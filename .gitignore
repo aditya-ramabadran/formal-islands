@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.pyc
+build/
+dist/
+*.egg-info/
+
+lean_project/.lake/
+lean_project/build/
+lean_project/.cache/
+lean_project/FormalIslands/Generated/*.lean
