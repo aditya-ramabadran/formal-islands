@@ -3,18 +3,19 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter, defaultdict, deque
 from html import escape
 
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode, ReviewObligation
 
 
-NODE_WIDTH = 152
-NODE_HEIGHT = 76
-X_GAP = 188
-Y_GAP = 124
-MARGIN_X = 44
-MARGIN_Y = 32
+NODE_WIDTH = 156
+NODE_HEIGHT = 78
+ROW_GAP = 88
+COL_GAP = 52
+MARGIN_X = 30
+MARGIN_Y = 30
 
 
 def export_report_bundle(graph: ProofGraph, obligations: list[ReviewObligation]) -> dict:
@@ -27,14 +28,13 @@ def export_report_bundle(graph: ProofGraph, obligations: list[ReviewObligation])
 
 
 def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -> str:
-    """Render a compact static HTML report with interactive checklist and graph widget."""
+    """Render a static HTML report with a pure SVG/CSS graph widget."""
 
     status_counts = Counter(node.status for node in graph.nodes)
     checklist_items = "\n".join(_render_checklist_item(obligation) for obligation in obligations)
     node_sections = "\n".join(_render_node_section(node) for node in graph.nodes)
     graph_widget = _render_graph_widget(graph)
-    graph_payload = json.dumps(graph.model_dump(mode="json"))
-    obligation_payload = json.dumps([obligation.model_dump(mode="json") for obligation in obligations])
+    interaction_styles = _render_interaction_styles(graph, obligations)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -53,6 +53,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       --accent: #8c4f2b;
       --accent-soft: #f5e8d6;
       --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
       --checked: #2f8f5b;
       --checked-soft: #e6f5eb;
       --edge: #b3aa9f;
@@ -69,7 +70,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       background: radial-gradient(circle at top, #fff8e7, var(--bg));
       color: var(--ink);
     }}
-    main {{
+    main.report-root {{
       max-width: 1040px;
       margin: 0 auto;
       padding: 2rem 1rem 4rem;
@@ -99,84 +100,53 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       font-size: 0.88rem;
     }}
     .graph-shell {{
-      overflow-x: auto;
-      padding-bottom: 0.3rem;
-    }}
-    .graph-stage {{
-      position: relative;
-      min-width: 100%;
-      margin-top: 0.8rem;
+      margin-top: 0.85rem;
       border: 1px solid var(--border);
       border-radius: 16px;
-      background: linear-gradient(180deg, rgba(255, 251, 242, 0.92), rgba(245, 238, 227, 0.92));
+      background: linear-gradient(180deg, rgba(255, 251, 242, 0.96), rgba(245, 238, 227, 0.96));
+      overflow-x: auto;
+      overflow-y: hidden;
     }}
-    .graph-svg {{
-      position: absolute;
-      inset: 0;
+    .graph-widget {{
+      display: block;
       width: 100%;
-      height: 100%;
-      overflow: visible;
-      pointer-events: none;
+      height: auto;
+      min-width: 420px;
     }}
     .graph-edge {{
       stroke: var(--edge);
-      stroke-width: 3;
-      opacity: 0.95;
+      stroke-width: 3.5;
+      fill: none;
       transition: stroke 140ms ease, stroke-width 140ms ease;
     }}
-    .graph-edge.is-active {{
-      stroke: var(--highlight);
-      stroke-width: 4;
-    }}
-    .graph-edge.is-checked {{
-      stroke: var(--checked);
-      stroke-width: 4;
-    }}
-    .graph-node-btn {{
-      position: absolute;
-      width: {NODE_WIDTH}px;
-      min-height: {NODE_HEIGHT}px;
-      border-radius: 22px;
-      border: 2px solid var(--accent);
-      background: rgba(255, 250, 241, 0.98);
-      color: var(--ink);
-      padding: 0.6rem 0.7rem 0.55rem;
+    .graph-node-link {{
       cursor: pointer;
-      box-shadow: 0 8px 18px rgba(73, 48, 24, 0.08);
-      text-align: center;
-      transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+      text-decoration: none;
     }}
-    .graph-node-btn:hover {{
-      border-color: var(--highlight);
-      box-shadow: 0 10px 18px rgba(217, 124, 43, 0.12);
-    }}
-    .graph-node-btn.is-active {{
-      border-color: var(--highlight);
-      background: #fff0df;
-    }}
-    .graph-node-btn.is-checked {{
-      border-color: var(--checked);
-      background: var(--checked-soft);
+    .graph-node-box {{
+      fill: rgba(255, 250, 241, 0.98);
+      stroke: var(--accent);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
     }}
     .graph-node-title {{
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      line-height: 1.15;
-      font-size: 0.98rem;
+      fill: var(--ink);
+      font-size: 12px;
       font-weight: 700;
-      margin-bottom: 0.35rem;
-      text-wrap: balance;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
     }}
     .graph-node-id {{
-      display: block;
-      font-size: 0.84rem;
-      color: var(--muted);
-      letter-spacing: 0.02em;
+      fill: var(--muted);
+      font-size: 11px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
     }}
     .graph-caption {{
-      margin-top: 0.65rem;
+      margin-top: 0.7rem;
       color: var(--muted);
       font-size: 0.95rem;
     }}
@@ -192,10 +162,6 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       border-radius: 12px;
       background: rgba(255, 250, 241, 0.95);
       transition: border-color 140ms ease, background 140ms ease;
-    }}
-    .checklist-item.is-checked {{
-      border-color: var(--checked);
-      background: var(--checked-soft);
     }}
     .checklist-label {{
       display: grid;
@@ -235,16 +201,12 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
     }}
     .node-card {{
       scroll-margin-top: 1rem;
-      transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
     }}
-    .node-card.is-highlighted {{
+    .node-card:target {{
       border-color: var(--highlight);
       box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
       background: #fff8ee;
-    }}
-    .node-card.is-checked {{
-      border-color: var(--checked);
-      background: #f8fdf9;
     }}
     pre {{
       overflow-x: auto;
@@ -256,18 +218,16 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
     code {{
       font-family: "SFMono-Regular", Menlo, monospace;
     }}
+    {interaction_styles}
     @media (max-width: 720px) {{
-      main {{
+      main.report-root {{
         padding-inline: 0.8rem;
-      }}
-      .graph-node-btn {{
-        width: 138px;
       }}
     }}
   </style>
 </head>
 <body>
-  <main>
+  <main class="report-root">
     <section>
       <h1>{escape(graph.theorem_title)}</h1>
       <p>{escape(graph.theorem_statement)}</p>
@@ -287,7 +247,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
         {graph_widget}
       </div>
       <p class="graph-caption">
-        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and incident edges.
+        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
       </p>
     </section>
     <section>
@@ -303,134 +263,23 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       </div>
     </section>
   </main>
-  <script id="report-graph-data" type="application/json">{escape(graph_payload)}</script>
-  <script id="report-obligation-data" type="application/json">{escape(obligation_payload)}</script>
-  <script>
-    (() => {{
-      const graph = JSON.parse(document.getElementById("report-graph-data").textContent);
-      const obligations = JSON.parse(document.getElementById("report-obligation-data").textContent);
-
-      const nodeCards = new Map(
-        [...document.querySelectorAll("[data-node-id]")].map((el) => [el.dataset.nodeId, el])
-      );
-      const graphButtons = new Map(
-        [...document.querySelectorAll("[data-graph-node-id]")].map((el) => [el.dataset.graphNodeId, el])
-      );
-      const graphEdges = [...document.querySelectorAll("[data-edge-key]")];
-      const checklistItems = [...document.querySelectorAll("[data-obligation-id]")];
-
-      function edgeKey(sourceId, targetId) {{
-        return `${{sourceId}}->${{targetId}}`;
-      }}
-
-      function clearHighlights() {{
-        nodeCards.forEach((card) => card.classList.remove("is-highlighted"));
-        graphButtons.forEach((button) => button.classList.remove("is-active"));
-        graphEdges.forEach((edge) => edge.classList.remove("is-active"));
-      }}
-
-      function highlightNodeSet(nodeIds) {{
-        const nodeSet = new Set(nodeIds);
-        clearHighlights();
-
-        nodeSet.forEach((nodeId) => {{
-          const card = nodeCards.get(nodeId);
-          const button = graphButtons.get(nodeId);
-          if (card) {{
-            card.classList.add("is-highlighted");
-          }}
-          if (button) {{
-            button.classList.add("is-active");
-          }}
-        }});
-
-        graph.edges.forEach((edge) => {{
-          if (nodeSet.has(edge.source_id) || nodeSet.has(edge.target_id)) {{
-            const edgeElement = document.querySelector(`[data-edge-key="${{edgeKey(edge.source_id, edge.target_id)}}"]`);
-            if (edgeElement) {{
-              edgeElement.classList.add("is-active");
-            }}
-          }}
-        }});
-      }}
-
-      function syncCheckedState() {{
-        const checkedNodeIds = new Set();
-
-        checklistItems.forEach((item) => {{
-          const checkbox = item.querySelector('input[type="checkbox"]');
-          const nodeIds = JSON.parse(item.dataset.nodeIds || "[]");
-          item.classList.toggle("is-checked", checkbox.checked);
-          if (checkbox.checked) {{
-            nodeIds.forEach((nodeId) => checkedNodeIds.add(nodeId));
-          }}
-        }});
-
-        nodeCards.forEach((card, nodeId) => {{
-          card.classList.toggle("is-checked", checkedNodeIds.has(nodeId));
-        }});
-        graphButtons.forEach((button, nodeId) => {{
-          button.classList.toggle("is-checked", checkedNodeIds.has(nodeId));
-        }});
-        graphEdges.forEach((edgeElement) => {{
-          const [sourceId, targetId] = edgeElement.dataset.edgeKey.split("->");
-          edgeElement.classList.toggle(
-            "is-checked",
-            checkedNodeIds.has(sourceId) || checkedNodeIds.has(targetId)
-          );
-        }});
-      }}
-
-      checklistItems.forEach((item) => {{
-        const nodeIds = JSON.parse(item.dataset.nodeIds || "[]");
-        const checkbox = item.querySelector('input[type="checkbox"]');
-        item.addEventListener("mouseenter", () => highlightNodeSet(nodeIds));
-        item.addEventListener("mouseleave", clearHighlights);
-        checkbox.addEventListener("change", syncCheckedState);
-      }});
-
-      function scrollToNode(nodeId) {{
-        const card = nodeCards.get(nodeId);
-        if (!card) {{
-          return;
-        }}
-        highlightNodeSet([nodeId]);
-        card.scrollIntoView({{ behavior: "smooth", block: "start" }});
-        window.setTimeout(clearHighlights, 1400);
-      }}
-
-      graphButtons.forEach((button, nodeId) => {{
-        button.addEventListener("click", () => scrollToNode(nodeId));
-      }});
-
-      document.querySelectorAll("[data-node-jump]").forEach((link) => {{
-        link.addEventListener("click", (event) => {{
-          const nodeId = event.currentTarget.dataset.nodeJump;
-          event.preventDefault();
-          scrollToNode(nodeId);
-        }});
-      }});
-
-      syncCheckedState();
-    }})();
-  </script>
 </body>
 </html>
 """
 
 
 def _render_checklist_item(obligation: ReviewObligation) -> str:
+    control_id = _obligation_control_id(obligation.id)
     node_links = ", ".join(
         (
-            f'<a class="node-jump" href="#node-{escape(node_id)}" '
-            f'data-node-jump="{escape(node_id)}">{escape(node_id)}</a>'
+            f'<a class="node-jump" href="#node-{escape(node_id)}">{escape(node_id)}</a>'
         )
         for node_id in obligation.node_ids
     )
     return f"""
-    <li class="checklist-item" data-obligation-id="{escape(obligation.id)}" data-node-ids='{escape(json.dumps(obligation.node_ids))}'>
-      <label class="checklist-label">
-        <input type="checkbox" />
+    <li class="checklist-item obligation-{_slugify(obligation.id)}" data-obligation-id="{escape(obligation.id)}">
+      <label class="checklist-label" for="{control_id}">
+        <input id="{control_id}" type="checkbox" />
         <span>
           <span class="checklist-kind">{escape(obligation.kind)}</span><br />
           {escape(obligation.text)}
@@ -479,8 +328,9 @@ stderr:
         </details>
         """
 
+    node_key = _node_class(node.id)
     return f"""
-    <article class="node-card" id="node-{escape(node.id)}" data-node-id="{escape(node.id)}">
+    <article class="node-card {node_key}" id="node-{escape(node.id)}" data-node-id="{escape(node.id)}">
       <h3>{escape(node.title)}</h3>
       <p class="meta">Node id: {escape(node.id)} | Status: {escape(node.status)}</p>
       {display_label}
@@ -496,105 +346,257 @@ def _render_graph_widget(graph: ProofGraph) -> str:
     layout = _compute_graph_layout(graph)
     width = layout["width"]
     height = layout["height"]
-    edges_svg = "\n".join(
-        _render_graph_edge(edge, layout["centers"][edge.source_id], layout["centers"][edge.target_id])
-        for edge in graph.edges
+    edges_svg = "\n".join(_render_edge(edge, layout) for edge in graph.edges)
+    nodes_svg = "\n".join(_render_node(node, layout) for node in graph.nodes)
+    return f"""
+    <svg class="graph-widget" viewBox="0 0 {width} {height}" role="img" aria-label="Proof graph">
+      <defs>
+        <marker id="graph-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L9,3 z" fill="#b3aa9f"></path>
+        </marker>
+      </defs>
+      <g>{edges_svg}</g>
+      <g>{nodes_svg}</g>
+    </svg>
+    """
+
+
+def _render_edge(edge: ProofEdge, layout: dict) -> str:
+    x1, y1 = layout["centers"][edge.source_id]
+    x2, y2 = layout["centers"][edge.target_id]
+    start_y = y1 + NODE_HEIGHT / 2 - 4
+    end_y = y2 - NODE_HEIGHT / 2 + 4
+    edge_class = _edge_class(edge.source_id, edge.target_id)
+    return (
+        f'<line class="graph-edge {edge_class}" x1="{x1}" y1="{start_y}" x2="{x2}" y2="{end_y}" '
+        f'marker-end="url(#graph-arrow)"></line>'
     )
-    nodes_html = "\n".join(
-        _render_graph_node_button(node, *layout["positions"][node.id]) for node in graph.nodes
+
+
+def _render_node(node: ProofNode, layout: dict) -> str:
+    x, y = layout["positions"][node.id]
+    cx = x + NODE_WIDTH / 2
+    title_lines = _wrap_title_lines(node.display_label or node.title)
+    title_y_positions = _title_y_positions(y, len(title_lines))
+    node_key = _node_class(node.id)
+    title_tspans = "\n".join(
+        f'<tspan x="{cx}" y="{title_y_positions[index]}">{escape(line)}</tspan>'
+        for index, line in enumerate(title_lines)
     )
     return f"""
-    <div class="graph-stage" style="height: {height}px;">
-      <svg class="graph-svg" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMin meet" aria-hidden="true">
-        {edges_svg}
-      </svg>
-      <div style="position: relative; width: {width}px; height: {height}px;">
-        {nodes_html}
-      </div>
-    </div>
+    <a class="graph-node-link {node_key}" href="#node-{escape(node.id)}">
+      <rect class="graph-node-box" x="{x}" y="{y}" rx="22" ry="22" width="{NODE_WIDTH}" height="{NODE_HEIGHT}"></rect>
+      <text class="graph-node-title">{title_tspans}</text>
+      <text class="graph-node-id" x="{cx}" y="{y + NODE_HEIGHT - 18}">{escape(node.id)}</text>
+    </a>
     """
 
 
 def _compute_graph_layout(graph: ProofGraph) -> dict:
-    node_ids = [node.id for node in graph.nodes]
     children_by_source: dict[str, list[str]] = defaultdict(list)
-    depth_by_node: dict[str, int] = {graph.root_node_id: 0}
-    queue = deque([graph.root_node_id])
-    seen = {graph.root_node_id}
-
     for edge in graph.edges:
         children_by_source[edge.source_id].append(edge.target_id)
 
+    depths = {graph.root_node_id: 0}
+    queue = deque([graph.root_node_id])
     while queue:
         node_id = queue.popleft()
-        depth = depth_by_node[node_id]
+        depth = depths[node_id]
         for child_id in children_by_source.get(node_id, []):
             proposed = depth + 1
-            previous = depth_by_node.get(child_id)
+            previous = depths.get(child_id)
             if previous is None or proposed < previous:
-                depth_by_node[child_id] = proposed
-            if child_id not in seen:
-                seen.add(child_id)
+                depths[child_id] = proposed
                 queue.append(child_id)
 
-    remaining = [node_id for node_id in node_ids if node_id not in depth_by_node]
-    extra_depth_start = max(depth_by_node.values(), default=0) + 1
-    for offset, node_id in enumerate(remaining):
-        depth_by_node[node_id] = extra_depth_start + offset
+    extra_start = max(depths.values(), default=0) + 1
+    for offset, node in enumerate(graph.nodes):
+        if node.id not in depths:
+            depths[node.id] = extra_start + offset
 
-    nodes_by_depth: dict[int, list[str]] = defaultdict(list)
+    rows: dict[int, list[str]] = defaultdict(list)
     for node in graph.nodes:
-        nodes_by_depth[depth_by_node[node.id]].append(node.id)
+        rows[depths[node.id]].append(node.id)
 
-    max_nodes_per_row = max(len(row) for row in nodes_by_depth.values())
-    width = max(420, MARGIN_X * 2 + max_nodes_per_row * NODE_WIDTH + (max_nodes_per_row - 1) * (X_GAP - NODE_WIDTH))
-    height = MARGIN_Y * 2 + (max(depth_by_node.values(), default=0) + 1) * NODE_HEIGHT + max(depth_by_node.values(), default=0) * (Y_GAP - NODE_HEIGHT)
+    max_row_size = max(len(row) for row in rows.values())
+    width = max(420, MARGIN_X * 2 + max_row_size * NODE_WIDTH + max(0, max_row_size - 1) * COL_GAP)
+    height = MARGIN_Y * 2 + len(rows) * NODE_HEIGHT + max(0, len(rows) - 1) * ROW_GAP
 
     positions: dict[str, tuple[float, float]] = {}
     centers: dict[str, tuple[float, float]] = {}
-
-    for depth in sorted(nodes_by_depth):
-        row_ids = sorted(nodes_by_depth[depth])
-        row_width = len(row_ids) * NODE_WIDTH + (len(row_ids) - 1) * (X_GAP - NODE_WIDTH)
+    for depth in sorted(rows):
+        row_ids = sorted(rows[depth])
+        row_width = len(row_ids) * NODE_WIDTH + max(0, len(row_ids) - 1) * COL_GAP
         start_x = (width - row_width) / 2
-        y = MARGIN_Y + depth * Y_GAP
+        y = MARGIN_Y + depth * (NODE_HEIGHT + ROW_GAP)
         for index, node_id in enumerate(row_ids):
-            x = start_x + index * X_GAP
+            x = start_x + index * (NODE_WIDTH + COL_GAP)
             positions[node_id] = (x, y)
             centers[node_id] = (x + NODE_WIDTH / 2, y + NODE_HEIGHT / 2)
 
-    return {
-        "positions": positions,
-        "centers": centers,
-        "width": int(width),
-        "height": int(height),
-    }
+    return {"positions": positions, "centers": centers, "width": width, "height": height}
 
 
-def _render_graph_edge(
-    edge: ProofEdge,
-    source_center: tuple[float, float],
-    target_center: tuple[float, float],
-) -> str:
-    x1, y1 = source_center
-    x2, y2 = target_center
-    return (
-        f'<line class="graph-edge" data-edge-key="{escape(edge.source_id)}-&gt;{escape(edge.target_id)}" '
-        f'x1="{x1}" y1="{y1 + NODE_HEIGHT / 2 - 12}" x2="{x2}" y2="{y2 - NODE_HEIGHT / 2 + 12}" />'
-    )
+def _wrap_title_lines(text: str, max_chars: int = 18, max_lines: int = 2) -> list[str]:
+    words = text.split()
+    if not words:
+        return [""]
+    lines: list[str] = []
+    current = words[0]
+    for word in words[1:]:
+        candidate = f"{current} {word}"
+        if len(candidate) <= max_chars:
+            current = candidate
+            continue
+        lines.append(current)
+        current = word
+        if len(lines) == max_lines - 1:
+            break
+    remaining_words = words[len(" ".join(lines + [current]).split()):]
+    if lines and len(lines) == max_lines - 1:
+        rest = " ".join([current] + remaining_words)
+        current = _ellipsize(rest, max_chars)
+        return lines + [current]
+
+    lines.append(current)
+    if len(lines) < max_lines and remaining_words:
+        lines.append(_ellipsize(" ".join(remaining_words), max_chars))
+    elif len(lines) > max_lines:
+        lines = lines[:max_lines]
+    return lines[:max_lines]
 
 
-def _render_graph_node_button(node: ProofNode, x: float, y: float) -> str:
-    label = escape(node.display_label or node.title)
-    return f"""
-    <button
-      type="button"
-      class="graph-node-btn"
-      data-graph-node-id="{escape(node.id)}"
-      style="left: {x}px; top: {y}px;"
-      title="{escape(node.title)}"
-    >
-      <span class="graph-node-title">{label}</span>
-      <span class="graph-node-id">{escape(node.id)}</span>
-    </button>
-    """
+def _ellipsize(text: str, max_chars: int) -> str:
+    if len(text) <= max_chars:
+        return text
+    return text[: max_chars - 1].rstrip() + "…"
+
+
+def _title_y_positions(y: float, line_count: int) -> list[float]:
+    if line_count <= 1:
+        return [y + 31]
+    return [y + 25, y + 40]
+
+
+def _render_interaction_styles(graph: ProofGraph, obligations: list[ReviewObligation]) -> str:
+    node_edge_map = _incident_edge_classes(graph)
+    blocks: list[str] = []
+
+    for node in graph.nodes:
+        node_key = _node_class(node.id)
+        blocks.append(
+            f"""
+            .report-root:has(a.{node_key}:hover) .{node_key}.node-card,
+            .report-root:has(#{escape('node-' + node.id)}:target) a.{node_key} .graph-node-box {{
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }}
+            .report-root:has(a.{node_key}:hover) .{node_key}.node-card,
+            .report-root:has(#{escape('node-' + node.id)}:target).report-root .{node_key}.node-card {{
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }}
+            """
+        )
+
+    for obligation in obligations:
+        obligation_slug = _slugify(obligation.id)
+        control_id = _obligation_control_id(obligation.id)
+        node_classes = [_node_class(node_id) for node_id in obligation.node_ids]
+        edge_classes = sorted(
+            {
+                edge_class
+                for node_id in obligation.node_ids
+                for edge_class in node_edge_map.get(node_id, set())
+            }
+        )
+
+        node_selector = ",\n".join(
+            [
+                f".report-root:has(.obligation-{obligation_slug}:hover) a.{node_class} .graph-node-box"
+                for node_class in node_classes
+            ]
+            + [
+                f".report-root:has(#{control_id}:checked) a.{node_class} .graph-node-box"
+                for node_class in node_classes
+            ]
+            + [
+                f".report-root:has(.obligation-{obligation_slug}:hover) .{node_class}.node-card"
+                for node_class in node_classes
+            ]
+            + [
+                f".report-root:has(#{control_id}:checked) .{node_class}.node-card"
+                for node_class in node_classes
+            ]
+        )
+        if node_selector:
+            blocks.append(
+                f"""
+                {node_selector} {{
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }}
+                """
+            )
+
+        edge_selector = ",\n".join(
+            [
+                f".report-root:has(.obligation-{obligation_slug}:hover) .{edge_class}"
+                for edge_class in edge_classes
+            ]
+            + [
+                f".report-root:has(#{control_id}:checked) .{edge_class}"
+                for edge_class in edge_classes
+            ]
+        )
+        if edge_selector:
+            blocks.append(
+                f"""
+                {edge_selector} {{
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }}
+                """
+            )
+
+        blocks.append(
+            f"""
+            .report-root:has(#{control_id}:checked) .obligation-{obligation_slug} {{
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }}
+            """
+        )
+
+    return "\n".join(blocks)
+
+
+def _incident_edge_classes(graph: ProofGraph) -> dict[str, set[str]]:
+    mapping: dict[str, set[str]] = defaultdict(set)
+    for edge in graph.edges:
+        edge_class = _edge_class(edge.source_id, edge.target_id)
+        mapping[edge.source_id].add(edge_class)
+        mapping[edge.target_id].add(edge_class)
+    return mapping
+
+
+def _node_class(node_id: str) -> str:
+    return f"node-{_slugify(node_id)}"
+
+
+def _edge_class(source_id: str, target_id: str) -> str:
+    return f"edge-{_slugify(source_id)}-{_slugify(target_id)}"
+
+
+def _obligation_control_id(obligation_id: str) -> str:
+    return f"obligation-check-{_slugify(obligation_id)}"
+
+
+def _slugify(value: str) -> str:
+    slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", value).strip("-").lower()
+    return slug or "item"

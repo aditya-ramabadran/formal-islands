@@ -39,6 +39,6 @@ def test_render_html_report_includes_core_sections() -> None:
     assert "Lean code" in html
     assert "Verification logs" in html
     assert 'type="checkbox"' in html
-    assert 'class="graph-svg"' in html
-    assert 'data-graph-node-id="n1"' in html
+    assert 'class="graph-widget"' in html
+    assert 'class="graph-node-link node-n1"' in html
     assert 'data-obligation-id="informal-proof-n1"' in html
