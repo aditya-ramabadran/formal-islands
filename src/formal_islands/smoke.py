@@ -7,11 +7,11 @@ import json
 from pathlib import Path
 from typing import Any
 
-from formal_islands.backends import CodexCLIBackend
+from formal_islands.backends import BackendError, CodexCLIBackend
 from formal_islands.examples import TOY_RAW_PROOF, TOY_THEOREM_STATEMENT
 from formal_islands.extraction import extract_proof_graph, select_formalization_candidates
 from formal_islands.formalization import LeanVerifier, LeanWorkspace, formalize_candidate_node
-from formal_islands.models import ProofGraph
+from formal_islands.models import FormalArtifact, ProofGraph, VerificationResult
 from formal_islands.report import export_report_bundle, render_html_report
 from formal_islands.review import derive_review_obligations
 
@@ -21,6 +21,9 @@ DEFAULT_EXAMPLE_INPUT = {
     "theorem_statement": TOY_THEOREM_STATEMENT,
     "raw_proof_text": TOY_RAW_PROOF,
 }
+
+DEFAULT_BACKEND_TIMEOUT_SECONDS = 180.0
+FORMALIZATION_BACKEND_TIMEOUT_SECONDS = 420.0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -69,8 +72,8 @@ def build_parser() -> argparse.ArgumentParser:
     formalize_parser.add_argument(
         "--max-attempts",
         type=int,
-        default=1,
-        help="Maximum number of bounded formalization attempts.",
+        default=4,
+        help="Maximum number of bounded formalization attempts. The current prototype uses at most three repair retries after the initial attempt.",
     )
     formalize_parser.set_defaults(func=cmd_formalize_one)
 
@@ -91,8 +94,8 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--max-attempts",
         type=int,
-        default=1,
-        help="Maximum number of bounded formalization attempts.",
+        default=4,
+        help="Maximum number of bounded formalization attempts. The current prototype uses at most three repair retries after the initial attempt.",
     )
     run_parser.set_defaults(func=cmd_run_example)
 
@@ -138,9 +141,14 @@ def add_output_dir_arg(parser: argparse.ArgumentParser) -> None:
 
 
 def cmd_extract(args: argparse.Namespace) -> int:
-    backend = build_backend(args.backend, args.model)
     input_payload = load_input_payload(Path(args.input))
     output_dir = ensure_output_dir(Path(args.output_dir))
+    backend = build_backend(
+        args.backend,
+        args.model,
+        output_dir / "_backend_logs",
+        timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
+    )
     graph = extract_proof_graph(
         backend=backend,
         theorem_statement=input_payload["theorem_statement"],
@@ -154,8 +162,13 @@ def cmd_extract(args: argparse.Namespace) -> int:
 
 
 def cmd_select_candidates(args: argparse.Namespace) -> int:
-    backend = build_backend(args.backend, args.model)
     output_dir = ensure_output_dir(Path(args.output_dir))
+    backend = build_backend(
+        args.backend,
+        args.model,
+        output_dir / "_backend_logs",
+        timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
+    )
     graph = load_graph(Path(args.graph))
     updated_graph = select_formalization_candidates(backend=backend, graph=graph)
     path = output_dir / "02_candidate_graph.json"
@@ -165,34 +178,40 @@ def cmd_select_candidates(args: argparse.Namespace) -> int:
 
 
 def cmd_formalize_one(args: argparse.Namespace) -> int:
-    backend = build_backend(args.backend, args.model)
     output_dir = ensure_output_dir(Path(args.output_dir))
+    backend = build_backend(
+        args.backend,
+        args.model,
+        output_dir / "_backend_logs",
+        timeout_seconds=FORMALIZATION_BACKEND_TIMEOUT_SECONDS,
+    )
     graph = load_graph(Path(args.graph))
     node_id = select_candidate_node_id(graph, requested_node_id=args.node_id)
     verifier = LeanVerifier(workspace=LeanWorkspace(root=Path(args.workspace)))
-    outcome = formalize_candidate_node(
-        backend=backend,
-        verifier=verifier,
-        graph=graph,
-        node_id=node_id,
-        max_attempts=args.max_attempts,
-    )
     graph_path = output_dir / "03_formalized_graph.json"
     summary_path = output_dir / "03_formalization_summary.json"
-    write_graph(outcome.graph, graph_path)
-    summary_path.write_text(
-        json.dumps(
-            {
-                "node_id": outcome.node_id,
-                "status": outcome.artifact.verification.status,
-                "artifact_path": outcome.artifact.verification.artifact_path,
-                "attempt_count": outcome.artifact.verification.attempt_count,
-            },
-            indent=2,
+
+    def write_progress(outcome) -> None:
+        write_graph(outcome.graph, graph_path)
+        _write_formalization_summary(summary_path, outcome)
+
+    try:
+        outcome = formalize_candidate_node(
+            backend=backend,
+            verifier=verifier,
+            graph=graph,
+            node_id=node_id,
+            max_attempts=args.max_attempts,
+            on_update=write_progress,
         )
-        + "\n",
-        encoding="utf-8",
-    )
+    except BackendError as exc:
+        failure_outcome = _backend_failure_outcome(graph=graph, node_id=node_id, error=exc)
+        write_progress(failure_outcome)
+        print(graph_path)
+        print(summary_path)
+        return 0
+
+    write_progress(outcome)
     print(graph_path)
     print(summary_path)
     return 0
@@ -255,12 +274,66 @@ def cmd_run_example(args: argparse.Namespace) -> int:
     return 0
 
 
-def build_backend(name: str, model: str | None) -> CodexCLIBackend:
+def build_backend(
+    name: str,
+    model: str | None,
+    log_dir: Path | None = None,
+    timeout_seconds: float = DEFAULT_BACKEND_TIMEOUT_SECONDS,
+) -> CodexCLIBackend:
     """Create a backend instance for the smoke CLI."""
 
     if name != "codex":
         raise ValueError(f"unsupported backend: {name}")
-    return CodexCLIBackend(model=model)
+    return CodexCLIBackend(model=model, log_dir=log_dir, timeout_seconds=timeout_seconds)
+
+
+def _write_formalization_summary(path: Path, outcome) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "node_id": outcome.node_id,
+                "status": outcome.artifact.verification.status,
+                "artifact_path": outcome.artifact.verification.artifact_path,
+                "attempt_count": outcome.artifact.verification.attempt_count,
+                "stderr": outcome.artifact.verification.stderr,
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def _backend_failure_outcome(*, graph: ProofGraph, node_id: str, error: BackendError):
+    verification = VerificationResult(
+        status="failed",
+        command="backend_request",
+        exit_code=None,
+        stdout="",
+        stderr=str(error),
+        attempt_count=1,
+        artifact_path=None,
+    )
+    artifact = FormalArtifact(
+        lean_theorem_name=f"{node_id}_backend_failure",
+        lean_statement="-- backend did not return a Lean statement",
+        lean_code="-- backend did not return Lean code",
+        verification=verification,
+        attempt_history=[verification],
+    )
+    updated_graph = graph.model_copy(
+        update={
+            "nodes": [
+                node.model_copy(update={"status": "formal_failed", "formal_artifact": artifact})
+                if node.id == node_id
+                else node
+                for node in graph.nodes
+            ]
+        }
+    )
+    from formal_islands.formalization.loop import FormalizationOutcome
+
+    return FormalizationOutcome(graph=updated_graph, node_id=node_id, artifact=artifact)
 
 
 def load_input_payload(path: Path) -> dict[str, Any]:

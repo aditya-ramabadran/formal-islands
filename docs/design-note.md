@@ -9,3 +9,4 @@ This first pass stays intentionally narrow.
 - The graph model keeps only nodes and dependency edges. Formal components, collapsible UI groupings, and AND/OR proof-search semantics are explicitly out of scope for this prototype.
 - Single-node formalization is bounded and local. Multi-node dependency-aware Lean synthesis, semantic equivalence checking between informal and formal claims, and broad theorem-proving loops are deferred.
 - The committed Lean workspace includes a concrete toolchain pin plus a lightweight Mathlib project skeleton. Contributors are still expected to run `lake update` and `lake exe cache get` locally after cloning.
+- Candidate selection and formalization are not yet live Mathlib-aware in a programmatic sense. The prototype currently relies on LLM judgment plus local Lean verification against the pinned workspace. A future version could make planning more aware of the local Mathlib environment, but that is intentionally deferred here.

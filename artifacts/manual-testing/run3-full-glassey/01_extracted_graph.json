@@ -1,24 +1,24 @@
 {
   "theorem_title": "Full Glassey blow-up proof",
   "theorem_statement": "Glassey blow-up argument for the focusing mass-critical nonlinear Schrodinger equation.\n\nConsider a sufficiently regular solution \\(u(t,x)\\) to the focusing mass-critical NLS on \\(\\mathbb{R}^d\\):\n\n\\[\ni\\partial_t u+\\Delta u=-|u|^{4/d}u.\n\\]\n\nAssume:\n\n- \\(u_0\\in H^1(\\mathbb{R}^d)\\),\n\n- \\(|x|u_0\\in L^2(\\mathbb{R}^d)\\),\n\n- the energy \\(E(u_0)\\) is negative, where\n\n\\[\nE(u)=\\frac12\\int_{\\mathbb{R}^d}|\\nabla u|^2\\,dx\n-\\frac{1}{2+4/d}\\int_{\\mathbb{R}^d}|u|^{2+4/d}\\,dx.\n\\]\n\nThen the maximal forward existence time \\(T\\) is finite and\n\n\\[\n\\|u(t)\\|_{H^1(\\mathbb{R}^d)}\\to\\infty\n\\quad\\text{as }t\\uparrow T.\n\\]",
-  "root_node_id": "thm_glassey_blowup",
+  "root_node_id": "n0",
   "nodes": [
     {
-      "id": "thm_glassey_blowup",
+      "id": "n0",
       "title": "Finite-time blow-up from negative energy",
-      "informal_statement": "Under the stated assumptions, the maximal forward existence time \\(T\\) is finite and \\(\\|u(t)\\|_{H^1(\\mathbb{R}^d)}\\to\\infty\\) as \\(t\\uparrow T\\).",
-      "informal_proof_text": "Let \\(V(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\). By the virial computation, \\(V''(t)=16E(u_0)<0\\), so \\(V\\) is a concave quadratic with negative leading coefficient. Since \\(V(t)\\ge 0\\) by definition, it cannot stay nonnegative for all large positive \\(t\\); hence there is a finite positive time \\(T\\) with \\(V(T)=0\\), and therefore \\(V(t)\\to 0\\) as \\(t\\uparrow T\\). By the weighted inequality applied to \\(f=u(t)\\) and conservation of mass, if \\(M=\\|u_0\\|_{L^2(\\mathbb{R}^d)}\\), then \\(M^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\). Because \\(M>0\\) is fixed and \\(\\sqrt{V(t)}\\to 0\\), it follows that \\(\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty\\) as \\(t\\uparrow T\\). Since \\(\\|u(t)\\|_{H^1}^2=\\|u(t)\\|_{L^2}^2+\\|\\nabla u(t)\\|_{L^2}^2\\) and the \\(L^2\\) norm is conserved, we obtain \\(\\|u(t)\\|_{H^1(\\mathbb{R}^d)}\\to\\infty\\). Thus the solution blows up in finite positive time.",
+      "informal_statement": "For a sufficiently regular solution \\(u\\) of \\(i\\partial_t u+\\Delta u=-|u|^{4/d}u\\) with \\(u_0\\in H^1(\\mathbb{R}^d)\\), \\(|x|u_0\\in L^2(\\mathbb{R}^d)\\), and \\(E(u_0)<0\\), the maximal forward existence time \\(T\\) is finite and \\(\\|u(t)\\|_{H^1(\\mathbb{R}^d)}\\to\\infty\\) as \\(t\\uparrow T\\).",
+      "informal_proof_text": "Define the variance \\(V(t)=\\int |x|^2|u(t,x)|^2\\,dx\\). By the virial identity in the mass-critical case, \\(V''(t)=16E(u(t))\\). Energy conservation gives \\(V''(t)=16E(u_0)<0\\), so \\(V\\) is a concave quadratic with negative second derivative. Since \\(V(t)\\ge 0\\) by definition, it cannot stay nonnegative for all large positive times; hence there is a finite forward time \\(T\\) with \\(V(T)=0\\) and thus \\(V(t)\\to 0\\) as \\(t\\uparrow T\\). Using the weighted inequality \\(\\|f\\|_{L^2}^2\\le \\frac{2}{d}\\|xf\\|_{L^2}\\|\\nabla f\\|_{L^2}\\) with \\(f=u(t)\\), together with mass conservation \\(\\|u(t)\\|_{L^2}=\\|u_0\\|_{L^2}=:M>0\\), we obtain \\(M^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2}\\). As \\(t\\uparrow T\\), the factor \\(\\sqrt{V(t)}\\to 0\\) while \\(M>0\\) is fixed, so necessarily \\(\\|\\nabla u(t)\\|_{L^2}\\to\\infty\\). Since \\(\\|u(t)\\|_{H^1}^2=\\|u(t)\\|_{L^2}^2+\\|\\nabla u(t)\\|_{L^2}^2\\) and the \\(L^2\\) norm is conserved, \\(\\|u(t)\\|_{H^1}\\to\\infty\\). Therefore the solution blows up in finite positive time.",
       "status": "informal",
-      "display_label": "Glassey blow-up",
+      "display_label": "Finite-time blow-up",
       "formalization_priority": null,
       "formalization_rationale": null,
       "formal_artifact": null
     },
     {
-      "id": "lem_virial_negative_second_derivative",
-      "title": "Virial identity and negative variance curvature",
-      "informal_statement": "For \\(V(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\), one has\n\\[\nV'(t)=4\\operatorname{Im}\\int_{\\mathbb{R}^d}x\\cdot \\nabla u(t,x)\\,\\overline{u(t,x)}\\,dx\n\\]\nand\n\\[\nV''(t)=16E(u(t))=16E(u_0)<0.\n\\]",
-      "informal_proof_text": "Differentiate \\(V(t)\\) once:\n\\[\nV'(t)=2\\operatorname{Re}\\int |x|^2u_t\\overline u\\,dx.\n\\]\nUsing \\(iu_t+\\Delta u=-|u|^{4/d}u\\), rewrite \\(u_t=i\\Delta u+i|u|^{4/d}u\\). Substituting into \\(V'(t)\\), the nonlinear term vanishes because \\(\\int |x|^2|u|^{2+4/d}\\,dx\\) is real, so its product with \\(i\\) is purely imaginary. Integrating by parts in the Laplacian term gives\n\\[\n\\int |x|^2\\Delta u\\,\\overline u\\,dx\n=-2\\int x\\cdot \\nabla u\\,\\overline u\\,dx-\\int |x|^2|\\nabla u|^2\\,dx,\n\\]\nand the last term is real, hence disappears after multiplying by \\(i\\) and taking real parts. Therefore\n\\[\nV'(t)=4\\operatorname{Im}\\int x\\cdot \\nabla u\\,\\overline u\\,dx.\n\\]\nDifferentiating again and substituting \\(u_t=i\\Delta u+i|u|^{4/d}u\\), \\(\\overline{u_t}=-i\\Delta\\overline u-i|u|^{4/d}\\overline u\\), one splits \\(V''(t)\\) into linear and nonlinear contributions. A standard integration-by-parts computation yields for the linear part\n\\[\n4\\operatorname{Re}\\int x\\cdot \\nabla\\Delta u\\,\\overline u\\,dx-4\\operatorname{Re}\\int x\\cdot \\nabla u\\,\\Delta\\overline u\\,dx=8\\int_{\\mathbb{R}^d}|\\nabla u|^2\\,dx.\n\\]\nFor the nonlinear part, after rewriting the real-part contribution as a divergence term and integrating by parts using \\(\\operatorname{div}(x)=d\\), one gets\n\\[\n-\\frac{16}{2+4/d}\\int_{\\mathbb{R}^d}|u|^{2+4/d}\\,dx.\n\\]\nHence\n\\[\nV''(t)=8\\int |\\nabla u|^2\\,dx-\\frac{16}{2+4/d}\\int |u|^{2+4/d}\\,dx=16E(u(t)).\n\\]\nBy conservation of energy, \\(E(u(t))=E(u_0)\\), so \\(V''(t)=16E(u_0)<0\\).",
+      "id": "n1",
+      "title": "Virial identity for the variance",
+      "informal_statement": "For \\(V(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\), one has\n\\[\nV'(t)=4\\operatorname{Im}\\int_{\\mathbb{R}^d}x\\cdot \\nabla u(t,x)\\,\\overline{u(t,x)}\\,dx\n\\]\nand, in the focusing mass-critical case,\n\\[\nV''(t)=16E(u(t)).\n\\]",
+      "informal_proof_text": "Differentiate \\(V(t)\\) once:\n\\[\nV'(t)=2\\operatorname{Re}\\int |x|^2u_t\\overline u\\,dx.\n\\]\nUsing \\(u_t=i\\Delta u+i|u|^{4/d}u\\), the nonlinear term drops out because \\(\\int |x|^2|u|^{2+4/d}\\,dx\\) is real, so\n\\[\nV'(t)=2\\operatorname{Re}\\left(i\\int |x|^2\\Delta u\\,\\overline u\\,dx\\right).\n\\]\nIntegrating by parts,\n\\[\n\\int |x|^2\\Delta u\\,\\overline u\\,dx=-2\\int x\\cdot\\nabla u\\,\\overline u\\,dx-\\int |x|^2|\\nabla u|^2\\,dx,\n\\]\nand the last term is real, giving\n\\[\nV'(t)=4\\operatorname{Im}\\int x\\cdot\\nabla u\\,\\overline u\\,dx.\n\\]\nDifferentiating again and substituting \\(u_t=i\\Delta u+i|u|^{4/d}u\\), \\(\\overline{u_t}=-i\\Delta\\overline u-i|u|^{4/d}\\overline u\\), one separates linear and nonlinear contributions. A standard integration-by-parts computation yields the linear contribution \\(8\\int |\\nabla u|^2\\,dx\\). For the nonlinear contribution, one rewrites the real part as a divergence term and integrates by parts using \\(\\operatorname{div}(x)=d\\), obtaining\n\\[\n-\\frac{16}{2+4/d}\\int |u|^{2+4/d}\\,dx.\n\\]\nHence\n\\[\nV''(t)=8\\int |\\nabla u|^2\\,dx-\\frac{16}{2+4/d}\\int |u|^{2+4/d}\\,dx.\n\\]\nComparing with\n\\[\n16E(u)=8\\int |\\nabla u|^2\\,dx-\\frac{16}{2+4/d}\\int |u|^{2+4/d}\\,dx,\n\\]\none gets \\(V''(t)=16E(u(t))\\).",
       "status": "informal",
       "display_label": "Virial identity",
       "formalization_priority": null,
@@ -26,12 +26,34 @@
       "formal_artifact": null
     },
     {
-      "id": "lem_weighted_inequality",
-      "title": "Weighted inequality relating mass, variance, and gradient",
+      "id": "n2",
+      "title": "Weighted mass-gradient inequality",
       "informal_statement": "For sufficiently regular \\(f\\),\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\n\\le\n\\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
-      "informal_proof_text": "Using \\(\\operatorname{div}(x)=d\\), integrate by parts:\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\n=\\int |f|^2\\,dx\n=\\frac{1}{d}\\int (\\operatorname{div}x)|f|^2\\,dx\n=-\\frac{1}{d}\\int x\\cdot \\nabla(|f|^2)\\,dx\n=-\\frac{2}{d}\\operatorname{Re}\\int x\\cdot \\nabla f\\,\\overline f\\,dx.\n\\]\nThen \\(|\\operatorname{Re} z|\\le |z|\\) and Cauchy-Schwarz imply\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\n\\le\n\\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
+      "informal_proof_text": "Using \\(\\operatorname{div}(x)=d\\),\n\\[\n\\|f\\|_{L^2}^2=\\int |f|^2\\,dx=\\frac{1}{d}\\int (\\operatorname{div}x)|f|^2\\,dx=-\\frac{1}{d}\\int x\\cdot \\nabla(|f|^2)\\,dx.\n\\]\nSince \\(\\nabla(|f|^2)=2\\operatorname{Re}(\\nabla f\\,\\overline f)\\), this becomes\n\\[\n\\|f\\|_{L^2}^2=-\\frac{2}{d}\\operatorname{Re}\\int x\\cdot \\nabla f\\,\\overline f\\,dx.\n\\]\nApplying \\(|\\operatorname{Re} z|\\le |z|\\) and then Cauchy-Schwarz gives\n\\[\n\\|f\\|_{L^2}^2\\le \\frac{2}{d}\\,\\|xf\\|_{L^2}\\,\\|\\nabla f\\|_{L^2}.\n\\]",
       "status": "informal",
       "display_label": "Weighted inequality",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "n3",
+      "title": "Concavity of the variance forces finite vanishing time",
+      "informal_statement": "If \\(V(t)=\\int |x|^2|u(t,x)|^2\\,dx\\) satisfies \\(V''(t)=16E(u_0)<0\\), then \\(V\\) is a concave quadratic with negative leading coefficient, so there exists a finite forward time \\(T\\) such that \\(V(T)=0\\) and \\(V(t)\\to 0\\) as \\(t\\uparrow T\\).",
+      "informal_proof_text": "Energy conservation turns the virial identity into \\(V''(t)=16E(u_0)<0\\), a negative constant. Therefore \\(V\\) is a quadratic function of \\(t\\) with negative leading coefficient, hence it tends to \\(-\\infty\\) as \\(t\\to +\\infty\\). But by definition \\(V(t)=\\int |x|^2|u(t,x)|^2\\,dx\\ge 0\\) on its interval of existence. So \\(V\\) cannot remain nonnegative for all large positive times. By continuity there must be a finite first forward time \\(T\\) at which \\(V(T)=0\\), and consequently \\(V(t)\\to 0\\) as \\(t\\uparrow T\\).",
+      "status": "informal",
+      "display_label": "Variance concavity",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "n4",
+      "title": "Variance collapse implies gradient blow-up",
+      "informal_statement": "Let \\(M=\\|u_0\\|_{L^2(\\mathbb{R}^d)}=\\|u(t)\\|_{L^2(\\mathbb{R}^d)}\\). If \\(V(t)=\\|xu(t)\\|_{L^2}^2\\to 0\\) as \\(t\\uparrow T\\), then\n\\[\n\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty,\n\\]\nand therefore \\(\\|u(t)\\|_{H^1(\\mathbb{R}^d)}\\to\\infty\\).",
+      "informal_proof_text": "Apply the weighted inequality to \\(f=u(t)\\):\n\\[\n\\|u(t)\\|_{L^2}^2\\le \\frac{2}{d}\\|xu(t)\\|_{L^2}\\|\\nabla u(t)\\|_{L^2}.\n\\]\nBy mass conservation, \\(\\|u(t)\\|_{L^2}=M>0\\), so\n\\[\nM^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2}.\n\\]\nAs \\(t\\uparrow T\\), the factor \\(\\sqrt{V(t)}\\to 0\\) while \\(M\\) stays fixed and positive, forcing \\(\\|\\nabla u(t)\\|_{L^2}\\to\\infty\\). Since\n\\[\n\\|u(t)\\|_{H^1}^2=\\|u(t)\\|_{L^2}^2+\\|\\nabla u(t)\\|_{L^2}^2\n\\]\nand the \\(L^2\\) term is constant, it follows that \\(\\|u(t)\\|_{H^1}\\to\\infty\\).",
+      "status": "informal",
+      "display_label": "Gradient blow-up",
       "formalization_priority": null,
       "formalization_rationale": null,
       "formal_artifact": null
@@ -39,16 +61,34 @@
   ],
   "edges": [
     {
-      "source_id": "thm_glassey_blowup",
-      "target_id": "lem_virial_negative_second_derivative",
+      "source_id": "n0",
+      "target_id": "n1",
       "label": "depends_on",
-      "explanation": "The theorem uses \\(V''(t)=16E(u_0)<0\\) to force the variance to hit zero in finite positive time."
+      "explanation": "The blow-up argument uses the virial identity \\(V''(t)=16E(u(t))\\)."
     },
     {
-      "source_id": "thm_glassey_blowup",
-      "target_id": "lem_weighted_inequality",
+      "source_id": "n0",
+      "target_id": "n3",
       "label": "depends_on",
-      "explanation": "The theorem combines this inequality with mass conservation and \\(V(t)\\to 0\\) to conclude \\(\\|\\nabla u(t)\\|_{L^2}\\to\\infty\\)."
+      "explanation": "Finite-time vanishing of the variance comes from the negativity of the constant second derivative."
+    },
+    {
+      "source_id": "n0",
+      "target_id": "n4",
+      "label": "depends_on",
+      "explanation": "The final \\(H^1\\) blow-up conclusion is obtained from variance collapse and the weighted estimate."
+    },
+    {
+      "source_id": "n3",
+      "target_id": "n1",
+      "label": "depends_on",
+      "explanation": "The concavity statement uses \\(V''(t)=16E(u(t))\\) together with energy conservation to get \\(V''(t)=16E(u_0)<0\\)."
+    },
+    {
+      "source_id": "n4",
+      "target_id": "n2",
+      "label": "depends_on",
+      "explanation": "The lower bound relating mass, variance, and gradient comes from the weighted inequality."
     }
   ]
 }

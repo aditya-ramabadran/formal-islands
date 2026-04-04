@@ -31,7 +31,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
     """Render a static HTML report with a pure SVG/CSS graph widget."""
 
     status_counts = Counter(node.status for node in graph.nodes)
-    checklist_items = "\n".join(_render_checklist_item(obligation) for obligation in obligations)
+    checklist_items = "\n".join(_render_checklist_item(obligation, graph) for obligation in obligations)
     node_sections = "\n".join(_render_node_section(node) for node in graph.nodes)
     graph_widget = _render_graph_widget(graph)
     interaction_styles = _render_interaction_styles(graph, obligations)
@@ -113,7 +113,13 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
     }}
     .math-text {{
       white-space: pre-wrap;
-      line-height: 1.55;
+      line-height: 1.45;
+    }}
+    .math-text mjx-container[display="true"] {{
+      margin: 0.45rem 0 !important;
+    }}
+    .math-text mjx-container[jax="CHTML"][display="true"] {{
+      padding: 0 !important;
     }}
     .pill {{
       display: inline-block;
@@ -279,9 +285,50 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       background: #f4efe6;
       border-radius: 8px;
       border: 1px solid var(--border);
+      margin: 0.6rem 0;
     }}
     code {{
       font-family: "SFMono-Regular", Menlo, monospace;
+    }}
+    code.inline-code {{
+      background: #f4efe6;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.95em;
+      white-space: break-spaces;
+    }}
+    .statement-code {{
+      margin-top: 0.35rem;
+    }}
+    .statement-code pre,
+    .checklist-code pre {{
+      margin-top: 0.35rem;
+      background: #f4efe6;
+    }}
+    .lean-code {{
+      color: #2a241f;
+    }}
+    .lean-code .tok-keyword {{
+      color: #8b2f18;
+      font-weight: 700;
+    }}
+    .lean-code .tok-tactic {{
+      color: #9d5d17;
+      font-weight: 600;
+    }}
+    .lean-code .tok-type {{
+      color: #245f7a;
+    }}
+    .lean-code .tok-number {{
+      color: #7442a8;
+    }}
+    .lean-code .tok-comment {{
+      color: #6e7a60;
+      font-style: italic;
+    }}
+    .lean-code .tok-string {{
+      color: #2d7f4d;
     }}
     {interaction_styles}
     @media (max-width: 720px) {{
@@ -336,7 +383,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
 """
 
 
-def _render_checklist_item(obligation: ReviewObligation) -> str:
+def _render_checklist_item(obligation: ReviewObligation, graph: ProofGraph) -> str:
     control_id = _obligation_control_id(obligation.id)
     node_links = ", ".join(
         (
@@ -344,6 +391,7 @@ def _render_checklist_item(obligation: ReviewObligation) -> str:
         )
         for node_id in obligation.node_ids
     )
+    code_block = _render_obligation_code_block(obligation, graph)
     return f"""
     <li class="checklist-item obligation-{_slugify(obligation.id)}" data-obligation-id="{escape(obligation.id)}">
       <label class="checklist-label" for="{control_id}">
@@ -351,6 +399,7 @@ def _render_checklist_item(obligation: ReviewObligation) -> str:
         <span>
           <span class="checklist-kind">{escape(obligation.kind)}</span><br />
           {escape(obligation.text)}
+          {code_block}
           <div class="checklist-nodes">Related nodes: {node_links}</div>
         </span>
       </label>
@@ -379,12 +428,15 @@ def _render_node_section(node: ProofNode) -> str:
         formal_block = f"""
         <h4>Formal Artifact</h4>
         <p><strong>Lean theorem name:</strong> {escape(node.formal_artifact.lean_theorem_name)}</p>
-        <p><strong>Lean statement:</strong> {escape(node.formal_artifact.lean_statement)}</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          {_render_lean_code_block(node.formal_artifact.lean_statement)}
+        </div>
         <p><strong>Verification status:</strong> {escape(verification.status)}</p>
         <p><strong>Verification command:</strong> <code>{escape(verification.command)}</code></p>
         <details>
           <summary>Lean code</summary>
-          <pre><code>{escape(node.formal_artifact.lean_code)}</code></pre>
+          {_render_lean_code_block(node.formal_artifact.lean_code)}
         </details>
         <details>
           <summary>Verification logs</summary>
@@ -413,7 +465,132 @@ stderr:
 
 
 def _render_math_text(text: str) -> str:
-    return f'<div class="math-text">{escape(text)}</div>'
+    compacted = _compact_report_text(text)
+    return f'<div class="math-text">{escape(compacted)}</div>'
+
+
+def _render_obligation_code_block(obligation: ReviewObligation, graph: ProofGraph) -> str:
+    if obligation.kind != "formal_semantic_match_check" or len(obligation.node_ids) != 1:
+        return ""
+    node = next((candidate for candidate in graph.nodes if candidate.id == obligation.node_ids[0]), None)
+    if node is None or node.formal_artifact is None:
+        return ""
+    return f'<div class="checklist-code">{_render_lean_code_block(node.formal_artifact.lean_statement)}</div>'
+
+
+def _compact_report_text(text: str) -> str:
+    stripped = text.strip()
+    stripped = re.sub(r"\n{3,}", "\n\n", stripped)
+    stripped = re.sub(r"[ \t]+\n", "\n", stripped)
+    stripped = re.sub(r"\n{2,}(\\\[)", r"\n\1", stripped)
+    stripped = re.sub(r"(\\\])\n{2,}", r"\1\n", stripped)
+    return stripped
+
+
+def _render_lean_code_block(code: str) -> str:
+    return f'<pre><code class="language-lean lean-code">{_highlight_lean_html(code)}</code></pre>'
+
+
+def _highlight_lean_html(code: str) -> str:
+    lines = []
+    for raw_line in code.splitlines():
+        comment_index = raw_line.find("--")
+        if comment_index != -1:
+            code_part = raw_line[:comment_index]
+            comment_part = raw_line[comment_index:]
+        else:
+            code_part = raw_line
+            comment_part = ""
+        highlighted = _highlight_lean_code_part(code_part)
+        if comment_part:
+            highlighted += f'<span class="tok-comment">{escape(comment_part)}</span>'
+        lines.append(highlighted)
+    return "\n".join(lines)
+
+
+def _highlight_lean_code_part(text: str) -> str:
+    keywords = {
+        "import",
+        "open",
+        "namespace",
+        "section",
+        "end",
+        "variable",
+        "variables",
+        "theorem",
+        "lemma",
+        "example",
+        "def",
+        "axiom",
+        "where",
+        "structure",
+        "class",
+        "instance",
+        "inductive",
+        "deriving",
+        "match",
+        "with",
+        "let",
+        "in",
+        "if",
+        "then",
+        "else",
+        "fun",
+        "forall",
+    }
+    tactics = {
+        "by",
+        "intro",
+        "intros",
+        "rintro",
+        "apply",
+        "exact",
+        "show",
+        "have",
+        "simpa",
+        "simp",
+        "rw",
+        "calc",
+        "constructor",
+        "cases",
+        "refine",
+        "obtain",
+        "aesop",
+        "omega",
+        "ring",
+        "linarith",
+        "norm_num",
+    }
+    builtin_types = {"ℝ", "ℕ", "ℤ", "Prop", "Type", "Type*", "Bool"}
+    token_pattern = re.compile(
+        r"(\"(?:[^\"\\\\]|\\\\.)*\")|(\b[A-Za-z_][A-Za-z0-9_']*\b)|(ℝ|ℕ|ℤ|Prop|Type\*?|Bool)|(\d+(?:\.\d+)?)"
+    )
+
+    parts: list[str] = []
+    last_index = 0
+    for match in token_pattern.finditer(text):
+        start, end = match.span()
+        if start > last_index:
+            parts.append(escape(text[last_index:start]))
+        string_token, word_token, type_token, number_token = match.groups()
+        if string_token is not None:
+            parts.append(f'<span class="tok-string">{escape(string_token)}</span>')
+        elif type_token is not None or (word_token is not None and word_token in builtin_types):
+            token = type_token or word_token
+            parts.append(f'<span class="tok-type">{escape(token)}</span>')
+        elif word_token is not None:
+            if word_token in keywords:
+                parts.append(f'<span class="tok-keyword">{escape(word_token)}</span>')
+            elif word_token in tactics:
+                parts.append(f'<span class="tok-tactic">{escape(word_token)}</span>')
+            else:
+                parts.append(escape(word_token))
+        elif number_token is not None:
+            parts.append(f'<span class="tok-number">{escape(number_token)}</span>')
+        last_index = end
+    if last_index < len(text):
+        parts.append(escape(text[last_index:]))
+    return "".join(parts)
 
 
 def _render_graph_widget(graph: ProofGraph) -> str:

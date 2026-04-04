@@ -6,32 +6,32 @@
     {
       "id": "n0",
       "title": "Finite-time blow-up from the virial identity",
-      "informal_statement": "There exists \\(T<\\infty\\) such that\n\\[\n\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty\n\\quad\\text{as } t\\uparrow T.\n\\]",
-      "informal_proof_text": "Let \\(T>0\\) be the finite time from the variance-vanishing claim. The weighted estimate gives\n\\[\nM^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\n\\]\nfor every time of existence. Here \\(M>0\\) is fixed, while \\(V(t)\\to 0\\) as \\(t\\uparrow T\\). Therefore the right-hand side can stay at least \\(M^2\\) only if\n\\[\n\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty\n\\quad\\text{as } t\\uparrow T.\n\\]\nThus the solution blows up in finite positive time.",
+      "informal_statement": "There exists \\(T<\\infty\\) such that \\(\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty\\) as \\(t\\uparrow T\\).",
+      "informal_proof_text": "Use the lower bound \\(M^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2}\\), obtained from the weighted inequality applied to \\(u(t)\\), mass conservation \\(\\|u(t)\\|_{L^2}=M\\), and \\(\\|xu(t)\\|_{L^2}^2=V(t)\\). By the finite-time variance-collapse claim, there is \\(T<\\infty\\) with \\(V(t)\\to 0\\) as \\(t\\uparrow T\\). Since \\(M>0\\) is fixed, the inequality can remain true only if \\(\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty\\) as \\(t\\uparrow T\\).",
       "status": "informal",
-      "display_label": "Blow-up theorem",
+      "display_label": "Blow-up conclusion",
       "formalization_priority": null,
       "formalization_rationale": null,
       "formal_artifact": null
     },
     {
       "id": "n1",
-      "title": "The variance reaches zero in finite positive time",
-      "informal_statement": "There exists a finite time \\(T>0\\) such that\n\\[\nV(T)=0,\n\\]\nand hence\n\\[\nV(t)\\to 0\n\\quad\\text{as } t\\uparrow T.\n\\]",
-      "informal_proof_text": "Since \\(E(u_0)<0\\), the virial identity gives \\(V''(t)=16E(u_0)<0\\), so \\(V\\) is strictly concave. Integrating twice yields\n\\[\nV(t)=8E(u_0)t^2+at+b\n\\]\nfor some constants \\(a,b\\). Because \\(E(u_0)<0\\), the coefficient of \\(t^2\\) is negative, so \\(V(t)\\to -\\infty\\) as \\(t\\to +\\infty\\). But by definition\n\\[\nV(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\ge 0\n\\]\nfor every time on which the solution exists. Therefore \\(V\\) cannot stay positive for all \\(t\\ge 0\\). By continuity there exists a finite \\(T>0\\) with \\(V(T)=0\\), equivalently \\(V(t)\\to 0\\) as \\(t\\uparrow T\\).",
+      "title": "Weighted inequality gives a gradient lower bound in terms of variance",
+      "informal_statement": "For every time in the interval of existence,\n\\[\nM^2=\\|u(t)\\|_{L^2(\\mathbb{R}^d)}^2\n\\le\n\\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
+      "informal_proof_text": "Apply the assumed inequality\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\\le \\frac{2}{d}\\,\\|xf\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}\n\\]\nwith \\(f=u(t)\\). Mass conservation gives \\(\\|u(t)\\|_{L^2}=M\\), so\n\\[\nM^2\\le \\frac{2}{d}\\,\\|xu(t)\\|_{L^2}\\,\\|\\nabla u(t)\\|_{L^2}.\n\\]\nBy definition of the variance,\n\\[\n\\|xu(t)\\|_{L^2(\\mathbb{R}^d)}^2=V(t),\n\\]\nhence \\(\\|xu(t)\\|_{L^2}=\\sqrt{V(t)}\\), yielding the claim.",
       "status": "informal",
-      "display_label": "Variance hits zero",
+      "display_label": "Mass-variance-gradient inequality",
       "formalization_priority": null,
       "formalization_rationale": null,
       "formal_artifact": null
     },
     {
       "id": "n2",
-      "title": "Mass and the weighted inequality force a lower bound involving \\(\\sqrt{V(t)}\\)",
-      "informal_statement": "For every time of existence,\n\\[\nM^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
-      "informal_proof_text": "Apply the weighted inequality with \\(f=u(t)\\):\n\\[\n\\|u(t)\\|_{L^2(\\mathbb{R}^d)}^2\n\\le\n\\frac{2}{d}\\,\\|x u(t)\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}.\n\\]\nMass conservation gives \\(\\|u(t)\\|_{L^2(\\mathbb{R}^d)}=M\\), hence\n\\[\nM^2\\le\n\\frac{2}{d}\\,\\|x u(t)\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}.\n\\]\nBy the definition of the variance,\n\\[\n\\|x u(t)\\|_{L^2(\\mathbb{R}^d)}^2=V(t),\n\\]\nso \\(\\|x u(t)\\|_{L^2(\\mathbb{R}^d)}=\\sqrt{V(t)}\\). Substituting gives the claimed inequality.",
+      "title": "Negative constant virial acceleration forces finite-time collapse of the variance",
+      "informal_statement": "There exists a finite time \\(T>0\\) such that \\(V(T)=0\\); equivalently, \\(V(t)\\to 0\\) as \\(t\\uparrow T\\).",
+      "informal_proof_text": "Since \\(E(u_0)<0\\), the virial identity gives\n\\[\nV''(t)=16E(u_0)<0.\n\\]\nThus \\(V\\) is a quadratic function with negative leading coefficient: integrating twice,\n\\[\nV(t)=8E(u_0)t^2+at+b\n\\]\nfor some constants \\(a,b\\), and the coefficient of \\(t^2\\) is negative. Therefore \\(V(t)\\to -\\infty\\) as \\(t\\to +\\infty\\). On the other hand, by definition,\n\\[\nV(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\ge 0\n\\]\nfor every time where the solution exists. Hence \\(V\\) cannot stay positive for all \\(t\\ge 0\\). By continuity, there is a finite \\(T>0\\) with \\(V(T)=0\\), and therefore \\(V(t)\\to 0\\) as \\(t\\uparrow T\\).",
       "status": "informal",
-      "display_label": "Mass-variance-gradient bound",
+      "display_label": "Finite-time variance collapse",
       "formalization_priority": null,
       "formalization_rationale": null,
       "formal_artifact": null
@@ -41,14 +41,14 @@
     {
       "source_id": "n0",
       "target_id": "n1",
-      "label": "depends on",
-      "explanation": "The blow-up time is obtained from the finite time at which the variance tends to zero."
+      "label": "uses",
+      "explanation": "The blow-up conclusion uses the inequality relating \\(M^2\\), \\(\\sqrt{V(t)}\\), and \\(\\|\\nabla u(t)\\|_{L^2}\\)."
     },
     {
       "source_id": "n0",
       "target_id": "n2",
-      "label": "depends on",
-      "explanation": "The weighted inequality turns small variance and positive mass into divergence of the gradient norm."
+      "label": "uses",
+      "explanation": "The blow-up conclusion uses that \\(V(t)\\to 0\\) at some finite time \\(T\\)."
     }
   ]
 }

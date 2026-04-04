@@ -7,6 +7,8 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -28,6 +30,7 @@ class CodexCLIBackend:
     sandbox: str = "read-only"
     use_ephemeral_session: bool = True
     timeout_seconds: float | None = 180.0
+    log_dir: Path | None = None
 
     def run_structured(self, request: StructuredBackendRequest) -> StructuredBackendResponse:
         executable_path = shutil.which(self.executable)
@@ -62,7 +65,29 @@ class CodexCLIBackend:
                 command.extend(["--model", self.model])
             if self.use_ephemeral_session:
                 command.append("--ephemeral")
-            command.append(self._render_prompt(request))
+            rendered_prompt = self._render_prompt(request)
+            command.append(rendered_prompt)
+            log_path = self._prepare_log_path(request.task_name)
+            self._write_log(
+                log_path,
+                {
+                    "status": "started",
+                    "task_name": request.task_name,
+                    "backend_name": "codex_cli",
+                    "command": command,
+                    "cwd": str(request.cwd) if request.cwd else None,
+                    "system_prompt": request.system_prompt,
+                    "prompt": request.prompt,
+                    "rendered_prompt": rendered_prompt,
+                    "json_schema": self._normalize_schema_for_codex(request.json_schema),
+                    "model": self.model,
+                    "sandbox": self.sandbox,
+                    "use_ephemeral_session": self.use_ephemeral_session,
+                    "timeout_seconds": self.timeout_seconds,
+                    "started_at_epoch_seconds": time.time(),
+                },
+            )
+            started_at = time.time()
 
             try:
                 completed = subprocess.run(
@@ -74,11 +99,59 @@ class CodexCLIBackend:
                     timeout=self.timeout_seconds,
                 )
             except subprocess.TimeoutExpired as exc:
+                self._write_log(
+                    log_path,
+                    {
+                        "status": "timeout",
+                        "task_name": request.task_name,
+                        "backend_name": "codex_cli",
+                        "command": command,
+                        "cwd": str(request.cwd) if request.cwd else None,
+                        "system_prompt": request.system_prompt,
+                        "prompt": request.prompt,
+                        "rendered_prompt": rendered_prompt,
+                        "json_schema": self._normalize_schema_for_codex(request.json_schema),
+                        "model": self.model,
+                        "sandbox": self.sandbox,
+                        "use_ephemeral_session": self.use_ephemeral_session,
+                        "timeout_seconds": self.timeout_seconds,
+                        "started_at_epoch_seconds": started_at,
+                        "elapsed_seconds": time.time() - started_at,
+                        "error": (
+                            "Codex CLI timed out while waiting for structured output "
+                            f"for task '{request.task_name}' after {self.timeout_seconds} seconds."
+                        ),
+                    },
+                )
                 raise BackendInvocationError(
                     "Codex CLI timed out while waiting for structured output "
                     f"for task '{request.task_name}' after {self.timeout_seconds} seconds."
                 ) from exc
             if completed.returncode != 0:
+                self._write_log(
+                    log_path,
+                    {
+                        "status": "failed",
+                        "task_name": request.task_name,
+                        "backend_name": "codex_cli",
+                        "command": command,
+                        "cwd": str(request.cwd) if request.cwd else None,
+                        "system_prompt": request.system_prompt,
+                        "prompt": request.prompt,
+                        "rendered_prompt": rendered_prompt,
+                        "json_schema": self._normalize_schema_for_codex(request.json_schema),
+                        "model": self.model,
+                        "sandbox": self.sandbox,
+                        "use_ephemeral_session": self.use_ephemeral_session,
+                        "timeout_seconds": self.timeout_seconds,
+                        "started_at_epoch_seconds": started_at,
+                        "elapsed_seconds": time.time() - started_at,
+                        "exit_code": completed.returncode,
+                        "raw_stdout": completed.stdout,
+                        "raw_stderr": completed.stderr,
+                        "error": f"Codex CLI failed with exit code {completed.returncode}: {completed.stderr.strip()}",
+                    },
+                )
                 raise BackendInvocationError(
                     f"Codex CLI failed with exit code {completed.returncode}: {completed.stderr.strip()}"
                 )
@@ -94,6 +167,31 @@ class CodexCLIBackend:
         if not isinstance(payload, dict):
             raise BackendOutputError("Codex CLI structured output must be a JSON object")
 
+        self._write_log(
+            log_path,
+            {
+                "status": "completed",
+                "task_name": request.task_name,
+                "backend_name": "codex_cli",
+                "command": command,
+                "cwd": str(request.cwd) if request.cwd else None,
+                "system_prompt": request.system_prompt,
+                "prompt": request.prompt,
+                "rendered_prompt": rendered_prompt,
+                "json_schema": self._normalize_schema_for_codex(request.json_schema),
+                "model": self.model,
+                "sandbox": self.sandbox,
+                "use_ephemeral_session": self.use_ephemeral_session,
+                "timeout_seconds": self.timeout_seconds,
+                "started_at_epoch_seconds": started_at,
+                "elapsed_seconds": time.time() - started_at,
+                "exit_code": completed.returncode,
+                "raw_stdout": completed.stdout,
+                "raw_stderr": completed.stderr,
+                "payload": payload,
+            },
+        )
+
         return StructuredBackendResponse(
             payload=payload,
             raw_stdout=completed.stdout,
@@ -103,6 +201,18 @@ class CodexCLIBackend:
             backend_name="codex_cli",
             metadata={"executable_path": executable_path},
         )
+
+    def _prepare_log_path(self, task_name: str) -> Path | None:
+        if self.log_dir is None:
+            return None
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+        return self.log_dir / f"{task_name}_{time.strftime('%Y%m%d-%H%M%S')}_{uuid.uuid4().hex[:8]}.json"
+
+    @staticmethod
+    def _write_log(path: Path | None, payload: dict) -> None:
+        if path is None:
+            return
+        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
     @staticmethod
     def _render_prompt(request: StructuredBackendRequest) -> str:

@@ -1,6 +1,7 @@
 {
-  "node_id": "lem_weighted_inequality",
+  "node_id": "gradient_blowup",
   "status": "failed",
-  "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean",
-  "attempt_count": 1
+  "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean",
+  "attempt_count": 2,
+  "stderr": ""
 }

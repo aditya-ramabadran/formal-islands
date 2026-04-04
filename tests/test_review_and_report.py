@@ -45,6 +45,8 @@ def test_render_html_report_includes_core_sections() -> None:
     assert 'id="MathJax-script"' in html
     assert "max-width: 460px;" in html
     assert "verified formal nodes use green" in html
+    assert "language-lean" in html
+    assert 'class="tok-keyword"' in html or 'class="tok-type"' in html
 
 
 def test_render_html_report_preserves_latex_text_blocks() -> None:
@@ -69,6 +71,7 @@ def test_render_html_report_preserves_latex_text_blocks() -> None:
     assert r"\(f : \mathbb{R}^d \to \mathbb{C}\)" in html
     assert r"\[\|f\|_{L^2}^2 \le 1.\]" in html
     assert 'class="math-text"' in html
+    assert "margin: 0.45rem 0 !important;" in html
 
 
 def test_render_html_report_uses_preview_highlight_for_hover_and_green_for_checked() -> None:
@@ -95,3 +98,24 @@ def test_render_html_report_styles_graph_nodes_by_status() -> None:
     assert 'class="graph-node-badge status-formal-verified"' in html
     assert ".graph-node-box.status-informal" in html
     assert ".graph-node-box.status-formal-verified" in html
+
+
+def test_render_html_report_formats_lean_statements_as_code() -> None:
+    graph = build_example_graph()
+    obligations = derive_review_obligations(graph)
+
+    html = render_html_report(graph, obligations)
+
+    assert "<strong>Lean statement:</strong>" in html
+    assert '<pre><code class="language-lean lean-code">' in html
+    assert 'class="checklist-code"' in html
+
+
+def test_render_html_report_highlights_lean_tokens_locally() -> None:
+    graph = build_example_graph()
+    obligations = derive_review_obligations(graph)
+
+    html = render_html_report(graph, obligations)
+
+    assert "tok-keyword" in html
+    assert "tok-tactic" in html

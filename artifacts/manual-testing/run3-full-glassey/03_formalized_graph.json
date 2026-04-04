@@ -1,24 +1,24 @@
 {
   "theorem_title": "Full Glassey blow-up proof",
   "theorem_statement": "Glassey blow-up argument for the focusing mass-critical nonlinear Schrodinger equation.\n\nConsider a sufficiently regular solution \\(u(t,x)\\) to the focusing mass-critical NLS on \\(\\mathbb{R}^d\\):\n\n\\[\ni\\partial_t u+\\Delta u=-|u|^{4/d}u.\n\\]\n\nAssume:\n\n- \\(u_0\\in H^1(\\mathbb{R}^d)\\),\n\n- \\(|x|u_0\\in L^2(\\mathbb{R}^d)\\),\n\n- the energy \\(E(u_0)\\) is negative, where\n\n\\[\nE(u)=\\frac12\\int_{\\mathbb{R}^d}|\\nabla u|^2\\,dx\n-\\frac{1}{2+4/d}\\int_{\\mathbb{R}^d}|u|^{2+4/d}\\,dx.\n\\]\n\nThen the maximal forward existence time \\(T\\) is finite and\n\n\\[\n\\|u(t)\\|_{H^1(\\mathbb{R}^d)}\\to\\infty\n\\quad\\text{as }t\\uparrow T.\n\\]",
-  "root_node_id": "thm_glassey_blowup",
+  "root_node_id": "thm_blowup",
   "nodes": [
     {
-      "id": "thm_glassey_blowup",
-      "title": "Finite-time blow-up from negative energy",
-      "informal_statement": "Under the stated assumptions, the maximal forward existence time \\(T\\) is finite and \\(\\|u(t)\\|_{H^1(\\mathbb{R}^d)}\\to\\infty\\) as \\(t\\uparrow T\\).",
-      "informal_proof_text": "Let \\(V(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\). By the virial computation, \\(V''(t)=16E(u_0)<0\\), so \\(V\\) is a concave quadratic with negative leading coefficient. Since \\(V(t)\\ge 0\\) by definition, it cannot stay nonnegative for all large positive \\(t\\); hence there is a finite positive time \\(T\\) with \\(V(T)=0\\), and therefore \\(V(t)\\to 0\\) as \\(t\\uparrow T\\). By the weighted inequality applied to \\(f=u(t)\\) and conservation of mass, if \\(M=\\|u_0\\|_{L^2(\\mathbb{R}^d)}\\), then \\(M^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\). Because \\(M>0\\) is fixed and \\(\\sqrt{V(t)}\\to 0\\), it follows that \\(\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty\\) as \\(t\\uparrow T\\). Since \\(\\|u(t)\\|_{H^1}^2=\\|u(t)\\|_{L^2}^2+\\|\\nabla u(t)\\|_{L^2}^2\\) and the \\(L^2\\) norm is conserved, we obtain \\(\\|u(t)\\|_{H^1(\\mathbb{R}^d)}\\to\\infty\\). Thus the solution blows up in finite positive time.",
+      "id": "thm_blowup",
+      "title": "Glassey blow-up for focusing mass-critical NLS",
+      "informal_statement": "Under the assumptions \\(u_0\\in H^1\\), \\(|x|u_0\\in L^2\\), and \\(E(u_0)<0\\), the forward maximal lifespan \\(T\\) of the solution to \\(i\\partial_tu+\\Delta u=-|u|^{4/d}u\\) is finite and \\(\\|u(t)\\|_{H^1(\\mathbb{R}^d)}\\to\\infty\\) as \\(t\\uparrow T\\).",
+      "informal_proof_text": "Define the variance \\(V(t)=\\int |x|^2|u(t,x)|^2\\,dx\\). The virial computation gives \\(V''(t)=16E(u(t))=16E(u_0)<0\\), so the variance is strictly concave with negative constant second derivative. Since \\(V(t)\\ge 0\\), this forces a finite time \\(T\\) at which \\(V(t)\\to 0\\) as \\(t\\uparrow T\\). A weighted inequality together with mass conservation gives \\(\\|u_0\\|_{L^2}^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2}\\). Because the mass is fixed and \\(\\sqrt{V(t)}\\to 0\\), one gets \\(\\|\\nabla u(t)\\|_{L^2}\\to\\infty\\), hence also \\(\\|u(t)\\|_{H^1}\\to\\infty\\). Therefore the solution cannot persist globally forward in \\(H^1\\), so the maximal forward existence time is finite.",
       "status": "informal",
-      "display_label": "Glassey blow-up",
+      "display_label": "Main theorem",
       "formalization_priority": null,
       "formalization_rationale": null,
       "formal_artifact": null
     },
     {
-      "id": "lem_virial_negative_second_derivative",
-      "title": "Virial identity and negative variance curvature",
-      "informal_statement": "For \\(V(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\), one has\n\\[\nV'(t)=4\\operatorname{Im}\\int_{\\mathbb{R}^d}x\\cdot \\nabla u(t,x)\\,\\overline{u(t,x)}\\,dx\n\\]\nand\n\\[\nV''(t)=16E(u(t))=16E(u_0)<0.\n\\]",
-      "informal_proof_text": "Differentiate \\(V(t)\\) once:\n\\[\nV'(t)=2\\operatorname{Re}\\int |x|^2u_t\\overline u\\,dx.\n\\]\nUsing \\(iu_t+\\Delta u=-|u|^{4/d}u\\), rewrite \\(u_t=i\\Delta u+i|u|^{4/d}u\\). Substituting into \\(V'(t)\\), the nonlinear term vanishes because \\(\\int |x|^2|u|^{2+4/d}\\,dx\\) is real, so its product with \\(i\\) is purely imaginary. Integrating by parts in the Laplacian term gives\n\\[\n\\int |x|^2\\Delta u\\,\\overline u\\,dx\n=-2\\int x\\cdot \\nabla u\\,\\overline u\\,dx-\\int |x|^2|\\nabla u|^2\\,dx,\n\\]\nand the last term is real, hence disappears after multiplying by \\(i\\) and taking real parts. Therefore\n\\[\nV'(t)=4\\operatorname{Im}\\int x\\cdot \\nabla u\\,\\overline u\\,dx.\n\\]\nDifferentiating again and substituting \\(u_t=i\\Delta u+i|u|^{4/d}u\\), \\(\\overline{u_t}=-i\\Delta\\overline u-i|u|^{4/d}\\overline u\\), one splits \\(V''(t)\\) into linear and nonlinear contributions. A standard integration-by-parts computation yields for the linear part\n\\[\n4\\operatorname{Re}\\int x\\cdot \\nabla\\Delta u\\,\\overline u\\,dx-4\\operatorname{Re}\\int x\\cdot \\nabla u\\,\\Delta\\overline u\\,dx=8\\int_{\\mathbb{R}^d}|\\nabla u|^2\\,dx.\n\\]\nFor the nonlinear part, after rewriting the real-part contribution as a divergence term and integrating by parts using \\(\\operatorname{div}(x)=d\\), one gets\n\\[\n-\\frac{16}{2+4/d}\\int_{\\mathbb{R}^d}|u|^{2+4/d}\\,dx.\n\\]\nHence\n\\[\nV''(t)=8\\int |\\nabla u|^2\\,dx-\\frac{16}{2+4/d}\\int |u|^{2+4/d}\\,dx=16E(u(t)).\n\\]\nBy conservation of energy, \\(E(u(t))=E(u_0)\\), so \\(V''(t)=16E(u_0)<0\\).",
+      "id": "virial_identity",
+      "title": "Virial second-derivative identity",
+      "informal_statement": "For \\(V(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\), one has\n\\[\nV''(t)=16E(u(t))=16E(u_0)<0.\n\\]",
+      "informal_proof_text": "Differentiate \\(V(t)\\) once and use \\(u_t=i\\Delta u+i|u|^{4/d}u\\). The nonlinear contribution in the first derivative is real before multiplication by \\(i\\), so its real part vanishes, and integration by parts yields\n\\[\nV'(t)=4\\operatorname{Im}\\int x\\cdot \\nabla u\\,\\overline u\\,dx.\n\\]\nDifferentiate again and substitute \\(u_t=i\\Delta u+i|u|^{4/d}u\\) and \\(\\overline{u_t}=-i\\Delta\\overline u-i|u|^{4/d}\\overline u\\). Splitting linear and nonlinear terms, a standard integration-by-parts computation gives for the linear part\n\\[\n4\\operatorname{Re}\\int x\\cdot \\nabla\\Delta u\\,\\overline u\\,dx-4\\operatorname{Re}\\int x\\cdot \\nabla u\\,\\Delta\\overline u\\,dx=8\\int |\\nabla u|^2\\,dx.\n\\]\nFor the nonlinear part, rewrite the real-part contribution as a divergence term and integrate by parts using \\(\\operatorname{div}(x)=d\\), obtaining\n\\[\n-\\frac{16}{2+4/d}\\int |u|^{2+4/d}\\,dx.\n\\]\nHence\n\\[\nV''(t)=8\\int |\\nabla u|^2\\,dx-\\frac{16}{2+4/d}\\int |u|^{2+4/d}\\,dx=16E(u(t)).\n\\]\nBy conservation of energy, \\(E(u(t))=E(u_0)\\), so \\(V''(t)=16E(u_0)<0\\).",
       "status": "informal",
       "display_label": "Virial identity",
       "formalization_priority": null,
@@ -26,38 +26,70 @@
       "formal_artifact": null
     },
     {
-      "id": "lem_weighted_inequality",
-      "title": "Weighted inequality relating mass, variance, and gradient",
-      "informal_statement": "For sufficiently regular \\(f\\),\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\n\\le\n\\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
-      "informal_proof_text": "Using \\(\\operatorname{div}(x)=d\\), integrate by parts:\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\n=\\int |f|^2\\,dx\n=\\frac{1}{d}\\int (\\operatorname{div}x)|f|^2\\,dx\n=-\\frac{1}{d}\\int x\\cdot \\nabla(|f|^2)\\,dx\n=-\\frac{2}{d}\\operatorname{Re}\\int x\\cdot \\nabla f\\,\\overline f\\,dx.\n\\]\nThen \\(|\\operatorname{Re} z|\\le |z|\\) and Cauchy-Schwarz imply\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\n\\le\n\\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
-      "status": "formal_failed",
+      "id": "weighted_inequality",
+      "title": "Weighted \\(L^2\\) inequality",
+      "informal_statement": "For sufficiently regular \\(f\\),\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\\le \\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
+      "informal_proof_text": "Use \\(\\operatorname{div}(x)=d\\) and integrate by parts:\n\\[\n\\|f\\|_{L^2}^2=\\int |f|^2\\,dx=\\frac1d\\int (\\operatorname{div}x)|f|^2\\,dx=-\\frac1d\\int x\\cdot \\nabla(|f|^2)\\,dx=-\\frac{2}{d}\\operatorname{Re}\\int x\\cdot \\nabla f\\,\\overline f\\,dx.\n\\]\nThen apply \\(|\\operatorname{Re} z|\\le |z|\\) and Cauchy-Schwarz to obtain\n\\[\n\\|f\\|_{L^2}^2\\le \\frac{2}{d}\\,\\|xf\\|_{L^2}\\,\\|\\nabla f\\|_{L^2}.\n\\]",
+      "status": "informal",
       "display_label": "Weighted inequality",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "variance_collapse",
+      "title": "Negative virial forces finite-time collapse of the variance",
+      "informal_statement": "Since \\(V''(t)=16E(u_0)<0\\) and \\(V(t)\\ge 0\\), there exists a finite positive time \\(T\\) such that \\(V(T)=0\\), equivalently \\(V(t)\\to 0\\) as \\(t\\uparrow T\\).",
+      "informal_proof_text": "The identity \\(V''(t)=16E(u_0)<0\\) shows that, on its interval of existence, \\(V\\) is a concave quadratic with negative leading coefficient. Such a function cannot stay nonnegative for all sufficiently large positive times. But by definition \\(V(t)=\\int |x|^2|u(t,x)|^2\\,dx\\ge 0\\). Therefore the forward evolution cannot continue with positive variance forever; by continuity there is a finite positive time \\(T\\) at which the nonnegative variance reaches \\(0\\), and hence \\(V(t)\\to 0\\) as \\(t\\uparrow T\\).",
+      "status": "informal",
+      "display_label": "Variance collapse",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "gradient_blowup",
+      "title": "Variance collapse and conserved mass force gradient blow-up",
+      "informal_statement": "Let \\(M=\\|u_0\\|_{L^2(\\mathbb{R}^d)}\\). Then\n\\[\nM^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}.\n\\]\nIf \\(V(t)\\to 0\\) as \\(t\\uparrow T\\), it follows that \\(\\|\\nabla u(t)\\|_{L^2}\\to\\infty\\), and therefore \\(\\|u(t)\\|_{H^1}\\to\\infty\\).",
+      "informal_proof_text": "Apply the weighted inequality to \\(f=u(t)\\). By conservation of mass, \\(\\|u(t)\\|_{L^2}=\\|u_0\\|_{L^2}=:M\\), so\n\\[\nM^2\\le \\frac{2}{d}\\,\\|xu(t)\\|_{L^2}\\,\\|\\nabla u(t)\\|_{L^2}=\\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2}.\n\\]\nAs \\(t\\uparrow T\\), the quantity \\(M>0\\) stays fixed while \\(\\sqrt{V(t)}\\to 0\\). Thus the product estimate can hold only if \\(\\|\\nabla u(t)\\|_{L^2}\\to\\infty\\). Since\n\\[\n\\|u(t)\\|_{H^1}^2=\\|u(t)\\|_{L^2}^2+\\|\\nabla u(t)\\|_{L^2}^2\n\\]\nand the \\(L^2\\) norm is conserved, this also implies \\(\\|u(t)\\|_{H^1}\\to\\infty\\).",
+      "status": "formal_failed",
+      "display_label": "Gradient blow-up",
       "formalization_priority": 1,
-      "formalization_rationale": "Most conservative local island: a short, self-contained inequality proved by integration by parts, the identity div x = d, and Cauchy-Schwarz. It avoids the heavy PDE and time-differentiation machinery required for the virial lemma and is a useful standalone component for the final blow-up argument.",
+      "formalization_rationale": "Best first local target: it is inferentially important for the main theorem, technically self-contained once mass conservation and variance collapse are available, and it packages the key coercive estimate into the actual blow-up conclusion. Formalizing this node discharges more real burden than the standalone weighted inequality, while avoiding the substantially heavier PDE/virial computation in the virial identity.",
       "formal_artifact": {
-        "lean_theorem_name": "lem_weighted_inequality",
-        "lean_statement": "theorem lem_weighted_inequality\n    {d : \u2115} (hd : 0 < d)\n    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace \u2102 E]\n    {massSq : \u211d} {xf gradf : E}\n    (hibp : massSq = -((2 : \u211d) / d) * Complex.re (\u27eaxf, gradf\u27eb_\u2102)) :\n    massSq \u2264 ((2 : \u211d) / d) * \u2016xf\u2016 * \u2016gradf\u2016",
-        "lean_code": "import Mathlib\n\ntheorem lem_weighted_inequality\n    {d : \u2115} (hd : 0 < d)\n    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace \u2102 E]\n    {massSq : \u211d} {xf gradf : E}\n    (hibp : massSq = -((2 : \u211d) / d) * Complex.re (\u27eaxf, gradf\u27eb_\u2102)) :\n    massSq \u2264 ((2 : \u211d) / d) * \u2016xf\u2016 * \u2016gradf\u2016 := by\n  have h0 : 0 \u2264 ((2 : \u211d) / d) := by\n    have hdR : (0 : \u211d) < d := by\n      exact_mod_cast hd\n    positivity\n  have h1 : -Complex.re (\u27eaxf, gradf\u27eb_\u2102) \u2264 |Complex.re (\u27eaxf, gradf\u27eb_\u2102)| := by\n    exact neg_le_abs _\n  have h2 : |Complex.re (\u27eaxf, gradf\u27eb_\u2102)| \u2264 \u2016\u27eaxf, gradf\u27eb_\u2102\u2016 := by\n    simpa using Complex.abs_re_le_abs (\u27eaxf, gradf\u27eb_\u2102)\n  have h3 : \u2016\u27eaxf, gradf\u27eb_\u2102\u2016 \u2264 \u2016xf\u2016 * \u2016gradf\u2016 := by\n    simpa using norm_inner_le_norm xf gradf\n  calc\n    massSq = -((2 : \u211d) / d) * Complex.re (\u27eaxf, gradf\u27eb_\u2102) := hibp\n    _ = ((2 : \u211d) / d) * (-Complex.re (\u27eaxf, gradf\u27eb_\u2102)) := by ring\n    _ \u2264 ((2 : \u211d) / d) * |Complex.re (\u27eaxf, gradf\u27eb_\u2102)| := by\n      exact mul_le_mul_of_nonneg_left h1 h0\n    _ \u2264 ((2 : \u211d) / d) * \u2016\u27eaxf, gradf\u27eb_\u2102\u2016 := by\n      exact mul_le_mul_of_nonneg_left h2 h0\n    _ \u2264 ((2 : \u211d) / d) * (\u2016xf\u2016 * \u2016gradf\u2016) := by\n      exact mul_le_mul_of_nonneg_left h3 h0",
+        "lean_theorem_name": "gradient_blowup_of_variance_collapse",
+        "lean_statement": "theorem gradient_blowup_of_variance_collapse\n    {d M : \u211d} (hd : 0 < d) (hM : 0 < M)\n    {V grad h1 : \u2115 \u2192 \u211d}\n    (hbound : \u2200 n, M ^ 2 \u2264 (2 / d) * Real.sqrt (V n) * grad n)\n    (hV_nonneg : \u2200 n, 0 \u2264 V n)\n    (hV : Tendsto V atTop (\ud835\udcdd 0))\n    (hh1 : \u2200 n, h1 n ^ 2 = M ^ 2 + grad n ^ 2) :\n    Tendsto grad atTop atTop \u2227 Tendsto h1 atTop atTop",
+        "lean_code": "import Mathlib.Analysis.SpecialFunctions.Sqrt\nimport Mathlib.Topology.Instances.ENNReal\nimport Mathlib.Topology.Algebra.Order\nimport Mathlib\n\nopen Filter Topology\nopen scoped Topology\n\ntheorem gradient_blowup_of_variance_collapse\n    {d M : \u211d} (hd : 0 < d) (hM : 0 < M)\n    {V grad h1 : \u2115 \u2192 \u211d}\n    (hbound : \u2200 n, M ^ 2 \u2264 (2 / d) * Real.sqrt (V n) * grad n)\n    (hV_nonneg : \u2200 n, 0 \u2264 V n)\n    (hV : Tendsto V atTop (\ud835\udcdd 0))\n    (hh1 : \u2200 n, h1 n ^ 2 = M ^ 2 + grad n ^ 2) :\n    Tendsto grad atTop atTop \u2227 Tendsto h1 atTop atTop := by\n  have hd2 : 0 < 2 / d := by positivity\n  have hM2 : 0 < M ^ 2 := by nlinarith\n  have hgrad_nonneg : \u2200 n, 0 \u2264 grad n := by\n    intro n\n    have hsqrt_nonneg : 0 \u2264 Real.sqrt (V n) := Real.sqrt_nonneg _\n    have hprod_nonneg : 0 \u2264 (2 / d) * Real.sqrt (V n) := by positivity\n    by_contra hneg\n    have hlt : (2 / d) * Real.sqrt (V n) * grad n < 0 := by\n      nlinarith\n    linarith [hbound n]\n  have hgrad : Tendsto grad atTop atTop := by\n    rw [tendsto_atTop.2]\n    intro b\n    let \u03b5 : \u211d := (M ^ 2 / ((2 / d) * (b + 1))) ^ 2\n    have hden : 0 < (2 / d) * (b + 1) := by\n      have hb1 : 0 < b + 1 := by linarith\n      positivity\n    have h\u03b5 : 0 < \u03b5 := by\n      dsimp [\u03b5]\n      positivity\n    have hVevent : \u2200\u1da0 n in atTop, V n < \u03b5 := by\n      have h := (tendsto_order.1 hV).2 0 \u03b5 h\u03b5\n      simpa using h\n    filter_upwards [hVevent] with n hn\n    have hsqrt_lt : Real.sqrt (V n) < M ^ 2 / ((2 / d) * (b + 1)) := by\n      have hnn : 0 \u2264 V n := hV_nonneg n\n      have hrhs_nonneg : 0 \u2264 M ^ 2 / ((2 / d) * (b + 1)) := by positivity\n      apply (Real.sqrt_lt_iff).2\n      constructor\n      \u00b7 exact hnn\n      \u00b7 have := hn\n        dsimp [\u03b5] at this\n        simpa [sq] using this\n    have hmul_pos : 0 < (2 / d) * Real.sqrt (V n) := by\n      positivity\n    have hle1 : M ^ 2 < (2 / d) * Real.sqrt (V n) * (b + 1) := by\n      have := mul_lt_mul_of_pos_left hsqrt_lt hd2\n      have hb1 : 0 < b + 1 := by linarith\n      have := mul_lt_mul_of_pos_right this hb1\n      field_simp at this\n      simpa [mul_assoc, mul_left_comm, mul_comm] using this\n    have hbg : b < grad n := by\n      by_contra hnot\n      have hle_grad : grad n \u2264 b := by linarith\n      have hle2 : (2 / d) * Real.sqrt (V n) * grad n \u2264 (2 / d) * Real.sqrt (V n) * b := by\n        gcongr\n      have hlt2 : (2 / d) * Real.sqrt (V n) * b < (2 / d) * Real.sqrt (V n) * (b + 1) := by\n        nlinarith [hmul_pos]\n      linarith [hbound n, hle2, hle1]\n    linarith\n  have hh1_nonneg : \u2200 n, 0 \u2264 h1 n := by\n    intro n\n    have hsq_nonneg : 0 \u2264 h1 n ^ 2 := sq_nonneg _\n    by_contra hneg\n    nlinarith\n  have hh1_tendsto : Tendsto h1 atTop atTop := by\n    rw [tendsto_atTop.2]\n    intro b\n    have hgrad_event : \u2200\u1da0 n in atTop, grad n \u2265 b + 1 := by\n      simpa using (tendsto_atTop.2 hgrad (b + 1))\n    filter_upwards [hgrad_event] with n hn\n    have hsum : h1 n ^ 2 = M ^ 2 + grad n ^ 2 := hh1 n\n    have hlarge : b ^ 2 < h1 n ^ 2 := by\n      have hgb : b < grad n := by linarith\n      have hgb_sq : b ^ 2 < grad n ^ 2 := by\n        have hgn : 0 \u2264 grad n := hgrad_nonneg n\n        nlinarith\n      nlinarith [hsum]\n    have hnneg : 0 \u2264 h1 n := hh1_nonneg n\n    by_contra hle\n    have : h1 n \u2264 b := by linarith\n    have hsquare_le : h1 n ^ 2 \u2264 b ^ 2 := by\n      nlinarith\n    linarith\n  exact \u27e8hgrad, hh1_tendsto\u27e9",
         "verification": {
           "status": "failed",
-          "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean",
+          "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean",
           "exit_code": 1,
-          "stdout": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean:7:60: error: expected token\n",
+          "stdout": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean:1:0: error: object file '/Users/adihaya/GitHub/formal-islands/lean_project/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Topology/Instances/ENNReal.olean' of module Mathlib.Topology.Instances.ENNReal does not exist\n",
           "stderr": "",
-          "elapsed_seconds": 93.19805608293973,
-          "attempt_count": 1,
-          "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean"
+          "elapsed_seconds": 10.013879541074857,
+          "attempt_count": 2,
+          "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean"
         },
         "attempt_history": [
           {
             "status": "failed",
-            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean",
-            "exit_code": 1,
-            "stdout": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean:7:60: error: expected token\n",
-            "stderr": "",
-            "elapsed_seconds": 93.19805608293973,
+            "command": "faithfulness_guard",
+            "exit_code": null,
+            "stdout": "",
+            "stderr": "Formalization drifted too far from the target node. Avoid introducing arbitrary `Type*` parameters when the node describes a concrete local claim.",
+            "elapsed_seconds": 0.0,
             "attempt_count": 1,
-            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean"
+            "artifact_path": null
+          },
+          {
+            "status": "failed",
+            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean",
+            "exit_code": 1,
+            "stdout": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean:1:0: error: object file '/Users/adihaya/GitHub/formal-islands/lean_project/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Topology/Instances/ENNReal.olean' of module Mathlib.Topology.Instances.ENNReal does not exist\n",
+            "stderr": "",
+            "elapsed_seconds": 10.013879541074857,
+            "attempt_count": 2,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean"
           }
         ]
       }
@@ -65,16 +97,34 @@
   ],
   "edges": [
     {
-      "source_id": "thm_glassey_blowup",
-      "target_id": "lem_virial_negative_second_derivative",
-      "label": "depends_on",
-      "explanation": "The theorem uses \\(V''(t)=16E(u_0)<0\\) to force the variance to hit zero in finite positive time."
+      "source_id": "thm_blowup",
+      "target_id": "variance_collapse",
+      "label": "uses",
+      "explanation": "Finite-time failure of the variance is the mechanism producing a finite forward blow-up time."
     },
     {
-      "source_id": "thm_glassey_blowup",
-      "target_id": "lem_weighted_inequality",
+      "source_id": "thm_blowup",
+      "target_id": "gradient_blowup",
+      "label": "uses",
+      "explanation": "Once the variance collapses, the weighted estimate forces the \\(H^1\\) norm to diverge."
+    },
+    {
+      "source_id": "variance_collapse",
+      "target_id": "virial_identity",
       "label": "depends_on",
-      "explanation": "The theorem combines this inequality with mass conservation and \\(V(t)\\to 0\\) to conclude \\(\\|\\nabla u(t)\\|_{L^2}\\to\\infty\\)."
+      "explanation": "The concavity argument starts from the explicit identity \\(V''(t)=16E(u_0)<0\\)."
+    },
+    {
+      "source_id": "gradient_blowup",
+      "target_id": "weighted_inequality",
+      "label": "depends_on",
+      "explanation": "The lower bound relating mass, variance, and gradient comes from the weighted \\(L^2\\) inequality."
+    },
+    {
+      "source_id": "gradient_blowup",
+      "target_id": "variance_collapse",
+      "label": "depends_on",
+      "explanation": "To force \\(\\|\\nabla u(t)\\|_{L^2}\\to\\infty\\), one needs \\(V(t)\\to 0\\) at a finite time."
     }
   ]
 }

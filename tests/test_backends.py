@@ -221,3 +221,38 @@ def test_codex_backend_raises_clean_error_on_timeout(tmp_path: Path) -> None:
             backend.run_structured(
                 StructuredBackendRequest(prompt="x", json_schema={"type": "object"})
             )
+
+
+def test_codex_backend_writes_debug_log_when_log_dir_is_configured(tmp_path: Path) -> None:
+    log_dir = tmp_path / "logs"
+    backend = CodexCLIBackend(model="gpt-5.4", log_dir=log_dir)
+    request = StructuredBackendRequest(
+        prompt="Return an empty candidate list.",
+        system_prompt="Return JSON only.",
+        json_schema={"type": "object", "properties": {"candidates": {"type": "array"}}},
+        cwd=tmp_path,
+        task_name="select_candidates",
+    )
+
+    def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        output_path = Path(command[command.index("--output-last-message") + 1])
+        output_path.write_text('{"candidates": []}', encoding="utf-8")
+        return subprocess.CompletedProcess(args=command, returncode=0, stdout="stdout", stderr="")
+
+    auth_home = tmp_path / "codex-home"
+    auth_home.mkdir()
+    (auth_home / "auth.json").write_text("{}", encoding="utf-8")
+
+    with patch("shutil.which", return_value="/usr/bin/codex"), patch.dict(
+        "os.environ", {"CODEX_HOME": str(auth_home)}, clear=False
+    ), patch("subprocess.run", side_effect=fake_run):
+        backend.run_structured(request)
+
+    logs = sorted(log_dir.glob("select_candidates_*.json"))
+    assert logs
+    payload = json.loads(logs[0].read_text(encoding="utf-8"))
+    assert payload["status"] == "completed"
+    assert payload["prompt"] == "Return an empty candidate list."
+    assert payload["payload"] == {"candidates": []}
+    assert isinstance(payload["elapsed_seconds"], float)
+    assert payload["elapsed_seconds"] >= 0.0

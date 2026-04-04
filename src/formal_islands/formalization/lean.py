@@ -83,15 +83,31 @@ class LeanVerifier:
         command = ["lake", "env", "lean", str(scratch_path)]
 
         start = time.monotonic()
-        completed = self.command_runner(
-            command,
-            capture_output=True,
-            text=True,
-            cwd=workspace_root,
-            check=False,
-            timeout=self.timeout_seconds,
-        )
-        elapsed_seconds = time.monotonic() - start
+        try:
+            completed = self.command_runner(
+                command,
+                capture_output=True,
+                text=True,
+                cwd=workspace_root,
+                check=False,
+                timeout=self.timeout_seconds,
+            )
+            elapsed_seconds = time.monotonic() - start
+        except subprocess.TimeoutExpired as exc:
+            elapsed_seconds = time.monotonic() - start
+            return VerificationResult(
+                status="failed",
+                command=" ".join(command),
+                exit_code=None,
+                stdout=exc.stdout or "",
+                stderr=(
+                    f"Lean verification timed out after {self.timeout_seconds} seconds."
+                    + (f"\n{exc.stderr}" if exc.stderr else "")
+                ),
+                elapsed_seconds=elapsed_seconds,
+                attempt_count=attempt_number,
+                artifact_path=str(scratch_path),
+            )
 
         return VerificationResult(
             status="verified" if completed.returncode == 0 else "failed",

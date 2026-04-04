@@ -5,11 +5,12 @@ import subprocess
 from argparse import Namespace
 from pathlib import Path
 
-from formal_islands.backends import MockBackend
+from formal_islands.backends import BackendInvocationError, MockBackend
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
 from formal_islands.review import derive_review_obligations
 from formal_islands.smoke import (
+    _backend_failure_outcome,
     ensure_output_dir,
     load_graph,
     load_input_payload,
@@ -19,6 +20,7 @@ from formal_islands.smoke import (
 from formal_islands.report import export_report_bundle, render_html_report
 from formal_islands.extraction import extract_proof_graph, select_formalization_candidates
 from formal_islands.formalization import formalize_candidate_node
+from formal_islands.backends import CodexCLIBackend
 
 
 def build_workspace(root: Path) -> LeanWorkspace:
@@ -179,3 +181,64 @@ def test_smoke_stage_orchestration_writes_expected_outputs(tmp_path: Path) -> No
     final_graph = load_graph(output_dir / "03_formalized_graph.json")
     assert any(node.status == "formal_verified" for node in final_graph.nodes)
     assert (output_dir / "04_report.html").exists()
+
+
+def test_backend_failure_outcome_marks_node_and_captures_logs() -> None:
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="If A then B.",
+        root_node_id="n1",
+        nodes=[
+            ProofNode(
+                id="n1",
+                title="Main claim",
+                informal_statement="B",
+                informal_proof_text="Use lemma",
+            ),
+            ProofNode(
+                id="n2",
+                title="Lemma",
+                informal_statement="A -> B",
+                informal_proof_text="Local technical fact.",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Candidate",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n1", target_id="n2")],
+    )
+
+    outcome = _backend_failure_outcome(
+        graph=graph,
+        node_id="n2",
+        error=BackendInvocationError("Codex timed out"),
+    )
+
+    updated_node = next(node for node in outcome.graph.nodes if node.id == "n2")
+    assert updated_node.status == "formal_failed"
+    assert updated_node.formal_artifact is not None
+    assert "Codex timed out" in updated_node.formal_artifact.verification.stderr
+
+
+def test_build_backend_configures_backend_logs(tmp_path: Path) -> None:
+    from formal_islands.smoke import build_backend
+
+    backend = build_backend("codex", "gpt-5.4", tmp_path / "_backend_logs")
+
+    assert isinstance(backend, CodexCLIBackend)
+    assert backend.model == "gpt-5.4"
+    assert backend.log_dir == tmp_path / "_backend_logs"
+    assert backend.timeout_seconds == 180.0
+
+
+def test_build_backend_allows_formalization_timeout_override(tmp_path: Path) -> None:
+    from formal_islands.smoke import build_backend
+
+    backend = build_backend(
+        "codex",
+        "gpt-5.4",
+        tmp_path / "_backend_logs",
+        timeout_seconds=420.0,
+    )
+
+    assert backend.timeout_seconds == 420.0

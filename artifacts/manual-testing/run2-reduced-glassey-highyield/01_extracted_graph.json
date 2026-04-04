@@ -1,0 +1,54 @@
+{
+  "theorem_title": "Reduced Glassey blow-up argument",
+  "theorem_statement": "Finite-time blow-up from a virial identity for focusing mass-critical NLS.\n\nLet \\(u(t,x)\\) be a sufficiently regular solution on \\(\\mathbb{R}^d\\) with finite variance. Assume:\n\n1. mass is conserved:\n\n\\[\n\\|u(t)\\|_{L^2(\\mathbb{R}^d)}=\\|u_0\\|_{L^2(\\mathbb{R}^d)}=:M>0,\n\\]\n\n2. energy is conserved and negative:\n\n\\[\nE(u(t))=E(u_0)<0,\n\\]\n\n3. the variance\n\n\\[\nV(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\n\\]\n\nsatisfies\n\n\\[\nV''(t)=16E(u_0)<0,\n\\]\n\n4. for every sufficiently regular \\(f\\),\n\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\n\\le\n\\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]\n\nThen there exists \\(T<\\infty\\) such that\n\n\\[\n\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty\n\\quad\\text{as } t\\uparrow T.\n\\]",
+  "root_node_id": "n0",
+  "nodes": [
+    {
+      "id": "n0",
+      "title": "Finite-time blow-up from negative virial curvature",
+      "informal_statement": "There exists \\(T<\\infty\\) such that \\(\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty\\) as \\(t\\uparrow T\\).",
+      "informal_proof_text": "Use the finite-time vanishing of the variance from \\(n1\\), together with the lower bound on \\(\\|\\nabla u(t)\\|_{L^2}\\) in terms of \\(V(t)\\) from \\(n2\\). Since \\(M>0\\) is fixed and \\(\\sqrt{V(t)}\\to 0\\) as \\(t\\uparrow T\\), the inequality \\(M^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\) can remain valid only if \\(\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty\\).",
+      "status": "informal",
+      "display_label": "Blow-up theorem",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "n1",
+      "title": "The variance reaches zero in finite positive time",
+      "informal_statement": "There exists a finite \\(T>0\\) such that \\(V(T)=0\\), hence \\(V(t)\\to 0\\) as \\(t\\uparrow T\\).",
+      "informal_proof_text": "Because \\(E(u_0)<0\\), the virial identity gives \\(V''(t)=16E(u_0)<0\\) for all times of existence. Integrating twice, \\(V\\) is a quadratic polynomial \\(V(t)=8E(u_0)t^2+at+b\\) with negative leading coefficient, so \\(V(t)\\to -\\infty\\) as \\(t\\to +\\infty\\). On the other hand, by definition \\(V(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\ge 0\\). Therefore \\(V\\) cannot stay positive for all \\(t\\ge 0\\). By continuity, it must hit zero at some finite time \\(T>0\\), and thus \\(V(t)\\to 0\\) as \\(t\\uparrow T\\).",
+      "status": "informal",
+      "display_label": "Finite-time variance collapse",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "n2",
+      "title": "Mass and the weighted inequality force a gradient lower bound",
+      "informal_statement": "For every time in the interval of existence, \\[M^2=\\|u(t)\\|_{L^2(\\mathbb{R}^d)}^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}.\\] Equivalently, \\[\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\ge \\frac{d}{2}\\,\\frac{M^2}{\\sqrt{V(t)}}.\\]",
+      "informal_proof_text": "Apply the assumed inequality \\(\\|f\\|_{L^2(\\mathbb{R}^d)}^2\\le \\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}\\) with \\(f=u(t)\\). Mass conservation gives \\(\\|u(t)\\|_{L^2(\\mathbb{R}^d)}=M\\), so \\(M^2\\le \\frac{2}{d}\\,\\|x u(t)\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\). Using \\(\\|x u(t)\\|_{L^2(\\mathbb{R}^d)}^2=V(t)\\), we obtain \\(\\|x u(t)\\|_{L^2}=\\sqrt{V(t)}\\), hence the stated inequality.",
+      "status": "informal",
+      "display_label": "Gradient vs. variance",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "n0",
+      "target_id": "n1",
+      "label": "depends_on",
+      "explanation": "The blow-up time is obtained from the finite positive time at which the variance collapses to zero."
+    },
+    {
+      "source_id": "n0",
+      "target_id": "n2",
+      "label": "depends_on",
+      "explanation": "The divergence of \\(\\|\\nabla u(t)\\|_{L^2}\\) follows by combining the gradient lower bound with \\(V(t)\\to 0\\)."
+    }
+  ]
+}

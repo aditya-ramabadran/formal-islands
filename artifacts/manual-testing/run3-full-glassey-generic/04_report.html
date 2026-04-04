@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Full Glassey blow-up proof - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: rgba(255, 250, 241, 0.98);
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.55;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 251, 242, 0.96), rgba(245, 238, 227, 0.96));
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      max-width: 460px;
+      margin: 0 auto;
+      height: auto;
+      min-width: 240px;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 3.5;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-box {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-candidate-fill);
+      stroke: var(--status-candidate-stroke);
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-title {
+      fill: var(--ink);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 9.5px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-candidate-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 250, 241, 0.95);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: #fff8ee;
+    }
+    pre {
+      overflow-x: auto;
+      padding: 0.75rem;
+      background: #f4efe6;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    
+            .report-root:has(a.node-thm_glassey_blowup:hover) .node-thm_glassey_blowup.node-card,
+            .report-root:has(#node-thm_glassey_blowup:target) a.node-thm_glassey_blowup .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-thm_glassey_blowup:hover) .node-thm_glassey_blowup.node-card,
+            .report-root:has(#node-thm_glassey_blowup:target).report-root .node-thm_glassey_blowup.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }
+            
+
+            .report-root:has(a.node-virial_identity:hover) .node-virial_identity.node-card,
+            .report-root:has(#node-virial_identity:target) a.node-virial_identity .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-virial_identity:hover) .node-virial_identity.node-card,
+            .report-root:has(#node-virial_identity:target).report-root .node-virial_identity.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }
+            
+
+            .report-root:has(a.node-weighted_uncertainty:hover) .node-weighted_uncertainty.node-card,
+            .report-root:has(#node-weighted_uncertainty:target) a.node-weighted_uncertainty .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-weighted_uncertainty:hover) .node-weighted_uncertainty.node-card,
+            .report-root:has(#node-weighted_uncertainty:target).report-root .node-weighted_uncertainty.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }
+            
+
+            .report-root:has(a.node-variance_collapse:hover) .node-variance_collapse.node-card,
+            .report-root:has(#node-variance_collapse:target) a.node-variance_collapse .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-variance_collapse:hover) .node-variance_collapse.node-card,
+            .report-root:has(#node-variance_collapse:target).report-root .node-variance_collapse.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }
+            
+
+            .report-root:has(a.node-gradient_blowup:hover) .node-gradient_blowup.node-card,
+            .report-root:has(#node-gradient_blowup:target) a.node-gradient_blowup .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-gradient_blowup:hover) .node-gradient_blowup.node-card,
+            .report-root:has(#node-gradient_blowup:target).report-root .node-gradient_blowup.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }
+            
+
+            .report-root:has(a.node-continuation_principle:hover) .node-continuation_principle.node-card,
+            .report-root:has(#node-continuation_principle:target) a.node-continuation_principle .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-continuation_principle:hover) .node-continuation_principle.node-card,
+            .report-root:has(#node-continuation_principle:target).report-root .node-continuation_principle.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-thm_glassey_blowup:hover) a.node-thm_glassey_blowup .graph-node-box,
+.report-root:has(.obligation-informal-proof-thm_glassey_blowup:hover) .node-thm_glassey_blowup.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-thm_glassey_blowup:checked) a.node-thm_glassey_blowup .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-thm_glassey_blowup:checked) .node-thm_glassey_blowup.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-thm_glassey_blowup:checked) .edge-thm_glassey_blowup-continuation_principle,
+.report-root:has(#obligation-check-informal-proof-thm_glassey_blowup:checked) .edge-thm_glassey_blowup-gradient_blowup {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-thm_glassey_blowup:hover) .obligation-informal-proof-thm_glassey_blowup {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-thm_glassey_blowup:checked) .obligation-informal-proof-thm_glassey_blowup {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-virial_identity:hover) a.node-virial_identity .graph-node-box,
+.report-root:has(.obligation-informal-proof-virial_identity:hover) .node-virial_identity.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-virial_identity:checked) a.node-virial_identity .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-virial_identity:checked) .node-virial_identity.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-virial_identity:checked) .edge-variance_collapse-virial_identity {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-virial_identity:hover) .obligation-informal-proof-virial_identity {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-virial_identity:checked) .obligation-informal-proof-virial_identity {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-weighted_uncertainty:hover) a.node-weighted_uncertainty .graph-node-box,
+.report-root:has(.obligation-informal-proof-weighted_uncertainty:hover) .node-weighted_uncertainty.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-weighted_uncertainty:checked) a.node-weighted_uncertainty .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-weighted_uncertainty:checked) .node-weighted_uncertainty.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-weighted_uncertainty:checked) .edge-gradient_blowup-weighted_uncertainty {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-weighted_uncertainty:hover) .obligation-informal-proof-weighted_uncertainty {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-weighted_uncertainty:checked) .obligation-informal-proof-weighted_uncertainty {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-variance_collapse:hover) a.node-variance_collapse .graph-node-box,
+.report-root:has(.obligation-informal-proof-variance_collapse:hover) .node-variance_collapse.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-variance_collapse:checked) a.node-variance_collapse .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-variance_collapse:checked) .node-variance_collapse.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-variance_collapse:checked) .edge-gradient_blowup-variance_collapse,
+.report-root:has(#obligation-check-informal-proof-variance_collapse:checked) .edge-variance_collapse-virial_identity {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-variance_collapse:hover) .obligation-informal-proof-variance_collapse {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-variance_collapse:checked) .obligation-informal-proof-variance_collapse {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-gradient_blowup:hover) a.node-gradient_blowup .graph-node-box,
+.report-root:has(.obligation-informal-proof-gradient_blowup:hover) .node-gradient_blowup.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-gradient_blowup:checked) a.node-gradient_blowup .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-gradient_blowup:checked) .node-gradient_blowup.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-gradient_blowup:checked) .edge-gradient_blowup-variance_collapse,
+.report-root:has(#obligation-check-informal-proof-gradient_blowup:checked) .edge-gradient_blowup-weighted_uncertainty,
+.report-root:has(#obligation-check-informal-proof-gradient_blowup:checked) .edge-thm_glassey_blowup-gradient_blowup {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-gradient_blowup:hover) .obligation-informal-proof-gradient_blowup {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-gradient_blowup:checked) .obligation-informal-proof-gradient_blowup {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-continuation_principle:hover) a.node-continuation_principle .graph-node-box,
+.report-root:has(.obligation-informal-proof-continuation_principle:hover) .node-continuation_principle.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-continuation_principle:checked) a.node-continuation_principle .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-continuation_principle:checked) .node-continuation_principle.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-continuation_principle:checked) .edge-thm_glassey_blowup-continuation_principle {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-continuation_principle:hover) .obligation-informal-proof-continuation_principle {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-continuation_principle:checked) .obligation-informal-proof-continuation_principle {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-root">
+    <section>
+      <h1>Full Glassey blow-up proof</h1>
+      <div class="math-text">Glassey blow-up argument for the focusing mass-critical nonlinear Schrodinger equation.
+
+Consider a sufficiently regular solution \(u(t,x)\) to the focusing mass-critical NLS on \(\mathbb{R}^d\):
+
+\[
+i\partial_t u+\Delta u=-|u|^{4/d}u.
+\]
+
+Assume:
+
+- \(u_0\in H^1(\mathbb{R}^d)\),
+
+- \(|x|u_0\in L^2(\mathbb{R}^d)\),
+
+- the energy \(E(u_0)\) is negative, where
+
+\[
+E(u)=\frac12\int_{\mathbb{R}^d}|\nabla u|^2\,dx
+-\frac{1}{2+4/d}\int_{\mathbb{R}^d}|u|^{2+4/d}\,dx.
+\]
+
+Then the maximal forward existence time \(T\) is finite and
+
+\[
+\|u(t)\|_{H^1(\mathbb{R}^d)}\to\infty
+\quad\text{as }t\uparrow T.
+\]</div>
+      <p class="meta">Root node: thm_glassey_blowup</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 6</span>
+        <span class="pill">Edges: 5</span>
+        <span class="pill">Informal: 5</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 0</span>
+        <span class="pill">Failed: 1</span>
+      </p>
+      <div class="graph-shell">
+        
+    <svg class="graph-widget" viewBox="0 0 420 460" role="img" aria-label="Proof graph">
+      <defs>
+        <marker id="graph-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L9,3 z" fill="#b3aa9f"></path>
+        </marker>
+      </defs>
+      <g><line class="graph-edge edge-thm_glassey_blowup-gradient_blowup" x1="210.0" y1="83.0" x2="294.0" y2="141.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-thm_glassey_blowup-continuation_principle" x1="210.0" y1="83.0" x2="126.0" y2="141.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-variance_collapse-virial_identity" x1="126.0" y1="319.0" x2="210.0" y2="377.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-gradient_blowup-weighted_uncertainty" x1="294.0" y1="201.0" x2="294.0" y2="259.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-gradient_blowup-variance_collapse" x1="294.0" y1="201.0" x2="126.0" y2="259.0" marker-end="url(#graph-arrow)"></line></g>
+      <g>
+    <a class="graph-node-link node-thm_glassey_blowup status-informal" href="#node-thm_glassey_blowup">
+      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="47">Main theorem</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">thm_glassey_blowup</text>
+    </a>
+    
+
+    <a class="graph-node-link node-virial_identity status-formal-failed" href="#node-virial_identity">
+      <rect class="graph-node-box status-formal-failed" x="144.0" y="374" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="386" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="401">Virial identity</tspan></text>
+      <text class="graph-node-id" x="210.0" y="422">virial_identity</text>
+    </a>
+    
+
+    <a class="graph-node-link node-weighted_uncertainty status-informal" href="#node-weighted_uncertainty">
+      <rect class="graph-node-box status-informal" x="228.0" y="256" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="346.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="294.0" y="278">Weighted</tspan>
+<tspan x="294.0" y="290">inequality</tspan></text>
+      <text class="graph-node-id" x="294.0" y="304">weighted_uncertainty</text>
+    </a>
+    
+
+    <a class="graph-node-link node-variance_collapse status-informal" href="#node-variance_collapse">
+      <rect class="graph-node-box status-informal" x="60.0" y="256" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="178.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="126.0" y="278">Concavity of</tspan>
+<tspan x="126.0" y="290">variance</tspan></text>
+      <text class="graph-node-id" x="126.0" y="304">variance_collapse</text>
+    </a>
+    
+
+    <a class="graph-node-link node-gradient_blowup status-informal" href="#node-gradient_blowup">
+      <rect class="graph-node-box status-informal" x="228.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="346.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="294.0" y="160">Blow-up from</tspan>
+<tspan x="294.0" y="172">variance collap…</tspan></text>
+      <text class="graph-node-id" x="294.0" y="186">gradient_blowup</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuation_principle status-informal" href="#node-continuation_principle">
+      <rect class="graph-node-box status-informal" x="60.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="178.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="126.0" y="160">Continuation</tspan>
+<tspan x="126.0" y="172">principle</tspan></text>
+      <text class="graph-node-id" x="126.0" y="186">continuation_principle</text>
+    </a>
+    </g>
+    </svg>
+    
+      </div>
+      <p class="graph-caption">
+        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+      </p>
+      <p class="graph-caption">
+        Informal nodes use dashed amber outlines, candidates use solid orange, verified formal nodes use green, and failed formal nodes use red.
+      </p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-informal-proof-thm_glassey_blowup" data-obligation-id="informal-proof-thm_glassey_blowup">
+      <label class="checklist-label" for="obligation-check-informal-proof-thm_glassey_blowup">
+        <input id="obligation-check-informal-proof-thm_glassey_blowup" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;thm_glassey_blowup&#x27; (Glassey blow-up for focusing mass-critical NLS) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-thm_glassey_blowup">thm_glassey_blowup</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-virial_identity" data-obligation-id="informal-proof-virial_identity">
+      <label class="checklist-label" for="obligation-check-informal-proof-virial_identity">
+        <input id="obligation-check-informal-proof-virial_identity" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;virial_identity&#x27; (Virial identity with negative constant second derivative) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-virial_identity">virial_identity</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-weighted_uncertainty" data-obligation-id="informal-proof-weighted_uncertainty">
+      <label class="checklist-label" for="obligation-check-informal-proof-weighted_uncertainty">
+        <input id="obligation-check-informal-proof-weighted_uncertainty" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;weighted_uncertainty&#x27; (Weighted \(L^2\) versus gradient inequality) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-weighted_uncertainty">weighted_uncertainty</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-variance_collapse" data-obligation-id="informal-proof-variance_collapse">
+      <label class="checklist-label" for="obligation-check-informal-proof-variance_collapse">
+        <input id="obligation-check-informal-proof-variance_collapse" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;variance_collapse&#x27; (Negative virial curvature forces finite-time vanishing of the variance) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-variance_collapse">variance_collapse</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-gradient_blowup" data-obligation-id="informal-proof-gradient_blowup">
+      <label class="checklist-label" for="obligation-check-informal-proof-gradient_blowup">
+        <input id="obligation-check-informal-proof-gradient_blowup" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;gradient_blowup&#x27; (Variance collapse implies gradient and \(H^1\) blow-up) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-gradient_blowup">gradient_blowup</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-continuation_principle" data-obligation-id="informal-proof-continuation_principle">
+      <label class="checklist-label" for="obligation-check-informal-proof-continuation_principle">
+        <input id="obligation-check-informal-proof-continuation_principle" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;continuation_principle&#x27; (Standard \(H^1\) continuation criterion) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-continuation_principle">continuation_principle</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="nodes-grid">
+        
+    <article class="node-card node-thm_glassey_blowup" id="node-thm_glassey_blowup" data-node-id="thm_glassey_blowup">
+      <h3>Glassey blow-up for focusing mass-critical NLS</h3>
+      <p class="meta">Node id: thm_glassey_blowup | Status: informal</p>
+      <p class="meta">Display label: Main theorem</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Under the assumptions \(u_0\in H^1\), \(|x|u_0\in L^2\), and \(E(u_0)&lt;0\), the forward maximal lifespan \(T\) of the focusing mass-critical NLS solution is finite and \(\|u(t)\|_{H^1(\mathbb{R}^d)}\to\infty\) as \(t\uparrow T\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Define the variance \(V(t)=\int |x|^2|u(t,x)|^2\,dx\). The virial computation gives \(V&#x27;&#x27;(t)=16E(u_0)&lt;0\), so \(V\) is strictly concave downward and must reach \(0\) in finite forward time; hence for some finite \(T_*\), \(V(t)\to0\) as \(t\uparrow T_*\). Applying the weighted inequality to \(u(t)\) and using mass conservation yields \(\|u_0\|_2^2\le \frac{2}{d}\sqrt{V(t)}\,\|\nabla u(t)\|_2\), so \(\|\nabla u(t)\|_2\to\infty\) as \(t\uparrow T_*\). Since \(\|u(t)\|_2\) is conserved, also \(\|u(t)\|_{H^1}\to\infty\). By the standard \(H^1\) continuation principle, finite-time \(H^1\)-norm blow-up forces the maximal forward lifespan to be finite, and taking \(T\) to be that maximal forward time gives the theorem.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-virial_identity" id="node-virial_identity" data-node-id="virial_identity">
+      <h3>Virial identity with negative constant second derivative</h3>
+      <p class="meta">Node id: virial_identity | Status: formal_failed</p>
+      <p class="meta">Display label: Virial identity</p>
+      <p class="meta">Formalization priority: 1. Rationale: This is the main self-contained technical step: an explicit virial/energy identity proved by differentiating the variance twice and carrying out nontrivial integration-by-parts and nonlinear coefficient bookkeeping. It discharges substantial inferential burden for the downstream concavity argument, while avoiding broader PDE continuation machinery and avoiding the lower-value elementary concavity consequence.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For \(V(t)=\int_{\mathbb{R}^d}|x|^2|u(t,x)|^2\,dx\), one has \(V&#x27;&#x27;(t)=16E(u(t))=16E(u_0)&lt;0\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Differentiate \(V\) once and substitute \(u_t=i\Delta u+i|u|^{4/d}u\). The term \(\int |x|^2|u|^{2+4/d}\,dx\) is real, so after multiplication by \(i\) its real part vanishes. Integrating by parts in the Laplacian term gives \(V&#x27;(t)=4\operatorname{Im}\int x\cdot\nabla u\,\overline u\,dx\). Differentiate again, substitute formulas for \(u_t\) and \(\overline{u_t}\), and split linear and nonlinear pieces. A standard integration-by-parts computation gives the linear contribution \(8\int |\nabla u|^2\,dx\). For the nonlinear contribution, rewrite the real-part expression so that after subtracting the matching term one is left with \(4\int x\cdot \nabla\!\left(\frac{d}{2d+4}|u|^{2+4/d}\right)dx\), and integrating by parts using \(\operatorname{div}(x)=d\) yields \(-\frac{16}{2+4/d}\int |u|^{2+4/d}\,dx\). Thus \(V&#x27;&#x27;(t)=8\int |\nabla u|^2\,dx-\frac{16}{2+4/d}\int |u|^{2+4/d}\,dx=16E(u(t))\). Energy conservation then gives \(V&#x27;&#x27;(t)=16E(u_0)&lt;0\).</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> virial_identity_with_negative_constant_second_derivative</p>
+        <p><strong>Lean statement:</strong> theorem virial_identity_with_negative_constant_second_derivative
+    {V E grad nonlin : ℝ → ℝ} {d : ℕ} {E0 : ℝ}
+    (hd : 0 &lt; d)
+    (hvirial : ∀ t, deriv (deriv V) t =
+      8 * grad t - (16 / (2 + 4 / (d : ℝ))) * nonlin t)
+    (henergy_def : ∀ t, E t = focusingMassCriticalEnergy d (grad t) (nonlin t))
+    (henergy_conserved : ∀ t, E t = E0)
+    (hneg : E0 &lt; 0) :
+    ∀ t, deriv (deriv V) t = 16 * E t ∧ deriv (deriv V) t = 16 * E0 ∧ deriv (deriv V) t &lt; 0</p>
+        <p><strong>Verification status:</strong> failed</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/virial_identity_attempt_1.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code>import Mathlib
+
+def focusingMassCriticalEnergy (d : ℕ) (grad nonlin : ℝ) : ℝ :=
+  (1 / 2 : ℝ) * grad - (1 / (2 + 4 / (d : ℝ))) * nonlin
+
+lemma virial_coefficient_bookkeeping (d : ℕ) (hd : 0 &lt; d) (grad nonlin : ℝ) :
+    8 * grad - (16 / (2 + 4 / (d : ℝ))) * nonlin =
+      16 * focusingMassCriticalEnergy d grad nonlin := by
+  unfold focusingMassCriticalEnergy
+  have hdR : (d : ℝ) ≠ 0 := by
+    exact_mod_cast (Nat.ne_of_gt hd)
+  field_simp [hdR]
+  ring
+
+theorem virial_identity_with_negative_constant_second_derivative
+    {V E grad nonlin : ℝ → ℝ} {d : ℕ} {E0 : ℝ}
+    (hd : 0 &lt; d)
+    (hvirial : ∀ t, deriv (deriv V) t =
+      8 * grad t - (16 / (2 + 4 / (d : ℝ))) * nonlin t)
+    (henergy_def : ∀ t, E t = focusingMassCriticalEnergy d (grad t) (nonlin t))
+    (henergy_conserved : ∀ t, E t = E0)
+    (hneg : E0 &lt; 0) :
+    ∀ t, deriv (deriv V) t = 16 * E t ∧ deriv (deriv V) t = 16 * E0 ∧ deriv (deriv V) t &lt; 0 := by
+  intro t
+  have hcurv_energy : deriv (deriv V) t = 16 * E t := by
+    rw [hvirial t, virial_coefficient_bookkeeping d hd (grad t) (nonlin t), ← henergy_def t]
+  have hcurv_const : deriv (deriv V) t = 16 * E0 := by
+    rw [hcurv_energy, henergy_conserved t]
+  refine ⟨hcurv_energy, hcurv_const, ?_⟩
+  rw [hcurv_const]
+  nlinarith</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/virial_identity_attempt_1.lean:3:4: error(lean.dependsOnNoncomputable): failed to compile definition, consider marking it as &#x27;noncomputable&#x27; because it depends on &#x27;Real.instDivInvMonoid&#x27;, which is &#x27;noncomputable&#x27;
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+
+    <article class="node-card node-weighted_uncertainty" id="node-weighted_uncertainty" data-node-id="weighted_uncertainty">
+      <h3>Weighted \(L^2\) versus gradient inequality</h3>
+      <p class="meta">Node id: weighted_uncertainty | Status: informal</p>
+      <p class="meta">Display label: Weighted inequality</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For sufficiently regular \(f\), \[\|f\|_{L^2(\mathbb{R}^d)}^2\le \frac{2}{d}\,\|x f\|_{L^2(\mathbb{R}^d)}\,\|\nabla f\|_{L^2(\mathbb{R}^d)}.\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Use \(\operatorname{div}(x)=d\): \(\|f\|_2^2=\frac1d\int (\operatorname{div}x)|f|^2\,dx=-\frac1d\int x\cdot \nabla(|f|^2)\,dx=-\frac{2}{d}\operatorname{Re}\int x\cdot \nabla f\,\overline f\,dx\). Then apply \(|\operatorname{Re} z|\le |z|\) and Cauchy-Schwarz to obtain the stated bound.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-variance_collapse" id="node-variance_collapse" data-node-id="variance_collapse">
+      <h3>Negative virial curvature forces finite-time vanishing of the variance</h3>
+      <p class="meta">Node id: variance_collapse | Status: informal</p>
+      <p class="meta">Display label: Concavity of variance</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">If \(V&#x27;&#x27;(t)=16E(u_0)&lt;0\), then \(V(t)\ge0\) cannot hold for all large positive times. Hence there exists a finite \(T_*&gt;0\) such that \(V(T_*)=0\), equivalently \(V(t)\to0\) as \(t\uparrow T_*\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Because \(V&#x27;&#x27;\) is a negative constant, \(V\) is a concave quadratic-type function with negative leading coefficient. Such a function eventually becomes negative as \(t\to+\infty\). Since by definition \(V(t)=\int |x|^2|u(t,x)|^2\,dx\ge0\), this is impossible unless the graph meets \(0\) at some finite forward time. Taking the first such time and using continuity yields \(V(t)\to0\) as \(t\uparrow T_*\).</div>
+      
+    </article>
+    
+
+    <article class="node-card node-gradient_blowup" id="node-gradient_blowup" data-node-id="gradient_blowup">
+      <h3>Variance collapse implies gradient and \(H^1\) blow-up</h3>
+      <p class="meta">Node id: gradient_blowup | Status: informal</p>
+      <p class="meta">Display label: Blow-up from variance collapse</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \(M=\|u_0\|_{L^2(\mathbb{R}^d)}&gt;0\). Then for all times of existence, \[M^2\le \frac{2}{d}\sqrt{V(t)}\,\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}.\] Therefore, if \(V(t)\to0\) as \(t\uparrow T_*\), then \(\|\nabla u(t)\|_2\to\infty\), and since \(\|u(t)\|_2=M\) is conserved, also \(\|u(t)\|_{H^1}\to\infty\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Apply the weighted inequality with \(f=u(t)\). Mass conservation gives \(\|u(t)\|_2=\|u_0\|_2=:M\), and \(M&gt;0\) since \(E(u_0)&lt;0\) rules out the zero solution. Using \(\|xu(t)\|_2^2=V(t)\), one obtains \(M^2\le \frac{2}{d}\sqrt{V(t)}\,\|\nabla u(t)\|_2\). As \(t\uparrow T_*\), the left side stays fixed while \(\sqrt{V(t)}\to0\), so necessarily \(\|\nabla u(t)\|_2\to\infty\). Finally, \(\|u(t)\|_{H^1}^2=\|u(t)\|_2^2+\|\nabla u(t)\|_2^2\) and \(\|u(t)\|_2=M\) is conserved, hence \(\|u(t)\|_{H^1}\to\infty\).</div>
+      
+    </article>
+    
+
+    <article class="node-card node-continuation_principle" id="node-continuation_principle" data-node-id="continuation_principle">
+      <h3>Standard \(H^1\) continuation criterion</h3>
+      <p class="meta">Node id: continuation_principle | Status: informal</p>
+      <p class="meta">Display label: Continuation principle</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For the mass-critical NLS in \(H^1(\mathbb{R}^d)\), if a solution on \([0,T_*)\) satisfies \(\sup_{t&lt;T_*}\|u(t)\|_{H^1}&lt;\infty\), then it extends beyond \(T_*\). Equivalently, finite-time failure of continuation forces \(\|u(t)\|_{H^1}\to\infty\) as \(t\uparrow T_*\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">This is the standard local well-posedness and blow-up alternative in \(H^1\) for the mass-critical nonlinear Schr\&quot;odinger equation. It is used only to identify the finite blow-up time produced by the virial argument with the maximal forward lifespan.</div>
+      
+    </article>
+    
+      </div>
+    </section>
+  </main>
+</body>
+</html>

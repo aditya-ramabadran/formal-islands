@@ -17,6 +17,15 @@
     };
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.hljs) {
+        window.hljs.highlightAll();
+      }
+    });
+  </script>
   <style>
     :root {
       color-scheme: light;
@@ -268,40 +277,20 @@
       margin-top: 0.35rem;
       background: #f4efe6;
     }
-    .lean-code {
-      color: #2a241f;
-    }
-    .lean-code .tok-keyword {
-      color: #8b2f18;
-      font-weight: 700;
-    }
-    .lean-code .tok-tactic {
-      color: #9d5d17;
-      font-weight: 600;
-    }
-    .lean-code .tok-type {
-      color: #245f7a;
-    }
-    .lean-code .tok-number {
-      color: #7442a8;
-    }
-    .lean-code .tok-comment {
-      color: #6e7a60;
-      font-style: italic;
-    }
-    .lean-code .tok-string {
-      color: #2d7f4d;
+    .hljs {
+      background: transparent !important;
+      padding: 0 !important;
     }
     
-            .report-root:has(a.node-n0:hover) .node-n0.node-card,
-            .report-root:has(#node-n0:target) a.node-n0 .graph-node-box {
+            .report-root:has(a.node-thm_blowup:hover) .node-thm_blowup.node-card,
+            .report-root:has(#node-thm_blowup:target) a.node-thm_blowup .graph-node-box {
               border-color: var(--highlight);
               stroke: var(--highlight);
               background: var(--highlight-soft);
               fill: var(--highlight-soft);
             }
-            .report-root:has(a.node-n0:hover) .node-n0.node-card,
-            .report-root:has(#node-n0:target).report-root .node-n0.node-card {
+            .report-root:has(a.node-thm_blowup:hover) .node-thm_blowup.node-card,
+            .report-root:has(#node-thm_blowup:target).report-root .node-thm_blowup.node-card {
               border-color: var(--highlight);
               box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
               background: #fff8ee;
@@ -353,8 +342,8 @@
             }
             
 
-                .report-root:has(.obligation-informal-proof-n0:hover) a.node-n0 .graph-node-box,
-.report-root:has(.obligation-informal-proof-n0:hover) .node-n0.node-card {
+                .report-root:has(.obligation-informal-proof-thm_blowup:hover) a.node-thm_blowup .graph-node-box,
+.report-root:has(.obligation-informal-proof-thm_blowup:hover) .node-thm_blowup.node-card {
                   border-color: var(--highlight);
                   stroke: var(--highlight);
                   stroke-width: 2.8;
@@ -364,8 +353,8 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-n0:checked) a.node-n0 .graph-node-box,
-.report-root:has(#obligation-check-informal-proof-n0:checked) .node-n0.node-card {
+                .report-root:has(#obligation-check-informal-proof-thm_blowup:checked) a.node-thm_blowup .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-thm_blowup:checked) .node-thm_blowup.node-card {
                   border-color: var(--checked);
                   stroke: var(--checked);
                   stroke-width: 2.9;
@@ -374,18 +363,18 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-n0:checked) .edge-n0-n1_refined_local_claim,
-.report-root:has(#obligation-check-informal-proof-n0:checked) .edge-n0-n2 {
+                .report-root:has(#obligation-check-informal-proof-thm_blowup:checked) .edge-thm_blowup-n1_refined_local_claim,
+.report-root:has(#obligation-check-informal-proof-thm_blowup:checked) .edge-thm_blowup-n2 {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
                 
 
-            .report-root:has(.obligation-informal-proof-n0:hover) .obligation-informal-proof-n0 {
+            .report-root:has(.obligation-informal-proof-thm_blowup:hover) .obligation-informal-proof-thm_blowup {
               border-color: var(--highlight);
               background: var(--preview-soft);
             }
-            .report-root:has(#obligation-check-informal-proof-n0:checked) .obligation-informal-proof-n0 {
+            .report-root:has(#obligation-check-informal-proof-thm_blowup:checked) .obligation-informal-proof-thm_blowup {
               border-color: var(--checked);
               background: var(--checked-soft);
             }
@@ -449,7 +438,7 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-n2:checked) .edge-n0-n2 {
+                .report-root:has(#obligation-check-informal-proof-n2:checked) .edge-thm_blowup-n2 {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
@@ -465,8 +454,8 @@
             }
             
 
-                .report-root:has(.obligation-informal-proof-n1_refined_local_claim:hover) a.node-n1_refined_local_claim .graph-node-box,
-.report-root:has(.obligation-informal-proof-n1_refined_local_claim:hover) .node-n1_refined_local_claim.node-card {
+                .report-root:has(.obligation-semantic-match-n1_refined_local_claim:hover) a.node-n1_refined_local_claim .graph-node-box,
+.report-root:has(.obligation-semantic-match-n1_refined_local_claim:hover) .node-n1_refined_local_claim.node-card {
                   border-color: var(--highlight);
                   stroke: var(--highlight);
                   stroke-width: 2.8;
@@ -476,8 +465,8 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-n1_refined_local_claim:checked) a.node-n1_refined_local_claim .graph-node-box,
-.report-root:has(#obligation-check-informal-proof-n1_refined_local_claim:checked) .node-n1_refined_local_claim.node-card {
+                .report-root:has(#obligation-check-semantic-match-n1_refined_local_claim:checked) a.node-n1_refined_local_claim .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-n1_refined_local_claim:checked) .node-n1_refined_local_claim.node-card {
                   border-color: var(--checked);
                   stroke: var(--checked);
                   stroke-width: 2.9;
@@ -486,18 +475,61 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-n1_refined_local_claim:checked) .edge-n0-n1_refined_local_claim,
-.report-root:has(#obligation-check-informal-proof-n1_refined_local_claim:checked) .edge-n1_refined_local_claim-n1 {
+                .report-root:has(#obligation-check-semantic-match-n1_refined_local_claim:checked) .edge-n1_refined_local_claim-n1,
+.report-root:has(#obligation-check-semantic-match-n1_refined_local_claim:checked) .edge-thm_blowup-n1_refined_local_claim {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
                 
 
-            .report-root:has(.obligation-informal-proof-n1_refined_local_claim:hover) .obligation-informal-proof-n1_refined_local_claim {
+            .report-root:has(.obligation-semantic-match-n1_refined_local_claim:hover) .obligation-semantic-match-n1_refined_local_claim {
               border-color: var(--highlight);
               background: var(--preview-soft);
             }
-            .report-root:has(#obligation-check-informal-proof-n1_refined_local_claim:checked) .obligation-informal-proof-n1_refined_local_claim {
+            .report-root:has(#obligation-check-semantic-match-n1_refined_local_claim:checked) .obligation-semantic-match-n1_refined_local_claim {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-boundary-thm_blowup-n1_refined_local_claim:hover) a.node-thm_blowup .graph-node-box,
+.report-root:has(.obligation-boundary-thm_blowup-n1_refined_local_claim:hover) a.node-n1_refined_local_claim .graph-node-box,
+.report-root:has(.obligation-boundary-thm_blowup-n1_refined_local_claim:hover) .node-thm_blowup.node-card,
+.report-root:has(.obligation-boundary-thm_blowup-n1_refined_local_claim:hover) .node-n1_refined_local_claim.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-thm_blowup-n1_refined_local_claim:checked) a.node-thm_blowup .graph-node-box,
+.report-root:has(#obligation-check-boundary-thm_blowup-n1_refined_local_claim:checked) a.node-n1_refined_local_claim .graph-node-box,
+.report-root:has(#obligation-check-boundary-thm_blowup-n1_refined_local_claim:checked) .node-thm_blowup.node-card,
+.report-root:has(#obligation-check-boundary-thm_blowup-n1_refined_local_claim:checked) .node-n1_refined_local_claim.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-thm_blowup-n1_refined_local_claim:checked) .edge-n1_refined_local_claim-n1,
+.report-root:has(#obligation-check-boundary-thm_blowup-n1_refined_local_claim:checked) .edge-thm_blowup-n1_refined_local_claim,
+.report-root:has(#obligation-check-boundary-thm_blowup-n1_refined_local_claim:checked) .edge-thm_blowup-n2 {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-boundary-thm_blowup-n1_refined_local_claim:hover) .obligation-boundary-thm_blowup-n1_refined_local_claim {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-boundary-thm_blowup-n1_refined_local_claim:checked) .obligation-boundary-thm_blowup-n1_refined_local_claim {
               border-color: var(--checked);
               background: var(--checked-soft);
             }
@@ -518,33 +550,44 @@
 Let \(u(t,x)\) be a sufficiently regular solution on \(\mathbb{R}^d\) with finite variance. Assume:
 
 1. mass is conserved:
+
 \[
 \|u(t)\|_{L^2(\mathbb{R}^d)}=\|u_0\|_{L^2(\mathbb{R}^d)}=:M&gt;0,
 \]
+
 2. energy is conserved and negative:
+
 \[
 E(u(t))=E(u_0)&lt;0,
 \]
+
 3. the variance
+
 \[
 V(t)=\int_{\mathbb{R}^d}|x|^2|u(t,x)|^2\,dx
 \]
+
 satisfies
+
 \[
 V&#x27;&#x27;(t)=16E(u_0)&lt;0,
 \]
+
 4. for every sufficiently regular \(f\),
+
 \[
 \|f\|_{L^2(\mathbb{R}^d)}^2
 \le
 \frac{2}{d}\,\|x f\|_{L^2(\mathbb{R}^d)}\,\|\nabla f\|_{L^2(\mathbb{R}^d)}.
 \]
+
 Then there exists \(T&lt;\infty\) such that
+
 \[
 \|\nabla u(t)\|_{L^2(\mathbb{R}^d)}\to\infty
 \quad\text{as } t\uparrow T.
 \]</div>
-      <p class="meta">Root node: n0</p>
+      <p class="meta">Root node: thm_blowup</p>
     </section>
     <section>
       <h2>Graph Summary</h2>
@@ -553,8 +596,8 @@ Then there exists \(T&lt;\infty\) such that
         <span class="pill">Edges: 3</span>
         <span class="pill">Informal: 3</span>
         <span class="pill">Candidates: 0</span>
-        <span class="pill">Verified: 0</span>
-        <span class="pill">Failed: 1</span>
+        <span class="pill">Verified: 1</span>
+        <span class="pill">Failed: 0</span>
       </p>
       <div class="graph-shell">
         
@@ -564,24 +607,23 @@ Then there exists \(T&lt;\infty\) such that
           <path d="M0,0 L0,6 L9,3 z" fill="#b3aa9f"></path>
         </marker>
       </defs>
-      <g><line class="graph-edge edge-n0-n1_refined_local_claim" x1="210.0" y1="83.0" x2="126.0" y2="141.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-n0-n2" x1="210.0" y1="83.0" x2="294.0" y2="141.0" marker-end="url(#graph-arrow)"></line>
+      <g><line class="graph-edge edge-thm_blowup-n1_refined_local_claim" x1="210.0" y1="83.0" x2="126.0" y2="141.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-thm_blowup-n2" x1="210.0" y1="83.0" x2="294.0" y2="141.0" marker-end="url(#graph-arrow)"></line>
 <line class="graph-edge edge-n1_refined_local_claim-n1" x1="126.0" y1="201.0" x2="210.0" y2="259.0" marker-end="url(#graph-arrow)"></line></g>
       <g>
-    <a class="graph-node-link node-n0 status-informal" href="#node-n0">
+    <a class="graph-node-link node-thm_blowup status-informal" href="#node-thm_blowup">
       <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
       <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="42">Blow-up</tspan>
-<tspan x="210.0" y="54">conclusion</tspan></text>
-      <text class="graph-node-id" x="210.0" y="68">n0</text>
+      <text class="graph-node-title"><tspan x="210.0" y="47">Blow-up theorem</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">thm_blowup</text>
     </a>
     
 
     <a class="graph-node-link node-n1 status-informal" href="#node-n1">
       <rect class="graph-node-box status-informal" x="144.0" y="256" rx="14" ry="14" width="132" height="66"></rect>
       <circle class="graph-node-badge status-informal" cx="262.0" cy="268" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="278">Mass-variance-gradient</tspan>
-<tspan x="210.0" y="290">inequality</tspan></text>
+      <text class="graph-node-title"><tspan x="210.0" y="278">\(M^2\lesssim</tspan>
+<tspan x="210.0" y="290">\sqrt{V}\,\|\na…</tspan></text>
       <text class="graph-node-id" x="210.0" y="304">n1</text>
     </a>
     
@@ -595,9 +637,9 @@ Then there exists \(T&lt;\infty\) such that
     </a>
     
 
-    <a class="graph-node-link node-n1_refined_local_claim status-formal-failed" href="#node-n1_refined_local_claim">
-      <rect class="graph-node-box status-formal-failed" x="60.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-failed" cx="178.0" cy="150" r="4.6"></circle>
+    <a class="graph-node-link node-n1_refined_local_claim status-formal-verified" href="#node-n1_refined_local_claim">
+      <rect class="graph-node-box status-formal-verified" x="60.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="178.0" cy="150" r="4.6"></circle>
       <text class="graph-node-title"><tspan x="126.0" y="165">Refined estimate</tspan></text>
       <text class="graph-node-id" x="126.0" y="186">n1_refined_local_claim</text>
     </a>
@@ -616,14 +658,14 @@ Then there exists \(T&lt;\infty\) such that
       <h2>Review Checklist</h2>
       <ul class="checklist">
         
-    <li class="checklist-item obligation-informal-proof-n0" data-obligation-id="informal-proof-n0">
-      <label class="checklist-label" for="obligation-check-informal-proof-n0">
-        <input id="obligation-check-informal-proof-n0" type="checkbox" />
+    <li class="checklist-item obligation-informal-proof-thm_blowup" data-obligation-id="informal-proof-thm_blowup">
+      <label class="checklist-label" for="obligation-check-informal-proof-thm_blowup">
+        <input id="obligation-check-informal-proof-thm_blowup" type="checkbox" />
         <span>
           <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;n0&#x27; (Finite-time blow-up from the virial identity) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          Check that node &#x27;thm_blowup&#x27; (Finite-time blow-up from virial collapse of the variance) has an informal proof that establishes its informal statement, assuming its child dependencies.
           
-          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n0">n0</a></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-thm_blowup">thm_blowup</a></div>
         </span>
       </label>
     </li>
@@ -634,7 +676,7 @@ Then there exists \(T&lt;\infty\) such that
         <input id="obligation-check-informal-proof-n1" type="checkbox" />
         <span>
           <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;n1&#x27; (Weighted inequality gives a gradient lower bound in terms of variance) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          Check that node &#x27;n1&#x27; (Mass/variance-gradient estimate) has an informal proof that establishes its informal statement, assuming its child dependencies.
           
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n1">n1</a></div>
         </span>
@@ -647,7 +689,7 @@ Then there exists \(T&lt;\infty\) such that
         <input id="obligation-check-informal-proof-n2" type="checkbox" />
         <span>
           <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;n2&#x27; (Negative constant virial acceleration forces finite-time collapse of the variance) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          Check that node &#x27;n2&#x27; (Negative virial curvature forces finite-time collapse of the variance) has an informal proof that establishes its informal statement, assuming its child dependencies.
           
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n2">n2</a></div>
         </span>
@@ -655,14 +697,39 @@ Then there exists \(T&lt;\infty\) such that
     </li>
     
 
-    <li class="checklist-item obligation-informal-proof-n1_refined_local_claim" data-obligation-id="informal-proof-n1_refined_local_claim">
-      <label class="checklist-label" for="obligation-check-informal-proof-n1_refined_local_claim">
-        <input id="obligation-check-informal-proof-n1_refined_local_claim" type="checkbox" />
+    <li class="checklist-item obligation-semantic-match-n1_refined_local_claim" data-obligation-id="semantic-match-n1_refined_local_claim">
+      <label class="checklist-label" for="obligation-check-semantic-match-n1_refined_local_claim">
+        <input id="obligation-check-semantic-match-n1_refined_local_claim" type="checkbox" />
         <span>
-          <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;n1_refined_local_claim&#x27; (Local estimate) has an informal proof that establishes its informal statement, assuming its child dependencies.
-          
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;n1_refined_local_claim&#x27; (Local estimate) matches the verified Lean statement &#x27;theorem reduced_glassey_local_estimate
+    {d mass variance l2u xL2u gradL2u : ℝ}
+    (hweighted : l2u ^ 2 ≤ (2 / d) * xL2u * gradL2u)
+    (hmass : l2u = mass)
+    (hvariance : xL2u ^ 2 = variance)
+    (hx_nonneg : 0 ≤ xL2u) :
+    mass ^ 2 ≤ (2 / d) * Real.sqrt variance * gradL2u&#x27;.
+          <div class="checklist-code"><pre><code class="language-lean">theorem reduced_glassey_local_estimate
+    {d mass variance l2u xL2u gradL2u : ℝ}
+    (hweighted : l2u ^ 2 ≤ (2 / d) * xL2u * gradL2u)
+    (hmass : l2u = mass)
+    (hvariance : xL2u ^ 2 = variance)
+    (hx_nonneg : 0 ≤ xL2u) :
+    mass ^ 2 ≤ (2 / d) * Real.sqrt variance * gradL2u</code></pre></div>
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n1_refined_local_claim">n1_refined_local_claim</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-boundary-thm_blowup-n1_refined_local_claim" data-obligation-id="boundary-thm_blowup-n1_refined_local_claim">
+      <label class="checklist-label" for="obligation-check-boundary-thm_blowup-n1_refined_local_claim">
+        <input id="obligation-check-boundary-thm_blowup-n1_refined_local_claim" type="checkbox" />
+        <span>
+          <span class="checklist-kind">boundary_interface_check</span><br />
+          Check that formal child &#x27;n1_refined_local_claim&#x27; proves exactly what informal parent &#x27;thm_blowup&#x27; uses across their dependency boundary.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-thm_blowup">thm_blowup</a>, <a class="node-jump" href="#node-n1_refined_local_claim">n1_refined_local_claim</a></div>
         </span>
       </label>
     </li>
@@ -673,23 +740,36 @@ Then there exists \(T&lt;\infty\) such that
       <h2>Nodes</h2>
       <div class="nodes-grid">
         
-    <article class="node-card node-n0" id="node-n0" data-node-id="n0">
-      <h3>Finite-time blow-up from the virial identity</h3>
-      <p class="meta">Node id: n0 | Status: informal</p>
-      <p class="meta">Display label: Blow-up conclusion</p>
+    <article class="node-card node-thm_blowup" id="node-thm_blowup" data-node-id="thm_blowup">
+      <h3>Finite-time blow-up from virial collapse of the variance</h3>
+      <p class="meta">Node id: thm_blowup | Status: informal</p>
+      <p class="meta">Display label: Blow-up theorem</p>
       
       <p><strong>Informal statement:</strong></p>
-      <div class="math-text">There exists \(T&lt;\infty\) such that \(\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}\to\infty\) as \(t\uparrow T\).</div>
+      <div class="math-text">There exists \(T&lt;\infty\) such that
+\[
+\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}\to\infty
+\quad\text{as } t\uparrow T.
+\]</div>
       <p><strong>Informal proof:</strong></p>
-      <div class="math-text">Use the lower bound \(M^2\le \frac{2}{d}\sqrt{V(t)}\,\|\nabla u(t)\|_{L^2}\), obtained from the weighted inequality applied to \(u(t)\), mass conservation \(\|u(t)\|_{L^2}=M\), and \(\|xu(t)\|_{L^2}^2=V(t)\). By the finite-time variance-collapse claim, there is \(T&lt;\infty\) with \(V(t)\to 0\) as \(t\uparrow T\). Since \(M&gt;0\) is fixed, the inequality can remain true only if \(\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}\to\infty\) as \(t\uparrow T\).</div>
+      <div class="math-text">Use the estimate
+\[
+M^2\le \frac{2}{d}\sqrt{V(t)}\,\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}
+\]
+from mass conservation and the weighted inequality, together with the existence of a finite time \(T&gt;0\) such that \(V(t)\to 0\) as \(t\uparrow T\). Since \(M&gt;0\) is fixed, the right-hand side can stay bounded below by \(M^2\) only if
+\[
+\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}\to\infty
+\quad\text{as } t\uparrow T.
+\]
+Thus the solution blows up in finite positive time.</div>
       
     </article>
     
 
     <article class="node-card node-n1" id="node-n1" data-node-id="n1">
-      <h3>Weighted inequality gives a gradient lower bound in terms of variance</h3>
+      <h3>Mass/variance-gradient estimate</h3>
       <p class="meta">Node id: n1 | Status: informal</p>
-      <p class="meta">Display label: Mass-variance-gradient inequality</p>
+      <p class="meta">Display label: \(M^2\lesssim \sqrt{V}\,\|\nabla u\|_{L^2}\)</p>
       
       <p><strong>Informal statement:</strong></p>
       <div class="math-text">For every time in the interval of existence,
@@ -699,97 +779,112 @@ M^2=\|u(t)\|_{L^2(\mathbb{R}^d)}^2
 \frac{2}{d}\sqrt{V(t)}\,\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}.
 \]</div>
       <p><strong>Informal proof:</strong></p>
-      <div class="math-text">Apply the assumed inequality
+      <div class="math-text">Apply the assumed weighted inequality
 \[
 \|f\|_{L^2(\mathbb{R}^d)}^2\le \frac{2}{d}\,\|xf\|_{L^2(\mathbb{R}^d)}\,\|\nabla f\|_{L^2(\mathbb{R}^d)}
 \]
-with \(f=u(t)\). Mass conservation gives \(\|u(t)\|_{L^2}=M\), so
-\[
-M^2\le \frac{2}{d}\,\|xu(t)\|_{L^2}\,\|\nabla u(t)\|_{L^2}.
-\]
-By definition of the variance,
+with \(f=u(t)\). Mass conservation gives \(\|u(t)\|_{L^2}=M\), and by definition of the variance,
 \[
 \|xu(t)\|_{L^2(\mathbb{R}^d)}^2=V(t),
 \]
-hence \(\|xu(t)\|_{L^2}=\sqrt{V(t)}\), yielding the claim.</div>
+so \(\|xu(t)\|_{L^2}=\sqrt{V(t)}\). Substituting yields the claimed estimate.</div>
       
     </article>
     
 
     <article class="node-card node-n2" id="node-n2" data-node-id="n2">
-      <h3>Negative constant virial acceleration forces finite-time collapse of the variance</h3>
+      <h3>Negative virial curvature forces finite-time collapse of the variance</h3>
       <p class="meta">Node id: n2 | Status: informal</p>
       <p class="meta">Display label: Finite-time variance collapse</p>
       
       <p><strong>Informal statement:</strong></p>
-      <div class="math-text">There exists a finite time \(T&gt;0\) such that \(V(T)=0\); equivalently, \(V(t)\to 0\) as \(t\uparrow T\).</div>
-      <p><strong>Informal proof:</strong></p>
-      <div class="math-text">Since \(E(u_0)&lt;0\), the virial identity gives
+      <div class="math-text">There exists a finite time \(T&gt;0\) such that
 \[
-V&#x27;&#x27;(t)=16E(u_0)&lt;0.
+V(T)=0,
 \]
-Thus \(V\) is a quadratic function with negative leading coefficient: integrating twice,
+and hence
+\[
+V(t)\to 0\quad\text{as }t\uparrow T.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">From the virial identity and \(E(u_0)&lt;0\),
+\[
+V&#x27;&#x27;(t)=16E(u_0)&lt;0
+\]
+for all times of existence. Integrating twice gives
 \[
 V(t)=8E(u_0)t^2+at+b
 \]
-for some constants \(a,b\), and the coefficient of \(t^2\) is negative. Therefore \(V(t)\to -\infty\) as \(t\to +\infty\). On the other hand, by definition,
+for some constants \(a,b\), so the coefficient of \(t^2\) is negative. Therefore \(V(t)\to -\infty\) as \(t\to +\infty\). On the other hand,
 \[
 V(t)=\int_{\mathbb{R}^d}|x|^2|u(t,x)|^2\,dx\ge 0
 \]
-for every time where the solution exists. Hence \(V\) cannot stay positive for all \(t\ge 0\). By continuity, there is a finite \(T&gt;0\) with \(V(T)=0\), and therefore \(V(t)\to 0\) as \(t\uparrow T\).</div>
+whenever the solution exists. Hence \(V\) cannot remain positive for all \(t\ge 0\). By continuity, there is a finite \(T&gt;0\) with \(V(T)=0\), equivalently \(V(t)\to 0\) as \(t\uparrow T\).</div>
       
     </article>
     
 
     <article class="node-card node-n1_refined_local_claim" id="node-n1_refined_local_claim" data-node-id="n1_refined_local_claim">
       <h3>Local estimate</h3>
-      <p class="meta">Node id: n1_refined_local_claim | Status: formal_failed</p>
+      <p class="meta">Node id: n1_refined_local_claim | Status: formal_verified</p>
       <p class="meta">Display label: Refined estimate</p>
       <p class="meta">Formalization priority: 1. Rationale: Smaller concrete local consequence extracted because it is more directly formalizable than the broader surrounding node.</p>
       <p><strong>Informal statement:</strong></p>
       <div class="math-text">\[
-M^2\le \frac{2}{d}\,\|xu(t)\|_{L^2}\,\|\nabla u(t)\|_{L^2}.
+\|f\|_{L^2(\mathbb{R}^d)}^2\le \frac{2}{d}\,\|xf\|_{L^2(\mathbb{R}^d)}\,\|\nabla f\|_{L^2(\mathbb{R}^d)}
 \]</div>
       <p><strong>Informal proof:</strong></p>
-      <div class="math-text">Apply the assumed inequality
+      <div class="math-text">Apply the assumed weighted inequality
 \[
 \|f\|_{L^2(\mathbb{R}^d)}^2\le \frac{2}{d}\,\|xf\|_{L^2(\mathbb{R}^d)}\,\|\nabla f\|_{L^2(\mathbb{R}^d)}
 \]
-with \(f=u(t)\). Mass conservation gives \(\|u(t)\|_{L^2}=M\), so
+with \(f=u(t)\). Mass conservation gives \(\|u(t)\|_{L^2}=M\), and by definition of the variance,
 \[
-M^2\le \frac{2}{d}\,\|xu(t)\|_{L^2}\,\|\nabla u(t)\|_{L^2}.
-\]
-By definition of the variance,
-\[
-\|xu(t)\|_{L^2(\mathbb{R}^d)}^2=V(t),
-\]
-hence \(\|xu(t)\|_{L^2}=\sqrt{V(t)}\), yielding the claim.</div>
+\|xu(t)\|_{L^2(\mathbb{R}^d)}^2=V(t),</div>
       
         <h4>Formal Artifact</h4>
         <p><strong>Lean theorem name:</strong> reduced_glassey_local_estimate</p>
         <div class="statement-code">
           <strong>Lean statement:</strong>
-          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> reduced_glassey_local_estimate {d M uL2 xuL2 graduL2 : <span class="tok-type">ℝ</span>} (h_est : uL2 ^ <span class="tok-number">2</span> ≤ (<span class="tok-number">2</span> / d) * xuL2 * graduL2) (h_mass : uL2 = M) : M ^ <span class="tok-number">2</span> ≤ (<span class="tok-number">2</span> / d) * xuL2 * graduL2</code></pre>
+          <pre><code class="language-lean">theorem reduced_glassey_local_estimate
+    {d mass variance l2u xL2u gradL2u : ℝ}
+    (hweighted : l2u ^ 2 ≤ (2 / d) * xL2u * gradL2u)
+    (hmass : l2u = mass)
+    (hvariance : xL2u ^ 2 = variance)
+    (hx_nonneg : 0 ≤ xL2u) :
+    mass ^ 2 ≤ (2 / d) * Real.sqrt variance * gradL2u</code></pre>
         </div>
-        <p><strong>Verification status:</strong> failed</p>
+        <p><strong>Verification status:</strong> verified</p>
         <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_attempt_1.lean</code></p>
         <details>
           <summary>Lean code</summary>
-          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+          <pre><code class="language-lean">import Mathlib
 
-<span class="tok-keyword">theorem</span> reduced_glassey_local_estimate {d M uL2 xuL2 graduL2 : <span class="tok-type">ℝ</span>}
-    (h_est : uL2 ^ <span class="tok-number">2</span> ≤ (<span class="tok-number">2</span> / d) * xuL2 * graduL2)
-    (h_mass : uL2 = M) :
-    M ^ <span class="tok-number">2</span> ≤ (<span class="tok-number">2</span> / d) * xuL2 * graduL2 := <span class="tok-tactic">by</span>
-  <span class="tok-tactic">simpa</span> [h_mass] using h_est</code></pre>
+theorem reduced_glassey_local_estimate
+    {d mass variance l2u xL2u gradL2u : ℝ}
+    (hweighted : l2u ^ 2 ≤ (2 / d) * xL2u * gradL2u)
+    (hmass : l2u = mass)
+    (hvariance : xL2u ^ 2 = variance)
+    (hx_nonneg : 0 ≤ xL2u) :
+    mass ^ 2 ≤ (2 / d) * Real.sqrt variance * gradL2u := by
+  have hsqrt : Real.sqrt variance = xL2u := by
+    rw [← hvariance, Real.sqrt_sq_eq_abs, abs_of_nonneg hx_nonneg]
+  calc
+    mass ^ 2 = l2u ^ 2 := by simpa [hmass]
+    _ ≤ (2 / d) * xL2u * gradL2u := hweighted
+    _ = (2 / d) * Real.sqrt variance * gradL2u := by
+      rw [← hsqrt]</code></pre>
         </details>
         <details>
           <summary>Verification logs</summary>
           <pre><code>stdout:
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_attempt_1.lean:13:29: warning: try &#x27;simp&#x27; instead of &#x27;simpa&#x27;
+
+Note: This linter can be disabled with `set_option linter.unnecessarySimpa false`
 
 
 stderr:
-Lean verification timed out after 120.0 seconds.</code></pre>
+</code></pre>
         </details>
         
     </article>

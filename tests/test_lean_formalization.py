@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from formal_islands.backends import MockBackend
+from formal_islands.backends import BackendInvocationError, MockBackend
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.formalization.loop import formalize_candidate_node
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
@@ -116,6 +116,34 @@ def test_lean_verifier_handles_relative_workspace_root(
     assert result.status == "verified"
 
 
+def test_lean_verifier_captures_timeout_as_failed_result(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        exc = subprocess.TimeoutExpired(cmd=args, timeout=timeout or 0)
+        exc.stdout = ""
+        exc.stderr = ""
+        raise exc
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run, timeout_seconds=5.0)
+    result = verifier.verify_code(
+        lean_code="theorem t : True := by trivial",
+        node_id="n2",
+        attempt_number=1,
+    )
+
+    assert result.status == "failed"
+    assert "timed out" in result.stderr.lower()
+
+
 def test_formalize_candidate_node_records_retry_history(tmp_path: Path) -> None:
     workspace = create_workspace(tmp_path)
     verifier_results = iter(
@@ -166,6 +194,10 @@ def test_formalize_candidate_node_records_retry_history(tmp_path: Path) -> None:
     assert updated_node.formal_artifact is not None
     assert len(updated_node.formal_artifact.attempt_history) == 2
     assert "Compiler feedback from the previous attempt:" in backend.requests[1].prompt
+    assert "avoid arbitrary `type*` parameters" in backend.requests[1].prompt.lower()
+    assert "avoid both `import mathlib`" in backend.requests[1].prompt.lower()
+    assert "previous failed lean file to revise" in backend.requests[1].prompt.lower()
+    assert "theorem sum_nonneg_attempt_1" in backend.requests[1].prompt
 
 
 def test_formalize_candidate_node_marks_failure_after_bound(tmp_path: Path) -> None:
@@ -239,3 +271,166 @@ def test_formalize_candidate_node_rejects_invalid_attempt_bound(tmp_path: Path) 
             node_id="n2",
             max_attempts=0,
         )
+
+
+def test_formalize_candidate_node_repairs_faithfulness_drift_once(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "lean_theorem_name": "too_abstract",
+                "lean_statement": (
+                    "theorem too_abstract {ι : Type*} (lhs rhs total : ι → ℝ) : "
+                    "∀ t, total t = lhs t + rhs t"
+                ),
+                "lean_code": (
+                    "import Mathlib\n\n"
+                    "theorem too_abstract {ι : Type*} (lhs rhs total : ι → ℝ) : "
+                    "∀ t, total t = lhs t + rhs t := by\n"
+                    "  intro t\n"
+                    "  sorry\n"
+                ),
+            },
+            {
+                "lean_theorem_name": "sum_nonneg",
+                "lean_statement": "theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b",
+                "lean_code": (
+                    "import Mathlib\n\n"
+                    "theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b := by\n"
+                    "  nlinarith\n"
+                ),
+            },
+        ]
+    )
+
+    outcome = formalize_candidate_node(
+        backend=backend,
+        verifier=verifier,
+        graph=build_graph(),
+        node_id="n2",
+        max_attempts=2,
+    )
+
+    updated_node = next(node for node in outcome.graph.nodes if node.id == "n2")
+    assert updated_node.status == "formal_verified"
+    assert len(updated_node.formal_artifact.attempt_history) == 2
+    assert "faithfulness guard" in backend.requests[1].prompt.lower()
+    assert "theorem too_abstract" in backend.requests[1].prompt
+
+
+def test_formalize_candidate_node_uses_at_most_three_repair_retries(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+    verifier_results = iter(
+        [
+            subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="unknown identifier"),
+            subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="unknown identifier"),
+            subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="unknown identifier"),
+            subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="unknown identifier"),
+        ]
+    )
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return next(verifier_results)
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "lean_theorem_name": "sum_nonneg_attempt_1",
+                "lean_statement": "0 <= a + b",
+                "lean_code": "import Mathlib\n\ntheorem sum_nonneg_attempt_1 : 0 <= a + b := by\n  simp",
+            },
+            {
+                "lean_theorem_name": "sum_nonneg_attempt_2",
+                "lean_statement": "0 <= a + b",
+                "lean_code": "import Mathlib\n\ntheorem sum_nonneg_attempt_2 : 0 <= a + b := by\n  simp",
+            },
+            {
+                "lean_theorem_name": "sum_nonneg_attempt_3",
+                "lean_statement": "0 <= a + b",
+                "lean_code": "import Mathlib\n\ntheorem sum_nonneg_attempt_3 : 0 <= a + b := by\n  simp",
+            },
+            {
+                "lean_theorem_name": "sum_nonneg_attempt_4",
+                "lean_statement": "0 <= a + b",
+                "lean_code": "import Mathlib\n\ntheorem sum_nonneg_attempt_4 : 0 <= a + b := by\n  simp",
+            },
+            {
+                "lean_theorem_name": "sum_nonneg_attempt_5",
+                "lean_statement": "0 <= a + b",
+                "lean_code": "import Mathlib\n\ntheorem sum_nonneg_attempt_5 : 0 <= a + b := by\n  simp",
+            },
+        ]
+    )
+
+    outcome = formalize_candidate_node(
+        backend=backend,
+        verifier=verifier,
+        graph=build_graph(),
+        node_id="n2",
+        max_attempts=5,
+    )
+
+    updated_node = next(node for node in outcome.graph.nodes if node.id == "n2")
+    assert updated_node.status == "formal_failed"
+    assert len(updated_node.formal_artifact.attempt_history) == 4
+    assert len(backend.requests) == 4
+
+
+def test_formalize_candidate_node_records_backend_failure_and_emits_update(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    class FailingBackend:
+        def run_structured(self, request):
+            raise BackendInvocationError("Codex timed out")
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    updates = []
+
+    outcome = formalize_candidate_node(
+        backend=FailingBackend(),
+        verifier=verifier,
+        graph=build_graph(),
+        node_id="n2",
+        max_attempts=2,
+        on_update=updates.append,
+    )
+
+    updated_node = next(node for node in outcome.graph.nodes if node.id == "n2")
+    assert updated_node.status == "formal_failed"
+    assert updated_node.formal_artifact is not None
+    assert updated_node.formal_artifact.verification.command == "backend_request"
+    assert "Codex timed out" in updated_node.formal_artifact.verification.stderr
+    assert len(updates) == 1
