@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Weighted L2 inequality - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.55;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 251, 242, 0.96), rgba(245, 238, 227, 0.96));
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 420px;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 3.5;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-box {
+      fill: rgba(255, 250, 241, 0.98);
+      stroke: var(--accent);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-title {
+      fill: var(--ink);
+      font-size: 12px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 11px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 250, 241, 0.95);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: #fff8ee;
+    }
+    pre {
+      overflow-x: auto;
+      padding: 0.75rem;
+      background: #f4efe6;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    
+            .report-root:has(a.node-n1:hover) .node-n1.node-card,
+            .report-root:has(#node-n1:target) a.node-n1 .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-n1:hover) .node-n1.node-card,
+            .report-root:has(#node-n1:target).report-root .node-n1.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-n1:hover) a.node-n1 .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-n1:checked) a.node-n1 .graph-node-box,
+.report-root:has(.obligation-informal-proof-n1:hover) .node-n1.node-card,
+.report-root:has(#obligation-check-informal-proof-n1:checked) .node-n1.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+            .report-root:has(#obligation-check-informal-proof-n1:checked) .obligation-informal-proof-n1 {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-root">
+    <section>
+      <h1>Weighted L2 inequality</h1>
+      <div class="math-text">Weighted \(L^2\) inequality on \(\mathbb{R}^d\).
+
+Let \(d \ge 1\) and let \(f : \mathbb{R}^d \to \mathbb{C}\) be sufficiently regular and sufficiently decaying at infinity so that the integrations by parts below are justified, with \(f \in H^1(\mathbb{R}^d)\) and \(x f \in L^2(\mathbb{R}^d)\). Then
+
+\[
+\|f\|_{L^2(\mathbb{R}^d)}^2 \le \frac{2}{d}\,\|x f\|_{L^2(\mathbb{R}^d)}\,\|\nabla f\|_{L^2(\mathbb{R}^d)}.
+\]</div>
+      <p class="meta">Root node: n1</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 1</span>
+        <span class="pill">Edges: 0</span>
+        <span class="pill">Informal: 0</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 0</span>
+        <span class="pill">Failed: 1</span>
+      </p>
+      <div class="graph-shell">
+        
+    <svg class="graph-widget" viewBox="0 0 420 138" role="img" aria-label="Proof graph">
+      <defs>
+        <marker id="graph-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L9,3 z" fill="#b3aa9f"></path>
+        </marker>
+      </defs>
+      <g></g>
+      <g>
+    <a class="graph-node-link node-n1" href="#node-n1">
+      <rect class="graph-node-box" x="132.0" y="30" rx="22" ry="22" width="156" height="78"></rect>
+      <text class="graph-node-title"><tspan x="210.0" y="55">Weighted \(L^2\)</tspan>
+<tspan x="210.0" y="70">inequality</tspan></text>
+      <text class="graph-node-id" x="210.0" y="90">n1</text>
+    </a>
+    </g>
+    </svg>
+    
+      </div>
+      <p class="graph-caption">
+        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+      </p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-informal-proof-n1" data-obligation-id="informal-proof-n1">
+      <label class="checklist-label" for="obligation-check-informal-proof-n1">
+        <input id="obligation-check-informal-proof-n1" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;n1&#x27; (Weighted \(L^2\) inequality on \(\mathbb{R}^d\)) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n1">n1</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="nodes-grid">
+        
+    <article class="node-card node-n1" id="node-n1" data-node-id="n1">
+      <h3>Weighted \(L^2\) inequality on \(\mathbb{R}^d\)</h3>
+      <p class="meta">Node id: n1 | Status: formal_failed</p>
+      <p class="meta">Display label: Weighted \(L^2\) inequality</p>
+      <p class="meta">Formalization priority: 1. Rationale: Only substantive node in the graph and a reasonable first-prototype target: a single, self-contained analytic inequality with a short proof built from divergence of the identity field, integration by parts, the identity for the gradient of |f|^2, and Cauchy-Schwarz. Although it depends on standard measure/Sobolev infrastructure, it does not require formalizing a larger parent chain or multiple auxiliary graph nodes.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \(d \ge 1\) and let \(f : \mathbb{R}^d \to \mathbb{C}\) be sufficiently regular and sufficiently decaying at infinity so that the integrations by parts below are justified, with \(f \in H^1(\mathbb{R}^d)\) and \(x f \in L^2(\mathbb{R}^d)\). Then
+\[
+\|f\|_{L^2(\mathbb{R}^d)}^2 \le \frac{2}{d}\,\|x f\|_{L^2(\mathbb{R}^d)}\,\|\nabla f\|_{L^2(\mathbb{R}^d)}.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Start from
+\[
+\|f\|_{L^2(\mathbb{R}^d)}^2 = \int_{\mathbb{R}^d} |f(x)|^2\,dx = \frac1d \int_{\mathbb{R}^d} (\operatorname{div} x) |f(x)|^2\,dx,
+\]
+using \(\operatorname{div}(x)=d\). Integrating by parts and discarding the boundary term by the decay assumptions gives
+\[
+\|f\|_{L^2(\mathbb{R}^d)}^2 = -\frac1d \int_{\mathbb{R}^d} x\cdot \nabla(|f(x)|^2)\,dx.
+\]
+Next,
+\[
+\nabla(|f|^2)=\nabla(f\overline f)=(\nabla f)\overline f+f\nabla\overline f,
+\]
+so
+\[
+x\cdot \nabla(|f|^2)=2\,\operatorname{Re}(x\cdot \nabla f\,\overline f).
+\]
+Hence
+\[
+\|f\|_{L^2(\mathbb{R}^d)}^2 = -\frac{2}{d}\operatorname{Re}\int_{\mathbb{R}^d} x\cdot \nabla f(x)\,\overline{f(x)}\,dx.
+\]
+Taking absolute values and using \(|\operatorname{Re} z|\le |z|\),
+\[
+\|f\|_{L^2(\mathbb{R}^d)}^2 \le \frac{2}{d}\int_{\mathbb{R}^d} |x|\,|\nabla f(x)|\,|f(x)|\,dx.
+\]
+Apply Cauchy--Schwarz to \(|x||f(x)|\) and \(|\nabla f(x)|\):
+\[
+\int_{\mathbb{R}^d} |x|\,|\nabla f(x)|\,|f(x)|\,dx
+\le
+\left(\int_{\mathbb{R}^d} |x|^2 |f(x)|^2\,dx\right)^{1/2}
+\left(\int_{\mathbb{R}^d} |\nabla f(x)|^2\,dx\right)^{1/2}.
+\]
+This is
+\[
+\int_{\mathbb{R}^d} |x|\,|\nabla f|\,|f| \le \|x f\|_{L^2(\mathbb{R}^d)}\,\|\nabla f\|_{L^2(\mathbb{R}^d)}.
+\]
+Combining the two estimates yields
+\[
+\|f\|_{L^2(\mathbb{R}^d)}^2 \le \frac{2}{d}\,\|x f\|_{L^2(\mathbb{R}^d)}\,\|\nabla f\|_{L^2(\mathbb{R}^d)},
+\]
+as claimed.</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> weighted_L2_inequality</p>
+        <p><strong>Lean statement:</strong> theorem weighted_L2_inequality {d : ℕ} (hd : 0 &lt; d) {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E] {f xf gradf : E} (hId : ‖f‖ ^ (2 : ℕ) = ((2 : ℝ) / (d : ℝ)) * (-(Complex.re ⟪xf, gradf⟫_ℂ))) : ‖f‖ ^ (2 : ℕ) ≤ ((2 : ℝ) / (d : ℝ)) * ‖xf‖ * ‖gradf‖</p>
+        <p><strong>Verification status:</strong> failed</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_attempt_1.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code>import Mathlib
+
+/--
+A local Hilbert-space version of the weighted `L^2` inequality.
+
+In the intended application to `L^2(ℝ^d)`, the element `xf` represents the weighted
+function `x ↦ x • f x`, the element `gradf` represents the weak gradient, and `hId`
+packages the integration-by-parts identity coming from `div x = d`.
+-/
+theorem weighted_L2_inequality
+    {d : ℕ} (hd : 0 &lt; d)
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    {f xf gradf : E}
+    (hId : ‖f‖ ^ (2 : ℕ) =
+      ((2 : ℝ) / (d : ℝ)) * (-(Complex.re ⟪xf, gradf⟫_ℂ))) :
+    ‖f‖ ^ (2 : ℕ) ≤ ((2 : ℝ) / (d : ℝ)) * ‖xf‖ * ‖gradf‖ := by
+  let c : ℝ := (2 : ℝ) / (d : ℝ)
+  have hdR : 0 &lt; (d : ℝ) := by
+    exact_mod_cast hd
+  have hc : 0 ≤ c := by
+    dsimp [c]
+    exact div_nonneg (by positivity) hdR.le
+  have hre : -(Complex.re ⟪xf, gradf⟫_ℂ) ≤ ‖xf‖ * ‖gradf‖ := by
+    have h1 : -(Complex.re ⟪xf, gradf⟫_ℂ) ≤ |Complex.re ⟪xf, gradf⟫_ℂ| := by
+      exact neg_le_abs _
+    have h2 : |Complex.re ⟪xf, gradf⟫_ℂ| ≤ ‖⟪xf, gradf⟫_ℂ‖ := by
+      simpa using Complex.abs_re_le_abs ⟪xf, gradf⟫_ℂ
+    exact le_trans h1 (le_trans h2 (norm_inner_le_norm _ _))
+  calc
+    ‖f‖ ^ (2 : ℕ) = c * (-(Complex.re ⟪xf, gradf⟫_ℂ)) := by
+      simpa [c] using hId
+    _ ≤ c * (‖xf‖ * ‖gradf‖) := by
+      exact mul_le_mul_of_nonneg_left hre hc
+    _ = c * ‖xf‖ * ‖gradf‖ := by
+      simp [mul_assoc]
+    _ = ((2 : ℝ) / (d : ℝ)) * ‖xf‖ * ‖gradf‖ := by
+      simp [c]
+</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_attempt_1.lean:15:52: error: expected token
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+      </div>
+    </section>
+  </main>
+</body>
+</html>

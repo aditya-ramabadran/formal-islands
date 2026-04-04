@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Full Glassey blow-up proof - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.55;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 251, 242, 0.96), rgba(245, 238, 227, 0.96));
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 420px;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 3.5;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-box {
+      fill: rgba(255, 250, 241, 0.98);
+      stroke: var(--accent);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-title {
+      fill: var(--ink);
+      font-size: 12px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 11px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 250, 241, 0.95);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: #fff8ee;
+    }
+    pre {
+      overflow-x: auto;
+      padding: 0.75rem;
+      background: #f4efe6;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    
+            .report-root:has(a.node-thm_glassey_blowup:hover) .node-thm_glassey_blowup.node-card,
+            .report-root:has(#node-thm_glassey_blowup:target) a.node-thm_glassey_blowup .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-thm_glassey_blowup:hover) .node-thm_glassey_blowup.node-card,
+            .report-root:has(#node-thm_glassey_blowup:target).report-root .node-thm_glassey_blowup.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }
+            
+
+            .report-root:has(a.node-lem_virial_negative_second_derivative:hover) .node-lem_virial_negative_second_derivative.node-card,
+            .report-root:has(#node-lem_virial_negative_second_derivative:target) a.node-lem_virial_negative_second_derivative .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-lem_virial_negative_second_derivative:hover) .node-lem_virial_negative_second_derivative.node-card,
+            .report-root:has(#node-lem_virial_negative_second_derivative:target).report-root .node-lem_virial_negative_second_derivative.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }
+            
+
+            .report-root:has(a.node-lem_weighted_inequality:hover) .node-lem_weighted_inequality.node-card,
+            .report-root:has(#node-lem_weighted_inequality:target) a.node-lem_weighted_inequality .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-lem_weighted_inequality:hover) .node-lem_weighted_inequality.node-card,
+            .report-root:has(#node-lem_weighted_inequality:target).report-root .node-lem_weighted_inequality.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-thm_glassey_blowup:hover) a.node-thm_glassey_blowup .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-thm_glassey_blowup:checked) a.node-thm_glassey_blowup .graph-node-box,
+.report-root:has(.obligation-informal-proof-thm_glassey_blowup:hover) .node-thm_glassey_blowup.node-card,
+.report-root:has(#obligation-check-informal-proof-thm_glassey_blowup:checked) .node-thm_glassey_blowup.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(.obligation-informal-proof-thm_glassey_blowup:hover) .edge-thm_glassey_blowup-lem_virial_negative_second_derivative,
+.report-root:has(.obligation-informal-proof-thm_glassey_blowup:hover) .edge-thm_glassey_blowup-lem_weighted_inequality,
+.report-root:has(#obligation-check-informal-proof-thm_glassey_blowup:checked) .edge-thm_glassey_blowup-lem_virial_negative_second_derivative,
+.report-root:has(#obligation-check-informal-proof-thm_glassey_blowup:checked) .edge-thm_glassey_blowup-lem_weighted_inequality {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(#obligation-check-informal-proof-thm_glassey_blowup:checked) .obligation-informal-proof-thm_glassey_blowup {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-lem_virial_negative_second_derivative:hover) a.node-lem_virial_negative_second_derivative .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-lem_virial_negative_second_derivative:checked) a.node-lem_virial_negative_second_derivative .graph-node-box,
+.report-root:has(.obligation-informal-proof-lem_virial_negative_second_derivative:hover) .node-lem_virial_negative_second_derivative.node-card,
+.report-root:has(#obligation-check-informal-proof-lem_virial_negative_second_derivative:checked) .node-lem_virial_negative_second_derivative.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(.obligation-informal-proof-lem_virial_negative_second_derivative:hover) .edge-thm_glassey_blowup-lem_virial_negative_second_derivative,
+.report-root:has(#obligation-check-informal-proof-lem_virial_negative_second_derivative:checked) .edge-thm_glassey_blowup-lem_virial_negative_second_derivative {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(#obligation-check-informal-proof-lem_virial_negative_second_derivative:checked) .obligation-informal-proof-lem_virial_negative_second_derivative {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-lem_weighted_inequality:hover) a.node-lem_weighted_inequality .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-lem_weighted_inequality:checked) a.node-lem_weighted_inequality .graph-node-box,
+.report-root:has(.obligation-informal-proof-lem_weighted_inequality:hover) .node-lem_weighted_inequality.node-card,
+.report-root:has(#obligation-check-informal-proof-lem_weighted_inequality:checked) .node-lem_weighted_inequality.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(.obligation-informal-proof-lem_weighted_inequality:hover) .edge-thm_glassey_blowup-lem_weighted_inequality,
+.report-root:has(#obligation-check-informal-proof-lem_weighted_inequality:checked) .edge-thm_glassey_blowup-lem_weighted_inequality {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(#obligation-check-informal-proof-lem_weighted_inequality:checked) .obligation-informal-proof-lem_weighted_inequality {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-root">
+    <section>
+      <h1>Full Glassey blow-up proof</h1>
+      <div class="math-text">Glassey blow-up argument for the focusing mass-critical nonlinear Schrodinger equation.
+
+Consider a sufficiently regular solution \(u(t,x)\) to the focusing mass-critical NLS on \(\mathbb{R}^d\):
+
+\[
+i\partial_t u+\Delta u=-|u|^{4/d}u.
+\]
+
+Assume:
+
+- \(u_0\in H^1(\mathbb{R}^d)\),
+
+- \(|x|u_0\in L^2(\mathbb{R}^d)\),
+
+- the energy \(E(u_0)\) is negative, where
+
+\[
+E(u)=\frac12\int_{\mathbb{R}^d}|\nabla u|^2\,dx
+-\frac{1}{2+4/d}\int_{\mathbb{R}^d}|u|^{2+4/d}\,dx.
+\]
+
+Then the maximal forward existence time \(T\) is finite and
+
+\[
+\|u(t)\|_{H^1(\mathbb{R}^d)}\to\infty
+\quad\text{as }t\uparrow T.
+\]</div>
+      <p class="meta">Root node: thm_glassey_blowup</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 3</span>
+        <span class="pill">Edges: 2</span>
+        <span class="pill">Informal: 2</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 0</span>
+        <span class="pill">Failed: 1</span>
+      </p>
+      <div class="graph-shell">
+        
+    <svg class="graph-widget" viewBox="0 0 424 304" role="img" aria-label="Proof graph">
+      <defs>
+        <marker id="graph-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L9,3 z" fill="#b3aa9f"></path>
+        </marker>
+      </defs>
+      <g><line class="graph-edge edge-thm_glassey_blowup-lem_virial_negative_second_derivative" x1="212.0" y1="104.0" x2="108.0" y2="200.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-thm_glassey_blowup-lem_weighted_inequality" x1="212.0" y1="104.0" x2="316.0" y2="200.0" marker-end="url(#graph-arrow)"></line></g>
+      <g>
+    <a class="graph-node-link node-thm_glassey_blowup" href="#node-thm_glassey_blowup">
+      <rect class="graph-node-box" x="134.0" y="30" rx="22" ry="22" width="156" height="78"></rect>
+      <text class="graph-node-title"><tspan x="212.0" y="61">Glassey blow-up</tspan></text>
+      <text class="graph-node-id" x="212.0" y="90">thm_glassey_blowup</text>
+    </a>
+    
+
+    <a class="graph-node-link node-lem_virial_negative_second_derivative" href="#node-lem_virial_negative_second_derivative">
+      <rect class="graph-node-box" x="30.0" y="196" rx="22" ry="22" width="156" height="78"></rect>
+      <text class="graph-node-title"><tspan x="108.0" y="227">Virial identity</tspan></text>
+      <text class="graph-node-id" x="108.0" y="256">lem_virial_negative_second_derivative</text>
+    </a>
+    
+
+    <a class="graph-node-link node-lem_weighted_inequality" href="#node-lem_weighted_inequality">
+      <rect class="graph-node-box" x="238.0" y="196" rx="22" ry="22" width="156" height="78"></rect>
+      <text class="graph-node-title"><tspan x="316.0" y="221">Weighted</tspan>
+<tspan x="316.0" y="236">inequality</tspan></text>
+      <text class="graph-node-id" x="316.0" y="256">lem_weighted_inequality</text>
+    </a>
+    </g>
+    </svg>
+    
+      </div>
+      <p class="graph-caption">
+        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+      </p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-informal-proof-thm_glassey_blowup" data-obligation-id="informal-proof-thm_glassey_blowup">
+      <label class="checklist-label" for="obligation-check-informal-proof-thm_glassey_blowup">
+        <input id="obligation-check-informal-proof-thm_glassey_blowup" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;thm_glassey_blowup&#x27; (Finite-time blow-up from negative energy) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-thm_glassey_blowup">thm_glassey_blowup</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-lem_virial_negative_second_derivative" data-obligation-id="informal-proof-lem_virial_negative_second_derivative">
+      <label class="checklist-label" for="obligation-check-informal-proof-lem_virial_negative_second_derivative">
+        <input id="obligation-check-informal-proof-lem_virial_negative_second_derivative" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;lem_virial_negative_second_derivative&#x27; (Virial identity and negative variance curvature) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-lem_virial_negative_second_derivative">lem_virial_negative_second_derivative</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-lem_weighted_inequality" data-obligation-id="informal-proof-lem_weighted_inequality">
+      <label class="checklist-label" for="obligation-check-informal-proof-lem_weighted_inequality">
+        <input id="obligation-check-informal-proof-lem_weighted_inequality" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;lem_weighted_inequality&#x27; (Weighted inequality relating mass, variance, and gradient) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-lem_weighted_inequality">lem_weighted_inequality</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="nodes-grid">
+        
+    <article class="node-card node-thm_glassey_blowup" id="node-thm_glassey_blowup" data-node-id="thm_glassey_blowup">
+      <h3>Finite-time blow-up from negative energy</h3>
+      <p class="meta">Node id: thm_glassey_blowup | Status: informal</p>
+      <p class="meta">Display label: Glassey blow-up</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Under the stated assumptions, the maximal forward existence time \(T\) is finite and \(\|u(t)\|_{H^1(\mathbb{R}^d)}\to\infty\) as \(t\uparrow T\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Let \(V(t)=\int_{\mathbb{R}^d}|x|^2|u(t,x)|^2\,dx\). By the virial computation, \(V&#x27;&#x27;(t)=16E(u_0)&lt;0\), so \(V\) is a concave quadratic with negative leading coefficient. Since \(V(t)\ge 0\) by definition, it cannot stay nonnegative for all large positive \(t\); hence there is a finite positive time \(T\) with \(V(T)=0\), and therefore \(V(t)\to 0\) as \(t\uparrow T\). By the weighted inequality applied to \(f=u(t)\) and conservation of mass, if \(M=\|u_0\|_{L^2(\mathbb{R}^d)}\), then \(M^2\le \frac{2}{d}\sqrt{V(t)}\,\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}\). Because \(M&gt;0\) is fixed and \(\sqrt{V(t)}\to 0\), it follows that \(\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}\to\infty\) as \(t\uparrow T\). Since \(\|u(t)\|_{H^1}^2=\|u(t)\|_{L^2}^2+\|\nabla u(t)\|_{L^2}^2\) and the \(L^2\) norm is conserved, we obtain \(\|u(t)\|_{H^1(\mathbb{R}^d)}\to\infty\). Thus the solution blows up in finite positive time.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-lem_virial_negative_second_derivative" id="node-lem_virial_negative_second_derivative" data-node-id="lem_virial_negative_second_derivative">
+      <h3>Virial identity and negative variance curvature</h3>
+      <p class="meta">Node id: lem_virial_negative_second_derivative | Status: informal</p>
+      <p class="meta">Display label: Virial identity</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For \(V(t)=\int_{\mathbb{R}^d}|x|^2|u(t,x)|^2\,dx\), one has
+\[
+V&#x27;(t)=4\operatorname{Im}\int_{\mathbb{R}^d}x\cdot \nabla u(t,x)\,\overline{u(t,x)}\,dx
+\]
+and
+\[
+V&#x27;&#x27;(t)=16E(u(t))=16E(u_0)&lt;0.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Differentiate \(V(t)\) once:
+\[
+V&#x27;(t)=2\operatorname{Re}\int |x|^2u_t\overline u\,dx.
+\]
+Using \(iu_t+\Delta u=-|u|^{4/d}u\), rewrite \(u_t=i\Delta u+i|u|^{4/d}u\). Substituting into \(V&#x27;(t)\), the nonlinear term vanishes because \(\int |x|^2|u|^{2+4/d}\,dx\) is real, so its product with \(i\) is purely imaginary. Integrating by parts in the Laplacian term gives
+\[
+\int |x|^2\Delta u\,\overline u\,dx
+=-2\int x\cdot \nabla u\,\overline u\,dx-\int |x|^2|\nabla u|^2\,dx,
+\]
+and the last term is real, hence disappears after multiplying by \(i\) and taking real parts. Therefore
+\[
+V&#x27;(t)=4\operatorname{Im}\int x\cdot \nabla u\,\overline u\,dx.
+\]
+Differentiating again and substituting \(u_t=i\Delta u+i|u|^{4/d}u\), \(\overline{u_t}=-i\Delta\overline u-i|u|^{4/d}\overline u\), one splits \(V&#x27;&#x27;(t)\) into linear and nonlinear contributions. A standard integration-by-parts computation yields for the linear part
+\[
+4\operatorname{Re}\int x\cdot \nabla\Delta u\,\overline u\,dx-4\operatorname{Re}\int x\cdot \nabla u\,\Delta\overline u\,dx=8\int_{\mathbb{R}^d}|\nabla u|^2\,dx.
+\]
+For the nonlinear part, after rewriting the real-part contribution as a divergence term and integrating by parts using \(\operatorname{div}(x)=d\), one gets
+\[
+-\frac{16}{2+4/d}\int_{\mathbb{R}^d}|u|^{2+4/d}\,dx.
+\]
+Hence
+\[
+V&#x27;&#x27;(t)=8\int |\nabla u|^2\,dx-\frac{16}{2+4/d}\int |u|^{2+4/d}\,dx=16E(u(t)).
+\]
+By conservation of energy, \(E(u(t))=E(u_0)\), so \(V&#x27;&#x27;(t)=16E(u_0)&lt;0\).</div>
+      
+    </article>
+    
+
+    <article class="node-card node-lem_weighted_inequality" id="node-lem_weighted_inequality" data-node-id="lem_weighted_inequality">
+      <h3>Weighted inequality relating mass, variance, and gradient</h3>
+      <p class="meta">Node id: lem_weighted_inequality | Status: formal_failed</p>
+      <p class="meta">Display label: Weighted inequality</p>
+      <p class="meta">Formalization priority: 1. Rationale: Most conservative local island: a short, self-contained inequality proved by integration by parts, the identity div x = d, and Cauchy-Schwarz. It avoids the heavy PDE and time-differentiation machinery required for the virial lemma and is a useful standalone component for the final blow-up argument.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For sufficiently regular \(f\),
+\[
+\|f\|_{L^2(\mathbb{R}^d)}^2
+\le
+\frac{2}{d}\,\|x f\|_{L^2(\mathbb{R}^d)}\,\|\nabla f\|_{L^2(\mathbb{R}^d)}.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Using \(\operatorname{div}(x)=d\), integrate by parts:
+\[
+\|f\|_{L^2(\mathbb{R}^d)}^2
+=\int |f|^2\,dx
+=\frac{1}{d}\int (\operatorname{div}x)|f|^2\,dx
+=-\frac{1}{d}\int x\cdot \nabla(|f|^2)\,dx
+=-\frac{2}{d}\operatorname{Re}\int x\cdot \nabla f\,\overline f\,dx.
+\]
+Then \(|\operatorname{Re} z|\le |z|\) and Cauchy-Schwarz imply
+\[
+\|f\|_{L^2(\mathbb{R}^d)}^2
+\le
+\frac{2}{d}\,\|x f\|_{L^2(\mathbb{R}^d)}\,\|\nabla f\|_{L^2(\mathbb{R}^d)}.
+\]</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> lem_weighted_inequality</p>
+        <p><strong>Lean statement:</strong> theorem lem_weighted_inequality
+    {d : ℕ} (hd : 0 &lt; d)
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    {massSq : ℝ} {xf gradf : E}
+    (hibp : massSq = -((2 : ℝ) / d) * Complex.re (⟪xf, gradf⟫_ℂ)) :
+    massSq ≤ ((2 : ℝ) / d) * ‖xf‖ * ‖gradf‖</p>
+        <p><strong>Verification status:</strong> failed</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code>import Mathlib
+
+theorem lem_weighted_inequality
+    {d : ℕ} (hd : 0 &lt; d)
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    {massSq : ℝ} {xf gradf : E}
+    (hibp : massSq = -((2 : ℝ) / d) * Complex.re (⟪xf, gradf⟫_ℂ)) :
+    massSq ≤ ((2 : ℝ) / d) * ‖xf‖ * ‖gradf‖ := by
+  have h0 : 0 ≤ ((2 : ℝ) / d) := by
+    have hdR : (0 : ℝ) &lt; d := by
+      exact_mod_cast hd
+    positivity
+  have h1 : -Complex.re (⟪xf, gradf⟫_ℂ) ≤ |Complex.re (⟪xf, gradf⟫_ℂ)| := by
+    exact neg_le_abs _
+  have h2 : |Complex.re (⟪xf, gradf⟫_ℂ)| ≤ ‖⟪xf, gradf⟫_ℂ‖ := by
+    simpa using Complex.abs_re_le_abs (⟪xf, gradf⟫_ℂ)
+  have h3 : ‖⟪xf, gradf⟫_ℂ‖ ≤ ‖xf‖ * ‖gradf‖ := by
+    simpa using norm_inner_le_norm xf gradf
+  calc
+    massSq = -((2 : ℝ) / d) * Complex.re (⟪xf, gradf⟫_ℂ) := hibp
+    _ = ((2 : ℝ) / d) * (-Complex.re (⟪xf, gradf⟫_ℂ)) := by ring
+    _ ≤ ((2 : ℝ) / d) * |Complex.re (⟪xf, gradf⟫_ℂ)| := by
+      exact mul_le_mul_of_nonneg_left h1 h0
+    _ ≤ ((2 : ℝ) / d) * ‖⟪xf, gradf⟫_ℂ‖ := by
+      exact mul_le_mul_of_nonneg_left h2 h0
+    _ ≤ ((2 : ℝ) / d) * (‖xf‖ * ‖gradf‖) := by
+      exact mul_le_mul_of_nonneg_left h3 h0</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean:7:60: error: expected token
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+      </div>
+    </section>
+  </main>
+</body>
+</html>

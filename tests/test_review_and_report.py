@@ -40,5 +40,58 @@ def test_render_html_report_includes_core_sections() -> None:
     assert "Verification logs" in html
     assert 'type="checkbox"' in html
     assert 'class="graph-widget"' in html
-    assert 'class="graph-node-link node-n1"' in html
+    assert 'class="graph-node-link node-n1 status-informal"' in html
     assert 'data-obligation-id="informal-proof-n1"' in html
+    assert 'id="MathJax-script"' in html
+    assert "max-width: 460px;" in html
+    assert "verified formal nodes use green" in html
+
+
+def test_render_html_report_preserves_latex_text_blocks() -> None:
+    graph = build_example_graph().model_copy(
+        update={
+            "theorem_statement": r"Let \(f : \mathbb{R}^d \to \mathbb{C}\). Then \[\|f\|_{L^2}^2 \le 1.\]",
+            "nodes": [
+                node.model_copy(
+                    update={
+                        "informal_statement": r"Show \(\|f\|_{L^2}^2 \le 1\).",
+                        "informal_proof_text": r"Apply \(\nabla(|f|^2)\) and conclude from \[\int_{\mathbb{R}^d} |f|^2\,dx \le 1.\]",
+                    }
+                )
+                for node in build_example_graph().nodes
+            ],
+        }
+    )
+    obligations = derive_review_obligations(graph)
+
+    html = render_html_report(graph, obligations)
+
+    assert r"\(f : \mathbb{R}^d \to \mathbb{C}\)" in html
+    assert r"\[\|f\|_{L^2}^2 \le 1.\]" in html
+    assert 'class="math-text"' in html
+
+
+def test_render_html_report_uses_preview_highlight_for_hover_and_green_for_checked() -> None:
+    graph = build_example_graph()
+    obligations = derive_review_obligations(graph)
+
+    html = render_html_report(graph, obligations)
+
+    assert ".report-root:has(.obligation-informal-proof-n1:hover)" in html
+    assert "background: var(--preview-soft);" in html
+    assert ".report-root:has(#obligation-check-informal-proof-n1:checked)" in html
+    assert "background: var(--checked-soft);" in html
+
+
+def test_render_html_report_styles_graph_nodes_by_status() -> None:
+    graph = build_example_graph()
+    obligations = derive_review_obligations(graph)
+
+    html = render_html_report(graph, obligations)
+
+    assert 'class="graph-node-link node-n1 status-informal"' in html
+    assert 'class="graph-node-link node-n2 status-formal-verified"' in html
+    assert 'class="graph-node-box status-formal-verified"' in html
+    assert 'class="graph-node-badge status-formal-verified"' in html
+    assert ".graph-node-box.status-informal" in html
+    assert ".graph-node-box.status-formal-verified" in html

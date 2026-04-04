@@ -1,0 +1,80 @@
+{
+  "theorem_title": "Reduced Glassey blow-up argument",
+  "theorem_statement": "Finite-time blow-up from a virial identity for focusing mass-critical NLS.\n\nLet \\(u(t,x)\\) be a sufficiently regular solution on \\(\\mathbb{R}^d\\) with finite variance. Assume:\n\n1. mass is conserved:\n\n\\[\n\\|u(t)\\|_{L^2(\\mathbb{R}^d)}=\\|u_0\\|_{L^2(\\mathbb{R}^d)}=:M>0,\n\\]\n\n2. energy is conserved and negative:\n\n\\[\nE(u(t))=E(u_0)<0,\n\\]\n\n3. the variance\n\n\\[\nV(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\n\\]\n\nsatisfies\n\n\\[\nV''(t)=16E(u_0)<0,\n\\]\n\n4. for every sufficiently regular \\(f\\),\n\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\n\\le\n\\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]\n\nThen there exists \\(T<\\infty\\) such that\n\n\\[\n\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty\n\\quad\\text{as } t\\uparrow T.\n\\]",
+  "root_node_id": "n0",
+  "nodes": [
+    {
+      "id": "n0",
+      "title": "Finite-time blow-up from the virial identity",
+      "informal_statement": "There exists \\(T<\\infty\\) such that\n\\[\n\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty\n\\quad\\text{as } t\\uparrow T.\n\\]",
+      "informal_proof_text": "Let \\(T>0\\) be the finite time from the variance-vanishing claim. The weighted estimate gives\n\\[\nM^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\n\\]\nfor every time of existence. Here \\(M>0\\) is fixed, while \\(V(t)\\to 0\\) as \\(t\\uparrow T\\). Therefore the right-hand side can stay at least \\(M^2\\) only if\n\\[\n\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty\n\\quad\\text{as } t\\uparrow T.\n\\]\nThus the solution blows up in finite positive time.",
+      "status": "informal",
+      "display_label": "Blow-up theorem",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "n1",
+      "title": "The variance reaches zero in finite positive time",
+      "informal_statement": "There exists a finite time \\(T>0\\) such that\n\\[\nV(T)=0,\n\\]\nand hence\n\\[\nV(t)\\to 0\n\\quad\\text{as } t\\uparrow T.\n\\]",
+      "informal_proof_text": "Since \\(E(u_0)<0\\), the virial identity gives \\(V''(t)=16E(u_0)<0\\), so \\(V\\) is strictly concave. Integrating twice yields\n\\[\nV(t)=8E(u_0)t^2+at+b\n\\]\nfor some constants \\(a,b\\). Because \\(E(u_0)<0\\), the coefficient of \\(t^2\\) is negative, so \\(V(t)\\to -\\infty\\) as \\(t\\to +\\infty\\). But by definition\n\\[\nV(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\ge 0\n\\]\nfor every time on which the solution exists. Therefore \\(V\\) cannot stay positive for all \\(t\\ge 0\\). By continuity there exists a finite \\(T>0\\) with \\(V(T)=0\\), equivalently \\(V(t)\\to 0\\) as \\(t\\uparrow T\\).",
+      "status": "informal",
+      "display_label": "Variance hits zero",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "n2",
+      "title": "Mass and the weighted inequality force a lower bound involving \\(\\sqrt{V(t)}\\)",
+      "informal_statement": "For every time of existence,\n\\[\nM^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
+      "informal_proof_text": "Apply the weighted inequality with \\(f=u(t)\\):\n\\[\n\\|u(t)\\|_{L^2(\\mathbb{R}^d)}^2\n\\le\n\\frac{2}{d}\\,\\|x u(t)\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}.\n\\]\nMass conservation gives \\(\\|u(t)\\|_{L^2(\\mathbb{R}^d)}=M\\), hence\n\\[\nM^2\\le\n\\frac{2}{d}\\,\\|x u(t)\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}.\n\\]\nBy the definition of the variance,\n\\[\n\\|x u(t)\\|_{L^2(\\mathbb{R}^d)}^2=V(t),\n\\]\nso \\(\\|x u(t)\\|_{L^2(\\mathbb{R}^d)}=\\sqrt{V(t)}\\). Substituting gives the claimed inequality.",
+      "status": "formal_verified",
+      "display_label": "Mass-variance-gradient bound",
+      "formalization_priority": 1,
+      "formalization_rationale": "Most conservative local island: it is a direct one-step derivation from the assumed weighted inequality, mass conservation, and the definition of variance. It is technically self-contained, avoids global blow-up/existence machinery, and should formalize with low dependency overhead compared with the finite-time root argument or the concavity-to-first-zero claim.",
+      "formal_artifact": {
+        "lean_theorem_name": "reducedGlassey_mass_weighted_lower_bound",
+        "lean_statement": "theorem reducedGlassey_mass_weighted_lower_bound {\u03b9 : Type*} {d M : \u211d} (massNorm xNorm gradNorm V : \u03b9 \u2192 \u211d) (hMass : \u2200 t, massNorm t = M) (hxNonneg : \u2200 t, 0 \u2264 xNorm t) (hWeighted : \u2200 t, massNorm t ^ 2 \u2264 ((2 : \u211d) / d) * xNorm t * gradNorm t) (hVariance : \u2200 t, xNorm t ^ 2 = V t) : \u2200 t, M ^ 2 \u2264 ((2 : \u211d) / d) * Real.sqrt (V t) * gradNorm t",
+        "lean_code": "import Mathlib\n\ntheorem reducedGlassey_mass_weighted_lower_bound\n    {\u03b9 : Type*} {d M : \u211d}\n    (massNorm xNorm gradNorm V : \u03b9 \u2192 \u211d)\n    (hMass : \u2200 t, massNorm t = M)\n    (hxNonneg : \u2200 t, 0 \u2264 xNorm t)\n    (hWeighted : \u2200 t, massNorm t ^ 2 \u2264 ((2 : \u211d) / d) * xNorm t * gradNorm t)\n    (hVariance : \u2200 t, xNorm t ^ 2 = V t) :\n    \u2200 t, M ^ 2 \u2264 ((2 : \u211d) / d) * Real.sqrt (V t) * gradNorm t := by\n  intro t\n  have hxEq : xNorm t = Real.sqrt (V t) := by\n    rw [\u2190 hVariance t, Real.sqrt_sq_eq_abs, abs_of_nonneg (hxNonneg t)]\n  calc\n    M ^ 2 = massNorm t ^ 2 := by rw [\u2190 hMass t]\n    _ \u2264 ((2 : \u211d) / d) * xNorm t * gradNorm t := hWeighted t\n    _ = ((2 : \u211d) / d) * Real.sqrt (V t) * gradNorm t := by rw [hxEq]\n",
+        "verification": {
+          "status": "verified",
+          "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n2_attempt_1.lean",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "",
+          "elapsed_seconds": 91.90062720817514,
+          "attempt_count": 1,
+          "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n2_attempt_1.lean"
+        },
+        "attempt_history": [
+          {
+            "status": "verified",
+            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n2_attempt_1.lean",
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "elapsed_seconds": 91.90062720817514,
+            "attempt_count": 1,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n2_attempt_1.lean"
+          }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "n0",
+      "target_id": "n1",
+      "label": "depends on",
+      "explanation": "The blow-up time is obtained from the finite time at which the variance tends to zero."
+    },
+    {
+      "source_id": "n0",
+      "target_id": "n2",
+      "label": "depends on",
+      "explanation": "The weighted inequality turns small variance and positive mass into divergence of the gradient norm."
+    }
+  ]
+}

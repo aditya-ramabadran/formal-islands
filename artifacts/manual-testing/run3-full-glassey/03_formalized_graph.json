@@ -1,0 +1,80 @@
+{
+  "theorem_title": "Full Glassey blow-up proof",
+  "theorem_statement": "Glassey blow-up argument for the focusing mass-critical nonlinear Schrodinger equation.\n\nConsider a sufficiently regular solution \\(u(t,x)\\) to the focusing mass-critical NLS on \\(\\mathbb{R}^d\\):\n\n\\[\ni\\partial_t u+\\Delta u=-|u|^{4/d}u.\n\\]\n\nAssume:\n\n- \\(u_0\\in H^1(\\mathbb{R}^d)\\),\n\n- \\(|x|u_0\\in L^2(\\mathbb{R}^d)\\),\n\n- the energy \\(E(u_0)\\) is negative, where\n\n\\[\nE(u)=\\frac12\\int_{\\mathbb{R}^d}|\\nabla u|^2\\,dx\n-\\frac{1}{2+4/d}\\int_{\\mathbb{R}^d}|u|^{2+4/d}\\,dx.\n\\]\n\nThen the maximal forward existence time \\(T\\) is finite and\n\n\\[\n\\|u(t)\\|_{H^1(\\mathbb{R}^d)}\\to\\infty\n\\quad\\text{as }t\\uparrow T.\n\\]",
+  "root_node_id": "thm_glassey_blowup",
+  "nodes": [
+    {
+      "id": "thm_glassey_blowup",
+      "title": "Finite-time blow-up from negative energy",
+      "informal_statement": "Under the stated assumptions, the maximal forward existence time \\(T\\) is finite and \\(\\|u(t)\\|_{H^1(\\mathbb{R}^d)}\\to\\infty\\) as \\(t\\uparrow T\\).",
+      "informal_proof_text": "Let \\(V(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\). By the virial computation, \\(V''(t)=16E(u_0)<0\\), so \\(V\\) is a concave quadratic with negative leading coefficient. Since \\(V(t)\\ge 0\\) by definition, it cannot stay nonnegative for all large positive \\(t\\); hence there is a finite positive time \\(T\\) with \\(V(T)=0\\), and therefore \\(V(t)\\to 0\\) as \\(t\\uparrow T\\). By the weighted inequality applied to \\(f=u(t)\\) and conservation of mass, if \\(M=\\|u_0\\|_{L^2(\\mathbb{R}^d)}\\), then \\(M^2\\le \\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\). Because \\(M>0\\) is fixed and \\(\\sqrt{V(t)}\\to 0\\), it follows that \\(\\|\\nabla u(t)\\|_{L^2(\\mathbb{R}^d)}\\to\\infty\\) as \\(t\\uparrow T\\). Since \\(\\|u(t)\\|_{H^1}^2=\\|u(t)\\|_{L^2}^2+\\|\\nabla u(t)\\|_{L^2}^2\\) and the \\(L^2\\) norm is conserved, we obtain \\(\\|u(t)\\|_{H^1(\\mathbb{R}^d)}\\to\\infty\\). Thus the solution blows up in finite positive time.",
+      "status": "informal",
+      "display_label": "Glassey blow-up",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "lem_virial_negative_second_derivative",
+      "title": "Virial identity and negative variance curvature",
+      "informal_statement": "For \\(V(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\), one has\n\\[\nV'(t)=4\\operatorname{Im}\\int_{\\mathbb{R}^d}x\\cdot \\nabla u(t,x)\\,\\overline{u(t,x)}\\,dx\n\\]\nand\n\\[\nV''(t)=16E(u(t))=16E(u_0)<0.\n\\]",
+      "informal_proof_text": "Differentiate \\(V(t)\\) once:\n\\[\nV'(t)=2\\operatorname{Re}\\int |x|^2u_t\\overline u\\,dx.\n\\]\nUsing \\(iu_t+\\Delta u=-|u|^{4/d}u\\), rewrite \\(u_t=i\\Delta u+i|u|^{4/d}u\\). Substituting into \\(V'(t)\\), the nonlinear term vanishes because \\(\\int |x|^2|u|^{2+4/d}\\,dx\\) is real, so its product with \\(i\\) is purely imaginary. Integrating by parts in the Laplacian term gives\n\\[\n\\int |x|^2\\Delta u\\,\\overline u\\,dx\n=-2\\int x\\cdot \\nabla u\\,\\overline u\\,dx-\\int |x|^2|\\nabla u|^2\\,dx,\n\\]\nand the last term is real, hence disappears after multiplying by \\(i\\) and taking real parts. Therefore\n\\[\nV'(t)=4\\operatorname{Im}\\int x\\cdot \\nabla u\\,\\overline u\\,dx.\n\\]\nDifferentiating again and substituting \\(u_t=i\\Delta u+i|u|^{4/d}u\\), \\(\\overline{u_t}=-i\\Delta\\overline u-i|u|^{4/d}\\overline u\\), one splits \\(V''(t)\\) into linear and nonlinear contributions. A standard integration-by-parts computation yields for the linear part\n\\[\n4\\operatorname{Re}\\int x\\cdot \\nabla\\Delta u\\,\\overline u\\,dx-4\\operatorname{Re}\\int x\\cdot \\nabla u\\,\\Delta\\overline u\\,dx=8\\int_{\\mathbb{R}^d}|\\nabla u|^2\\,dx.\n\\]\nFor the nonlinear part, after rewriting the real-part contribution as a divergence term and integrating by parts using \\(\\operatorname{div}(x)=d\\), one gets\n\\[\n-\\frac{16}{2+4/d}\\int_{\\mathbb{R}^d}|u|^{2+4/d}\\,dx.\n\\]\nHence\n\\[\nV''(t)=8\\int |\\nabla u|^2\\,dx-\\frac{16}{2+4/d}\\int |u|^{2+4/d}\\,dx=16E(u(t)).\n\\]\nBy conservation of energy, \\(E(u(t))=E(u_0)\\), so \\(V''(t)=16E(u_0)<0\\).",
+      "status": "informal",
+      "display_label": "Virial identity",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "lem_weighted_inequality",
+      "title": "Weighted inequality relating mass, variance, and gradient",
+      "informal_statement": "For sufficiently regular \\(f\\),\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\n\\le\n\\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
+      "informal_proof_text": "Using \\(\\operatorname{div}(x)=d\\), integrate by parts:\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\n=\\int |f|^2\\,dx\n=\\frac{1}{d}\\int (\\operatorname{div}x)|f|^2\\,dx\n=-\\frac{1}{d}\\int x\\cdot \\nabla(|f|^2)\\,dx\n=-\\frac{2}{d}\\operatorname{Re}\\int x\\cdot \\nabla f\\,\\overline f\\,dx.\n\\]\nThen \\(|\\operatorname{Re} z|\\le |z|\\) and Cauchy-Schwarz imply\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\n\\le\n\\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
+      "status": "formal_failed",
+      "display_label": "Weighted inequality",
+      "formalization_priority": 1,
+      "formalization_rationale": "Most conservative local island: a short, self-contained inequality proved by integration by parts, the identity div x = d, and Cauchy-Schwarz. It avoids the heavy PDE and time-differentiation machinery required for the virial lemma and is a useful standalone component for the final blow-up argument.",
+      "formal_artifact": {
+        "lean_theorem_name": "lem_weighted_inequality",
+        "lean_statement": "theorem lem_weighted_inequality\n    {d : \u2115} (hd : 0 < d)\n    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace \u2102 E]\n    {massSq : \u211d} {xf gradf : E}\n    (hibp : massSq = -((2 : \u211d) / d) * Complex.re (\u27eaxf, gradf\u27eb_\u2102)) :\n    massSq \u2264 ((2 : \u211d) / d) * \u2016xf\u2016 * \u2016gradf\u2016",
+        "lean_code": "import Mathlib\n\ntheorem lem_weighted_inequality\n    {d : \u2115} (hd : 0 < d)\n    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace \u2102 E]\n    {massSq : \u211d} {xf gradf : E}\n    (hibp : massSq = -((2 : \u211d) / d) * Complex.re (\u27eaxf, gradf\u27eb_\u2102)) :\n    massSq \u2264 ((2 : \u211d) / d) * \u2016xf\u2016 * \u2016gradf\u2016 := by\n  have h0 : 0 \u2264 ((2 : \u211d) / d) := by\n    have hdR : (0 : \u211d) < d := by\n      exact_mod_cast hd\n    positivity\n  have h1 : -Complex.re (\u27eaxf, gradf\u27eb_\u2102) \u2264 |Complex.re (\u27eaxf, gradf\u27eb_\u2102)| := by\n    exact neg_le_abs _\n  have h2 : |Complex.re (\u27eaxf, gradf\u27eb_\u2102)| \u2264 \u2016\u27eaxf, gradf\u27eb_\u2102\u2016 := by\n    simpa using Complex.abs_re_le_abs (\u27eaxf, gradf\u27eb_\u2102)\n  have h3 : \u2016\u27eaxf, gradf\u27eb_\u2102\u2016 \u2264 \u2016xf\u2016 * \u2016gradf\u2016 := by\n    simpa using norm_inner_le_norm xf gradf\n  calc\n    massSq = -((2 : \u211d) / d) * Complex.re (\u27eaxf, gradf\u27eb_\u2102) := hibp\n    _ = ((2 : \u211d) / d) * (-Complex.re (\u27eaxf, gradf\u27eb_\u2102)) := by ring\n    _ \u2264 ((2 : \u211d) / d) * |Complex.re (\u27eaxf, gradf\u27eb_\u2102)| := by\n      exact mul_le_mul_of_nonneg_left h1 h0\n    _ \u2264 ((2 : \u211d) / d) * \u2016\u27eaxf, gradf\u27eb_\u2102\u2016 := by\n      exact mul_le_mul_of_nonneg_left h2 h0\n    _ \u2264 ((2 : \u211d) / d) * (\u2016xf\u2016 * \u2016gradf\u2016) := by\n      exact mul_le_mul_of_nonneg_left h3 h0",
+        "verification": {
+          "status": "failed",
+          "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean",
+          "exit_code": 1,
+          "stdout": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean:7:60: error: expected token\n",
+          "stderr": "",
+          "elapsed_seconds": 93.19805608293973,
+          "attempt_count": 1,
+          "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean"
+        },
+        "attempt_history": [
+          {
+            "status": "failed",
+            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean",
+            "exit_code": 1,
+            "stdout": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean:7:60: error: expected token\n",
+            "stderr": "",
+            "elapsed_seconds": 93.19805608293973,
+            "attempt_count": 1,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/lem_weighted_inequality_attempt_1.lean"
+          }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "thm_glassey_blowup",
+      "target_id": "lem_virial_negative_second_derivative",
+      "label": "depends_on",
+      "explanation": "The theorem uses \\(V''(t)=16E(u_0)<0\\) to force the variance to hit zero in finite positive time."
+    },
+    {
+      "source_id": "thm_glassey_blowup",
+      "target_id": "lem_weighted_inequality",
+      "label": "depends_on",
+      "explanation": "The theorem combines this inequality with mass conservation and \\(V(t)\\to 0\\) to conclude \\(\\|\\nabla u(t)\\|_{L^2}\\to\\infty\\)."
+    }
+  ]
+}

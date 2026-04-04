@@ -1,0 +1,45 @@
+{
+  "theorem_title": "Weighted L2 inequality",
+  "theorem_statement": "Weighted \\(L^2\\) inequality on \\(\\mathbb{R}^d\\).\n\nLet \\(d \\ge 1\\) and let \\(f : \\mathbb{R}^d \\to \\mathbb{C}\\) be sufficiently regular and sufficiently decaying at infinity so that the integrations by parts below are justified, with \\(f \\in H^1(\\mathbb{R}^d)\\) and \\(x f \\in L^2(\\mathbb{R}^d)\\). Then\n\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2 \\le \\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
+  "root_node_id": "n1",
+  "nodes": [
+    {
+      "id": "n1",
+      "title": "Weighted \\(L^2\\) inequality on \\(\\mathbb{R}^d\\)",
+      "informal_statement": "Let \\(d \\ge 1\\) and let \\(f : \\mathbb{R}^d \\to \\mathbb{C}\\) be sufficiently regular and sufficiently decaying at infinity so that the integrations by parts below are justified, with \\(f \\in H^1(\\mathbb{R}^d)\\) and \\(x f \\in L^2(\\mathbb{R}^d)\\). Then\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2 \\le \\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
+      "informal_proof_text": "Start from\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2 = \\int_{\\mathbb{R}^d} |f(x)|^2\\,dx = \\frac1d \\int_{\\mathbb{R}^d} (\\operatorname{div} x) |f(x)|^2\\,dx,\n\\]\nusing \\(\\operatorname{div}(x)=d\\). Integrating by parts and discarding the boundary term by the decay assumptions gives\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2 = -\\frac1d \\int_{\\mathbb{R}^d} x\\cdot \\nabla(|f(x)|^2)\\,dx.\n\\]\nNext,\n\\[\n\\nabla(|f|^2)=\\nabla(f\\overline f)=(\\nabla f)\\overline f+f\\nabla\\overline f,\n\\]\nso\n\\[\nx\\cdot \\nabla(|f|^2)=2\\,\\operatorname{Re}(x\\cdot \\nabla f\\,\\overline f).\n\\]\nHence\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2 = -\\frac{2}{d}\\operatorname{Re}\\int_{\\mathbb{R}^d} x\\cdot \\nabla f(x)\\,\\overline{f(x)}\\,dx.\n\\]\nTaking absolute values and using \\(|\\operatorname{Re} z|\\le |z|\\),\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2 \\le \\frac{2}{d}\\int_{\\mathbb{R}^d} |x|\\,|\\nabla f(x)|\\,|f(x)|\\,dx.\n\\]\nApply Cauchy--Schwarz to \\(|x||f(x)|\\) and \\(|\\nabla f(x)|\\):\n\\[\n\\int_{\\mathbb{R}^d} |x|\\,|\\nabla f(x)|\\,|f(x)|\\,dx\n\\le\n\\left(\\int_{\\mathbb{R}^d} |x|^2 |f(x)|^2\\,dx\\right)^{1/2}\n\\left(\\int_{\\mathbb{R}^d} |\\nabla f(x)|^2\\,dx\\right)^{1/2}.\n\\]\nThis is\n\\[\n\\int_{\\mathbb{R}^d} |x|\\,|\\nabla f|\\,|f| \\le \\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]\nCombining the two estimates yields\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2 \\le \\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)},\n\\]\nas claimed.",
+      "status": "formal_failed",
+      "display_label": "Weighted \\(L^2\\) inequality",
+      "formalization_priority": 1,
+      "formalization_rationale": "Only substantive node in the graph and a reasonable first-prototype target: a single, self-contained analytic inequality with a short proof built from divergence of the identity field, integration by parts, the identity for the gradient of |f|^2, and Cauchy-Schwarz. Although it depends on standard measure/Sobolev infrastructure, it does not require formalizing a larger parent chain or multiple auxiliary graph nodes.",
+      "formal_artifact": {
+        "lean_theorem_name": "weighted_L2_inequality",
+        "lean_statement": "theorem weighted_L2_inequality {d : \u2115} (hd : 0 < d) {E : Type*} [NormedAddCommGroup E] [InnerProductSpace \u2102 E] {f xf gradf : E} (hId : \u2016f\u2016 ^ (2 : \u2115) = ((2 : \u211d) / (d : \u211d)) * (-(Complex.re \u27eaxf, gradf\u27eb_\u2102))) : \u2016f\u2016 ^ (2 : \u2115) \u2264 ((2 : \u211d) / (d : \u211d)) * \u2016xf\u2016 * \u2016gradf\u2016",
+        "lean_code": "import Mathlib\n\n/--\nA local Hilbert-space version of the weighted `L^2` inequality.\n\nIn the intended application to `L^2(\u211d^d)`, the element `xf` represents the weighted\nfunction `x \u21a6 x \u2022 f x`, the element `gradf` represents the weak gradient, and `hId`\npackages the integration-by-parts identity coming from `div x = d`.\n-/\ntheorem weighted_L2_inequality\n    {d : \u2115} (hd : 0 < d)\n    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace \u2102 E]\n    {f xf gradf : E}\n    (hId : \u2016f\u2016 ^ (2 : \u2115) =\n      ((2 : \u211d) / (d : \u211d)) * (-(Complex.re \u27eaxf, gradf\u27eb_\u2102))) :\n    \u2016f\u2016 ^ (2 : \u2115) \u2264 ((2 : \u211d) / (d : \u211d)) * \u2016xf\u2016 * \u2016gradf\u2016 := by\n  let c : \u211d := (2 : \u211d) / (d : \u211d)\n  have hdR : 0 < (d : \u211d) := by\n    exact_mod_cast hd\n  have hc : 0 \u2264 c := by\n    dsimp [c]\n    exact div_nonneg (by positivity) hdR.le\n  have hre : -(Complex.re \u27eaxf, gradf\u27eb_\u2102) \u2264 \u2016xf\u2016 * \u2016gradf\u2016 := by\n    have h1 : -(Complex.re \u27eaxf, gradf\u27eb_\u2102) \u2264 |Complex.re \u27eaxf, gradf\u27eb_\u2102| := by\n      exact neg_le_abs _\n    have h2 : |Complex.re \u27eaxf, gradf\u27eb_\u2102| \u2264 \u2016\u27eaxf, gradf\u27eb_\u2102\u2016 := by\n      simpa using Complex.abs_re_le_abs \u27eaxf, gradf\u27eb_\u2102\n    exact le_trans h1 (le_trans h2 (norm_inner_le_norm _ _))\n  calc\n    \u2016f\u2016 ^ (2 : \u2115) = c * (-(Complex.re \u27eaxf, gradf\u27eb_\u2102)) := by\n      simpa [c] using hId\n    _ \u2264 c * (\u2016xf\u2016 * \u2016gradf\u2016) := by\n      exact mul_le_mul_of_nonneg_left hre hc\n    _ = c * \u2016xf\u2016 * \u2016gradf\u2016 := by\n      simp [mul_assoc]\n    _ = ((2 : \u211d) / (d : \u211d)) * \u2016xf\u2016 * \u2016gradf\u2016 := by\n      simp [c]\n",
+        "verification": {
+          "status": "failed",
+          "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_attempt_1.lean",
+          "exit_code": 1,
+          "stdout": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_attempt_1.lean:15:52: error: expected token\n",
+          "stderr": "",
+          "elapsed_seconds": 115.06934662512504,
+          "attempt_count": 1,
+          "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_attempt_1.lean"
+        },
+        "attempt_history": [
+          {
+            "status": "failed",
+            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_attempt_1.lean",
+            "exit_code": 1,
+            "stdout": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_attempt_1.lean:15:52: error: expected token\n",
+            "stderr": "",
+            "elapsed_seconds": 115.06934662512504,
+            "attempt_count": 1,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_attempt_1.lean"
+          }
+        ]
+      }
+    }
+  ],
+  "edges": []
+}

@@ -10,12 +10,12 @@ from html import escape
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode, ReviewObligation
 
 
-NODE_WIDTH = 156
-NODE_HEIGHT = 78
-ROW_GAP = 88
-COL_GAP = 52
-MARGIN_X = 30
-MARGIN_Y = 30
+NODE_WIDTH = 132
+NODE_HEIGHT = 66
+ROW_GAP = 52
+COL_GAP = 36
+MARGIN_X = 24
+MARGIN_Y = 20
 
 
 def export_report_bundle(graph: ProofGraph, obligations: list[ReviewObligation]) -> dict:
@@ -42,6 +42,19 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{escape(graph.theorem_title)} - Formal Islands Report</title>
+  <script>
+    window.MathJax = {{
+      tex: {{
+        inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+        displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']],
+        processEscapes: true
+      }},
+      options: {{
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }}
+    }};
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   <style>
     :root {{
       color-scheme: light;
@@ -54,9 +67,18 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       --accent-soft: #f5e8d6;
       --highlight: #d97c2b;
       --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
       --checked: #2f8f5b;
       --checked-soft: #e6f5eb;
       --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: rgba(255, 250, 241, 0.98);
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
     }}
     * {{
       box-sizing: border-box;
@@ -89,6 +111,10 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
     .meta {{
       color: var(--muted);
     }}
+    .math-text {{
+      white-space: pre-wrap;
+      line-height: 1.55;
+    }}
     .pill {{
       display: inline-block;
       margin-right: 0.45rem;
@@ -104,14 +130,17 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       border: 1px solid var(--border);
       border-radius: 16px;
       background: linear-gradient(180deg, rgba(255, 251, 242, 0.96), rgba(245, 238, 227, 0.96));
+      padding: 0.5rem 0.75rem;
       overflow-x: auto;
       overflow-y: hidden;
     }}
     .graph-widget {{
       display: block;
       width: 100%;
+      max-width: 460px;
+      margin: 0 auto;
       height: auto;
-      min-width: 420px;
+      min-width: 240px;
     }}
     .graph-edge {{
       stroke: var(--edge);
@@ -124,15 +153,34 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       text-decoration: none;
     }}
     .graph-node-box {{
-      fill: rgba(255, 250, 241, 0.98);
-      stroke: var(--accent);
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
       stroke-width: 2.25;
-      transition: fill 140ms ease, stroke 140ms ease;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
       filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }}
+    .graph-node-box.status-informal {{
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }}
+    .graph-node-box.status-candidate-formal {{
+      fill: var(--status-candidate-fill);
+      stroke: var(--status-candidate-stroke);
+    }}
+    .graph-node-box.status-formal-verified {{
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }}
+    .graph-node-box.status-formal-failed {{
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
     }}
     .graph-node-title {{
       fill: var(--ink);
-      font-size: 12px;
+      font-size: 10.5px;
       font-weight: 700;
       text-anchor: middle;
       dominant-baseline: middle;
@@ -140,10 +188,27 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
     }}
     .graph-node-id {{
       fill: var(--muted);
-      font-size: 11px;
+      font-size: 9.5px;
       text-anchor: middle;
       dominant-baseline: middle;
       pointer-events: none;
+    }}
+    .graph-node-badge {{
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }}
+    .graph-node-badge.status-informal {{
+      fill: var(--status-informal-stroke);
+    }}
+    .graph-node-badge.status-candidate-formal {{
+      fill: var(--status-candidate-stroke);
+    }}
+    .graph-node-badge.status-formal-verified {{
+      fill: var(--status-verified-stroke);
+    }}
+    .graph-node-badge.status-formal-failed {{
+      fill: var(--status-failed-stroke);
     }}
     .graph-caption {{
       margin-top: 0.7rem;
@@ -230,7 +295,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
   <main class="report-root">
     <section>
       <h1>{escape(graph.theorem_title)}</h1>
-      <p>{escape(graph.theorem_statement)}</p>
+      {_render_math_text(graph.theorem_statement)}
       <p class="meta">Root node: {escape(graph.root_node_id)}</p>
     </section>
     <section>
@@ -248,6 +313,9 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       </div>
       <p class="graph-caption">
         Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+      </p>
+      <p class="graph-caption">
+        Informal nodes use dashed amber outlines, candidates use solid orange, verified formal nodes use green, and failed formal nodes use red.
       </p>
     </section>
     <section>
@@ -335,11 +403,17 @@ stderr:
       <p class="meta">Node id: {escape(node.id)} | Status: {escape(node.status)}</p>
       {display_label}
       {candidate_block}
-      <p><strong>Informal statement:</strong> {escape(node.informal_statement)}</p>
-      <p><strong>Informal proof:</strong> {escape(node.informal_proof_text)}</p>
+      <p><strong>Informal statement:</strong></p>
+      {_render_math_text(node.informal_statement)}
+      <p><strong>Informal proof:</strong></p>
+      {_render_math_text(node.informal_proof_text)}
       {formal_block}
     </article>
     """
+
+
+def _render_math_text(text: str) -> str:
+    return f'<div class="math-text">{escape(text)}</div>'
 
 
 def _render_graph_widget(graph: ProofGraph) -> str:
@@ -364,8 +438,8 @@ def _render_graph_widget(graph: ProofGraph) -> str:
 def _render_edge(edge: ProofEdge, layout: dict) -> str:
     x1, y1 = layout["centers"][edge.source_id]
     x2, y2 = layout["centers"][edge.target_id]
-    start_y = y1 + NODE_HEIGHT / 2 - 4
-    end_y = y2 - NODE_HEIGHT / 2 + 4
+    start_y = y1 + NODE_HEIGHT / 2 - 3
+    end_y = y2 - NODE_HEIGHT / 2 + 3
     edge_class = _edge_class(edge.source_id, edge.target_id)
     return (
         f'<line class="graph-edge {edge_class}" x1="{x1}" y1="{start_y}" x2="{x2}" y2="{end_y}" '
@@ -379,13 +453,16 @@ def _render_node(node: ProofNode, layout: dict) -> str:
     title_lines = _wrap_title_lines(node.display_label or node.title)
     title_y_positions = _title_y_positions(y, len(title_lines))
     node_key = _node_class(node.id)
+    status_class = _status_class(node.status)
+    rx = _node_corner_radius(node.status)
     title_tspans = "\n".join(
         f'<tspan x="{cx}" y="{title_y_positions[index]}">{escape(line)}</tspan>'
         for index, line in enumerate(title_lines)
     )
     return f"""
-    <a class="graph-node-link {node_key}" href="#node-{escape(node.id)}">
-      <rect class="graph-node-box" x="{x}" y="{y}" rx="22" ry="22" width="{NODE_WIDTH}" height="{NODE_HEIGHT}"></rect>
+    <a class="graph-node-link {node_key} {status_class}" href="#node-{escape(node.id)}">
+      <rect class="graph-node-box {status_class}" x="{x}" y="{y}" rx="{rx}" ry="{rx}" width="{NODE_WIDTH}" height="{NODE_HEIGHT}"></rect>
+      <circle class="graph-node-badge {status_class}" cx="{x + NODE_WIDTH - 14}" cy="{y + 12}" r="4.6"></circle>
       <text class="graph-node-title">{title_tspans}</text>
       <text class="graph-node-id" x="{cx}" y="{y + NODE_HEIGHT - 18}">{escape(node.id)}</text>
     </a>
@@ -437,7 +514,7 @@ def _compute_graph_layout(graph: ProofGraph) -> dict:
     return {"positions": positions, "centers": centers, "width": width, "height": height}
 
 
-def _wrap_title_lines(text: str, max_chars: int = 18, max_lines: int = 2) -> list[str]:
+def _wrap_title_lines(text: str, max_chars: int = 16, max_lines: int = 2) -> list[str]:
     words = text.split()
     if not words:
         return [""]
@@ -474,8 +551,8 @@ def _ellipsize(text: str, max_chars: int) -> str:
 
 def _title_y_positions(y: float, line_count: int) -> list[float]:
     if line_count <= 1:
-        return [y + 31]
-    return [y + 25, y + 40]
+        return [y + 27]
+    return [y + 22, y + 34]
 
 
 def _render_interaction_styles(graph: ProofGraph, obligations: list[ReviewObligation]) -> str:
@@ -514,17 +591,33 @@ def _render_interaction_styles(graph: ProofGraph, obligations: list[ReviewObliga
             }
         )
 
-        node_selector = ",\n".join(
+        hover_node_selector = ",\n".join(
             [
                 f".report-root:has(.obligation-{obligation_slug}:hover) a.{node_class} .graph-node-box"
                 for node_class in node_classes
             ]
             + [
-                f".report-root:has(#{control_id}:checked) a.{node_class} .graph-node-box"
+                f".report-root:has(.obligation-{obligation_slug}:hover) .{node_class}.node-card"
                 for node_class in node_classes
             ]
-            + [
-                f".report-root:has(.obligation-{obligation_slug}:hover) .{node_class}.node-card"
+        )
+        if hover_node_selector:
+            blocks.append(
+                f"""
+                {hover_node_selector} {{
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }}
+                """
+            )
+
+        checked_node_selector = ",\n".join(
+            [
+                f".report-root:has(#{control_id}:checked) a.{node_class} .graph-node-box"
                 for node_class in node_classes
             ]
             + [
@@ -532,32 +625,29 @@ def _render_interaction_styles(graph: ProofGraph, obligations: list[ReviewObliga
                 for node_class in node_classes
             ]
         )
-        if node_selector:
+        if checked_node_selector:
             blocks.append(
                 f"""
-                {node_selector} {{
+                {checked_node_selector} {{
                   border-color: var(--checked);
                   stroke: var(--checked);
+                  stroke-width: 2.9;
                   background: var(--checked-soft);
                   fill: var(--checked-soft);
                 }}
                 """
             )
 
-        edge_selector = ",\n".join(
+        checked_edge_selector = ",\n".join(
             [
-                f".report-root:has(.obligation-{obligation_slug}:hover) .{edge_class}"
-                for edge_class in edge_classes
-            ]
-            + [
                 f".report-root:has(#{control_id}:checked) .{edge_class}"
                 for edge_class in edge_classes
             ]
         )
-        if edge_selector:
+        if checked_edge_selector:
             blocks.append(
                 f"""
-                {edge_selector} {{
+                {checked_edge_selector} {{
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }}
@@ -566,6 +656,10 @@ def _render_interaction_styles(graph: ProofGraph, obligations: list[ReviewObliga
 
         blocks.append(
             f"""
+            .report-root:has(.obligation-{obligation_slug}:hover) .obligation-{obligation_slug} {{
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }}
             .report-root:has(#{control_id}:checked) .obligation-{obligation_slug} {{
               border-color: var(--checked);
               background: var(--checked-soft);
@@ -595,6 +689,20 @@ def _edge_class(source_id: str, target_id: str) -> str:
 
 def _obligation_control_id(obligation_id: str) -> str:
     return f"obligation-check-{_slugify(obligation_id)}"
+
+
+def _status_class(status: str) -> str:
+    return f"status-{_slugify(status).replace('_', '-')}"
+
+
+def _node_corner_radius(status: str) -> int:
+    if status == "formal_verified":
+        return 28
+    if status == "formal_failed":
+        return 10
+    if status == "candidate_formal":
+        return 22
+    return 14
 
 
 def _slugify(value: str) -> str:

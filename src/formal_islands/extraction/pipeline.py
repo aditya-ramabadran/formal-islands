@@ -18,7 +18,8 @@ EXTRACTION_SYSTEM_PROMPT = (
     "Convert the user's theorem statement and informal proof into a dependency graph. "
     "Return only JSON that matches the supplied schema. "
     "Do not add candidate-formalization or formal-artifact fields. "
-    "Optimize for the smallest faithful graph."
+    "Optimize for the smallest faithful graph. "
+    "Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible."
 )
 
 CANDIDATE_SELECTION_SYSTEM_PROMPT = (
@@ -68,6 +69,10 @@ def build_extraction_request(
                 "For a tiny proof, prefer a single root node unless a second node for a reusable or conceptually "
                 "distinct lemma clearly improves the graph."
             ),
+            (
+                "Preserve the original mathematical notation in your output whenever feasible. "
+                "Do not normalize LaTeX into plain ASCII unless absolutely necessary."
+            ),
         ]
     )
     return StructuredBackendRequest(
@@ -96,7 +101,7 @@ def extract_proof_graph(
     extracted = ExtractedProofGraph.model_validate(response.payload)
     graph = ProofGraph(
         theorem_title=extracted.theorem_title,
-        theorem_statement=extracted.theorem_statement,
+        theorem_statement=theorem_statement,
         root_node_id=extracted.root_node_id,
         nodes=[
             ProofNode(

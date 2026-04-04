@@ -84,6 +84,36 @@ def test_extract_proof_graph_validates_schema_and_maps_to_internal_graph() -> No
     assert graph.nodes[1].display_label == "technical estimate"
 
 
+def test_extract_proof_graph_preserves_input_theorem_statement_exactly() -> None:
+    original_statement = r"Let \(f : \mathbb{R}^d \to \mathbb{C}\). Then \[\|f\|_{L^2}^2 \le 1.\]"
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "theorem_title": "Toy theorem",
+                "theorem_statement": "Let f : R^d -> C. Then ||f||_2^2 <= 1.",
+                "root_node_id": "n1",
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "title": "Main claim",
+                        "informal_statement": "The claim holds.",
+                        "informal_proof_text": "By direct computation.",
+                    }
+                ],
+                "edges": [],
+            }
+        ]
+    )
+
+    graph = extract_proof_graph(
+        backend=backend,
+        theorem_statement=original_statement,
+        raw_proof_text=r"Use \(\nabla\) and conclude.",
+    )
+
+    assert graph.theorem_statement == original_statement
+
+
 def test_extract_proof_graph_rejects_malformed_payload() -> None:
     backend = MockBackend(queued_payloads=[{"theorem_title": "Missing fields"}])
 

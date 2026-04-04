@@ -27,6 +27,7 @@ class CodexCLIBackend:
     model: str | None = None
     sandbox: str = "read-only"
     use_ephemeral_session: bool = True
+    timeout_seconds: float | None = 180.0
 
     def run_structured(self, request: StructuredBackendRequest) -> StructuredBackendResponse:
         executable_path = shutil.which(self.executable)
@@ -63,13 +64,20 @@ class CodexCLIBackend:
                 command.append("--ephemeral")
             command.append(self._render_prompt(request))
 
-            completed = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                cwd=request.cwd,
-                check=False,
-            )
+            try:
+                completed = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True,
+                    cwd=request.cwd,
+                    check=False,
+                    timeout=self.timeout_seconds,
+                )
+            except subprocess.TimeoutExpired as exc:
+                raise BackendInvocationError(
+                    "Codex CLI timed out while waiting for structured output "
+                    f"for task '{request.task_name}' after {self.timeout_seconds} seconds."
+                ) from exc
             if completed.returncode != 0:
                 raise BackendInvocationError(
                     f"Codex CLI failed with exit code {completed.returncode}: {completed.stderr.strip()}"

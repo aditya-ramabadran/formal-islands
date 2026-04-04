@@ -203,3 +203,21 @@ def test_codex_backend_rejects_missing_output_file(tmp_path: Path) -> None:
             backend.run_structured(
                 StructuredBackendRequest(prompt="x", json_schema={"type": "object"})
             )
+
+
+def test_codex_backend_raises_clean_error_on_timeout(tmp_path: Path) -> None:
+    backend = CodexCLIBackend(timeout_seconds=12.0)
+    auth_home = tmp_path / "codex-home"
+    auth_home.mkdir()
+    (auth_home / "auth.json").write_text("{}", encoding="utf-8")
+
+    with patch("shutil.which", return_value="/usr/bin/codex"), patch.dict(
+        "os.environ", {"CODEX_HOME": str(auth_home)}, clear=False
+    ), patch(
+        "subprocess.run",
+        side_effect=subprocess.TimeoutExpired(cmd=["codex"], timeout=12.0),
+    ):
+        with pytest.raises(BackendInvocationError, match="timed out"):
+            backend.run_structured(
+                StructuredBackendRequest(prompt="x", json_schema={"type": "object"})
+            )

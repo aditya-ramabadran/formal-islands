@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reduced Glassey blow-up argument - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: rgba(255, 250, 241, 0.98);
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.55;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 251, 242, 0.96), rgba(245, 238, 227, 0.96));
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      max-width: 460px;
+      margin: 0 auto;
+      height: auto;
+      min-width: 240px;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 3.5;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-box {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-candidate-fill);
+      stroke: var(--status-candidate-stroke);
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-title {
+      fill: var(--ink);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 9.5px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-candidate-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 250, 241, 0.95);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: #fff8ee;
+    }
+    pre {
+      overflow-x: auto;
+      padding: 0.75rem;
+      background: #f4efe6;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    
+            .report-root:has(a.node-n0:hover) .node-n0.node-card,
+            .report-root:has(#node-n0:target) a.node-n0 .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-n0:hover) .node-n0.node-card,
+            .report-root:has(#node-n0:target).report-root .node-n0.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }
+            
+
+            .report-root:has(a.node-n1:hover) .node-n1.node-card,
+            .report-root:has(#node-n1:target) a.node-n1 .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-n1:hover) .node-n1.node-card,
+            .report-root:has(#node-n1:target).report-root .node-n1.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }
+            
+
+            .report-root:has(a.node-n2:hover) .node-n2.node-card,
+            .report-root:has(#node-n2:target) a.node-n2 .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-n2:hover) .node-n2.node-card,
+            .report-root:has(#node-n2:target).report-root .node-n2.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: #fff8ee;
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-n0:hover) a.node-n0 .graph-node-box,
+.report-root:has(.obligation-informal-proof-n0:hover) .node-n0.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-n0:checked) a.node-n0 .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-n0:checked) .node-n0.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-n0:checked) .edge-n0-n1,
+.report-root:has(#obligation-check-informal-proof-n0:checked) .edge-n0-n2 {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-n0:hover) .obligation-informal-proof-n0 {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-n0:checked) .obligation-informal-proof-n0 {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-n1:hover) a.node-n1 .graph-node-box,
+.report-root:has(.obligation-informal-proof-n1:hover) .node-n1.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-n1:checked) a.node-n1 .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-n1:checked) .node-n1.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-n1:checked) .edge-n0-n1 {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-n1:hover) .obligation-informal-proof-n1 {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-n1:checked) .obligation-informal-proof-n1 {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-n2:hover) a.node-n2 .graph-node-box,
+.report-root:has(.obligation-semantic-match-n2:hover) .node-n2.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-n2:checked) a.node-n2 .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-n2:checked) .node-n2.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-n2:checked) .edge-n0-n2 {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-n2:hover) .obligation-semantic-match-n2 {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-n2:checked) .obligation-semantic-match-n2 {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-boundary-n0-n2:hover) a.node-n0 .graph-node-box,
+.report-root:has(.obligation-boundary-n0-n2:hover) a.node-n2 .graph-node-box,
+.report-root:has(.obligation-boundary-n0-n2:hover) .node-n0.node-card,
+.report-root:has(.obligation-boundary-n0-n2:hover) .node-n2.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-n0-n2:checked) a.node-n0 .graph-node-box,
+.report-root:has(#obligation-check-boundary-n0-n2:checked) a.node-n2 .graph-node-box,
+.report-root:has(#obligation-check-boundary-n0-n2:checked) .node-n0.node-card,
+.report-root:has(#obligation-check-boundary-n0-n2:checked) .node-n2.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-n0-n2:checked) .edge-n0-n1,
+.report-root:has(#obligation-check-boundary-n0-n2:checked) .edge-n0-n2 {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-boundary-n0-n2:hover) .obligation-boundary-n0-n2 {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-boundary-n0-n2:checked) .obligation-boundary-n0-n2 {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-root">
+    <section>
+      <h1>Reduced Glassey blow-up argument</h1>
+      <div class="math-text">Finite-time blow-up from a virial identity for focusing mass-critical NLS.
+
+Let \(u(t,x)\) be a sufficiently regular solution on \(\mathbb{R}^d\) with finite variance. Assume:
+
+1. mass is conserved:
+
+\[
+\|u(t)\|_{L^2(\mathbb{R}^d)}=\|u_0\|_{L^2(\mathbb{R}^d)}=:M&gt;0,
+\]
+
+2. energy is conserved and negative:
+
+\[
+E(u(t))=E(u_0)&lt;0,
+\]
+
+3. the variance
+
+\[
+V(t)=\int_{\mathbb{R}^d}|x|^2|u(t,x)|^2\,dx
+\]
+
+satisfies
+
+\[
+V&#x27;&#x27;(t)=16E(u_0)&lt;0,
+\]
+
+4. for every sufficiently regular \(f\),
+
+\[
+\|f\|_{L^2(\mathbb{R}^d)}^2
+\le
+\frac{2}{d}\,\|x f\|_{L^2(\mathbb{R}^d)}\,\|\nabla f\|_{L^2(\mathbb{R}^d)}.
+\]
+
+Then there exists \(T&lt;\infty\) such that
+
+\[
+\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}\to\infty
+\quad\text{as } t\uparrow T.
+\]</div>
+      <p class="meta">Root node: n0</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 3</span>
+        <span class="pill">Edges: 2</span>
+        <span class="pill">Informal: 2</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 1</span>
+        <span class="pill">Failed: 0</span>
+      </p>
+      <div class="graph-shell">
+        
+    <svg class="graph-widget" viewBox="0 0 420 224" role="img" aria-label="Proof graph">
+      <defs>
+        <marker id="graph-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L9,3 z" fill="#b3aa9f"></path>
+        </marker>
+      </defs>
+      <g><line class="graph-edge edge-n0-n1" x1="210.0" y1="83.0" x2="126.0" y2="141.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-n0-n2" x1="210.0" y1="83.0" x2="294.0" y2="141.0" marker-end="url(#graph-arrow)"></line></g>
+      <g>
+    <a class="graph-node-link node-n0 status-informal" href="#node-n0">
+      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="47">Blow-up theorem</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">n0</text>
+    </a>
+    
+
+    <a class="graph-node-link node-n1 status-informal" href="#node-n1">
+      <rect class="graph-node-box status-informal" x="60.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="178.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="126.0" y="160">Variance hits</tspan>
+<tspan x="126.0" y="172">zero</tspan></text>
+      <text class="graph-node-id" x="126.0" y="186">n1</text>
+    </a>
+    
+
+    <a class="graph-node-link node-n2 status-formal-verified" href="#node-n2">
+      <rect class="graph-node-box status-formal-verified" x="228.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="346.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="294.0" y="160">Mass-variance-gradient</tspan>
+<tspan x="294.0" y="172">bound</tspan></text>
+      <text class="graph-node-id" x="294.0" y="186">n2</text>
+    </a>
+    </g>
+    </svg>
+    
+      </div>
+      <p class="graph-caption">
+        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+      </p>
+      <p class="graph-caption">
+        Informal nodes use dashed amber outlines, candidates use solid orange, verified formal nodes use green, and failed formal nodes use red.
+      </p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-informal-proof-n0" data-obligation-id="informal-proof-n0">
+      <label class="checklist-label" for="obligation-check-informal-proof-n0">
+        <input id="obligation-check-informal-proof-n0" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;n0&#x27; (Finite-time blow-up from the virial identity) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n0">n0</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-n1" data-obligation-id="informal-proof-n1">
+      <label class="checklist-label" for="obligation-check-informal-proof-n1">
+        <input id="obligation-check-informal-proof-n1" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;n1&#x27; (The variance reaches zero in finite positive time) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n1">n1</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-n2" data-obligation-id="semantic-match-n2">
+      <label class="checklist-label" for="obligation-check-semantic-match-n2">
+        <input id="obligation-check-semantic-match-n2" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;n2&#x27; (Mass and the weighted inequality force a lower bound involving \(\sqrt{V(t)}\)) matches the verified Lean statement &#x27;theorem reducedGlassey_mass_weighted_lower_bound {ι : Type*} {d M : ℝ} (massNorm xNorm gradNorm V : ι → ℝ) (hMass : ∀ t, massNorm t = M) (hxNonneg : ∀ t, 0 ≤ xNorm t) (hWeighted : ∀ t, massNorm t ^ 2 ≤ ((2 : ℝ) / d) * xNorm t * gradNorm t) (hVariance : ∀ t, xNorm t ^ 2 = V t) : ∀ t, M ^ 2 ≤ ((2 : ℝ) / d) * Real.sqrt (V t) * gradNorm t&#x27;.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n2">n2</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-boundary-n0-n2" data-obligation-id="boundary-n0-n2">
+      <label class="checklist-label" for="obligation-check-boundary-n0-n2">
+        <input id="obligation-check-boundary-n0-n2" type="checkbox" />
+        <span>
+          <span class="checklist-kind">boundary_interface_check</span><br />
+          Check that formal child &#x27;n2&#x27; proves exactly what informal parent &#x27;n0&#x27; uses across their dependency boundary.
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n0">n0</a>, <a class="node-jump" href="#node-n2">n2</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="nodes-grid">
+        
+    <article class="node-card node-n0" id="node-n0" data-node-id="n0">
+      <h3>Finite-time blow-up from the virial identity</h3>
+      <p class="meta">Node id: n0 | Status: informal</p>
+      <p class="meta">Display label: Blow-up theorem</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">There exists \(T&lt;\infty\) such that
+\[
+\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}\to\infty
+\quad\text{as } t\uparrow T.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Let \(T&gt;0\) be the finite time from the variance-vanishing claim. The weighted estimate gives
+\[
+M^2\le \frac{2}{d}\sqrt{V(t)}\,\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}
+\]
+for every time of existence. Here \(M&gt;0\) is fixed, while \(V(t)\to 0\) as \(t\uparrow T\). Therefore the right-hand side can stay at least \(M^2\) only if
+\[
+\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}\to\infty
+\quad\text{as } t\uparrow T.
+\]
+Thus the solution blows up in finite positive time.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-n1" id="node-n1" data-node-id="n1">
+      <h3>The variance reaches zero in finite positive time</h3>
+      <p class="meta">Node id: n1 | Status: informal</p>
+      <p class="meta">Display label: Variance hits zero</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">There exists a finite time \(T&gt;0\) such that
+\[
+V(T)=0,
+\]
+and hence
+\[
+V(t)\to 0
+\quad\text{as } t\uparrow T.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Since \(E(u_0)&lt;0\), the virial identity gives \(V&#x27;&#x27;(t)=16E(u_0)&lt;0\), so \(V\) is strictly concave. Integrating twice yields
+\[
+V(t)=8E(u_0)t^2+at+b
+\]
+for some constants \(a,b\). Because \(E(u_0)&lt;0\), the coefficient of \(t^2\) is negative, so \(V(t)\to -\infty\) as \(t\to +\infty\). But by definition
+\[
+V(t)=\int_{\mathbb{R}^d}|x|^2|u(t,x)|^2\,dx\ge 0
+\]
+for every time on which the solution exists. Therefore \(V\) cannot stay positive for all \(t\ge 0\). By continuity there exists a finite \(T&gt;0\) with \(V(T)=0\), equivalently \(V(t)\to 0\) as \(t\uparrow T\).</div>
+      
+    </article>
+    
+
+    <article class="node-card node-n2" id="node-n2" data-node-id="n2">
+      <h3>Mass and the weighted inequality force a lower bound involving \(\sqrt{V(t)}\)</h3>
+      <p class="meta">Node id: n2 | Status: formal_verified</p>
+      <p class="meta">Display label: Mass-variance-gradient bound</p>
+      <p class="meta">Formalization priority: 1. Rationale: Most conservative local island: it is a direct one-step derivation from the assumed weighted inequality, mass conservation, and the definition of variance. It is technically self-contained, avoids global blow-up/existence machinery, and should formalize with low dependency overhead compared with the finite-time root argument or the concavity-to-first-zero claim.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For every time of existence,
+\[
+M^2\le \frac{2}{d}\sqrt{V(t)}\,\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Apply the weighted inequality with \(f=u(t)\):
+\[
+\|u(t)\|_{L^2(\mathbb{R}^d)}^2
+\le
+\frac{2}{d}\,\|x u(t)\|_{L^2(\mathbb{R}^d)}\,\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}.
+\]
+Mass conservation gives \(\|u(t)\|_{L^2(\mathbb{R}^d)}=M\), hence
+\[
+M^2\le
+\frac{2}{d}\,\|x u(t)\|_{L^2(\mathbb{R}^d)}\,\|\nabla u(t)\|_{L^2(\mathbb{R}^d)}.
+\]
+By the definition of the variance,
+\[
+\|x u(t)\|_{L^2(\mathbb{R}^d)}^2=V(t),
+\]
+so \(\|x u(t)\|_{L^2(\mathbb{R}^d)}=\sqrt{V(t)}\). Substituting gives the claimed inequality.</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> reducedGlassey_mass_weighted_lower_bound</p>
+        <p><strong>Lean statement:</strong> theorem reducedGlassey_mass_weighted_lower_bound {ι : Type*} {d M : ℝ} (massNorm xNorm gradNorm V : ι → ℝ) (hMass : ∀ t, massNorm t = M) (hxNonneg : ∀ t, 0 ≤ xNorm t) (hWeighted : ∀ t, massNorm t ^ 2 ≤ ((2 : ℝ) / d) * xNorm t * gradNorm t) (hVariance : ∀ t, xNorm t ^ 2 = V t) : ∀ t, M ^ 2 ≤ ((2 : ℝ) / d) * Real.sqrt (V t) * gradNorm t</p>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n2_attempt_1.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code>import Mathlib
+
+theorem reducedGlassey_mass_weighted_lower_bound
+    {ι : Type*} {d M : ℝ}
+    (massNorm xNorm gradNorm V : ι → ℝ)
+    (hMass : ∀ t, massNorm t = M)
+    (hxNonneg : ∀ t, 0 ≤ xNorm t)
+    (hWeighted : ∀ t, massNorm t ^ 2 ≤ ((2 : ℝ) / d) * xNorm t * gradNorm t)
+    (hVariance : ∀ t, xNorm t ^ 2 = V t) :
+    ∀ t, M ^ 2 ≤ ((2 : ℝ) / d) * Real.sqrt (V t) * gradNorm t := by
+  intro t
+  have hxEq : xNorm t = Real.sqrt (V t) := by
+    rw [← hVariance t, Real.sqrt_sq_eq_abs, abs_of_nonneg (hxNonneg t)]
+  calc
+    M ^ 2 = massNorm t ^ 2 := by rw [← hMass t]
+    _ ≤ ((2 : ℝ) / d) * xNorm t * gradNorm t := hWeighted t
+    _ = ((2 : ℝ) / d) * Real.sqrt (V t) * gradNorm t := by rw [hxEq]
+</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+      </div>
+    </section>
+  </main>
+</body>
+</html>

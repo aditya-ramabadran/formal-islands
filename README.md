@@ -125,6 +125,8 @@ Expected stage outputs:
   * `artifacts/nonnegative-sum/04_report_bundle.json`
   * `artifacts/nonnegative-sum/04_report.html`
 
+The generated HTML report preserves raw LaTeX and includes MathJax for browser-side rendering of `\(...\)` and `\[...\]` blocks.
+
 ## Motivation
 
 There is a real near-term gap between two extremes:
