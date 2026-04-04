@@ -38,3 +38,7 @@ def test_render_html_report_includes_core_sections() -> None:
     assert "Formal Artifact" in html
     assert "Lean code" in html
     assert "Verification logs" in html
+    assert 'type="checkbox"' in html
+    assert 'class="graph-svg"' in html
+    assert 'data-graph-node-id="n1"' in html
+    assert 'data-obligation-id="informal-proof-n1"' in html

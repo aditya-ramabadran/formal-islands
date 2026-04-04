@@ -1,0 +1,142 @@
+{
+  "graph": {
+    "theorem_title": "Nonnegative sum",
+    "theorem_statement": "If a and b are nonnegative, then a + b is nonnegative.",
+    "root_node_id": "n1",
+    "nodes": [
+      {
+        "id": "n1",
+        "title": "Nonnegative sum",
+        "informal_statement": "If 0 <= a and 0 <= b, then 0 <= a + b.",
+        "informal_proof_text": "Assume 0 <= a and 0 <= b. It suffices to derive 0 <= a + b from these assumptions.",
+        "status": "candidate_formal",
+        "display_label": "Main theorem",
+        "formalization_priority": 2,
+        "formalization_rationale": "The main theorem is still very small and self-contained, with a short proof likely obtained immediately from the same arithmetic fact used in the intermediate step.",
+        "formal_artifact": null
+      },
+      {
+        "id": "n2",
+        "title": "Assumptions",
+        "informal_statement": "0 <= a and 0 <= b.",
+        "informal_proof_text": "These are the hypotheses assumed in the proof.",
+        "status": "informal",
+        "display_label": "Hypotheses",
+        "formalization_priority": null,
+        "formalization_rationale": null,
+        "formal_artifact": null
+      },
+      {
+        "id": "n3",
+        "title": "Sum of nonnegative reals is nonnegative",
+        "informal_statement": "If 0 <= x and 0 <= y, then 0 <= x + y.",
+        "informal_proof_text": "This is the standard arithmetic lemma invoked in the proof.",
+        "status": "formal_verified",
+        "display_label": "Arithmetic lemma",
+        "formalization_priority": 3,
+        "formalization_rationale": "Technically clean and self-contained, but lower priority for a first local prototype because it is a general library-style arithmetic lemma that Lean likely already provides rather than something that needs bespoke local formalization.",
+        "formal_artifact": {
+          "lean_theorem_name": "nonnegative_sum",
+          "lean_statement": "theorem nonnegative_sum {x y : \u211d} (hx : 0 <= x) (hy : 0 <= y) : 0 <= x + y",
+          "lean_code": "import Mathlib.Data.Real.Basic\n\n theorem nonnegative_sum {x y : \u211d} (hx : 0 <= x) (hy : 0 <= y) : 0 <= x + y := by\n  exact add_nonneg hx hy",
+          "verification": {
+            "status": "verified",
+            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n3_attempt_1.lean",
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "elapsed_seconds": 13.733017875114456,
+            "attempt_count": 1,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n3_attempt_1.lean"
+          },
+          "attempt_history": [
+            {
+              "status": "verified",
+              "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n3_attempt_1.lean",
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": "",
+              "elapsed_seconds": 13.733017875114456,
+              "attempt_count": 1,
+              "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n3_attempt_1.lean"
+            }
+          ]
+        }
+      },
+      {
+        "id": "n4",
+        "title": "Derived nonnegativity of the sum",
+        "informal_statement": "0 <= a + b.",
+        "informal_proof_text": "Apply the standard lemma on sums of nonnegative reals to the assumptions 0 <= a and 0 <= b.",
+        "status": "candidate_formal",
+        "display_label": "Conclusion under assumptions",
+        "formalization_priority": 1,
+        "formalization_rationale": "Directly local and low-dependency: it is the concrete goal under the current hypotheses and should formalize as a one-step application of a standard nonnegativity lemma.",
+        "formal_artifact": null
+      }
+    ],
+    "edges": [
+      {
+        "source_id": "n1",
+        "target_id": "n4",
+        "label": "depends_on",
+        "explanation": "The theorem is established once the desired conclusion 0 <= a + b has been derived from the assumptions."
+      },
+      {
+        "source_id": "n4",
+        "target_id": "n2",
+        "label": "depends_on",
+        "explanation": "The derivation uses the assumed facts 0 <= a and 0 <= b."
+      },
+      {
+        "source_id": "n4",
+        "target_id": "n3",
+        "label": "depends_on",
+        "explanation": "The derivation applies the standard lemma that the sum of two nonnegative reals is nonnegative."
+      }
+    ]
+  },
+  "review_obligations": [
+    {
+      "id": "informal-proof-n1",
+      "kind": "informal_proof_check",
+      "text": "Check that node 'n1' (Nonnegative sum) has an informal proof that establishes its informal statement, assuming its child dependencies.",
+      "node_ids": [
+        "n1"
+      ]
+    },
+    {
+      "id": "informal-proof-n2",
+      "kind": "informal_proof_check",
+      "text": "Check that node 'n2' (Assumptions) has an informal proof that establishes its informal statement, assuming its child dependencies.",
+      "node_ids": [
+        "n2"
+      ]
+    },
+    {
+      "id": "semantic-match-n3",
+      "kind": "formal_semantic_match_check",
+      "text": "Check that node 'n3' (Sum of nonnegative reals is nonnegative) matches the verified Lean statement 'theorem nonnegative_sum {x y : \u211d} (hx : 0 <= x) (hy : 0 <= y) : 0 <= x + y'.",
+      "node_ids": [
+        "n3"
+      ]
+    },
+    {
+      "id": "informal-proof-n4",
+      "kind": "informal_proof_check",
+      "text": "Check that node 'n4' (Derived nonnegativity of the sum) has an informal proof that establishes its informal statement, assuming its child dependencies.",
+      "node_ids": [
+        "n4"
+      ]
+    },
+    {
+      "id": "boundary-n4-n3",
+      "kind": "boundary_interface_check",
+      "text": "Check that formal child 'n3' proves exactly what informal parent 'n4' uses across their dependency boundary.",
+      "node_ids": [
+        "n4",
+        "n3"
+      ]
+    }
+  ]
+}

@@ -11,6 +11,120 @@ The system uses an LLM to extract structure from that prose, breaking it into no
 
 The goal is not full end-to-end formalization. The goal is to produce the strongest honest certification artifact currently available under Lean/Mathlib coverage, and to tell a human reviewer exactly what remains to be checked.
 
+## Quickstart
+
+The repository now includes a small smoke-test CLI for the current prototype:
+
+* `formal-islands-smoke extract`
+* `formal-islands-smoke select-candidates`
+* `formal-islands-smoke formalize-one`
+* `formal-islands-smoke report`
+* `formal-islands-smoke run-example`
+
+### One-time setup
+
+```bash
+python3 -m venv .venv
+./.venv/bin/python -m pip install -e '.[dev]'
+
+cd lean_project
+lake update
+lake exe cache get
+lake build
+cd ..
+```
+
+Install Codex CLI separately and authenticate it before using the Codex backend:
+
+```bash
+codex --version
+codex
+```
+
+Then choose **Sign in with ChatGPT** in the interactive Codex prompt, or set `CODEX_API_KEY` for non-interactive use.
+
+### Verify Codex auth/config
+
+```bash
+test -f "${CODEX_HOME:-$HOME/.codex}/auth.json" && echo "codex auth present"
+codex exec --skip-git-repo-check --sandbox read-only --output-schema /tmp/formal-islands-ping-schema.json --output-last-message /tmp/formal-islands-ping-output.json "Return a JSON object with ok=true"
+cat /tmp/formal-islands-ping-output.json
+```
+
+Create the tiny schema file once before that ping:
+
+```bash
+cat > /tmp/formal-islands-ping-schema.json <<'EOF'
+{"type":"object","properties":{"ok":{"type":"boolean"}},"required":["ok"],"additionalProperties":false}
+EOF
+```
+
+Expected output:
+
+* `/tmp/formal-islands-ping-output.json`
+* JSON of the form `{"ok": true}`
+
+### End-to-end smoke run on the included smallest example
+
+The smallest included raw-proof example is:
+
+* [`examples/nonnegative_sum_input.json`](examples/nonnegative_sum_input.json)
+
+You can run the whole current pipeline in one command:
+
+```bash
+./.venv/bin/formal-islands-smoke run-example \
+  --backend codex \
+  --input examples/nonnegative_sum_input.json \
+  --output-dir artifacts/nonnegative-sum \
+  --workspace lean_project \
+  --max-attempts 1
+```
+
+Or run the stages explicitly:
+
+```bash
+./.venv/bin/formal-islands-smoke extract \
+  --backend codex \
+  --input examples/nonnegative_sum_input.json \
+  --output-dir artifacts/nonnegative-sum
+
+./.venv/bin/formal-islands-smoke select-candidates \
+  --backend codex \
+  --graph artifacts/nonnegative-sum/01_extracted_graph.json \
+  --output-dir artifacts/nonnegative-sum
+
+./.venv/bin/formal-islands-smoke formalize-one \
+  --backend codex \
+  --graph artifacts/nonnegative-sum/02_candidate_graph.json \
+  --output-dir artifacts/nonnegative-sum \
+  --workspace lean_project \
+  --node-id auto \
+  --max-attempts 1
+
+./.venv/bin/formal-islands-smoke report \
+  --graph artifacts/nonnegative-sum/03_formalized_graph.json \
+  --output-dir artifacts/nonnegative-sum
+```
+
+Expected stage outputs:
+
+* extraction:
+
+  * `artifacts/nonnegative-sum/01_extracted_graph.json`
+* candidate selection:
+
+  * `artifacts/nonnegative-sum/02_candidate_graph.json`
+* one formalization attempt:
+
+  * `artifacts/nonnegative-sum/03_formalized_graph.json`
+  * `artifacts/nonnegative-sum/03_formalization_summary.json`
+  * generated Lean scratch file under `lean_project/FormalIslands/Generated/`
+* report generation:
+
+  * `artifacts/nonnegative-sum/04_report_bundle.json`
+  * `artifacts/nonnegative-sum/04_report.html`
+
 ## Motivation
 
 There is a real near-term gap between two extremes:

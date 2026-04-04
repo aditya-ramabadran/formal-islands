@@ -74,11 +74,12 @@ class LeanVerifier:
     def verify_code(self, *, lean_code: str, node_id: str, attempt_number: int) -> VerificationResult:
         """Write Lean code into the workspace and verify it locally."""
 
+        workspace_root = self.workspace.root.resolve()
         scratch_path = self.workspace.write_scratch_file(
             node_id=node_id,
             attempt_number=attempt_number,
             lean_code=lean_code,
-        )
+        ).resolve()
         command = ["lake", "env", "lean", str(scratch_path)]
 
         start = time.monotonic()
@@ -86,7 +87,7 @@ class LeanVerifier:
             command,
             capture_output=True,
             text=True,
-            cwd=self.workspace.root,
+            cwd=workspace_root,
             check=False,
             timeout=self.timeout_seconds,
         )

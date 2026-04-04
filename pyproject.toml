@@ -12,6 +12,9 @@ dependencies = [
   "pydantic>=2.10,<3",
 ]
 
+[project.scripts]
+formal-islands-smoke = "formal_islands.smoke:main"
+
 [project.optional-dependencies]
 dev = [
   "pytest>=8.3,<9",

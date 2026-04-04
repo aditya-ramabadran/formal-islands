@@ -68,7 +68,8 @@ def test_lean_verifier_captures_command_result(tmp_path: Path) -> None:
         timeout: float | None = None,
     ) -> subprocess.CompletedProcess[str]:
         assert args[:3] == ["lake", "env", "lean"]
-        assert cwd == tmp_path
+        assert cwd == tmp_path.resolve()
+        assert args[3] == str((tmp_path / "FormalIslands" / "Generated" / "n2_attempt_1.lean").resolve())
         return subprocess.CompletedProcess(args=args, returncode=0, stdout="ok", stderr="")
 
     verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
@@ -81,6 +82,38 @@ def test_lean_verifier_captures_command_result(tmp_path: Path) -> None:
     assert result.status == "verified"
     assert result.exit_code == 0
     assert result.artifact_path is not None
+
+
+def test_lean_verifier_handles_relative_workspace_root(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    workspace = create_workspace(Path("lean_project"))
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        assert cwd == (tmp_path / "lean_project").resolve()
+        assert args[3] == str(
+            (tmp_path / "lean_project" / "FormalIslands" / "Generated" / "n2_attempt_1.lean").resolve()
+        )
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="ok", stderr="")
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    result = verifier.verify_code(
+        lean_code="theorem t : True := by trivial",
+        node_id="n2",
+        attempt_number=1,
+    )
+
+    assert result.status == "verified"
 
 
 def test_formalize_candidate_node_records_retry_history(tmp_path: Path) -> None:

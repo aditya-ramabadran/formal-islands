@@ -146,6 +146,48 @@ def test_codex_backend_writes_schema_and_reads_structured_output(tmp_path: Path)
     assert response.payload == {"candidates": []}
 
 
+def test_codex_backend_normalizes_optional_properties_for_schema_file(tmp_path: Path) -> None:
+    backend = CodexCLIBackend()
+    request = StructuredBackendRequest(
+        prompt="Return data.",
+        json_schema={
+            "type": "object",
+            "properties": {
+                "outer": {
+                    "type": "object",
+                    "properties": {
+                        "optional_value": {
+                            "anyOf": [{"type": "string"}, {"type": "null"}]
+                        }
+                    },
+                }
+            },
+        },
+    )
+
+    def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        schema_path = Path(command[command.index("--output-schema") + 1])
+        output_path = Path(command[command.index("--output-last-message") + 1])
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+
+        assert schema["required"] == ["outer"]
+        assert schema["properties"]["outer"]["required"] == ["optional_value"]
+
+        output_path.write_text('{"outer": {"optional_value": null}}', encoding="utf-8")
+        return subprocess.CompletedProcess(args=command, returncode=0, stdout="", stderr="")
+
+    auth_home = tmp_path / "codex-home"
+    auth_home.mkdir()
+    (auth_home / "auth.json").write_text("{}", encoding="utf-8")
+
+    with patch("shutil.which", return_value="/usr/bin/codex"), patch.dict(
+        "os.environ", {"CODEX_HOME": str(auth_home)}, clear=False
+    ), patch("subprocess.run", side_effect=fake_run):
+        response = backend.run_structured(request)
+
+    assert response.payload == {"outer": {"optional_value": None}}
+
+
 def test_codex_backend_rejects_missing_output_file(tmp_path: Path) -> None:
     backend = CodexCLIBackend()
     auth_home = tmp_path / "codex-home"

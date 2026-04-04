@@ -41,7 +41,10 @@ class CodexCLIBackend:
             temp_path = Path(temp_dir)
             schema_path = temp_path / "schema.json"
             output_path = temp_path / "output.json"
-            schema_path.write_text(json.dumps(request.json_schema), encoding="utf-8")
+            schema_path.write_text(
+                json.dumps(self._normalize_schema_for_codex(request.json_schema)),
+                encoding="utf-8",
+            )
 
             command = [
                 self.executable,
@@ -120,3 +123,28 @@ class CodexCLIBackend:
             "Codex CLI auth was not found. Run `codex` and choose 'Sign in with ChatGPT', "
             "or set CODEX_API_KEY for non-interactive runs."
         )
+
+    @classmethod
+    def _normalize_schema_for_codex(cls, schema: dict) -> dict:
+        """Adjust JSON Schema to match Codex CLI's stricter response-format expectations."""
+
+        normalized = json.loads(json.dumps(schema))
+        return cls._normalize_schema_node(normalized)
+
+    @classmethod
+    def _normalize_schema_node(cls, node: object) -> object:
+        if isinstance(node, dict):
+            normalized = {key: cls._normalize_schema_node(value) for key, value in node.items()}
+
+            properties = normalized.get("properties")
+            if isinstance(properties, dict):
+                normalized["required"] = list(properties.keys())
+                if "additionalProperties" not in normalized:
+                    normalized["additionalProperties"] = False
+
+            return normalized
+
+        if isinstance(node, list):
+            return [cls._normalize_schema_node(item) for item in node]
+
+        return node
