@@ -1,0 +1,71 @@
+{
+  "theorem_title": "Weak maximum principle via the negative part",
+  "theorem_statement": "Weak maximum principle via the negative part.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded smooth domain, and let \\(u\\) be a sufficiently regular function such that\n\\[\n-\\Delta u \\ge 0 \\quad \\text{in } \\Omega,\n\\]\nand\n\\[\nu \\ge 0 \\quad \\text{on } \\partial \\Omega.\n\\]\nThen\n\\[\nu \\ge 0 \\quad \\text{in } \\Omega.\n\\]",
+  "root_node_id": "n0",
+  "nodes": [
+    {
+      "id": "n0",
+      "title": "Weak maximum principle via the negative part",
+      "informal_statement": "If \\(-\\Delta u \\ge 0\\) in \\(\\Omega\\) and \\(u \\ge 0\\) on \\(\\partial\\Omega\\), then \\(u \\ge 0\\) in \\(\\Omega\\).",
+      "informal_proof_text": "Test the inequality against the negative part \\(u_-(x)=\\max\\{-u(x),0\\}\\). Since \\(u_-\\) vanishes on \\(\\partial\\Omega\\), integration by parts gives \\(\\int_\\Omega (-\\Delta u)u_-\\,dx=\\int_\\Omega \\nabla u\\cdot\\nabla u_-\\,dx\\ge 0\\). On \\(\\{u<0\\}\\), \\(\\nabla u_-=-\\nabla u\\), while on \\(\\{u\\ge 0\\}\\), \\(\\nabla u_-=0\\), so \\(\\int_\\Omega \\nabla u\\cdot\\nabla u_-\\,dx=-\\int_\\Omega |\\nabla u_-|^2\\,dx\\). Hence \\(\\int_\\Omega |\\nabla u_-|^2\\,dx\\le 0\\), so \\(u_-\\) is constant; the boundary condition forces that constant to be zero. Therefore \\(u_\\equiv 0\\), i.e. \\(u\\ge 0\\) in \\(\\Omega\\).",
+      "status": "informal",
+      "display_label": "Weak maximum principle",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "n1",
+      "title": "Testing with the negative part and integration by parts",
+      "informal_statement": "For \\(u_-(x)=\\max\\{-u(x),0\\}\\), one has \\(u_-\\ge 0\\) in \\(\\Omega\\), \\(u_-=0\\) on \\(\\partial\\Omega\\), and\n\\[\n\\int_\\Omega (-\\Delta u)\\,u_-\\,dx = \\int_\\Omega \\nabla u\\cdot\\nabla u_-\\,dx.\n\\]",
+      "informal_proof_text": "Because \\(u\\ge 0\\) on \\(\\partial\\Omega\\), the negative part \\(u_-\\) has zero boundary trace. Thus it is an admissible test function for the weak form of \\(-\\Delta u \\ge 0\\), and integration by parts removes the boundary term.",
+      "status": "candidate_formal",
+      "display_label": "Test by \\(u_-\\)",
+      "formalization_priority": 2,
+      "formalization_rationale": "This packages the admissibility of \\(u_-\\) as a test function and the boundary-term cancellation, which is a standard but formally delicate step in weak maximum principle proofs.",
+      "formal_artifact": null
+    },
+    {
+      "id": "n2",
+      "title": "Energy identity for the negative part",
+      "informal_statement": "The gradients satisfy\n\\[\n\\int_\\Omega \\nabla u\\cdot\\nabla u_-\\,dx = -\\int_\\Omega |\\nabla u_-|^2\\,dx.\n\\]",
+      "informal_proof_text": "On \\(\\{u\\ge 0\\}\\), one has \\(u_-=0\\) and hence \\(\\nabla u_-=0\\). On \\(\\{u<0\\}\\), \\(u_-=-u\\), so \\(\\nabla u_-=-\\nabla u\\). Therefore \\(\\nabla u\\cdot\\nabla u_-=-|\\nabla u_-|^2\\) pointwise where \\(u<0\\), and the identity follows after integrating over \\(\\Omega\\).",
+      "status": "candidate_formal",
+      "display_label": "Negative-part identity",
+      "formalization_priority": 1,
+      "formalization_rationale": "This is the main local formal island: the pointwise case split on \\(u\\ge 0\\) vs. \\(u<0\\) produces the decisive energy identity \\(\\int \\nabla u\\cdot\\nabla u_- = -\\int |\\nabla u_-|^2\\).",
+      "formal_artifact": null
+    },
+    {
+      "id": "n3",
+      "title": "Vanishing of the negative part",
+      "informal_statement": "If \\(\\int_\\Omega |\\nabla u_-|^2\\,dx\\le 0\\), then \\(u_-=0\\) in \\(\\Omega\\), hence \\(u\\ge 0\\) in \\(\\Omega\\).",
+      "informal_proof_text": "Since \\(|\\nabla u_-|^2\\ge 0\\), the integral inequality forces \\(|\\nabla u_-|^2=0\\) almost everywhere. Thus \\(u_-\\) is constant on \\(\\Omega\\); the boundary condition \\(u_-=0\\) on \\(\\partial\\Omega\\) forces that constant to be zero. Consequently \\(u_-\\equiv 0\\), so \\(u\\) never takes negative values.",
+      "status": "candidate_formal",
+      "display_label": "Conclude \\(u_-=0\\)",
+      "formalization_priority": 3,
+      "formalization_rationale": "This is the final deduction from the nonpositive energy integral to \\(u_-\\equiv 0\\), combining nonnegativity, constancy, and the boundary trace condition.",
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "n1",
+      "target_id": "n2",
+      "label": "compute",
+      "explanation": "The integration-by-parts identity is sharpened by identifying the integrand in terms of \\(u_-\\)."
+    },
+    {
+      "source_id": "n2",
+      "target_id": "n3",
+      "label": "sign argument",
+      "explanation": "The identity yields a nonpositive integral of a nonnegative quantity, forcing \\(\\nabla u_- = 0\\) a.e."
+    },
+    {
+      "source_id": "n3",
+      "target_id": "n0",
+      "label": "final conclusion",
+      "explanation": "Once \\(u_-\\equiv 0\\), the theorem follows immediately."
+    }
+  ]
+}

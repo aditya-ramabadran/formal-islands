@@ -1,0 +1,252 @@
+{
+  "status": "completed",
+  "task_name": "plan_theorem",
+  "backend_name": "codex_cli",
+  "command": [
+    "codex",
+    "exec",
+    "--skip-git-repo-check",
+    "--output-schema",
+    "/var/folders/w1/mn46t3j176sbmjhbch0r0pph0000gp/T/formal-islands-codex-rx89nfs8/schema.json",
+    "--output-last-message",
+    "/var/folders/w1/mn46t3j176sbmjhbch0r0pph0000gp/T/formal-islands-codex-rx89nfs8/output.json",
+    "--sandbox",
+    "read-only",
+    "--ephemeral",
+    "System instructions:\n\nPlan a compact, faithful, formalization-sensitive proof graph for the user's theorem. Return only JSON that matches the supplied schema. In one pass, choose the graph shape and rank the best local formalization candidates. Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible.\n\nUser task:\n\nTheorem title hint: Harmonic functions minimize Dirichlet energy among competitors with the same boundary values\n\nTheorem statement:\nHarmonic functions minimize the Dirichlet energy among competitors with the same boundary values.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain with sufficiently regular boundary, and let \\(g\\) be prescribed boundary data. Suppose \\(u\\) is a sufficiently regular function such that:\n- \\(u=g\\) on \\(\\partial\\Omega\\),\n- and \\(u\\) is weakly harmonic, meaning\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla \\varphi \\, dx = 0\n\\qquad \\text{for every } \\varphi \\in H_0^1(\\Omega).\n\\]\n\nThen for every sufficiently regular \\(v\\) with the same boundary data \\(v=g\\) on \\(\\partial\\Omega\\), one has\n\\[\n\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx.\n\\]\nMoreover,\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]\n\nRaw informal proof:\nLet \\(v\\) be another sufficiently regular function with the same boundary data as \\(u\\), and define\n\\[\nw := v-u.\n\\]\nBecause \\(u\\) and \\(v\\) agree on \\(\\partial\\Omega\\), we have\n\\[\nw=0 \\quad \\text{on } \\partial\\Omega,\n\\]\nso \\(w \\in H_0^1(\\Omega)\\).\n\nNow compute the gradient of \\(v\\):\n\\[\n\\nabla v = \\nabla(u+w)=\\nabla u+\\nabla w.\n\\]\nTherefore\n\\[\n|\\nabla v|^2\n=\n|\\nabla u+\\nabla w|^2\n=\n|\\nabla u|^2 + 2\\nabla u\\cdot \\nabla w + |\\nabla w|^2.\n\\]\nIntegrating over \\(\\Omega\\), we get\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n2\\int_\\Omega \\nabla u\\cdot \\nabla w\\,dx\n+\n\\int_\\Omega |\\nabla w|^2\\,dx.\n\\]\n\nNow use the weak harmonicity of \\(u\\). Since \\(w \\in H_0^1(\\Omega)\\), we may take \\(\\varphi = w\\) in the weak formulation, which gives\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla w\\,dx = 0.\n\\]\nSo the middle term vanishes. Hence\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla w|^2\\,dx.\n\\]\nSince \\(w=v-u\\), this is exactly\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]\n\nBecause the final term is nonnegative, we conclude\n\\[\n\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx.\n\\]\nThus \\(u\\) minimizes the Dirichlet energy among all competitors with the same boundary values.\n\nReturn one JSON object with top-level keys theorem_title, theorem_statement, root_node_id, nodes, edges, and candidates.\n\nThe nodes and edges must follow the same informal extraction schema as before: nodes include id, title, informal_statement, informal_proof_text, and optional display_label; edges include source_id, target_id, and optional label and explanation.\n\nThe candidates array must include objects with node_id, priority, and rationale. Candidates should refer only to node ids that exist in the graph you emit.\n\nPlan the graph and candidate ranking jointly. Optimize for a compact, faithful, formalization-sensitive graph with a small, high-yield candidate set.\n\nA node should exist only if it is the root theorem, a nontrivial intermediate claim, a meaningful candidate formal island, a reused claim, a separate review obligation, or a conceptually distinct proof step that improves the final mixed informal/formal report.\n\nDo not create separate nodes for bare assumptions, local variable setup, trivial restatements, goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims.\n\nWhen choosing graph granularity, preserve one or two local technical subclaims if they are concrete, inferentially important, plausibly formalizable, and substantially used by the surrounding proof. Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic simplifications, monotonicity or concavity consequences, and concrete local estimates.\n\nKeep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims that are much weaker than the surrounding local argument.\n\nFor a tiny proof, prefer a single root node unless a second node for a reusable or conceptually distinct lemma clearly improves the graph.\n\nPreserve the original mathematical notation in your output whenever feasible. Do not normalize LaTeX into plain ASCII unless absolutely necessary."
+  ],
+  "cwd": null,
+  "system_prompt": "Plan a compact, faithful, formalization-sensitive proof graph for the user's theorem. Return only JSON that matches the supplied schema. In one pass, choose the graph shape and rank the best local formalization candidates. Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible.",
+  "prompt": "Theorem title hint: Harmonic functions minimize Dirichlet energy among competitors with the same boundary values\n\nTheorem statement:\nHarmonic functions minimize the Dirichlet energy among competitors with the same boundary values.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain with sufficiently regular boundary, and let \\(g\\) be prescribed boundary data. Suppose \\(u\\) is a sufficiently regular function such that:\n- \\(u=g\\) on \\(\\partial\\Omega\\),\n- and \\(u\\) is weakly harmonic, meaning\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla \\varphi \\, dx = 0\n\\qquad \\text{for every } \\varphi \\in H_0^1(\\Omega).\n\\]\n\nThen for every sufficiently regular \\(v\\) with the same boundary data \\(v=g\\) on \\(\\partial\\Omega\\), one has\n\\[\n\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx.\n\\]\nMoreover,\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]\n\nRaw informal proof:\nLet \\(v\\) be another sufficiently regular function with the same boundary data as \\(u\\), and define\n\\[\nw := v-u.\n\\]\nBecause \\(u\\) and \\(v\\) agree on \\(\\partial\\Omega\\), we have\n\\[\nw=0 \\quad \\text{on } \\partial\\Omega,\n\\]\nso \\(w \\in H_0^1(\\Omega)\\).\n\nNow compute the gradient of \\(v\\):\n\\[\n\\nabla v = \\nabla(u+w)=\\nabla u+\\nabla w.\n\\]\nTherefore\n\\[\n|\\nabla v|^2\n=\n|\\nabla u+\\nabla w|^2\n=\n|\\nabla u|^2 + 2\\nabla u\\cdot \\nabla w + |\\nabla w|^2.\n\\]\nIntegrating over \\(\\Omega\\), we get\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n2\\int_\\Omega \\nabla u\\cdot \\nabla w\\,dx\n+\n\\int_\\Omega |\\nabla w|^2\\,dx.\n\\]\n\nNow use the weak harmonicity of \\(u\\). Since \\(w \\in H_0^1(\\Omega)\\), we may take \\(\\varphi = w\\) in the weak formulation, which gives\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla w\\,dx = 0.\n\\]\nSo the middle term vanishes. Hence\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla w|^2\\,dx.\n\\]\nSince \\(w=v-u\\), this is exactly\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]\n\nBecause the final term is nonnegative, we conclude\n\\[\n\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx.\n\\]\nThus \\(u\\) minimizes the Dirichlet energy among all competitors with the same boundary values.\n\nReturn one JSON object with top-level keys theorem_title, theorem_statement, root_node_id, nodes, edges, and candidates.\n\nThe nodes and edges must follow the same informal extraction schema as before: nodes include id, title, informal_statement, informal_proof_text, and optional display_label; edges include source_id, target_id, and optional label and explanation.\n\nThe candidates array must include objects with node_id, priority, and rationale. Candidates should refer only to node ids that exist in the graph you emit.\n\nPlan the graph and candidate ranking jointly. Optimize for a compact, faithful, formalization-sensitive graph with a small, high-yield candidate set.\n\nA node should exist only if it is the root theorem, a nontrivial intermediate claim, a meaningful candidate formal island, a reused claim, a separate review obligation, or a conceptually distinct proof step that improves the final mixed informal/formal report.\n\nDo not create separate nodes for bare assumptions, local variable setup, trivial restatements, goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims.\n\nWhen choosing graph granularity, preserve one or two local technical subclaims if they are concrete, inferentially important, plausibly formalizable, and substantially used by the surrounding proof. Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic simplifications, monotonicity or concavity consequences, and concrete local estimates.\n\nKeep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims that are much weaker than the surrounding local argument.\n\nFor a tiny proof, prefer a single root node unless a second node for a reusable or conceptually distinct lemma clearly improves the graph.\n\nPreserve the original mathematical notation in your output whenever feasible. Do not normalize LaTeX into plain ASCII unless absolutely necessary.",
+  "rendered_prompt": "System instructions:\n\nPlan a compact, faithful, formalization-sensitive proof graph for the user's theorem. Return only JSON that matches the supplied schema. In one pass, choose the graph shape and rank the best local formalization candidates. Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible.\n\nUser task:\n\nTheorem title hint: Harmonic functions minimize Dirichlet energy among competitors with the same boundary values\n\nTheorem statement:\nHarmonic functions minimize the Dirichlet energy among competitors with the same boundary values.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain with sufficiently regular boundary, and let \\(g\\) be prescribed boundary data. Suppose \\(u\\) is a sufficiently regular function such that:\n- \\(u=g\\) on \\(\\partial\\Omega\\),\n- and \\(u\\) is weakly harmonic, meaning\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla \\varphi \\, dx = 0\n\\qquad \\text{for every } \\varphi \\in H_0^1(\\Omega).\n\\]\n\nThen for every sufficiently regular \\(v\\) with the same boundary data \\(v=g\\) on \\(\\partial\\Omega\\), one has\n\\[\n\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx.\n\\]\nMoreover,\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]\n\nRaw informal proof:\nLet \\(v\\) be another sufficiently regular function with the same boundary data as \\(u\\), and define\n\\[\nw := v-u.\n\\]\nBecause \\(u\\) and \\(v\\) agree on \\(\\partial\\Omega\\), we have\n\\[\nw=0 \\quad \\text{on } \\partial\\Omega,\n\\]\nso \\(w \\in H_0^1(\\Omega)\\).\n\nNow compute the gradient of \\(v\\):\n\\[\n\\nabla v = \\nabla(u+w)=\\nabla u+\\nabla w.\n\\]\nTherefore\n\\[\n|\\nabla v|^2\n=\n|\\nabla u+\\nabla w|^2\n=\n|\\nabla u|^2 + 2\\nabla u\\cdot \\nabla w + |\\nabla w|^2.\n\\]\nIntegrating over \\(\\Omega\\), we get\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n2\\int_\\Omega \\nabla u\\cdot \\nabla w\\,dx\n+\n\\int_\\Omega |\\nabla w|^2\\,dx.\n\\]\n\nNow use the weak harmonicity of \\(u\\). Since \\(w \\in H_0^1(\\Omega)\\), we may take \\(\\varphi = w\\) in the weak formulation, which gives\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla w\\,dx = 0.\n\\]\nSo the middle term vanishes. Hence\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla w|^2\\,dx.\n\\]\nSince \\(w=v-u\\), this is exactly\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]\n\nBecause the final term is nonnegative, we conclude\n\\[\n\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx.\n\\]\nThus \\(u\\) minimizes the Dirichlet energy among all competitors with the same boundary values.\n\nReturn one JSON object with top-level keys theorem_title, theorem_statement, root_node_id, nodes, edges, and candidates.\n\nThe nodes and edges must follow the same informal extraction schema as before: nodes include id, title, informal_statement, informal_proof_text, and optional display_label; edges include source_id, target_id, and optional label and explanation.\n\nThe candidates array must include objects with node_id, priority, and rationale. Candidates should refer only to node ids that exist in the graph you emit.\n\nPlan the graph and candidate ranking jointly. Optimize for a compact, faithful, formalization-sensitive graph with a small, high-yield candidate set.\n\nA node should exist only if it is the root theorem, a nontrivial intermediate claim, a meaningful candidate formal island, a reused claim, a separate review obligation, or a conceptually distinct proof step that improves the final mixed informal/formal report.\n\nDo not create separate nodes for bare assumptions, local variable setup, trivial restatements, goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims.\n\nWhen choosing graph granularity, preserve one or two local technical subclaims if they are concrete, inferentially important, plausibly formalizable, and substantially used by the surrounding proof. Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic simplifications, monotonicity or concavity consequences, and concrete local estimates.\n\nKeep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims that are much weaker than the surrounding local argument.\n\nFor a tiny proof, prefer a single root node unless a second node for a reusable or conceptually distinct lemma clearly improves the graph.\n\nPreserve the original mathematical notation in your output whenever feasible. Do not normalize LaTeX into plain ASCII unless absolutely necessary.",
+  "json_schema": {
+    "$defs": {
+      "CandidateSelection": {
+        "additionalProperties": false,
+        "description": "Single candidate-formalization decision.",
+        "properties": {
+          "node_id": {
+            "minLength": 1,
+            "title": "Node Id",
+            "type": "string"
+          },
+          "priority": {
+            "maximum": 3,
+            "minimum": 1,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "rationale": {
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_id",
+          "priority",
+          "rationale"
+        ],
+        "title": "CandidateSelection",
+        "type": "object"
+      },
+      "ExtractedEdge": {
+        "additionalProperties": false,
+        "description": "Dependency edge shape expected from the graph-extraction pass.",
+        "properties": {
+          "source_id": {
+            "minLength": 1,
+            "title": "Source Id",
+            "type": "string"
+          },
+          "target_id": {
+            "minLength": 1,
+            "title": "Target Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Explanation"
+          }
+        },
+        "required": [
+          "source_id",
+          "target_id",
+          "label",
+          "explanation"
+        ],
+        "title": "ExtractedEdge",
+        "type": "object"
+      },
+      "ExtractedNode": {
+        "additionalProperties": false,
+        "description": "Node shape expected from the graph-extraction LLM pass.",
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "informal_statement": {
+            "minLength": 1,
+            "title": "Informal Statement",
+            "type": "string"
+          },
+          "informal_proof_text": {
+            "minLength": 1,
+            "title": "Informal Proof Text",
+            "type": "string"
+          },
+          "display_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Display Label"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "informal_statement",
+          "informal_proof_text",
+          "display_label"
+        ],
+        "title": "ExtractedNode",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Merged theorem-level planning payload: graph plus ranked formalization candidates.",
+    "properties": {
+      "theorem_title": {
+        "minLength": 1,
+        "title": "Theorem Title",
+        "type": "string"
+      },
+      "theorem_statement": {
+        "minLength": 1,
+        "title": "Theorem Statement",
+        "type": "string"
+      },
+      "root_node_id": {
+        "minLength": 1,
+        "title": "Root Node Id",
+        "type": "string"
+      },
+      "nodes": {
+        "items": {
+          "$ref": "#/$defs/ExtractedNode"
+        },
+        "minItems": 1,
+        "title": "Nodes",
+        "type": "array"
+      },
+      "edges": {
+        "items": {
+          "$ref": "#/$defs/ExtractedEdge"
+        },
+        "title": "Edges",
+        "type": "array"
+      },
+      "candidates": {
+        "items": {
+          "$ref": "#/$defs/CandidateSelection"
+        },
+        "title": "Candidates",
+        "type": "array"
+      }
+    },
+    "required": [
+      "theorem_title",
+      "theorem_statement",
+      "root_node_id",
+      "nodes",
+      "edges",
+      "candidates"
+    ],
+    "title": "PlannedProofGraph",
+    "type": "object"
+  },
+  "model": null,
+  "sandbox": "read-only",
+  "full_auto": false,
+  "use_ephemeral_session": true,
+  "timeout_seconds": 180.0,
+  "started_at_epoch_seconds": 1775361169.613203,
+  "elapsed_seconds": 33.2461040019989,
+  "exit_code": 0,
+  "raw_stdout": "{\"theorem_title\":\"Harmonic functions minimize Dirichlet energy among competitors with the same boundary values\",\"theorem_statement\":\"Let \\\\(\\\\Omega \\\\subset \\\\mathbb{R}^d\\\\) be a bounded domain with sufficiently regular boundary, and let \\\\(g\\\\) be prescribed boundary data. Suppose \\\\(u\\\\) is a sufficiently regular function such that \\\\(u=g\\\\) on \\\\(\\\\partial\\\\Omega\\\\) and \\\\(u\\\\) is weakly harmonic, meaning\\n\\\\[\\n\\\\int_\\\\Omega \\\\nabla u \\\\cdot \\\\nabla \\\\varphi \\\\, dx = 0\\n\\\\qquad \\\\text{for every } \\\\varphi \\\\in H_0^1(\\\\Omega).\\n\\\\]\\nThen for every sufficiently regular \\\\(v\\\\) with the same boundary data \\\\(v=g\\\\) on \\\\(\\\\partial\\\\Omega\\\\), one has\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx \\\\le \\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx.\\n\\\\]\\nMoreover,\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx\\n=\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx\\n+\\n\\\\int_\\\\Omega |\\\\nabla(v-u)|^2\\\\,dx.\\n\\\\]\",\"root_node_id\":\"n_root\",\"nodes\":[{\"id\":\"n_root\",\"title\":\"Harmonic functions minimize Dirichlet energy among competitors with the same boundary values\",\"informal_statement\":\"If \\\\(u\\\\) is weakly harmonic in \\\\(\\\\Omega\\\\) and \\\\(u=g\\\\) on \\\\(\\\\partial\\\\Omega\\\\), then for every sufficiently regular \\\\(v\\\\) with \\\\(v=g\\\\) on \\\\(\\\\partial\\\\Omega\\\\),\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx\\n=\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx\\n+\\n\\\\int_\\\\Omega |\\\\nabla(v-u)|^2\\\\,dx,\\n\\\\]\\nand hence\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx \\\\le \\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx.\\n\\\\]\",\"informal_proof_text\":\"Fix a competitor \\\\(v\\\\) with the same boundary data and set \\\\(w:=v-u\\\\). By the common boundary condition, \\\\(w=0\\\\) on \\\\(\\\\partial\\\\Omega\\\\), so \\\\(w\\\\in H_0^1(\\\\Omega)\\\\). Apply the energy decomposition from the local claim to obtain\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx\\n=\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx\\n+\\n\\\\int_\\\\Omega |\\\\nabla(v-u)|^2\\\\,dx.\\n\\\\]\\nSince the last term is nonnegative, the minimizing inequality follows immediately. Thus \\\\(u\\\\) minimizes the Dirichlet energy among all competitors with the same boundary values.\",\"display_label\":\"Dirichlet principle for weakly harmonic \\\\(u\\\\)\"},{\"id\":\"n_energy_split\",\"title\":\"Energy decomposition using the weak harmonicity test \\\\(\\\\varphi=v-u\\\\)\",\"informal_statement\":\"For \\\\(w:=v-u\\\\), if \\\\(u\\\\) and \\\\(v\\\\) have the same boundary values, then \\\\(w\\\\in H_0^1(\\\\Omega)\\\\) and\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx\\n=\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx\\n+\\n\\\\int_\\\\Omega |\\\\nabla w|^2\\\\,dx.\\n\\\\]\",\"informal_proof_text\":\"Set \\\\(w:=v-u\\\\). Since \\\\(u=v=g\\\\) on \\\\(\\\\partial\\\\Omega\\\\), we have \\\\(w=0\\\\) on \\\\(\\\\partial\\\\Omega\\\\), hence \\\\(w\\\\in H_0^1(\\\\Omega)\\\\). Also \\\\(\\\\nabla v=\\\\nabla(u+w)=\\\\nabla u+\\\\nabla w\\\\), so pointwise\\n\\\\[\\n|\\\\nabla v|^2=|\\\\nabla u+\\\\nabla w|^2=|\\\\nabla u|^2+2\\\\nabla u\\\\cdot\\\\nabla w+|\\\\nabla w|^2.\\n\\\\]\\nIntegrating gives\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx\\n=\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx\\n+2\\\\int_\\\\Omega \\\\nabla u\\\\cdot\\\\nabla w\\\\,dx\\n+\\\\int_\\\\Omega |\\\\nabla w|^2\\\\,dx.\\n\\\\]\\nBecause \\\\(w\\\\in H_0^1(\\\\Omega)\\\\), it is an admissible test function in the weak harmonicity condition for \\\\(u\\\\), so\\n\\\\[\\n\\\\int_\\\\Omega \\\\nabla u\\\\cdot\\\\nabla w\\\\,dx=0.\\n\\\\]\\nTherefore the cross term vanishes and the stated identity follows. Replacing \\\\(w\\\\) by \\\\(v-u\\\\) yields the advertised form.\",\"display_label\":\"Energy identity\"}],\"edges\":[{\"source_id\":\"n_energy_split\",\"target_id\":\"n_root\",\"label\":\"main step\",\"explanation\":\"The theorem follows by applying the energy identity to \\\\(w=v-u\\\\) and then using nonnegativity of \\\\(\\\\int_\\\\Omega |\\\\nabla(v-u)|^2\\\\,dx\\\\).\"}],\"candidates\":[{\"node_id\":\"n_energy_split\",\"priority\":1,\"rationale\":\"Best local formal island: it packages the concrete algebraic expansion of \\\\(|\\\\nabla(u+w)|^2\\\\) with the key weak-form orthogonality argument \\\\(\\\\varphi=w\\\\), eliminating the only nontrivial cross term.\"},{\"node_id\":\"n_root\",\"priority\":2,\"rationale\":\"Natural end-to-end theorem statement once the energy identity is available; formalization is straightforward from nonnegativity of the final term.\"}]}\n",
+  "raw_stderr": "OpenAI Codex v0.118.0 (research preview)\n--------\nworkdir: /Users/adihaya/GitHub/formal-islands\nmodel: gpt-5.4\nprovider: openai\napproval: never\nsandbox: read-only\nreasoning effort: medium\nreasoning summaries: none\nsession id: 019d5bc5-9963-79a3-a7e0-6ca7eb34daa9\n--------\nuser\nSystem instructions:\n\nPlan a compact, faithful, formalization-sensitive proof graph for the user's theorem. Return only JSON that matches the supplied schema. In one pass, choose the graph shape and rank the best local formalization candidates. Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible.\n\nUser task:\n\nTheorem title hint: Harmonic functions minimize Dirichlet energy among competitors with the same boundary values\n\nTheorem statement:\nHarmonic functions minimize the Dirichlet energy among competitors with the same boundary values.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain with sufficiently regular boundary, and let \\(g\\) be prescribed boundary data. Suppose \\(u\\) is a sufficiently regular function such that:\n- \\(u=g\\) on \\(\\partial\\Omega\\),\n- and \\(u\\) is weakly harmonic, meaning\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla \\varphi \\, dx = 0\n\\qquad \\text{for every } \\varphi \\in H_0^1(\\Omega).\n\\]\n\nThen for every sufficiently regular \\(v\\) with the same boundary data \\(v=g\\) on \\(\\partial\\Omega\\), one has\n\\[\n\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx.\n\\]\nMoreover,\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]\n\nRaw informal proof:\nLet \\(v\\) be another sufficiently regular function with the same boundary data as \\(u\\), and define\n\\[\nw := v-u.\n\\]\nBecause \\(u\\) and \\(v\\) agree on \\(\\partial\\Omega\\), we have\n\\[\nw=0 \\quad \\text{on } \\partial\\Omega,\n\\]\nso \\(w \\in H_0^1(\\Omega)\\).\n\nNow compute the gradient of \\(v\\):\n\\[\n\\nabla v = \\nabla(u+w)=\\nabla u+\\nabla w.\n\\]\nTherefore\n\\[\n|\\nabla v|^2\n=\n|\\nabla u+\\nabla w|^2\n=\n|\\nabla u|^2 + 2\\nabla u\\cdot \\nabla w + |\\nabla w|^2.\n\\]\nIntegrating over \\(\\Omega\\), we get\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n2\\int_\\Omega \\nabla u\\cdot \\nabla w\\,dx\n+\n\\int_\\Omega |\\nabla w|^2\\,dx.\n\\]\n\nNow use the weak harmonicity of \\(u\\). Since \\(w \\in H_0^1(\\Omega)\\), we may take \\(\\varphi = w\\) in the weak formulation, which gives\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla w\\,dx = 0.\n\\]\nSo the middle term vanishes. Hence\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla w|^2\\,dx.\n\\]\nSince \\(w=v-u\\), this is exactly\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]\n\nBecause the final term is nonnegative, we conclude\n\\[\n\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx.\n\\]\nThus \\(u\\) minimizes the Dirichlet energy among all competitors with the same boundary values.\n\nReturn one JSON object with top-level keys theorem_title, theorem_statement, root_node_id, nodes, edges, and candidates.\n\nThe nodes and edges must follow the same informal extraction schema as before: nodes include id, title, informal_statement, informal_proof_text, and optional display_label; edges include source_id, target_id, and optional label and explanation.\n\nThe candidates array must include objects with node_id, priority, and rationale. Candidates should refer only to node ids that exist in the graph you emit.\n\nPlan the graph and candidate ranking jointly. Optimize for a compact, faithful, formalization-sensitive graph with a small, high-yield candidate set.\n\nA node should exist only if it is the root theorem, a nontrivial intermediate claim, a meaningful candidate formal island, a reused claim, a separate review obligation, or a conceptually distinct proof step that improves the final mixed informal/formal report.\n\nDo not create separate nodes for bare assumptions, local variable setup, trivial restatements, goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims.\n\nWhen choosing graph granularity, preserve one or two local technical subclaims if they are concrete, inferentially important, plausibly formalizable, and substantially used by the surrounding proof. Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic simplifications, monotonicity or concavity consequences, and concrete local estimates.\n\nKeep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims that are much weaker than the surrounding local argument.\n\nFor a tiny proof, prefer a single root node unless a second node for a reusable or conceptually distinct lemma clearly improves the graph.\n\nPreserve the original mathematical notation in your output whenever feasible. Do not normalize LaTeX into plain ASCII unless absolutely necessary.\n2026-04-05T03:52:50.100163Z  WARN codex_core::shell_snapshot: Failed to delete shell snapshot at \"/Users/adihaya/.codex/shell_snapshots/019d5bc5-9963-79a3-a7e0-6ca7eb34daa9.tmp-1775361169767382000\": Os { code: 2, kind: NotFound, message: \"No such file or directory\" }\ncodex\n{\"theorem_title\":\"Harmonic functions minimize Dirichlet energy among competitors with the same boundary values\",\"theorem_statement\":\"Let \\\\(\\\\Omega \\\\subset \\\\mathbb{R}^d\\\\) be a bounded domain with sufficiently regular boundary, and let \\\\(g\\\\) be prescribed boundary data. Suppose \\\\(u\\\\) is a sufficiently regular function such that \\\\(u=g\\\\) on \\\\(\\\\partial\\\\Omega\\\\) and \\\\(u\\\\) is weakly harmonic, meaning\\n\\\\[\\n\\\\int_\\\\Omega \\\\nabla u \\\\cdot \\\\nabla \\\\varphi \\\\, dx = 0\\n\\\\qquad \\\\text{for every } \\\\varphi \\\\in H_0^1(\\\\Omega).\\n\\\\]\\nThen for every sufficiently regular \\\\(v\\\\) with the same boundary data \\\\(v=g\\\\) on \\\\(\\\\partial\\\\Omega\\\\), one has\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx \\\\le \\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx.\\n\\\\]\\nMoreover,\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx\\n=\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx\\n+\\n\\\\int_\\\\Omega |\\\\nabla(v-u)|^2\\\\,dx.\\n\\\\]\",\"root_node_id\":\"n_root\",\"nodes\":[{\"id\":\"n_root\",\"title\":\"Harmonic functions minimize Dirichlet energy among competitors with the same boundary values\",\"informal_statement\":\"If \\\\(u\\\\) is weakly harmonic in \\\\(\\\\Omega\\\\) and \\\\(u=g\\\\) on \\\\(\\\\partial\\\\Omega\\\\), then for every sufficiently regular \\\\(v\\\\) with \\\\(v=g\\\\) on \\\\(\\\\partial\\\\Omega\\\\),\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx\\n=\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx\\n+\\n\\\\int_\\\\Omega |\\\\nabla(v-u)|^2\\\\,dx,\\n\\\\]\\nand hence\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx \\\\le \\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx.\\n\\\\]\",\"informal_proof_text\":\"Fix a competitor \\\\(v\\\\) with the same boundary data and set \\\\(w:=v-u\\\\). By the common boundary condition, \\\\(w=0\\\\) on \\\\(\\\\partial\\\\Omega\\\\), so \\\\(w\\\\in H_0^1(\\\\Omega)\\\\). Apply the energy decomposition from the local claim to obtain\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx\\n=\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx\\n+\\n\\\\int_\\\\Omega |\\\\nabla(v-u)|^2\\\\,dx.\\n\\\\]\\nSince the last term is nonnegative, the minimizing inequality follows immediately. Thus \\\\(u\\\\) minimizes the Dirichlet energy among all competitors with the same boundary values.\",\"display_label\":\"Dirichlet principle for weakly harmonic \\\\(u\\\\)\"},{\"id\":\"n_energy_split\",\"title\":\"Energy decomposition using the weak harmonicity test \\\\(\\\\varphi=v-u\\\\)\",\"informal_statement\":\"For \\\\(w:=v-u\\\\), if \\\\(u\\\\) and \\\\(v\\\\) have the same boundary values, then \\\\(w\\\\in H_0^1(\\\\Omega)\\\\) and\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx\\n=\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx\\n+\\n\\\\int_\\\\Omega |\\\\nabla w|^2\\\\,dx.\\n\\\\]\",\"informal_proof_text\":\"Set \\\\(w:=v-u\\\\). Since \\\\(u=v=g\\\\) on \\\\(\\\\partial\\\\Omega\\\\), we have \\\\(w=0\\\\) on \\\\(\\\\partial\\\\Omega\\\\), hence \\\\(w\\\\in H_0^1(\\\\Omega)\\\\). Also \\\\(\\\\nabla v=\\\\nabla(u+w)=\\\\nabla u+\\\\nabla w\\\\), so pointwise\\n\\\\[\\n|\\\\nabla v|^2=|\\\\nabla u+\\\\nabla w|^2=|\\\\nabla u|^2+2\\\\nabla u\\\\cdot\\\\nabla w+|\\\\nabla w|^2.\\n\\\\]\\nIntegrating gives\\n\\\\[\\n\\\\int_\\\\Omega |\\\\nabla v|^2\\\\,dx\\n=\\n\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx\\n+2\\\\int_\\\\Omega \\\\nabla u\\\\cdot\\\\nabla w\\\\,dx\\n+\\\\int_\\\\Omega |\\\\nabla w|^2\\\\,dx.\\n\\\\]\\nBecause \\\\(w\\\\in H_0^1(\\\\Omega)\\\\), it is an admissible test function in the weak harmonicity condition for \\\\(u\\\\), so\\n\\\\[\\n\\\\int_\\\\Omega \\\\nabla u\\\\cdot\\\\nabla w\\\\,dx=0.\\n\\\\]\\nTherefore the cross term vanishes and the stated identity follows. Replacing \\\\(w\\\\) by \\\\(v-u\\\\) yields the advertised form.\",\"display_label\":\"Energy identity\"}],\"edges\":[{\"source_id\":\"n_energy_split\",\"target_id\":\"n_root\",\"label\":\"main step\",\"explanation\":\"The theorem follows by applying the energy identity to \\\\(w=v-u\\\\) and then using nonnegativity of \\\\(\\\\int_\\\\Omega |\\\\nabla(v-u)|^2\\\\,dx\\\\).\"}],\"candidates\":[{\"node_id\":\"n_energy_split\",\"priority\":1,\"rationale\":\"Best local formal island: it packages the concrete algebraic expansion of \\\\(|\\\\nabla(u+w)|^2\\\\) with the key weak-form orthogonality argument \\\\(\\\\varphi=w\\\\), eliminating the only nontrivial cross term.\"},{\"node_id\":\"n_root\",\"priority\":2,\"rationale\":\"Natural end-to-end theorem statement once the energy identity is available; formalization is straightforward from nonnegativity of the final term.\"}]}\n2026-04-05T03:53:22.638850Z  WARN codex_exec: thread/read failed while backfilling turn items for turn completion: thread/read: thread/read failed: ephemeral threads do not support includeTurns\ntokens used\n15,771\n",
+  "payload": {
+    "theorem_title": "Harmonic functions minimize Dirichlet energy among competitors with the same boundary values",
+    "theorem_statement": "Let \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain with sufficiently regular boundary, and let \\(g\\) be prescribed boundary data. Suppose \\(u\\) is a sufficiently regular function such that \\(u=g\\) on \\(\\partial\\Omega\\) and \\(u\\) is weakly harmonic, meaning\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla \\varphi \\, dx = 0\n\\qquad \\text{for every } \\varphi \\in H_0^1(\\Omega).\n\\]\nThen for every sufficiently regular \\(v\\) with the same boundary data \\(v=g\\) on \\(\\partial\\Omega\\), one has\n\\[\n\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx.\n\\]\nMoreover,\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]",
+    "root_node_id": "n_root",
+    "nodes": [
+      {
+        "id": "n_root",
+        "title": "Harmonic functions minimize Dirichlet energy among competitors with the same boundary values",
+        "informal_statement": "If \\(u\\) is weakly harmonic in \\(\\Omega\\) and \\(u=g\\) on \\(\\partial\\Omega\\), then for every sufficiently regular \\(v\\) with \\(v=g\\) on \\(\\partial\\Omega\\),\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx,\n\\]\nand hence\n\\[\n\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx.\n\\]",
+        "informal_proof_text": "Fix a competitor \\(v\\) with the same boundary data and set \\(w:=v-u\\). By the common boundary condition, \\(w=0\\) on \\(\\partial\\Omega\\), so \\(w\\in H_0^1(\\Omega)\\). Apply the energy decomposition from the local claim to obtain\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]\nSince the last term is nonnegative, the minimizing inequality follows immediately. Thus \\(u\\) minimizes the Dirichlet energy among all competitors with the same boundary values.",
+        "display_label": "Dirichlet principle for weakly harmonic \\(u\\)"
+      },
+      {
+        "id": "n_energy_split",
+        "title": "Energy decomposition using the weak harmonicity test \\(\\varphi=v-u\\)",
+        "informal_statement": "For \\(w:=v-u\\), if \\(u\\) and \\(v\\) have the same boundary values, then \\(w\\in H_0^1(\\Omega)\\) and\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla w|^2\\,dx.\n\\]",
+        "informal_proof_text": "Set \\(w:=v-u\\). Since \\(u=v=g\\) on \\(\\partial\\Omega\\), we have \\(w=0\\) on \\(\\partial\\Omega\\), hence \\(w\\in H_0^1(\\Omega)\\). Also \\(\\nabla v=\\nabla(u+w)=\\nabla u+\\nabla w\\), so pointwise\n\\[\n|\\nabla v|^2=|\\nabla u+\\nabla w|^2=|\\nabla u|^2+2\\nabla u\\cdot\\nabla w+|\\nabla w|^2.\n\\]\nIntegrating gives\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+2\\int_\\Omega \\nabla u\\cdot\\nabla w\\,dx\n+\\int_\\Omega |\\nabla w|^2\\,dx.\n\\]\nBecause \\(w\\in H_0^1(\\Omega)\\), it is an admissible test function in the weak harmonicity condition for \\(u\\), so\n\\[\n\\int_\\Omega \\nabla u\\cdot\\nabla w\\,dx=0.\n\\]\nTherefore the cross term vanishes and the stated identity follows. Replacing \\(w\\) by \\(v-u\\) yields the advertised form.",
+        "display_label": "Energy identity"
+      }
+    ],
+    "edges": [
+      {
+        "source_id": "n_energy_split",
+        "target_id": "n_root",
+        "label": "main step",
+        "explanation": "The theorem follows by applying the energy identity to \\(w=v-u\\) and then using nonnegativity of \\(\\int_\\Omega |\\nabla(v-u)|^2\\,dx\\)."
+      }
+    ],
+    "candidates": [
+      {
+        "node_id": "n_energy_split",
+        "priority": 1,
+        "rationale": "Best local formal island: it packages the concrete algebraic expansion of \\(|\\nabla(u+w)|^2\\) with the key weak-form orthogonality argument \\(\\varphi=w\\), eliminating the only nontrivial cross term."
+      },
+      {
+        "node_id": "n_root",
+        "priority": 2,
+        "rationale": "Natural end-to-end theorem statement once the energy identity is available; formalization is straightforward from nonnegativity of the final term."
+      }
+    ]
+  }
+}

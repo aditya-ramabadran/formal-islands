@@ -1,0 +1,289 @@
+{
+  "status": "completed",
+  "task_name": "plan_theorem",
+  "backend_name": "codex_cli",
+  "command": [
+    "codex",
+    "exec",
+    "--skip-git-repo-check",
+    "--output-schema",
+    "/var/folders/w1/mn46t3j176sbmjhbch0r0pph0000gp/T/formal-islands-codex-e1xzz98o/schema.json",
+    "--output-last-message",
+    "/var/folders/w1/mn46t3j176sbmjhbch0r0pph0000gp/T/formal-islands-codex-e1xzz98o/output.json",
+    "--sandbox",
+    "read-only",
+    "--ephemeral",
+    "System instructions:\n\nPlan a compact, faithful, formalization-sensitive proof graph for the user's theorem. Return only JSON that matches the supplied schema. In one pass, choose the graph shape and rank the best local formalization candidates. Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible.\n\nUser task:\n\nTheorem title hint: Finite-time blow-up for the semilinear heat equation by the energy method\n\nTheorem statement:\nFinite-time blow-up for the semilinear heat equation by the energy method.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain, and let \\(u(t,x)\\) be a sufficiently regular solution of\n\\[\nu_t = \\Delta u + |u|^{p-1}u\n\\qquad \\text{in } \\Omega,\n\\]\nwith homogeneous Dirichlet boundary condition\n\\[\nu=0 \\qquad \\text{on } \\partial\\Omega,\n\\]\nfor some \\(p>1\\).\n\nDefine the energy\n\\[\nE(t)\n=\n\\frac12 \\int_\\Omega |\\nabla u(t,x)|^2\\,dx\n-\n\\frac{1}{p+1}\\int_\\Omega |u(t,x)|^{p+1}\\,dx.\n\\]\n\nAssume the initial energy is nonpositive:\n\\[\nE(0)\\le 0.\n\\]\n\nThen the quantity\n\\[\nY(t):=\\int_\\Omega |u(t,x)|^2\\,dx\n\\]\nsatisfies a differential inequality that forces finite-time blow-up.\n\nRaw informal proof:\nWe proceed in several steps.\n\nFirst, differentiate the energy:\n\\[\n\\frac{dE}{dt}\n=\n\\int_\\Omega \\nabla u \\cdot \\nabla u_t\\,dx\n-\n\\int_\\Omega |u|^{p-1}u\\,u_t\\,dx.\n\\]\nIntegrate the first term by parts, using the homogeneous Dirichlet boundary condition so that the boundary term vanishes:\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla u_t\\,dx\n=\n-\\int_\\Omega (\\Delta u)\\,u_t\\,dx.\n\\]\nTherefore\n\\[\n\\frac{dE}{dt}\n=\n-\\int_\\Omega (\\Delta u)\\,u_t\\,dx\n-\n\\int_\\Omega |u|^{p-1}u\\,u_t\\,dx\n=\n-\\int_\\Omega \\bigl(\\Delta u + |u|^{p-1}u\\bigr)u_t\\,dx.\n\\]\nUsing the equation\n\\[\nu_t = \\Delta u + |u|^{p-1}u,\n\\]\nwe obtain\n\\[\n\\frac{dE}{dt}\n=\n-\\int_\\Omega |u_t|^2\\,dx \\le 0.\n\\]\nSo the energy is nonincreasing:\n\\[\nE(t)\\le E(0)\\le 0.\n\\]\n\nNext define\n\\[\nY(t)=\\int_\\Omega |u|^2\\,dx.\n\\]\nDifferentiate:\n\\[\n\\frac12 Y'(t)\n=\n\\int_\\Omega u\\,u_t\\,dx.\n\\]\nSubstitute the PDE:\n\\[\n\\frac12 Y'(t)\n=\n\\int_\\Omega u\\Delta u\\,dx\n+\n\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nIntegrate the Laplacian term by parts, again using \\(u=0\\) on \\(\\partial\\Omega\\):\n\\[\n\\int_\\Omega u\\Delta u\\,dx\n=\n-\\int_\\Omega |\\nabla u|^2\\,dx.\n\\]\nSo\n\\[\n\\frac12 Y'(t)\n=\n-\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\n\nNow rewrite this using the energy. By definition,\n\\[\nE(t)\n=\n\\frac12 \\int_\\Omega |\\nabla u|^2\\,dx\n-\n\\frac{1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nMultiplying by \\(2\\),\n\\[\n2E(t)\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n-\n\\frac{2}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nRearranging gives\n\\[\n-\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |u|^{p+1}\\,dx\n=\n-2E(t)\n+\n\\left(1-\\frac{2}{p+1}\\right)\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nSince\n\\[\n1-\\frac{2}{p+1}=\\frac{p-1}{p+1}>0,\n\\]\nwe conclude\n\\[\n\\frac12 Y'(t)\n=\n-2E(t)\n+\n\\frac{p-1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nBecause \\(E(t)\\le 0\\), this implies\n\\[\n\\frac12 Y'(t)\n\\ge\n\\frac{p-1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\n\nNow apply H\u00f6lder\u2019s inequality on the bounded domain \\(\\Omega\\). Since \\(p+1>2\\),\n\\[\n\\int_\\Omega |u|^{p+1}\\,dx\n\\ge\nC_\\Omega \\left(\\int_\\Omega |u|^2\\,dx\\right)^{\\frac{p+1}{2}}\n=\nC_\\Omega Y(t)^{\\frac{p+1}{2}}\n\\]\nfor some constant \\(C_\\Omega>0\\) depending only on \\(\\Omega\\).\n\nTherefore\n\\[\nY'(t)\\ge c\\,Y(t)^{\\frac{p+1}{2}}\n\\]\nfor some constant \\(c>0\\).\n\nFinally, since \\(\\frac{p+1}{2}>1\\), the ODE\n\\[\nz'(t)=c z(t)^{\\frac{p+1}{2}}\n\\]\nhas solutions that blow up in finite time, and by comparison \\(Y(t)\\) cannot remain finite for all time. Thus the solution blows up in finite time.\n\nReturn one JSON object with top-level keys theorem_title, theorem_statement, root_node_id, nodes, edges, and candidates.\n\nThe nodes and edges must follow the same informal extraction schema as before: nodes include id, title, informal_statement, informal_proof_text, and optional display_label; edges include source_id, target_id, and optional label and explanation.\n\nThe candidates array must include objects with node_id, priority, and rationale. Candidates should refer only to node ids that exist in the graph you emit.\n\nPlan the graph and candidate ranking jointly. Optimize for a compact, faithful, formalization-sensitive graph with a small, high-yield candidate set.\n\nA node should exist only if it is the root theorem, a nontrivial intermediate claim, a meaningful candidate formal island, a reused claim, a separate review obligation, or a conceptually distinct proof step that improves the final mixed informal/formal report.\n\nDo not create separate nodes for bare assumptions, local variable setup, trivial restatements, goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims.\n\nWhen choosing graph granularity, preserve one or two local technical subclaims if they are concrete, inferentially important, plausibly formalizable, and substantially used by the surrounding proof. Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic simplifications, monotonicity or concavity consequences, and concrete local estimates.\n\nKeep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims that are much weaker than the surrounding local argument.\n\nFor a tiny proof, prefer a single root node unless a second node for a reusable or conceptually distinct lemma clearly improves the graph.\n\nPreserve the original mathematical notation in your output whenever feasible. Do not normalize LaTeX into plain ASCII unless absolutely necessary."
+  ],
+  "cwd": null,
+  "system_prompt": "Plan a compact, faithful, formalization-sensitive proof graph for the user's theorem. Return only JSON that matches the supplied schema. In one pass, choose the graph shape and rank the best local formalization candidates. Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible.",
+  "prompt": "Theorem title hint: Finite-time blow-up for the semilinear heat equation by the energy method\n\nTheorem statement:\nFinite-time blow-up for the semilinear heat equation by the energy method.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain, and let \\(u(t,x)\\) be a sufficiently regular solution of\n\\[\nu_t = \\Delta u + |u|^{p-1}u\n\\qquad \\text{in } \\Omega,\n\\]\nwith homogeneous Dirichlet boundary condition\n\\[\nu=0 \\qquad \\text{on } \\partial\\Omega,\n\\]\nfor some \\(p>1\\).\n\nDefine the energy\n\\[\nE(t)\n=\n\\frac12 \\int_\\Omega |\\nabla u(t,x)|^2\\,dx\n-\n\\frac{1}{p+1}\\int_\\Omega |u(t,x)|^{p+1}\\,dx.\n\\]\n\nAssume the initial energy is nonpositive:\n\\[\nE(0)\\le 0.\n\\]\n\nThen the quantity\n\\[\nY(t):=\\int_\\Omega |u(t,x)|^2\\,dx\n\\]\nsatisfies a differential inequality that forces finite-time blow-up.\n\nRaw informal proof:\nWe proceed in several steps.\n\nFirst, differentiate the energy:\n\\[\n\\frac{dE}{dt}\n=\n\\int_\\Omega \\nabla u \\cdot \\nabla u_t\\,dx\n-\n\\int_\\Omega |u|^{p-1}u\\,u_t\\,dx.\n\\]\nIntegrate the first term by parts, using the homogeneous Dirichlet boundary condition so that the boundary term vanishes:\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla u_t\\,dx\n=\n-\\int_\\Omega (\\Delta u)\\,u_t\\,dx.\n\\]\nTherefore\n\\[\n\\frac{dE}{dt}\n=\n-\\int_\\Omega (\\Delta u)\\,u_t\\,dx\n-\n\\int_\\Omega |u|^{p-1}u\\,u_t\\,dx\n=\n-\\int_\\Omega \\bigl(\\Delta u + |u|^{p-1}u\\bigr)u_t\\,dx.\n\\]\nUsing the equation\n\\[\nu_t = \\Delta u + |u|^{p-1}u,\n\\]\nwe obtain\n\\[\n\\frac{dE}{dt}\n=\n-\\int_\\Omega |u_t|^2\\,dx \\le 0.\n\\]\nSo the energy is nonincreasing:\n\\[\nE(t)\\le E(0)\\le 0.\n\\]\n\nNext define\n\\[\nY(t)=\\int_\\Omega |u|^2\\,dx.\n\\]\nDifferentiate:\n\\[\n\\frac12 Y'(t)\n=\n\\int_\\Omega u\\,u_t\\,dx.\n\\]\nSubstitute the PDE:\n\\[\n\\frac12 Y'(t)\n=\n\\int_\\Omega u\\Delta u\\,dx\n+\n\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nIntegrate the Laplacian term by parts, again using \\(u=0\\) on \\(\\partial\\Omega\\):\n\\[\n\\int_\\Omega u\\Delta u\\,dx\n=\n-\\int_\\Omega |\\nabla u|^2\\,dx.\n\\]\nSo\n\\[\n\\frac12 Y'(t)\n=\n-\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\n\nNow rewrite this using the energy. By definition,\n\\[\nE(t)\n=\n\\frac12 \\int_\\Omega |\\nabla u|^2\\,dx\n-\n\\frac{1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nMultiplying by \\(2\\),\n\\[\n2E(t)\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n-\n\\frac{2}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nRearranging gives\n\\[\n-\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |u|^{p+1}\\,dx\n=\n-2E(t)\n+\n\\left(1-\\frac{2}{p+1}\\right)\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nSince\n\\[\n1-\\frac{2}{p+1}=\\frac{p-1}{p+1}>0,\n\\]\nwe conclude\n\\[\n\\frac12 Y'(t)\n=\n-2E(t)\n+\n\\frac{p-1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nBecause \\(E(t)\\le 0\\), this implies\n\\[\n\\frac12 Y'(t)\n\\ge\n\\frac{p-1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\n\nNow apply H\u00f6lder\u2019s inequality on the bounded domain \\(\\Omega\\). Since \\(p+1>2\\),\n\\[\n\\int_\\Omega |u|^{p+1}\\,dx\n\\ge\nC_\\Omega \\left(\\int_\\Omega |u|^2\\,dx\\right)^{\\frac{p+1}{2}}\n=\nC_\\Omega Y(t)^{\\frac{p+1}{2}}\n\\]\nfor some constant \\(C_\\Omega>0\\) depending only on \\(\\Omega\\).\n\nTherefore\n\\[\nY'(t)\\ge c\\,Y(t)^{\\frac{p+1}{2}}\n\\]\nfor some constant \\(c>0\\).\n\nFinally, since \\(\\frac{p+1}{2}>1\\), the ODE\n\\[\nz'(t)=c z(t)^{\\frac{p+1}{2}}\n\\]\nhas solutions that blow up in finite time, and by comparison \\(Y(t)\\) cannot remain finite for all time. Thus the solution blows up in finite time.\n\nReturn one JSON object with top-level keys theorem_title, theorem_statement, root_node_id, nodes, edges, and candidates.\n\nThe nodes and edges must follow the same informal extraction schema as before: nodes include id, title, informal_statement, informal_proof_text, and optional display_label; edges include source_id, target_id, and optional label and explanation.\n\nThe candidates array must include objects with node_id, priority, and rationale. Candidates should refer only to node ids that exist in the graph you emit.\n\nPlan the graph and candidate ranking jointly. Optimize for a compact, faithful, formalization-sensitive graph with a small, high-yield candidate set.\n\nA node should exist only if it is the root theorem, a nontrivial intermediate claim, a meaningful candidate formal island, a reused claim, a separate review obligation, or a conceptually distinct proof step that improves the final mixed informal/formal report.\n\nDo not create separate nodes for bare assumptions, local variable setup, trivial restatements, goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims.\n\nWhen choosing graph granularity, preserve one or two local technical subclaims if they are concrete, inferentially important, plausibly formalizable, and substantially used by the surrounding proof. Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic simplifications, monotonicity or concavity consequences, and concrete local estimates.\n\nKeep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims that are much weaker than the surrounding local argument.\n\nFor a tiny proof, prefer a single root node unless a second node for a reusable or conceptually distinct lemma clearly improves the graph.\n\nPreserve the original mathematical notation in your output whenever feasible. Do not normalize LaTeX into plain ASCII unless absolutely necessary.",
+  "rendered_prompt": "System instructions:\n\nPlan a compact, faithful, formalization-sensitive proof graph for the user's theorem. Return only JSON that matches the supplied schema. In one pass, choose the graph shape and rank the best local formalization candidates. Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible.\n\nUser task:\n\nTheorem title hint: Finite-time blow-up for the semilinear heat equation by the energy method\n\nTheorem statement:\nFinite-time blow-up for the semilinear heat equation by the energy method.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain, and let \\(u(t,x)\\) be a sufficiently regular solution of\n\\[\nu_t = \\Delta u + |u|^{p-1}u\n\\qquad \\text{in } \\Omega,\n\\]\nwith homogeneous Dirichlet boundary condition\n\\[\nu=0 \\qquad \\text{on } \\partial\\Omega,\n\\]\nfor some \\(p>1\\).\n\nDefine the energy\n\\[\nE(t)\n=\n\\frac12 \\int_\\Omega |\\nabla u(t,x)|^2\\,dx\n-\n\\frac{1}{p+1}\\int_\\Omega |u(t,x)|^{p+1}\\,dx.\n\\]\n\nAssume the initial energy is nonpositive:\n\\[\nE(0)\\le 0.\n\\]\n\nThen the quantity\n\\[\nY(t):=\\int_\\Omega |u(t,x)|^2\\,dx\n\\]\nsatisfies a differential inequality that forces finite-time blow-up.\n\nRaw informal proof:\nWe proceed in several steps.\n\nFirst, differentiate the energy:\n\\[\n\\frac{dE}{dt}\n=\n\\int_\\Omega \\nabla u \\cdot \\nabla u_t\\,dx\n-\n\\int_\\Omega |u|^{p-1}u\\,u_t\\,dx.\n\\]\nIntegrate the first term by parts, using the homogeneous Dirichlet boundary condition so that the boundary term vanishes:\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla u_t\\,dx\n=\n-\\int_\\Omega (\\Delta u)\\,u_t\\,dx.\n\\]\nTherefore\n\\[\n\\frac{dE}{dt}\n=\n-\\int_\\Omega (\\Delta u)\\,u_t\\,dx\n-\n\\int_\\Omega |u|^{p-1}u\\,u_t\\,dx\n=\n-\\int_\\Omega \\bigl(\\Delta u + |u|^{p-1}u\\bigr)u_t\\,dx.\n\\]\nUsing the equation\n\\[\nu_t = \\Delta u + |u|^{p-1}u,\n\\]\nwe obtain\n\\[\n\\frac{dE}{dt}\n=\n-\\int_\\Omega |u_t|^2\\,dx \\le 0.\n\\]\nSo the energy is nonincreasing:\n\\[\nE(t)\\le E(0)\\le 0.\n\\]\n\nNext define\n\\[\nY(t)=\\int_\\Omega |u|^2\\,dx.\n\\]\nDifferentiate:\n\\[\n\\frac12 Y'(t)\n=\n\\int_\\Omega u\\,u_t\\,dx.\n\\]\nSubstitute the PDE:\n\\[\n\\frac12 Y'(t)\n=\n\\int_\\Omega u\\Delta u\\,dx\n+\n\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nIntegrate the Laplacian term by parts, again using \\(u=0\\) on \\(\\partial\\Omega\\):\n\\[\n\\int_\\Omega u\\Delta u\\,dx\n=\n-\\int_\\Omega |\\nabla u|^2\\,dx.\n\\]\nSo\n\\[\n\\frac12 Y'(t)\n=\n-\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\n\nNow rewrite this using the energy. By definition,\n\\[\nE(t)\n=\n\\frac12 \\int_\\Omega |\\nabla u|^2\\,dx\n-\n\\frac{1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nMultiplying by \\(2\\),\n\\[\n2E(t)\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n-\n\\frac{2}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nRearranging gives\n\\[\n-\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |u|^{p+1}\\,dx\n=\n-2E(t)\n+\n\\left(1-\\frac{2}{p+1}\\right)\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nSince\n\\[\n1-\\frac{2}{p+1}=\\frac{p-1}{p+1}>0,\n\\]\nwe conclude\n\\[\n\\frac12 Y'(t)\n=\n-2E(t)\n+\n\\frac{p-1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nBecause \\(E(t)\\le 0\\), this implies\n\\[\n\\frac12 Y'(t)\n\\ge\n\\frac{p-1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\n\nNow apply H\u00f6lder\u2019s inequality on the bounded domain \\(\\Omega\\). Since \\(p+1>2\\),\n\\[\n\\int_\\Omega |u|^{p+1}\\,dx\n\\ge\nC_\\Omega \\left(\\int_\\Omega |u|^2\\,dx\\right)^{\\frac{p+1}{2}}\n=\nC_\\Omega Y(t)^{\\frac{p+1}{2}}\n\\]\nfor some constant \\(C_\\Omega>0\\) depending only on \\(\\Omega\\).\n\nTherefore\n\\[\nY'(t)\\ge c\\,Y(t)^{\\frac{p+1}{2}}\n\\]\nfor some constant \\(c>0\\).\n\nFinally, since \\(\\frac{p+1}{2}>1\\), the ODE\n\\[\nz'(t)=c z(t)^{\\frac{p+1}{2}}\n\\]\nhas solutions that blow up in finite time, and by comparison \\(Y(t)\\) cannot remain finite for all time. Thus the solution blows up in finite time.\n\nReturn one JSON object with top-level keys theorem_title, theorem_statement, root_node_id, nodes, edges, and candidates.\n\nThe nodes and edges must follow the same informal extraction schema as before: nodes include id, title, informal_statement, informal_proof_text, and optional display_label; edges include source_id, target_id, and optional label and explanation.\n\nThe candidates array must include objects with node_id, priority, and rationale. Candidates should refer only to node ids that exist in the graph you emit.\n\nPlan the graph and candidate ranking jointly. Optimize for a compact, faithful, formalization-sensitive graph with a small, high-yield candidate set.\n\nA node should exist only if it is the root theorem, a nontrivial intermediate claim, a meaningful candidate formal island, a reused claim, a separate review obligation, or a conceptually distinct proof step that improves the final mixed informal/formal report.\n\nDo not create separate nodes for bare assumptions, local variable setup, trivial restatements, goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims.\n\nWhen choosing graph granularity, preserve one or two local technical subclaims if they are concrete, inferentially important, plausibly formalizable, and substantially used by the surrounding proof. Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic simplifications, monotonicity or concavity consequences, and concrete local estimates.\n\nKeep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims that are much weaker than the surrounding local argument.\n\nFor a tiny proof, prefer a single root node unless a second node for a reusable or conceptually distinct lemma clearly improves the graph.\n\nPreserve the original mathematical notation in your output whenever feasible. Do not normalize LaTeX into plain ASCII unless absolutely necessary.",
+  "json_schema": {
+    "$defs": {
+      "CandidateSelection": {
+        "additionalProperties": false,
+        "description": "Single candidate-formalization decision.",
+        "properties": {
+          "node_id": {
+            "minLength": 1,
+            "title": "Node Id",
+            "type": "string"
+          },
+          "priority": {
+            "maximum": 3,
+            "minimum": 1,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "rationale": {
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_id",
+          "priority",
+          "rationale"
+        ],
+        "title": "CandidateSelection",
+        "type": "object"
+      },
+      "ExtractedEdge": {
+        "additionalProperties": false,
+        "description": "Dependency edge shape expected from the graph-extraction pass.",
+        "properties": {
+          "source_id": {
+            "minLength": 1,
+            "title": "Source Id",
+            "type": "string"
+          },
+          "target_id": {
+            "minLength": 1,
+            "title": "Target Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Explanation"
+          }
+        },
+        "required": [
+          "source_id",
+          "target_id",
+          "label",
+          "explanation"
+        ],
+        "title": "ExtractedEdge",
+        "type": "object"
+      },
+      "ExtractedNode": {
+        "additionalProperties": false,
+        "description": "Node shape expected from the graph-extraction LLM pass.",
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "informal_statement": {
+            "minLength": 1,
+            "title": "Informal Statement",
+            "type": "string"
+          },
+          "informal_proof_text": {
+            "minLength": 1,
+            "title": "Informal Proof Text",
+            "type": "string"
+          },
+          "display_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Display Label"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "informal_statement",
+          "informal_proof_text",
+          "display_label"
+        ],
+        "title": "ExtractedNode",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Merged theorem-level planning payload: graph plus ranked formalization candidates.",
+    "properties": {
+      "theorem_title": {
+        "minLength": 1,
+        "title": "Theorem Title",
+        "type": "string"
+      },
+      "theorem_statement": {
+        "minLength": 1,
+        "title": "Theorem Statement",
+        "type": "string"
+      },
+      "root_node_id": {
+        "minLength": 1,
+        "title": "Root Node Id",
+        "type": "string"
+      },
+      "nodes": {
+        "items": {
+          "$ref": "#/$defs/ExtractedNode"
+        },
+        "minItems": 1,
+        "title": "Nodes",
+        "type": "array"
+      },
+      "edges": {
+        "items": {
+          "$ref": "#/$defs/ExtractedEdge"
+        },
+        "title": "Edges",
+        "type": "array"
+      },
+      "candidates": {
+        "items": {
+          "$ref": "#/$defs/CandidateSelection"
+        },
+        "title": "Candidates",
+        "type": "array"
+      }
+    },
+    "required": [
+      "theorem_title",
+      "theorem_statement",
+      "root_node_id",
+      "nodes",
+      "edges",
+      "candidates"
+    ],
+    "title": "PlannedProofGraph",
+    "type": "object"
+  },
+  "model": null,
+  "sandbox": "read-only",
+  "full_auto": false,
+  "use_ephemeral_session": true,
+  "timeout_seconds": 180.0,
+  "started_at_epoch_seconds": 1775361699.897435,
+  "elapsed_seconds": 56.50702500343323,
+  "exit_code": 0,
+  "raw_stdout": "{\"theorem_title\":\"Finite-time blow-up for the semilinear heat equation by the energy method\",\"theorem_statement\":\"Let \\\\(\\\\Omega \\\\subset \\\\mathbb{R}^d\\\\) be a bounded domain, and let \\\\(u(t,x)\\\\) be a sufficiently regular solution of\\n\\\\[\\nu_t = \\\\Delta u + |u|^{p-1}u\\n\\\\qquad \\\\text{in } \\\\Omega,\\n\\\\]\\nwith homogeneous Dirichlet boundary condition\\n\\\\[\\nu=0 \\\\qquad \\\\text{on } \\\\partial\\\\Omega,\\n\\\\]\\nfor some \\\\(p>1\\\\). Define\\n\\\\[\\nE(t)=\\\\frac12 \\\\int_\\\\Omega |\\\\nabla u(t,x)|^2\\\\,dx-\\\\frac{1}{p+1}\\\\int_\\\\Omega |u(t,x)|^{p+1}\\\\,dx,\\n\\\\qquad\\nY(t):=\\\\int_\\\\Omega |u(t,x)|^2\\\\,dx.\\n\\\\]\\nAssume \\\\(E(0)\\\\le 0\\\\). Then \\\\(Y(t)\\\\) satisfies a differential inequality of the form\\n\\\\[\\nY'(t)\\\\ge c\\\\,Y(t)^{\\\\frac{p+1}{2}}\\n\\\\]\\nfor some \\\\(c>0\\\\), and therefore \\\\(Y(t)\\\\) blows up in finite time; hence the solution cannot exist globally in time.\",\"root_node_id\":\"n0\",\"nodes\":[{\"id\":\"n0\",\"title\":\"Finite-time blow-up from nonpositive initial energy\",\"informal_statement\":\"Under the assumptions above, the energy is nonincreasing and nonpositive for all times of existence, one obtains\\n\\\\[\\nY'(t)\\\\ge c\\\\,Y(t)^{\\\\frac{p+1}{2}}\\n\\\\]\\nfor some \\\\(c>0\\\\), and since \\\\(\\\\frac{p+1}{2}>1\\\\), comparison with the ODE \\\\(z'=c z^{\\\\frac{p+1}{2}}\\\\) implies finite-time blow-up of \\\\(Y(t)\\\\).\",\"informal_proof_text\":\"Differentiate the energy and integrate by parts:\\n\\\\[\\n\\\\frac{dE}{dt}\\n=\\n\\\\int_\\\\Omega \\\\nabla u\\\\cdot \\\\nabla u_t\\\\,dx-\\n\\\\int_\\\\Omega |u|^{p-1}u\\\\,u_t\\\\,dx\\n=\\n-\\\\int_\\\\Omega (\\\\Delta u+|u|^{p-1}u)u_t\\\\,dx.\\n\\\\]\\nUsing the PDE \\\\(u_t=\\\\Delta u+|u|^{p-1}u\\\\), this gives\\n\\\\[\\nE'(t)=-\\\\int_\\\\Omega |u_t|^2\\\\,dx\\\\le 0,\\n\\\\]\\nso \\\\(E(t)\\\\le E(0)\\\\le 0\\\\).\\n\\nNext,\\n\\\\[\\n\\\\frac12 Y'(t)=\\\\int_\\\\Omega u u_t\\\\,dx\\n=\\\\int_\\\\Omega u\\\\Delta u\\\\,dx+\\\\int_\\\\Omega |u|^{p+1}\\\\,dx\\n=-\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx+\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nRewrite the right-hand side using the definition of \\\\(E(t)\\\\):\\n\\\\[\\n\\\\frac12 Y'(t)\\n=-2E(t)+\\\\frac{p-1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nSince \\\\(E(t)\\\\le 0\\\\),\\n\\\\[\\n\\\\frac12 Y'(t)\\\\ge \\\\frac{p-1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nBecause \\\\(\\\\Omega\\\\) is bounded and \\\\(p+1>2\\\\), H\u00f6lder yields\\n\\\\[\\n\\\\int_\\\\Omega |u|^{p+1}\\\\,dx\\\\ge C_\\\\Omega\\\\Bigl(\\\\int_\\\\Omega |u|^2\\\\,dx\\\\Bigr)^{\\\\frac{p+1}{2}}=C_\\\\Omega Y(t)^{\\\\frac{p+1}{2}}.\\n\\\\]\\nHence\\n\\\\[\\nY'(t)\\\\ge c Y(t)^{\\\\frac{p+1}{2}}.\\n\\\\]\\nSince \\\\(\\\\frac{p+1}{2}>1\\\\), any positive solution of the comparison ODE blows up in finite time, so \\\\(Y(t)\\\\) cannot stay finite for all time. Thus the solution blows up in finite time.\",\"display_label\":\"Blow-up theorem\"},{\"id\":\"n1\",\"title\":\"Energy dissipation identity\",\"informal_statement\":\"The energy satisfies\\n\\\\[\\nE'(t)=-\\\\int_\\\\Omega |u_t|^2\\\\,dx\\\\le 0.\\n\\\\]\\nIn particular, \\\\(E(t)\\\\le E(0)\\\\le 0\\\\).\",\"informal_proof_text\":\"Differentiate\\n\\\\[\\nE(t)=\\\\frac12\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx-\\\\frac{1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nThen\\n\\\\[\\nE'(t)=\\\\int_\\\\Omega \\\\nabla u\\\\cdot \\\\nabla u_t\\\\,dx-\\\\int_\\\\Omega |u|^{p-1}u\\\\,u_t\\\\,dx.\\n\\\\]\\nIntegrate the first term by parts, using \\\\(u=0\\\\) on \\\\(\\\\partial\\\\Omega\\\\), to get\\n\\\\[\\n\\\\int_\\\\Omega \\\\nabla u\\\\cdot \\\\nabla u_t\\\\,dx=-\\\\int_\\\\Omega (\\\\Delta u)u_t\\\\,dx.\\n\\\\]\\nTherefore\\n\\\\[\\nE'(t)=-\\\\int_\\\\Omega (\\\\Delta u+|u|^{p-1}u)u_t\\\\,dx.\\n\\\\]\\nSubstitute the equation \\\\(u_t=\\\\Delta u+|u|^{p-1}u\\\\) and obtain\\n\\\\[\\nE'(t)=-\\\\int_\\\\Omega |u_t|^2\\\\,dx.\\n\\\\]\\nThis is nonpositive, so the energy is nonincreasing.\" , \"display_label\":\"Energy dissipation\"},{\"id\":\"n2\",\"title\":\"Differential inequality for \\\\(Y(t)\\\\)\",\"informal_statement\":\"The \\\\(L^2\\\\)-mass satisfies\\n\\\\[\\n\\\\frac12 Y'(t)=-\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx+\\\\int_\\\\Omega |u|^{p+1}\\\\,dx\\n=-2E(t)+\\\\frac{p-1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx,\\n\\\\]\\nand hence, since \\\\(E(t)\\\\le 0\\\\),\\n\\\\[\\n\\\\frac12 Y'(t)\\\\ge \\\\frac{p-1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\",\"informal_proof_text\":\"Differentiate \\\\(Y(t)=\\\\int_\\\\Omega |u|^2\\\\,dx\\\\):\\n\\\\[\\n\\\\frac12 Y'(t)=\\\\int_\\\\Omega u u_t\\\\,dx.\\n\\\\]\\nUse the PDE:\\n\\\\[\\n\\\\frac12 Y'(t)=\\\\int_\\\\Omega u\\\\Delta u\\\\,dx+\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nIntegrating by parts and using \\\\(u=0\\\\) on \\\\(\\\\partial\\\\Omega\\\\) gives\\n\\\\[\\n\\\\int_\\\\Omega u\\\\Delta u\\\\,dx=-\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx.\\n\\\\]\\nSo\\n\\\\[\\n\\\\frac12 Y'(t)=-\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx+\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nFrom\\n\\\\[\\nE(t)=\\\\frac12\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx-\\\\frac{1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx,\\n\\\\]\\none rewrites\\n\\\\[\\n-\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx+\\\\int_\\\\Omega |u|^{p+1}\\\\,dx\\n=-2E(t)+\\\\frac{p-1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nSince node \\\\(n1\\\\) gives \\\\(E(t)\\\\le 0\\\\), the lower bound follows.\",\"display_label\":\"Mass inequality\"},{\"id\":\"n3\",\"title\":\"Bounded-domain lower bound and ODE comparison\",\"informal_statement\":\"Because \\\\(\\\\Omega\\\\) is bounded and \\\\(p+1>2\\\\), there is \\\\(C_\\\\Omega>0\\\\) such that\\n\\\\[\\n\\\\int_\\\\Omega |u|^{p+1}\\\\,dx\\\\ge C_\\\\Omega Y(t)^{\\\\frac{p+1}{2}}.\\n\\\\]\\nCombining with node \\\\(n2\\\\) yields\\n\\\\[\\nY'(t)\\\\ge c Y(t)^{\\\\frac{p+1}{2}}.\\n\\\\]\\nSince \\\\(\\\\frac{p+1}{2}>1\\\\), comparison with \\\\(z'=c z^{\\\\frac{p+1}{2}}\\\\) forces finite-time blow-up.\",\"informal_proof_text\":\"Use the standard finite-measure comparison between \\\\(L^{p+1}(\\\\Omega)\\\\) and \\\\(L^2(\\\\Omega)\\\\): on a bounded domain,\\n\\\\[\\n\\\\|u\\\\|_{L^{p+1}}\\\\ge C_\\\\Omega \\\\|u\\\\|_{L^2}.\\n\\\\]\\nRaising to the power \\\\(p+1\\\\) gives\\n\\\\[\\n\\\\int_\\\\Omega |u|^{p+1}\\\\,dx\\\\ge C_\\\\Omega \\\\left(\\\\int_\\\\Omega |u|^2\\\\,dx\\\\right)^{\\\\frac{p+1}{2}}=C_\\\\Omega Y(t)^{\\\\frac{p+1}{2}}.\\n\\\\]\\nInsert this into the inequality from node \\\\(n2\\\\) to obtain\\n\\\\[\\nY'(t)\\\\ge c Y(t)^{\\\\frac{p+1}{2}}.\\n\\\\]\\nFor \\\\(\\\\alpha=\\\\frac{p+1}{2}>1\\\\), solutions of \\\\(z'=c z^\\\\alpha\\\\) with positive initial data blow up in finite time, and the standard comparison principle implies the same for \\\\(Y(t)\\\\).\",\"display_label\":\"Norm lower bound + ODE\"}],\"edges\":[{\"source_id\":\"n1\",\"target_id\":\"n0\",\"label\":\"used in\",\"explanation\":\"Energy monotonicity supplies \\\\(E(t)\\\\le 0\\\\), needed in the derivation of the lower bound for \\\\(Y'(t)\\\\).\"},{\"source_id\":\"n2\",\"target_id\":\"n0\",\"label\":\"used in\",\"explanation\":\"Provides the key differential inequality for \\\\(Y\\\\) up to the \\\\(L^{p+1}\\\\)-term.\"},{\"source_id\":\"n3\",\"target_id\":\"n0\",\"label\":\"used in\",\"explanation\":\"Converts the \\\\(L^{p+1}\\\\)-term into a power of \\\\(Y\\\\) and concludes blow-up by ODE comparison.\"},{\"source_id\":\"n1\",\"target_id\":\"n2\",\"label\":\"input\",\"explanation\":\"The sign \\\\(E(t)\\\\le 0\\\\) is inserted into the exact identity for \\\\(\\\\frac12 Y'(t)\\\\).\"}],\"candidates\":[{\"node_id\":\"n2\",\"priority\":1,\"rationale\":\"Best local formal island: a concrete differentiated identity plus explicit algebraic rewrite from the energy, and it carries the main inferential load into the blow-up argument.\"},{\"node_id\":\"n1\",\"priority\":2,\"rationale\":\"High-yield formal lemma: the energy dissipation computation is standard but nontrivial, involving differentiation, integration by parts, and substitution of the PDE.\"},{\"node_id\":\"n3\",\"priority\":3,\"rationale\":\"Useful local package combining the bounded-domain \\\\(L^{p+1}\\\\)-to-\\\\(L^2\\\\) lower bound with the scalar ODE comparison; this closes the argument once \\\\(n2\\\\) is available.\"}]}\n",
+  "raw_stderr": "Reading additional input from stdin...\nOpenAI Codex v0.118.0 (research preview)\n--------\nworkdir: /Users/adihaya/GitHub/formal-islands\nmodel: gpt-5.4\nprovider: openai\napproval: never\nsandbox: read-only\nreasoning effort: medium\nreasoning summaries: none\nsession id: 019d5bcd-b106-7362-af5d-13fd742d5e5a\n--------\nuser\nSystem instructions:\n\nPlan a compact, faithful, formalization-sensitive proof graph for the user's theorem. Return only JSON that matches the supplied schema. In one pass, choose the graph shape and rank the best local formalization candidates. Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible.\n\nUser task:\n\nTheorem title hint: Finite-time blow-up for the semilinear heat equation by the energy method\n\nTheorem statement:\nFinite-time blow-up for the semilinear heat equation by the energy method.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain, and let \\(u(t,x)\\) be a sufficiently regular solution of\n\\[\nu_t = \\Delta u + |u|^{p-1}u\n\\qquad \\text{in } \\Omega,\n\\]\nwith homogeneous Dirichlet boundary condition\n\\[\nu=0 \\qquad \\text{on } \\partial\\Omega,\n\\]\nfor some \\(p>1\\).\n\nDefine the energy\n\\[\nE(t)\n=\n\\frac12 \\int_\\Omega |\\nabla u(t,x)|^2\\,dx\n-\n\\frac{1}{p+1}\\int_\\Omega |u(t,x)|^{p+1}\\,dx.\n\\]\n\nAssume the initial energy is nonpositive:\n\\[\nE(0)\\le 0.\n\\]\n\nThen the quantity\n\\[\nY(t):=\\int_\\Omega |u(t,x)|^2\\,dx\n\\]\nsatisfies a differential inequality that forces finite-time blow-up.\n\nRaw informal proof:\nWe proceed in several steps.\n\nFirst, differentiate the energy:\n\\[\n\\frac{dE}{dt}\n=\n\\int_\\Omega \\nabla u \\cdot \\nabla u_t\\,dx\n-\n\\int_\\Omega |u|^{p-1}u\\,u_t\\,dx.\n\\]\nIntegrate the first term by parts, using the homogeneous Dirichlet boundary condition so that the boundary term vanishes:\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla u_t\\,dx\n=\n-\\int_\\Omega (\\Delta u)\\,u_t\\,dx.\n\\]\nTherefore\n\\[\n\\frac{dE}{dt}\n=\n-\\int_\\Omega (\\Delta u)\\,u_t\\,dx\n-\n\\int_\\Omega |u|^{p-1}u\\,u_t\\,dx\n=\n-\\int_\\Omega \\bigl(\\Delta u + |u|^{p-1}u\\bigr)u_t\\,dx.\n\\]\nUsing the equation\n\\[\nu_t = \\Delta u + |u|^{p-1}u,\n\\]\nwe obtain\n\\[\n\\frac{dE}{dt}\n=\n-\\int_\\Omega |u_t|^2\\,dx \\le 0.\n\\]\nSo the energy is nonincreasing:\n\\[\nE(t)\\le E(0)\\le 0.\n\\]\n\nNext define\n\\[\nY(t)=\\int_\\Omega |u|^2\\,dx.\n\\]\nDifferentiate:\n\\[\n\\frac12 Y'(t)\n=\n\\int_\\Omega u\\,u_t\\,dx.\n\\]\nSubstitute the PDE:\n\\[\n\\frac12 Y'(t)\n=\n\\int_\\Omega u\\Delta u\\,dx\n+\n\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nIntegrate the Laplacian term by parts, again using \\(u=0\\) on \\(\\partial\\Omega\\):\n\\[\n\\int_\\Omega u\\Delta u\\,dx\n=\n-\\int_\\Omega |\\nabla u|^2\\,dx.\n\\]\nSo\n\\[\n\\frac12 Y'(t)\n=\n-\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\n\nNow rewrite this using the energy. By definition,\n\\[\nE(t)\n=\n\\frac12 \\int_\\Omega |\\nabla u|^2\\,dx\n-\n\\frac{1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nMultiplying by \\(2\\),\n\\[\n2E(t)\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n-\n\\frac{2}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nRearranging gives\n\\[\n-\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |u|^{p+1}\\,dx\n=\n-2E(t)\n+\n\\left(1-\\frac{2}{p+1}\\right)\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nSince\n\\[\n1-\\frac{2}{p+1}=\\frac{p-1}{p+1}>0,\n\\]\nwe conclude\n\\[\n\\frac12 Y'(t)\n=\n-2E(t)\n+\n\\frac{p-1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nBecause \\(E(t)\\le 0\\), this implies\n\\[\n\\frac12 Y'(t)\n\\ge\n\\frac{p-1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\n\nNow apply H\u00f6lder\u2019s inequality on the bounded domain \\(\\Omega\\). Since \\(p+1>2\\),\n\\[\n\\int_\\Omega |u|^{p+1}\\,dx\n\\ge\nC_\\Omega \\left(\\int_\\Omega |u|^2\\,dx\\right)^{\\frac{p+1}{2}}\n=\nC_\\Omega Y(t)^{\\frac{p+1}{2}}\n\\]\nfor some constant \\(C_\\Omega>0\\) depending only on \\(\\Omega\\).\n\nTherefore\n\\[\nY'(t)\\ge c\\,Y(t)^{\\frac{p+1}{2}}\n\\]\nfor some constant \\(c>0\\).\n\nFinally, since \\(\\frac{p+1}{2}>1\\), the ODE\n\\[\nz'(t)=c z(t)^{\\frac{p+1}{2}}\n\\]\nhas solutions that blow up in finite time, and by comparison \\(Y(t)\\) cannot remain finite for all time. Thus the solution blows up in finite time.\n\nReturn one JSON object with top-level keys theorem_title, theorem_statement, root_node_id, nodes, edges, and candidates.\n\nThe nodes and edges must follow the same informal extraction schema as before: nodes include id, title, informal_statement, informal_proof_text, and optional display_label; edges include source_id, target_id, and optional label and explanation.\n\nThe candidates array must include objects with node_id, priority, and rationale. Candidates should refer only to node ids that exist in the graph you emit.\n\nPlan the graph and candidate ranking jointly. Optimize for a compact, faithful, formalization-sensitive graph with a small, high-yield candidate set.\n\nA node should exist only if it is the root theorem, a nontrivial intermediate claim, a meaningful candidate formal island, a reused claim, a separate review obligation, or a conceptually distinct proof step that improves the final mixed informal/formal report.\n\nDo not create separate nodes for bare assumptions, local variable setup, trivial restatements, goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims.\n\nWhen choosing graph granularity, preserve one or two local technical subclaims if they are concrete, inferentially important, plausibly formalizable, and substantially used by the surrounding proof. Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic simplifications, monotonicity or concavity consequences, and concrete local estimates.\n\nKeep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims that are much weaker than the surrounding local argument.\n\nFor a tiny proof, prefer a single root node unless a second node for a reusable or conceptually distinct lemma clearly improves the graph.\n\nPreserve the original mathematical notation in your output whenever feasible. Do not normalize LaTeX into plain ASCII unless absolutely necessary.\n2026-04-05T04:01:40.419519Z  WARN codex_core::shell_snapshot: Failed to delete shell snapshot at \"/Users/adihaya/.codex/shell_snapshots/019d5bcd-b106-7362-af5d-13fd742d5e5a.tmp-1775361700107758000\": Os { code: 2, kind: NotFound, message: \"No such file or directory\" }\ncodex\n{\"theorem_title\":\"Finite-time blow-up for the semilinear heat equation by the energy method\",\"theorem_statement\":\"Let \\\\(\\\\Omega \\\\subset \\\\mathbb{R}^d\\\\) be a bounded domain, and let \\\\(u(t,x)\\\\) be a sufficiently regular solution of\\n\\\\[\\nu_t = \\\\Delta u + |u|^{p-1}u\\n\\\\qquad \\\\text{in } \\\\Omega,\\n\\\\]\\nwith homogeneous Dirichlet boundary condition\\n\\\\[\\nu=0 \\\\qquad \\\\text{on } \\\\partial\\\\Omega,\\n\\\\]\\nfor some \\\\(p>1\\\\). Define\\n\\\\[\\nE(t)=\\\\frac12 \\\\int_\\\\Omega |\\\\nabla u(t,x)|^2\\\\,dx-\\\\frac{1}{p+1}\\\\int_\\\\Omega |u(t,x)|^{p+1}\\\\,dx,\\n\\\\qquad\\nY(t):=\\\\int_\\\\Omega |u(t,x)|^2\\\\,dx.\\n\\\\]\\nAssume \\\\(E(0)\\\\le 0\\\\). Then \\\\(Y(t)\\\\) satisfies a differential inequality of the form\\n\\\\[\\nY'(t)\\\\ge c\\\\,Y(t)^{\\\\frac{p+1}{2}}\\n\\\\]\\nfor some \\\\(c>0\\\\), and therefore \\\\(Y(t)\\\\) blows up in finite time; hence the solution cannot exist globally in time.\",\"root_node_id\":\"n0\",\"nodes\":[{\"id\":\"n0\",\"title\":\"Finite-time blow-up from nonpositive initial energy\",\"informal_statement\":\"Under the assumptions above, the energy is nonincreasing and nonpositive for all times of existence, one obtains\\n\\\\[\\nY'(t)\\\\ge c\\\\,Y(t)^{\\\\frac{p+1}{2}}\\n\\\\]\\nfor some \\\\(c>0\\\\), and since \\\\(\\\\frac{p+1}{2}>1\\\\), comparison with the ODE \\\\(z'=c z^{\\\\frac{p+1}{2}}\\\\) implies finite-time blow-up of \\\\(Y(t)\\\\).\",\"informal_proof_text\":\"Differentiate the energy and integrate by parts:\\n\\\\[\\n\\\\frac{dE}{dt}\\n=\\n\\\\int_\\\\Omega \\\\nabla u\\\\cdot \\\\nabla u_t\\\\,dx-\\n\\\\int_\\\\Omega |u|^{p-1}u\\\\,u_t\\\\,dx\\n=\\n-\\\\int_\\\\Omega (\\\\Delta u+|u|^{p-1}u)u_t\\\\,dx.\\n\\\\]\\nUsing the PDE \\\\(u_t=\\\\Delta u+|u|^{p-1}u\\\\), this gives\\n\\\\[\\nE'(t)=-\\\\int_\\\\Omega |u_t|^2\\\\,dx\\\\le 0,\\n\\\\]\\nso \\\\(E(t)\\\\le E(0)\\\\le 0\\\\).\\n\\nNext,\\n\\\\[\\n\\\\frac12 Y'(t)=\\\\int_\\\\Omega u u_t\\\\,dx\\n=\\\\int_\\\\Omega u\\\\Delta u\\\\,dx+\\\\int_\\\\Omega |u|^{p+1}\\\\,dx\\n=-\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx+\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nRewrite the right-hand side using the definition of \\\\(E(t)\\\\):\\n\\\\[\\n\\\\frac12 Y'(t)\\n=-2E(t)+\\\\frac{p-1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nSince \\\\(E(t)\\\\le 0\\\\),\\n\\\\[\\n\\\\frac12 Y'(t)\\\\ge \\\\frac{p-1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nBecause \\\\(\\\\Omega\\\\) is bounded and \\\\(p+1>2\\\\), H\u00f6lder yields\\n\\\\[\\n\\\\int_\\\\Omega |u|^{p+1}\\\\,dx\\\\ge C_\\\\Omega\\\\Bigl(\\\\int_\\\\Omega |u|^2\\\\,dx\\\\Bigr)^{\\\\frac{p+1}{2}}=C_\\\\Omega Y(t)^{\\\\frac{p+1}{2}}.\\n\\\\]\\nHence\\n\\\\[\\nY'(t)\\\\ge c Y(t)^{\\\\frac{p+1}{2}}.\\n\\\\]\\nSince \\\\(\\\\frac{p+1}{2}>1\\\\), any positive solution of the comparison ODE blows up in finite time, so \\\\(Y(t)\\\\) cannot stay finite for all time. Thus the solution blows up in finite time.\",\"display_label\":\"Blow-up theorem\"},{\"id\":\"n1\",\"title\":\"Energy dissipation identity\",\"informal_statement\":\"The energy satisfies\\n\\\\[\\nE'(t)=-\\\\int_\\\\Omega |u_t|^2\\\\,dx\\\\le 0.\\n\\\\]\\nIn particular, \\\\(E(t)\\\\le E(0)\\\\le 0\\\\).\",\"informal_proof_text\":\"Differentiate\\n\\\\[\\nE(t)=\\\\frac12\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx-\\\\frac{1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nThen\\n\\\\[\\nE'(t)=\\\\int_\\\\Omega \\\\nabla u\\\\cdot \\\\nabla u_t\\\\,dx-\\\\int_\\\\Omega |u|^{p-1}u\\\\,u_t\\\\,dx.\\n\\\\]\\nIntegrate the first term by parts, using \\\\(u=0\\\\) on \\\\(\\\\partial\\\\Omega\\\\), to get\\n\\\\[\\n\\\\int_\\\\Omega \\\\nabla u\\\\cdot \\\\nabla u_t\\\\,dx=-\\\\int_\\\\Omega (\\\\Delta u)u_t\\\\,dx.\\n\\\\]\\nTherefore\\n\\\\[\\nE'(t)=-\\\\int_\\\\Omega (\\\\Delta u+|u|^{p-1}u)u_t\\\\,dx.\\n\\\\]\\nSubstitute the equation \\\\(u_t=\\\\Delta u+|u|^{p-1}u\\\\) and obtain\\n\\\\[\\nE'(t)=-\\\\int_\\\\Omega |u_t|^2\\\\,dx.\\n\\\\]\\nThis is nonpositive, so the energy is nonincreasing.\" , \"display_label\":\"Energy dissipation\"},{\"id\":\"n2\",\"title\":\"Differential inequality for \\\\(Y(t)\\\\)\",\"informal_statement\":\"The \\\\(L^2\\\\)-mass satisfies\\n\\\\[\\n\\\\frac12 Y'(t)=-\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx+\\\\int_\\\\Omega |u|^{p+1}\\\\,dx\\n=-2E(t)+\\\\frac{p-1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx,\\n\\\\]\\nand hence, since \\\\(E(t)\\\\le 0\\\\),\\n\\\\[\\n\\\\frac12 Y'(t)\\\\ge \\\\frac{p-1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\",\"informal_proof_text\":\"Differentiate \\\\(Y(t)=\\\\int_\\\\Omega |u|^2\\\\,dx\\\\):\\n\\\\[\\n\\\\frac12 Y'(t)=\\\\int_\\\\Omega u u_t\\\\,dx.\\n\\\\]\\nUse the PDE:\\n\\\\[\\n\\\\frac12 Y'(t)=\\\\int_\\\\Omega u\\\\Delta u\\\\,dx+\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nIntegrating by parts and using \\\\(u=0\\\\) on \\\\(\\\\partial\\\\Omega\\\\) gives\\n\\\\[\\n\\\\int_\\\\Omega u\\\\Delta u\\\\,dx=-\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx.\\n\\\\]\\nSo\\n\\\\[\\n\\\\frac12 Y'(t)=-\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx+\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nFrom\\n\\\\[\\nE(t)=\\\\frac12\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx-\\\\frac{1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx,\\n\\\\]\\none rewrites\\n\\\\[\\n-\\\\int_\\\\Omega |\\\\nabla u|^2\\\\,dx+\\\\int_\\\\Omega |u|^{p+1}\\\\,dx\\n=-2E(t)+\\\\frac{p-1}{p+1}\\\\int_\\\\Omega |u|^{p+1}\\\\,dx.\\n\\\\]\\nSince node \\\\(n1\\\\) gives \\\\(E(t)\\\\le 0\\\\), the lower bound follows.\",\"display_label\":\"Mass inequality\"},{\"id\":\"n3\",\"title\":\"Bounded-domain lower bound and ODE comparison\",\"informal_statement\":\"Because \\\\(\\\\Omega\\\\) is bounded and \\\\(p+1>2\\\\), there is \\\\(C_\\\\Omega>0\\\\) such that\\n\\\\[\\n\\\\int_\\\\Omega |u|^{p+1}\\\\,dx\\\\ge C_\\\\Omega Y(t)^{\\\\frac{p+1}{2}}.\\n\\\\]\\nCombining with node \\\\(n2\\\\) yields\\n\\\\[\\nY'(t)\\\\ge c Y(t)^{\\\\frac{p+1}{2}}.\\n\\\\]\\nSince \\\\(\\\\frac{p+1}{2}>1\\\\), comparison with \\\\(z'=c z^{\\\\frac{p+1}{2}}\\\\) forces finite-time blow-up.\",\"informal_proof_text\":\"Use the standard finite-measure comparison between \\\\(L^{p+1}(\\\\Omega)\\\\) and \\\\(L^2(\\\\Omega)\\\\): on a bounded domain,\\n\\\\[\\n\\\\|u\\\\|_{L^{p+1}}\\\\ge C_\\\\Omega \\\\|u\\\\|_{L^2}.\\n\\\\]\\nRaising to the power \\\\(p+1\\\\) gives\\n\\\\[\\n\\\\int_\\\\Omega |u|^{p+1}\\\\,dx\\\\ge C_\\\\Omega \\\\left(\\\\int_\\\\Omega |u|^2\\\\,dx\\\\right)^{\\\\frac{p+1}{2}}=C_\\\\Omega Y(t)^{\\\\frac{p+1}{2}}.\\n\\\\]\\nInsert this into the inequality from node \\\\(n2\\\\) to obtain\\n\\\\[\\nY'(t)\\\\ge c Y(t)^{\\\\frac{p+1}{2}}.\\n\\\\]\\nFor \\\\(\\\\alpha=\\\\frac{p+1}{2}>1\\\\), solutions of \\\\(z'=c z^\\\\alpha\\\\) with positive initial data blow up in finite time, and the standard comparison principle implies the same for \\\\(Y(t)\\\\).\",\"display_label\":\"Norm lower bound + ODE\"}],\"edges\":[{\"source_id\":\"n1\",\"target_id\":\"n0\",\"label\":\"used in\",\"explanation\":\"Energy monotonicity supplies \\\\(E(t)\\\\le 0\\\\), needed in the derivation of the lower bound for \\\\(Y'(t)\\\\).\"},{\"source_id\":\"n2\",\"target_id\":\"n0\",\"label\":\"used in\",\"explanation\":\"Provides the key differential inequality for \\\\(Y\\\\) up to the \\\\(L^{p+1}\\\\)-term.\"},{\"source_id\":\"n3\",\"target_id\":\"n0\",\"label\":\"used in\",\"explanation\":\"Converts the \\\\(L^{p+1}\\\\)-term into a power of \\\\(Y\\\\) and concludes blow-up by ODE comparison.\"},{\"source_id\":\"n1\",\"target_id\":\"n2\",\"label\":\"input\",\"explanation\":\"The sign \\\\(E(t)\\\\le 0\\\\) is inserted into the exact identity for \\\\(\\\\frac12 Y'(t)\\\\).\"}],\"candidates\":[{\"node_id\":\"n2\",\"priority\":1,\"rationale\":\"Best local formal island: a concrete differentiated identity plus explicit algebraic rewrite from the energy, and it carries the main inferential load into the blow-up argument.\"},{\"node_id\":\"n1\",\"priority\":2,\"rationale\":\"High-yield formal lemma: the energy dissipation computation is standard but nontrivial, involving differentiation, integration by parts, and substitution of the PDE.\"},{\"node_id\":\"n3\",\"priority\":3,\"rationale\":\"Useful local package combining the bounded-domain \\\\(L^{p+1}\\\\)-to-\\\\(L^2\\\\) lower bound with the scalar ODE comparison; this closes the argument once \\\\(n2\\\\) is available.\"}]}\n2026-04-05T04:02:36.175102Z  WARN codex_exec: thread/read failed while backfilling turn items for turn completion: thread/read: thread/read failed: ephemeral threads do not support includeTurns\ntokens used\n17,513\n",
+  "payload": {
+    "theorem_title": "Finite-time blow-up for the semilinear heat equation by the energy method",
+    "theorem_statement": "Let \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain, and let \\(u(t,x)\\) be a sufficiently regular solution of\n\\[\nu_t = \\Delta u + |u|^{p-1}u\n\\qquad \\text{in } \\Omega,\n\\]\nwith homogeneous Dirichlet boundary condition\n\\[\nu=0 \\qquad \\text{on } \\partial\\Omega,\n\\]\nfor some \\(p>1\\). Define\n\\[\nE(t)=\\frac12 \\int_\\Omega |\\nabla u(t,x)|^2\\,dx-\\frac{1}{p+1}\\int_\\Omega |u(t,x)|^{p+1}\\,dx,\n\\qquad\nY(t):=\\int_\\Omega |u(t,x)|^2\\,dx.\n\\]\nAssume \\(E(0)\\le 0\\). Then \\(Y(t)\\) satisfies a differential inequality of the form\n\\[\nY'(t)\\ge c\\,Y(t)^{\\frac{p+1}{2}}\n\\]\nfor some \\(c>0\\), and therefore \\(Y(t)\\) blows up in finite time; hence the solution cannot exist globally in time.",
+    "root_node_id": "n0",
+    "nodes": [
+      {
+        "id": "n0",
+        "title": "Finite-time blow-up from nonpositive initial energy",
+        "informal_statement": "Under the assumptions above, the energy is nonincreasing and nonpositive for all times of existence, one obtains\n\\[\nY'(t)\\ge c\\,Y(t)^{\\frac{p+1}{2}}\n\\]\nfor some \\(c>0\\), and since \\(\\frac{p+1}{2}>1\\), comparison with the ODE \\(z'=c z^{\\frac{p+1}{2}}\\) implies finite-time blow-up of \\(Y(t)\\).",
+        "informal_proof_text": "Differentiate the energy and integrate by parts:\n\\[\n\\frac{dE}{dt}\n=\n\\int_\\Omega \\nabla u\\cdot \\nabla u_t\\,dx-\n\\int_\\Omega |u|^{p-1}u\\,u_t\\,dx\n=\n-\\int_\\Omega (\\Delta u+|u|^{p-1}u)u_t\\,dx.\n\\]\nUsing the PDE \\(u_t=\\Delta u+|u|^{p-1}u\\), this gives\n\\[\nE'(t)=-\\int_\\Omega |u_t|^2\\,dx\\le 0,\n\\]\nso \\(E(t)\\le E(0)\\le 0\\).\n\nNext,\n\\[\n\\frac12 Y'(t)=\\int_\\Omega u u_t\\,dx\n=\\int_\\Omega u\\Delta u\\,dx+\\int_\\Omega |u|^{p+1}\\,dx\n=-\\int_\\Omega |\\nabla u|^2\\,dx+\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nRewrite the right-hand side using the definition of \\(E(t)\\):\n\\[\n\\frac12 Y'(t)\n=-2E(t)+\\frac{p-1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nSince \\(E(t)\\le 0\\),\n\\[\n\\frac12 Y'(t)\\ge \\frac{p-1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nBecause \\(\\Omega\\) is bounded and \\(p+1>2\\), H\u00f6lder yields\n\\[\n\\int_\\Omega |u|^{p+1}\\,dx\\ge C_\\Omega\\Bigl(\\int_\\Omega |u|^2\\,dx\\Bigr)^{\\frac{p+1}{2}}=C_\\Omega Y(t)^{\\frac{p+1}{2}}.\n\\]\nHence\n\\[\nY'(t)\\ge c Y(t)^{\\frac{p+1}{2}}.\n\\]\nSince \\(\\frac{p+1}{2}>1\\), any positive solution of the comparison ODE blows up in finite time, so \\(Y(t)\\) cannot stay finite for all time. Thus the solution blows up in finite time.",
+        "display_label": "Blow-up theorem"
+      },
+      {
+        "id": "n1",
+        "title": "Energy dissipation identity",
+        "informal_statement": "The energy satisfies\n\\[\nE'(t)=-\\int_\\Omega |u_t|^2\\,dx\\le 0.\n\\]\nIn particular, \\(E(t)\\le E(0)\\le 0\\).",
+        "informal_proof_text": "Differentiate\n\\[\nE(t)=\\frac12\\int_\\Omega |\\nabla u|^2\\,dx-\\frac{1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nThen\n\\[\nE'(t)=\\int_\\Omega \\nabla u\\cdot \\nabla u_t\\,dx-\\int_\\Omega |u|^{p-1}u\\,u_t\\,dx.\n\\]\nIntegrate the first term by parts, using \\(u=0\\) on \\(\\partial\\Omega\\), to get\n\\[\n\\int_\\Omega \\nabla u\\cdot \\nabla u_t\\,dx=-\\int_\\Omega (\\Delta u)u_t\\,dx.\n\\]\nTherefore\n\\[\nE'(t)=-\\int_\\Omega (\\Delta u+|u|^{p-1}u)u_t\\,dx.\n\\]\nSubstitute the equation \\(u_t=\\Delta u+|u|^{p-1}u\\) and obtain\n\\[\nE'(t)=-\\int_\\Omega |u_t|^2\\,dx.\n\\]\nThis is nonpositive, so the energy is nonincreasing.",
+        "display_label": "Energy dissipation"
+      },
+      {
+        "id": "n2",
+        "title": "Differential inequality for \\(Y(t)\\)",
+        "informal_statement": "The \\(L^2\\)-mass satisfies\n\\[\n\\frac12 Y'(t)=-\\int_\\Omega |\\nabla u|^2\\,dx+\\int_\\Omega |u|^{p+1}\\,dx\n=-2E(t)+\\frac{p-1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx,\n\\]\nand hence, since \\(E(t)\\le 0\\),\n\\[\n\\frac12 Y'(t)\\ge \\frac{p-1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]",
+        "informal_proof_text": "Differentiate \\(Y(t)=\\int_\\Omega |u|^2\\,dx\\):\n\\[\n\\frac12 Y'(t)=\\int_\\Omega u u_t\\,dx.\n\\]\nUse the PDE:\n\\[\n\\frac12 Y'(t)=\\int_\\Omega u\\Delta u\\,dx+\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nIntegrating by parts and using \\(u=0\\) on \\(\\partial\\Omega\\) gives\n\\[\n\\int_\\Omega u\\Delta u\\,dx=-\\int_\\Omega |\\nabla u|^2\\,dx.\n\\]\nSo\n\\[\n\\frac12 Y'(t)=-\\int_\\Omega |\\nabla u|^2\\,dx+\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nFrom\n\\[\nE(t)=\\frac12\\int_\\Omega |\\nabla u|^2\\,dx-\\frac{1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx,\n\\]\none rewrites\n\\[\n-\\int_\\Omega |\\nabla u|^2\\,dx+\\int_\\Omega |u|^{p+1}\\,dx\n=-2E(t)+\\frac{p-1}{p+1}\\int_\\Omega |u|^{p+1}\\,dx.\n\\]\nSince node \\(n1\\) gives \\(E(t)\\le 0\\), the lower bound follows.",
+        "display_label": "Mass inequality"
+      },
+      {
+        "id": "n3",
+        "title": "Bounded-domain lower bound and ODE comparison",
+        "informal_statement": "Because \\(\\Omega\\) is bounded and \\(p+1>2\\), there is \\(C_\\Omega>0\\) such that\n\\[\n\\int_\\Omega |u|^{p+1}\\,dx\\ge C_\\Omega Y(t)^{\\frac{p+1}{2}}.\n\\]\nCombining with node \\(n2\\) yields\n\\[\nY'(t)\\ge c Y(t)^{\\frac{p+1}{2}}.\n\\]\nSince \\(\\frac{p+1}{2}>1\\), comparison with \\(z'=c z^{\\frac{p+1}{2}}\\) forces finite-time blow-up.",
+        "informal_proof_text": "Use the standard finite-measure comparison between \\(L^{p+1}(\\Omega)\\) and \\(L^2(\\Omega)\\): on a bounded domain,\n\\[\n\\|u\\|_{L^{p+1}}\\ge C_\\Omega \\|u\\|_{L^2}.\n\\]\nRaising to the power \\(p+1\\) gives\n\\[\n\\int_\\Omega |u|^{p+1}\\,dx\\ge C_\\Omega \\left(\\int_\\Omega |u|^2\\,dx\\right)^{\\frac{p+1}{2}}=C_\\Omega Y(t)^{\\frac{p+1}{2}}.\n\\]\nInsert this into the inequality from node \\(n2\\) to obtain\n\\[\nY'(t)\\ge c Y(t)^{\\frac{p+1}{2}}.\n\\]\nFor \\(\\alpha=\\frac{p+1}{2}>1\\), solutions of \\(z'=c z^\\alpha\\) with positive initial data blow up in finite time, and the standard comparison principle implies the same for \\(Y(t)\\).",
+        "display_label": "Norm lower bound + ODE"
+      }
+    ],
+    "edges": [
+      {
+        "source_id": "n1",
+        "target_id": "n0",
+        "label": "used in",
+        "explanation": "Energy monotonicity supplies \\(E(t)\\le 0\\), needed in the derivation of the lower bound for \\(Y'(t)\\)."
+      },
+      {
+        "source_id": "n2",
+        "target_id": "n0",
+        "label": "used in",
+        "explanation": "Provides the key differential inequality for \\(Y\\) up to the \\(L^{p+1}\\)-term."
+      },
+      {
+        "source_id": "n3",
+        "target_id": "n0",
+        "label": "used in",
+        "explanation": "Converts the \\(L^{p+1}\\)-term into a power of \\(Y\\) and concludes blow-up by ODE comparison."
+      },
+      {
+        "source_id": "n1",
+        "target_id": "n2",
+        "label": "input",
+        "explanation": "The sign \\(E(t)\\le 0\\) is inserted into the exact identity for \\(\\frac12 Y'(t)\\)."
+      }
+    ],
+    "candidates": [
+      {
+        "node_id": "n2",
+        "priority": 1,
+        "rationale": "Best local formal island: a concrete differentiated identity plus explicit algebraic rewrite from the energy, and it carries the main inferential load into the blow-up argument."
+      },
+      {
+        "node_id": "n1",
+        "priority": 2,
+        "rationale": "High-yield formal lemma: the energy dissipation computation is standard but nontrivial, involving differentiation, integration by parts, and substitution of the PDE."
+      },
+      {
+        "node_id": "n3",
+        "priority": 3,
+        "rationale": "Useful local package combining the bounded-domain \\(L^{p+1}\\)-to-\\(L^2\\) lower bound with the scalar ODE comparison; this closes the argument once \\(n2\\) is available."
+      }
+    ]
+  }
+}

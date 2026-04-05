@@ -42,34 +42,34 @@
         "title": "Local estimate",
         "informal_statement": "\\[\nM^2\\le \\frac{2}{d}\\,\\|xu(t)\\|_{L^2}\\,\\|\\nabla u(t)\\|_{L^2}.\n\\]",
         "informal_proof_text": "Apply the assumed inequality\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\\le \\frac{2}{d}\\,\\|xf\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}\n\\]\nwith \\(f=u(t)\\). Mass conservation gives \\(\\|u(t)\\|_{L^2}=M\\), so\n\\[\nM^2\\le \\frac{2}{d}\\,\\|xu(t)\\|_{L^2}\\,\\|\\nabla u(t)\\|_{L^2}.\n\\]\nBy definition of the variance,\n\\[\n\\|xu(t)\\|_{L^2(\\mathbb{R}^d)}^2=V(t),\n\\]\nhence \\(\\|xu(t)\\|_{L^2}=\\sqrt{V(t)}\\), yielding the claim.",
-        "status": "formal_failed",
+        "status": "formal_verified",
         "display_label": "Refined estimate",
         "formalization_priority": 1,
         "formalization_rationale": "Smaller concrete local consequence extracted because it is more directly formalizable than the broader surrounding node.",
         "formal_artifact": {
           "lean_theorem_name": "reduced_glassey_local_estimate",
-          "lean_statement": "theorem reduced_glassey_local_estimate {d M uL2 xuL2 graduL2 : \u211d} (h_est : uL2 ^ 2 \u2264 (2 / d) * xuL2 * graduL2) (h_mass : uL2 = M) : M ^ 2 \u2264 (2 / d) * xuL2 * graduL2",
-          "lean_code": "import Mathlib\n\ntheorem reduced_glassey_local_estimate {d M uL2 xuL2 graduL2 : \u211d}\n    (h_est : uL2 ^ 2 \u2264 (2 / d) * xuL2 * graduL2)\n    (h_mass : uL2 = M) :\n    M ^ 2 \u2264 (2 / d) * xuL2 * graduL2 := by\n  simpa [h_mass] using h_est\n",
+          "lean_statement": "theorem reduced_glassey_local_estimate {d : \u2115} {M xu_norm grad_norm uL2_norm : \u211d} (hweighted : uL2_norm ^ 2 \u2264 ((2 : \u211d) / d) * xu_norm * grad_norm) (hmass : uL2_norm = M) : M ^ 2 \u2264 ((2 : \u211d) / d) * xu_norm * grad_norm",
+          "lean_code": "import Mathlib.Data.Real.Basic\n\nnamespace FormalIslands\n\ntheorem reduced_glassey_local_estimate\n    {d : \u2115} {M xu_norm grad_norm uL2_norm : \u211d}\n    (hweighted : uL2_norm ^ 2 \u2264 ((2 : \u211d) / d) * xu_norm * grad_norm)\n    (hmass : uL2_norm = M) :\n    M ^ 2 \u2264 ((2 : \u211d) / d) * xu_norm * grad_norm := by\n  simpa [hmass] using hweighted\n\nend FormalIslands\n",
           "verification": {
-            "status": "failed",
-            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_attempt_1.lean",
-            "exit_code": null,
+            "status": "verified",
+            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_worker.lean",
+            "exit_code": 0,
             "stdout": "",
-            "stderr": "Lean verification timed out after 120.0 seconds.",
-            "elapsed_seconds": 120.01984270801768,
+            "stderr": "",
+            "elapsed_seconds": 6.974996165838093,
             "attempt_count": 1,
-            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_attempt_1.lean"
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_worker.lean"
           },
           "attempt_history": [
             {
-              "status": "failed",
-              "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_attempt_1.lean",
-              "exit_code": null,
+              "status": "verified",
+              "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_worker.lean",
+              "exit_code": 0,
               "stdout": "",
-              "stderr": "Lean verification timed out after 120.0 seconds.",
-              "elapsed_seconds": 120.01984270801768,
+              "stderr": "",
+              "elapsed_seconds": 6.974996165838093,
               "attempt_count": 1,
-              "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_attempt_1.lean"
+              "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_worker.lean"
             }
           ]
         }
@@ -122,10 +122,19 @@
       ]
     },
     {
-      "id": "informal-proof-n1_refined_local_claim",
-      "kind": "informal_proof_check",
-      "text": "Check that node 'n1_refined_local_claim' (Local estimate) has an informal proof that establishes its informal statement, assuming its child dependencies.",
+      "id": "semantic-match-n1_refined_local_claim",
+      "kind": "formal_semantic_match_check",
+      "text": "Check that node 'n1_refined_local_claim' (Local estimate) matches the verified Lean statement 'theorem reduced_glassey_local_estimate {d : \u2115} {M xu_norm grad_norm uL2_norm : \u211d} (hweighted : uL2_norm ^ 2 \u2264 ((2 : \u211d) / d) * xu_norm * grad_norm) (hmass : uL2_norm = M) : M ^ 2 \u2264 ((2 : \u211d) / d) * xu_norm * grad_norm'.",
       "node_ids": [
+        "n1_refined_local_claim"
+      ]
+    },
+    {
+      "id": "boundary-n0-n1_refined_local_claim",
+      "kind": "boundary_interface_check",
+      "text": "Check that formal child 'n1_refined_local_claim' proves exactly what informal parent 'n0' uses across their dependency boundary.",
+      "node_ids": [
+        "n0",
         "n1_refined_local_claim"
       ]
     }

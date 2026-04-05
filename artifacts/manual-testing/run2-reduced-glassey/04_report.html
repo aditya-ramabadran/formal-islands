@@ -465,8 +465,8 @@
             }
             
 
-                .report-root:has(.obligation-informal-proof-n1_refined_local_claim:hover) a.node-n1_refined_local_claim .graph-node-box,
-.report-root:has(.obligation-informal-proof-n1_refined_local_claim:hover) .node-n1_refined_local_claim.node-card {
+                .report-root:has(.obligation-semantic-match-n1_refined_local_claim:hover) a.node-n1_refined_local_claim .graph-node-box,
+.report-root:has(.obligation-semantic-match-n1_refined_local_claim:hover) .node-n1_refined_local_claim.node-card {
                   border-color: var(--highlight);
                   stroke: var(--highlight);
                   stroke-width: 2.8;
@@ -476,8 +476,8 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-n1_refined_local_claim:checked) a.node-n1_refined_local_claim .graph-node-box,
-.report-root:has(#obligation-check-informal-proof-n1_refined_local_claim:checked) .node-n1_refined_local_claim.node-card {
+                .report-root:has(#obligation-check-semantic-match-n1_refined_local_claim:checked) a.node-n1_refined_local_claim .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-n1_refined_local_claim:checked) .node-n1_refined_local_claim.node-card {
                   border-color: var(--checked);
                   stroke: var(--checked);
                   stroke-width: 2.9;
@@ -486,18 +486,61 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-n1_refined_local_claim:checked) .edge-n0-n1_refined_local_claim,
-.report-root:has(#obligation-check-informal-proof-n1_refined_local_claim:checked) .edge-n1_refined_local_claim-n1 {
+                .report-root:has(#obligation-check-semantic-match-n1_refined_local_claim:checked) .edge-n0-n1_refined_local_claim,
+.report-root:has(#obligation-check-semantic-match-n1_refined_local_claim:checked) .edge-n1_refined_local_claim-n1 {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
                 
 
-            .report-root:has(.obligation-informal-proof-n1_refined_local_claim:hover) .obligation-informal-proof-n1_refined_local_claim {
+            .report-root:has(.obligation-semantic-match-n1_refined_local_claim:hover) .obligation-semantic-match-n1_refined_local_claim {
               border-color: var(--highlight);
               background: var(--preview-soft);
             }
-            .report-root:has(#obligation-check-informal-proof-n1_refined_local_claim:checked) .obligation-informal-proof-n1_refined_local_claim {
+            .report-root:has(#obligation-check-semantic-match-n1_refined_local_claim:checked) .obligation-semantic-match-n1_refined_local_claim {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-boundary-n0-n1_refined_local_claim:hover) a.node-n0 .graph-node-box,
+.report-root:has(.obligation-boundary-n0-n1_refined_local_claim:hover) a.node-n1_refined_local_claim .graph-node-box,
+.report-root:has(.obligation-boundary-n0-n1_refined_local_claim:hover) .node-n0.node-card,
+.report-root:has(.obligation-boundary-n0-n1_refined_local_claim:hover) .node-n1_refined_local_claim.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-n0-n1_refined_local_claim:checked) a.node-n0 .graph-node-box,
+.report-root:has(#obligation-check-boundary-n0-n1_refined_local_claim:checked) a.node-n1_refined_local_claim .graph-node-box,
+.report-root:has(#obligation-check-boundary-n0-n1_refined_local_claim:checked) .node-n0.node-card,
+.report-root:has(#obligation-check-boundary-n0-n1_refined_local_claim:checked) .node-n1_refined_local_claim.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-n0-n1_refined_local_claim:checked) .edge-n0-n1_refined_local_claim,
+.report-root:has(#obligation-check-boundary-n0-n1_refined_local_claim:checked) .edge-n0-n2,
+.report-root:has(#obligation-check-boundary-n0-n1_refined_local_claim:checked) .edge-n1_refined_local_claim-n1 {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-boundary-n0-n1_refined_local_claim:hover) .obligation-boundary-n0-n1_refined_local_claim {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-boundary-n0-n1_refined_local_claim:checked) .obligation-boundary-n0-n1_refined_local_claim {
               border-color: var(--checked);
               background: var(--checked-soft);
             }
@@ -553,8 +596,8 @@ Then there exists \(T&lt;\infty\) such that
         <span class="pill">Edges: 3</span>
         <span class="pill">Informal: 3</span>
         <span class="pill">Candidates: 0</span>
-        <span class="pill">Verified: 0</span>
-        <span class="pill">Failed: 1</span>
+        <span class="pill">Verified: 1</span>
+        <span class="pill">Failed: 0</span>
       </p>
       <div class="graph-shell">
         
@@ -595,9 +638,9 @@ Then there exists \(T&lt;\infty\) such that
     </a>
     
 
-    <a class="graph-node-link node-n1_refined_local_claim status-formal-failed" href="#node-n1_refined_local_claim">
-      <rect class="graph-node-box status-formal-failed" x="60.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-failed" cx="178.0" cy="150" r="4.6"></circle>
+    <a class="graph-node-link node-n1_refined_local_claim status-formal-verified" href="#node-n1_refined_local_claim">
+      <rect class="graph-node-box status-formal-verified" x="60.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="178.0" cy="150" r="4.6"></circle>
       <text class="graph-node-title"><tspan x="126.0" y="165">Refined estimate</tspan></text>
       <text class="graph-node-id" x="126.0" y="186">n1_refined_local_claim</text>
     </a>
@@ -655,14 +698,27 @@ Then there exists \(T&lt;\infty\) such that
     </li>
     
 
-    <li class="checklist-item obligation-informal-proof-n1_refined_local_claim" data-obligation-id="informal-proof-n1_refined_local_claim">
-      <label class="checklist-label" for="obligation-check-informal-proof-n1_refined_local_claim">
-        <input id="obligation-check-informal-proof-n1_refined_local_claim" type="checkbox" />
+    <li class="checklist-item obligation-semantic-match-n1_refined_local_claim" data-obligation-id="semantic-match-n1_refined_local_claim">
+      <label class="checklist-label" for="obligation-check-semantic-match-n1_refined_local_claim">
+        <input id="obligation-check-semantic-match-n1_refined_local_claim" type="checkbox" />
         <span>
-          <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;n1_refined_local_claim&#x27; (Local estimate) has an informal proof that establishes its informal statement, assuming its child dependencies.
-          
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;n1_refined_local_claim&#x27; (Local estimate) matches the verified Lean statement &#x27;theorem reduced_glassey_local_estimate {d : ℕ} {M xu_norm grad_norm uL2_norm : ℝ} (hweighted : uL2_norm ^ 2 ≤ ((2 : ℝ) / d) * xu_norm * grad_norm) (hmass : uL2_norm = M) : M ^ 2 ≤ ((2 : ℝ) / d) * xu_norm * grad_norm&#x27;.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> reduced_glassey_local_estimate {d : <span class="tok-type">ℕ</span>} {M xu_norm grad_norm uL2_norm : <span class="tok-type">ℝ</span>} (hweighted : uL2_norm ^ <span class="tok-number">2</span> ≤ ((<span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) / d) * xu_norm * grad_norm) (hmass : uL2_norm = M) : M ^ <span class="tok-number">2</span> ≤ ((<span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) / d) * xu_norm * grad_norm</code></pre></div>
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n1_refined_local_claim">n1_refined_local_claim</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-boundary-n0-n1_refined_local_claim" data-obligation-id="boundary-n0-n1_refined_local_claim">
+      <label class="checklist-label" for="obligation-check-boundary-n0-n1_refined_local_claim">
+        <input id="obligation-check-boundary-n0-n1_refined_local_claim" type="checkbox" />
+        <span>
+          <span class="checklist-kind">boundary_interface_check</span><br />
+          Check that formal child &#x27;n1_refined_local_claim&#x27; proves exactly what informal parent &#x27;n0&#x27; uses across their dependency boundary.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n0">n0</a>, <a class="node-jump" href="#node-n1_refined_local_claim">n1_refined_local_claim</a></div>
         </span>
       </label>
     </li>
@@ -743,7 +799,7 @@ for every time where the solution exists. Hence \(V\) cannot stay positive for a
 
     <article class="node-card node-n1_refined_local_claim" id="node-n1_refined_local_claim" data-node-id="n1_refined_local_claim">
       <h3>Local estimate</h3>
-      <p class="meta">Node id: n1_refined_local_claim | Status: formal_failed</p>
+      <p class="meta">Node id: n1_refined_local_claim | Status: formal_verified</p>
       <p class="meta">Display label: Refined estimate</p>
       <p class="meta">Formalization priority: 1. Rationale: Smaller concrete local consequence extracted because it is more directly formalizable than the broader surrounding node.</p>
       <p><strong>Informal statement:</strong></p>
@@ -769,19 +825,24 @@ hence \(\|xu(t)\|_{L^2}=\sqrt{V(t)}\), yielding the claim.</div>
         <p><strong>Lean theorem name:</strong> reduced_glassey_local_estimate</p>
         <div class="statement-code">
           <strong>Lean statement:</strong>
-          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> reduced_glassey_local_estimate {d M uL2 xuL2 graduL2 : <span class="tok-type">ℝ</span>} (h_est : uL2 ^ <span class="tok-number">2</span> ≤ (<span class="tok-number">2</span> / d) * xuL2 * graduL2) (h_mass : uL2 = M) : M ^ <span class="tok-number">2</span> ≤ (<span class="tok-number">2</span> / d) * xuL2 * graduL2</code></pre>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> reduced_glassey_local_estimate {d : <span class="tok-type">ℕ</span>} {M xu_norm grad_norm uL2_norm : <span class="tok-type">ℝ</span>} (hweighted : uL2_norm ^ <span class="tok-number">2</span> ≤ ((<span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) / d) * xu_norm * grad_norm) (hmass : uL2_norm = M) : M ^ <span class="tok-number">2</span> ≤ ((<span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) / d) * xu_norm * grad_norm</code></pre>
         </div>
-        <p><strong>Verification status:</strong> failed</p>
-        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_attempt_1.lean</code></p>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_worker.lean</code></p>
         <details>
           <summary>Lean code</summary>
-          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib.Data.Real.Basic
 
-<span class="tok-keyword">theorem</span> reduced_glassey_local_estimate {d M uL2 xuL2 graduL2 : <span class="tok-type">ℝ</span>}
-    (h_est : uL2 ^ <span class="tok-number">2</span> ≤ (<span class="tok-number">2</span> / d) * xuL2 * graduL2)
-    (h_mass : uL2 = M) :
-    M ^ <span class="tok-number">2</span> ≤ (<span class="tok-number">2</span> / d) * xuL2 * graduL2 := <span class="tok-tactic">by</span>
-  <span class="tok-tactic">simpa</span> [h_mass] using h_est</code></pre>
+<span class="tok-keyword">namespace</span> FormalIslands
+
+<span class="tok-keyword">theorem</span> reduced_glassey_local_estimate
+    {d : <span class="tok-type">ℕ</span>} {M xu_norm grad_norm uL2_norm : <span class="tok-type">ℝ</span>}
+    (hweighted : uL2_norm ^ <span class="tok-number">2</span> ≤ ((<span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) / d) * xu_norm * grad_norm)
+    (hmass : uL2_norm = M) :
+    M ^ <span class="tok-number">2</span> ≤ ((<span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) / d) * xu_norm * grad_norm := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">simpa</span> [hmass] using hweighted
+
+<span class="tok-keyword">end</span> FormalIslands</code></pre>
         </details>
         <details>
           <summary>Verification logs</summary>
@@ -789,7 +850,7 @@ hence \(\|xu(t)\|_{L^2}=\sqrt{V(t)}\), yielding the claim.</div>
 
 
 stderr:
-Lean verification timed out after 120.0 seconds.</code></pre>
+</code></pre>
         </details>
         
     </article>

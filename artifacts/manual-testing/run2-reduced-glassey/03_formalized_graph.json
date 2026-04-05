@@ -47,28 +47,28 @@
       "formalization_rationale": "Smaller concrete local consequence extracted because it is more directly formalizable than the broader surrounding node.",
       "formal_artifact": {
         "lean_theorem_name": "reduced_glassey_local_estimate",
-        "lean_statement": "theorem reduced_glassey_local_estimate\n    {d : \u2115} {M xu_norm grad_norm uL2_norm : \u211d}\n    (hweighted : uL2_norm ^ 2 \u2264 ((2 : \u211d) / d) * xu_norm * grad_norm)\n    (hmass : uL2_norm = M) :\n    M ^ 2 \u2264 ((2 : \u211d) / d) * xu_norm * grad_norm",
+        "lean_statement": "theorem reduced_glassey_local_estimate {d : \u2115} {M xu_norm grad_norm uL2_norm : \u211d} (hweighted : uL2_norm ^ 2 \u2264 ((2 : \u211d) / d) * xu_norm * grad_norm) (hmass : uL2_norm = M) : M ^ 2 \u2264 ((2 : \u211d) / d) * xu_norm * grad_norm",
         "lean_code": "import Mathlib.Data.Real.Basic\n\nnamespace FormalIslands\n\ntheorem reduced_glassey_local_estimate\n    {d : \u2115} {M xu_norm grad_norm uL2_norm : \u211d}\n    (hweighted : uL2_norm ^ 2 \u2264 ((2 : \u211d) / d) * xu_norm * grad_norm)\n    (hmass : uL2_norm = M) :\n    M ^ 2 \u2264 ((2 : \u211d) / d) * xu_norm * grad_norm := by\n  simpa [hmass] using hweighted\n\nend FormalIslands\n",
         "verification": {
           "status": "verified",
-          "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_attempt_1.lean",
+          "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_worker.lean",
           "exit_code": 0,
           "stdout": "",
           "stderr": "",
-          "elapsed_seconds": 12.474533957894892,
+          "elapsed_seconds": 6.974996165838093,
           "attempt_count": 1,
-          "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_attempt_1.lean"
+          "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_worker.lean"
         },
         "attempt_history": [
           {
             "status": "verified",
-            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_attempt_1.lean",
+            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_worker.lean",
             "exit_code": 0,
             "stdout": "",
             "stderr": "",
-            "elapsed_seconds": 12.474533957894892,
+            "elapsed_seconds": 6.974996165838093,
             "attempt_count": 1,
-            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_attempt_1.lean"
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_refined_local_claim_worker.lean"
           }
         ]
       }

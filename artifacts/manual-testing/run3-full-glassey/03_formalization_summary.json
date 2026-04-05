@@ -1,7 +1,7 @@
 {
   "node_id": "gradient_blowup",
   "status": "failed",
-  "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean",
-  "attempt_count": 2,
-  "stderr": ""
+  "artifact_path": null,
+  "attempt_count": 1,
+  "stderr": "Codex CLI timed out while waiting for structured output for task 'formalize_node_agentic' after 420.0 seconds."
 }

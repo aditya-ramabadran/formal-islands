@@ -1,0 +1,82 @@
+{
+  "theorem_title": "Harmonic functions minimize Dirichlet energy among competitors with the same boundary values",
+  "theorem_statement": "Harmonic functions minimize the Dirichlet energy among competitors with the same boundary values.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain with sufficiently regular boundary, and let \\(g\\) be prescribed boundary data. Suppose \\(u\\) is a sufficiently regular function such that:\n- \\(u=g\\) on \\(\\partial\\Omega\\),\n- and \\(u\\) is weakly harmonic, meaning\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla \\varphi \\, dx = 0\n\\qquad \\text{for every } \\varphi \\in H_0^1(\\Omega).\n\\]\n\nThen for every sufficiently regular \\(v\\) with the same boundary data \\(v=g\\) on \\(\\partial\\Omega\\), one has\n\\[\n\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx.\n\\]\nMoreover,\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]",
+  "root_node_id": "n_root",
+  "nodes": [
+    {
+      "id": "n_root",
+      "title": "Harmonic functions minimize Dirichlet energy among competitors with the same boundary values",
+      "informal_statement": "If \\(u\\) is weakly harmonic in \\(\\Omega\\) and \\(u=g\\) on \\(\\partial\\Omega\\), then for every sufficiently regular \\(v\\) with \\(v=g\\) on \\(\\partial\\Omega\\),\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx,\n\\]\nand hence\n\\[\n\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx.\n\\]",
+      "informal_proof_text": "Fix a competitor \\(v\\) with the same boundary data and set \\(w:=v-u\\). By the common boundary condition, \\(w=0\\) on \\(\\partial\\Omega\\), so \\(w\\in H_0^1(\\Omega)\\). Apply the energy decomposition from the local claim to obtain\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]\nSince the last term is nonnegative, the minimizing inequality follows immediately. Thus \\(u\\) minimizes the Dirichlet energy among all competitors with the same boundary values.",
+      "status": "candidate_formal",
+      "display_label": "Dirichlet principle for weakly harmonic \\(u\\)",
+      "formalization_priority": 2,
+      "formalization_rationale": "Natural end-to-end theorem statement once the energy identity is available; formalization is straightforward from nonnegativity of the final term.",
+      "formal_artifact": null
+    },
+    {
+      "id": "n_energy_split",
+      "title": "Energy decomposition using the weak harmonicity test \\(\\varphi=v-u\\)",
+      "informal_statement": "For \\(w:=v-u\\), if \\(u\\) and \\(v\\) have the same boundary values, then \\(w\\in H_0^1(\\Omega)\\) and\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla w|^2\\,dx.\n\\]",
+      "informal_proof_text": "Set \\(w:=v-u\\). Since \\(u=v=g\\) on \\(\\partial\\Omega\\), we have \\(w=0\\) on \\(\\partial\\Omega\\), hence \\(w\\in H_0^1(\\Omega)\\). Also \\(\\nabla v=\\nabla(u+w)=\\nabla u+\\nabla w\\), so pointwise\n\\[\n|\\nabla v|^2=|\\nabla u+\\nabla w|^2=|\\nabla u|^2+2\\nabla u\\cdot\\nabla w+|\\nabla w|^2.\n\\]\nIntegrating gives\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+2\\int_\\Omega \\nabla u\\cdot\\nabla w\\,dx\n+\\int_\\Omega |\\nabla w|^2\\,dx.\n\\]\nBecause \\(w\\in H_0^1(\\Omega)\\), it is an admissible test function in the weak harmonicity condition for \\(u\\), so\n\\[\n\\int_\\Omega \\nabla u\\cdot\\nabla w\\,dx=0.\n\\]\nTherefore the cross term vanishes and the stated identity follows. Replacing \\(w\\) by \\(v-u\\) yields the advertised form.",
+      "status": "informal",
+      "display_label": "Energy identity",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "n_energy_split__formal_core",
+      "title": "Certified local core for Energy decomposition using the weak harmonicity test \\(\\varphi=v-u\\)",
+      "informal_statement": "Lean verifies a narrower concrete local core supporting this parent step. See the attached Lean statement and code for the exact certified sublemma.",
+      "informal_proof_text": "This node records a verified supporting sublemma extracted from the formalization of parent node 'n_energy_split'. It certifies part of the parent's local proof burden without claiming to cover the full informal node.",
+      "status": "formal_verified",
+      "display_label": "Certified core",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": {
+        "lean_theorem_name": "FormalIslands.n_energy_split",
+        "lean_statement": "theorem n_energy_split\n    (d : \u2115)\n    (\u03a9 : Set (EuclideanSpace \u211d (Fin d)))\n    (grad_u grad_w : EuclideanSpace \u211d (Fin d) \u2192 EuclideanSpace \u211d (Fin d))\n    (hu : Integrable (fun x => \u2016grad_u x\u2016 ^ 2) (volume.restrict \u03a9))\n    (hw : Integrable (fun x => \u2016grad_w x\u2016 ^ 2) (volume.restrict \u03a9))\n    (huw : Integrable (fun x => @inner \u211d _ _ (grad_u x) (grad_w x)) (volume.restrict \u03a9))\n    (horth : \u222b x, @inner \u211d _ _ (grad_u x) (grad_w x) \u2202(volume.restrict \u03a9) = 0) :\n    (\u222b x, \u2016grad_u x + grad_w x\u2016 ^ 2 \u2202(volume.restrict \u03a9)) =\n      (\u222b x, \u2016grad_u x\u2016 ^ 2 \u2202(volume.restrict \u03a9)) +\n        \u222b x, \u2016grad_w x\u2016 ^ 2 \u2202(volume.restrict \u03a9)",
+        "lean_code": "import Mathlib.MeasureTheory.Integral.Bochner.Basic\nimport Mathlib.Analysis.InnerProductSpace.Basic\nimport Mathlib.Analysis.InnerProductSpace.PiL2\nimport Mathlib.MeasureTheory.Measure.Haar.InnerProductSpace\n\nopen MeasureTheory\n\nnamespace FormalIslands\n\ntheorem n_energy_split\n    (d : \u2115)\n    (\u03a9 : Set (EuclideanSpace \u211d (Fin d)))\n    (grad_u grad_w : EuclideanSpace \u211d (Fin d) \u2192 EuclideanSpace \u211d (Fin d))\n    (hu : Integrable (fun x => \u2016grad_u x\u2016 ^ 2) (volume.restrict \u03a9))\n    (hw : Integrable (fun x => \u2016grad_w x\u2016 ^ 2) (volume.restrict \u03a9))\n    (huw : Integrable (fun x => @inner \u211d _ _ (grad_u x) (grad_w x)) (volume.restrict \u03a9))\n    (horth : \u222b x, @inner \u211d _ _ (grad_u x) (grad_w x) \u2202(volume.restrict \u03a9) = 0) :\n    (\u222b x, \u2016grad_u x + grad_w x\u2016 ^ 2 \u2202(volume.restrict \u03a9)) =\n      (\u222b x, \u2016grad_u x\u2016 ^ 2 \u2202(volume.restrict \u03a9)) +\n        \u222b x, \u2016grad_w x\u2016 ^ 2 \u2202(volume.restrict \u03a9) := by\n  have h_expand :\n      (fun x => \u2016grad_u x + grad_w x\u2016 ^ 2) =\n        fun x => \u2016grad_u x\u2016 ^ 2 + 2 * @inner \u211d _ _ (grad_u x) (grad_w x) + \u2016grad_w x\u2016 ^ 2 := by\n    funext x\n    simpa using norm_add_sq_real (grad_u x) (grad_w x)\n  rw [h_expand]\n  have h_two_inner :\n      Integrable (fun x => 2 * @inner \u211d _ _ (grad_u x) (grad_w x)) (volume.restrict \u03a9) :=\n    huw.const_mul (2 : \u211d)\n  have h_first_two :\n      Integrable (fun x => \u2016grad_u x\u2016 ^ 2 + 2 * @inner \u211d _ _ (grad_u x) (grad_w x))\n        (volume.restrict \u03a9) :=\n    hu.add h_two_inner\n  have h_assoc :\n      (fun x => \u2016grad_u x\u2016 ^ 2 + 2 * @inner \u211d _ _ (grad_u x) (grad_w x) + \u2016grad_w x\u2016 ^ 2) =\n        fun x => (\u2016grad_u x\u2016 ^ 2 + 2 * @inner \u211d _ _ (grad_u x) (grad_w x)) + \u2016grad_w x\u2016 ^ 2 := by\n    funext x\n    ring\n  rw [h_assoc, integral_add h_first_two hw, integral_add hu h_two_inner,\n    integral_const_mul, horth]\n  ring\n\nend FormalIslands\n",
+        "faithfulness_classification": "concrete_sublemma",
+        "faithfulness_notes": "Accepted as a narrower concrete local core in the same ambient setting; it should support the parent node rather than count as full-node certification.",
+        "verification": {
+          "status": "verified",
+          "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n_energy_split_worker.lean",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "",
+          "elapsed_seconds": 29.53047762508504,
+          "attempt_count": 1,
+          "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n_energy_split_worker.lean"
+        },
+        "attempt_history": [
+          {
+            "status": "verified",
+            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n_energy_split_worker.lean",
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "elapsed_seconds": 29.53047762508504,
+            "attempt_count": 1,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n_energy_split_worker.lean"
+          }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "n_energy_split",
+      "target_id": "n_root",
+      "label": "main step",
+      "explanation": "The theorem follows by applying the energy identity to \\(w=v-u\\) and then using nonnegativity of \\(\\int_\\Omega |\\nabla(v-u)|^2\\,dx\\)."
+    },
+    {
+      "source_id": "n_energy_split__formal_core",
+      "target_id": "n_energy_split",
+      "label": "formal_sublemma_for",
+      "explanation": "This verified Lean theorem certifies a narrower concrete local core used inside the parent informal step."
+    }
+  ]
+}

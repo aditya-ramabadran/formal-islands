@@ -58,39 +58,29 @@
         "formalization_priority": 1,
         "formalization_rationale": "Best first local target: it is inferentially important for the main theorem, technically self-contained once mass conservation and variance collapse are available, and it packages the key coercive estimate into the actual blow-up conclusion. Formalizing this node discharges more real burden than the standalone weighted inequality, while avoiding the substantially heavier PDE/virial computation in the virial identity.",
         "formal_artifact": {
-          "lean_theorem_name": "gradient_blowup_of_variance_collapse",
-          "lean_statement": "theorem gradient_blowup_of_variance_collapse\n    {d M : \u211d} (hd : 0 < d) (hM : 0 < M)\n    {V grad h1 : \u2115 \u2192 \u211d}\n    (hbound : \u2200 n, M ^ 2 \u2264 (2 / d) * Real.sqrt (V n) * grad n)\n    (hV_nonneg : \u2200 n, 0 \u2264 V n)\n    (hV : Tendsto V atTop (\ud835\udcdd 0))\n    (hh1 : \u2200 n, h1 n ^ 2 = M ^ 2 + grad n ^ 2) :\n    Tendsto grad atTop atTop \u2227 Tendsto h1 atTop atTop",
-          "lean_code": "import Mathlib.Analysis.SpecialFunctions.Sqrt\nimport Mathlib.Topology.Instances.ENNReal\nimport Mathlib.Topology.Algebra.Order\nimport Mathlib\n\nopen Filter Topology\nopen scoped Topology\n\ntheorem gradient_blowup_of_variance_collapse\n    {d M : \u211d} (hd : 0 < d) (hM : 0 < M)\n    {V grad h1 : \u2115 \u2192 \u211d}\n    (hbound : \u2200 n, M ^ 2 \u2264 (2 / d) * Real.sqrt (V n) * grad n)\n    (hV_nonneg : \u2200 n, 0 \u2264 V n)\n    (hV : Tendsto V atTop (\ud835\udcdd 0))\n    (hh1 : \u2200 n, h1 n ^ 2 = M ^ 2 + grad n ^ 2) :\n    Tendsto grad atTop atTop \u2227 Tendsto h1 atTop atTop := by\n  have hd2 : 0 < 2 / d := by positivity\n  have hM2 : 0 < M ^ 2 := by nlinarith\n  have hgrad_nonneg : \u2200 n, 0 \u2264 grad n := by\n    intro n\n    have hsqrt_nonneg : 0 \u2264 Real.sqrt (V n) := Real.sqrt_nonneg _\n    have hprod_nonneg : 0 \u2264 (2 / d) * Real.sqrt (V n) := by positivity\n    by_contra hneg\n    have hlt : (2 / d) * Real.sqrt (V n) * grad n < 0 := by\n      nlinarith\n    linarith [hbound n]\n  have hgrad : Tendsto grad atTop atTop := by\n    rw [tendsto_atTop.2]\n    intro b\n    let \u03b5 : \u211d := (M ^ 2 / ((2 / d) * (b + 1))) ^ 2\n    have hden : 0 < (2 / d) * (b + 1) := by\n      have hb1 : 0 < b + 1 := by linarith\n      positivity\n    have h\u03b5 : 0 < \u03b5 := by\n      dsimp [\u03b5]\n      positivity\n    have hVevent : \u2200\u1da0 n in atTop, V n < \u03b5 := by\n      have h := (tendsto_order.1 hV).2 0 \u03b5 h\u03b5\n      simpa using h\n    filter_upwards [hVevent] with n hn\n    have hsqrt_lt : Real.sqrt (V n) < M ^ 2 / ((2 / d) * (b + 1)) := by\n      have hnn : 0 \u2264 V n := hV_nonneg n\n      have hrhs_nonneg : 0 \u2264 M ^ 2 / ((2 / d) * (b + 1)) := by positivity\n      apply (Real.sqrt_lt_iff).2\n      constructor\n      \u00b7 exact hnn\n      \u00b7 have := hn\n        dsimp [\u03b5] at this\n        simpa [sq] using this\n    have hmul_pos : 0 < (2 / d) * Real.sqrt (V n) := by\n      positivity\n    have hle1 : M ^ 2 < (2 / d) * Real.sqrt (V n) * (b + 1) := by\n      have := mul_lt_mul_of_pos_left hsqrt_lt hd2\n      have hb1 : 0 < b + 1 := by linarith\n      have := mul_lt_mul_of_pos_right this hb1\n      field_simp at this\n      simpa [mul_assoc, mul_left_comm, mul_comm] using this\n    have hbg : b < grad n := by\n      by_contra hnot\n      have hle_grad : grad n \u2264 b := by linarith\n      have hle2 : (2 / d) * Real.sqrt (V n) * grad n \u2264 (2 / d) * Real.sqrt (V n) * b := by\n        gcongr\n      have hlt2 : (2 / d) * Real.sqrt (V n) * b < (2 / d) * Real.sqrt (V n) * (b + 1) := by\n        nlinarith [hmul_pos]\n      linarith [hbound n, hle2, hle1]\n    linarith\n  have hh1_nonneg : \u2200 n, 0 \u2264 h1 n := by\n    intro n\n    have hsq_nonneg : 0 \u2264 h1 n ^ 2 := sq_nonneg _\n    by_contra hneg\n    nlinarith\n  have hh1_tendsto : Tendsto h1 atTop atTop := by\n    rw [tendsto_atTop.2]\n    intro b\n    have hgrad_event : \u2200\u1da0 n in atTop, grad n \u2265 b + 1 := by\n      simpa using (tendsto_atTop.2 hgrad (b + 1))\n    filter_upwards [hgrad_event] with n hn\n    have hsum : h1 n ^ 2 = M ^ 2 + grad n ^ 2 := hh1 n\n    have hlarge : b ^ 2 < h1 n ^ 2 := by\n      have hgb : b < grad n := by linarith\n      have hgb_sq : b ^ 2 < grad n ^ 2 := by\n        have hgn : 0 \u2264 grad n := hgrad_nonneg n\n        nlinarith\n      nlinarith [hsum]\n    have hnneg : 0 \u2264 h1 n := hh1_nonneg n\n    by_contra hle\n    have : h1 n \u2264 b := by linarith\n    have hsquare_le : h1 n ^ 2 \u2264 b ^ 2 := by\n      nlinarith\n    linarith\n  exact \u27e8hgrad, hh1_tendsto\u27e9",
+          "lean_theorem_name": "gradient_blowup_backend_failure",
+          "lean_statement": "-- backend did not return a Lean statement",
+          "lean_code": "-- backend did not return Lean code",
           "verification": {
             "status": "failed",
-            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean",
-            "exit_code": 1,
-            "stdout": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean:1:0: error: object file '/Users/adihaya/GitHub/formal-islands/lean_project/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Topology/Instances/ENNReal.olean' of module Mathlib.Topology.Instances.ENNReal does not exist\n",
-            "stderr": "",
-            "elapsed_seconds": 10.013879541074857,
-            "attempt_count": 2,
-            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean"
+            "command": "backend_request",
+            "exit_code": null,
+            "stdout": "",
+            "stderr": "Codex CLI timed out while waiting for structured output for task 'formalize_node_agentic' after 420.0 seconds.",
+            "elapsed_seconds": 0.0,
+            "attempt_count": 1,
+            "artifact_path": null
           },
           "attempt_history": [
             {
               "status": "failed",
-              "command": "faithfulness_guard",
+              "command": "backend_request",
               "exit_code": null,
               "stdout": "",
-              "stderr": "Formalization drifted too far from the target node. Avoid introducing arbitrary `Type*` parameters when the node describes a concrete local claim.",
+              "stderr": "Codex CLI timed out while waiting for structured output for task 'formalize_node_agentic' after 420.0 seconds.",
               "elapsed_seconds": 0.0,
               "attempt_count": 1,
               "artifact_path": null
-            },
-            {
-              "status": "failed",
-              "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean",
-              "exit_code": 1,
-              "stdout": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean:1:0: error: object file '/Users/adihaya/GitHub/formal-islands/lean_project/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Topology/Instances/ENNReal.olean' of module Mathlib.Topology.Instances.ENNReal does not exist\n",
-              "stderr": "",
-              "elapsed_seconds": 10.013879541074857,
-              "attempt_count": 2,
-              "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/gradient_blowup_attempt_2.lean"
             }
           ]
         }

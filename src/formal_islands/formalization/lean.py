@@ -62,6 +62,16 @@ class LeanWorkspace:
         scratch_path.write_text(lean_code, encoding="utf-8")
         return scratch_path
 
+    def prepare_worker_file(self, node_id: str) -> Path:
+        """Reserve the single-file workspace used by the one-shot agentic worker."""
+
+        self.validate()
+        self.generated_dir.mkdir(parents=True, exist_ok=True)
+        safe_node_id = node_id.replace("/", "_")
+        scratch_path = self.generated_dir / f"{safe_node_id}_worker.lean"
+        scratch_path.write_text("-- agentic formalization worker scratch file\n", encoding="utf-8")
+        return scratch_path
+
 
 @dataclass(frozen=True)
 class LeanVerifier:
@@ -118,4 +128,49 @@ class LeanVerifier:
             elapsed_seconds=elapsed_seconds,
             attempt_count=attempt_number,
             artifact_path=str(scratch_path),
+        )
+
+    def verify_existing_file(self, *, file_path: Path, attempt_number: int) -> VerificationResult:
+        """Verify an existing Lean scratch file without rewriting it."""
+
+        workspace_root = self.workspace.root.resolve()
+        resolved_path = file_path.resolve()
+        command = ["lake", "env", "lean", str(resolved_path)]
+
+        start = time.monotonic()
+        try:
+            completed = self.command_runner(
+                command,
+                capture_output=True,
+                text=True,
+                cwd=workspace_root,
+                check=False,
+                timeout=self.timeout_seconds,
+            )
+            elapsed_seconds = time.monotonic() - start
+        except subprocess.TimeoutExpired as exc:
+            elapsed_seconds = time.monotonic() - start
+            return VerificationResult(
+                status="failed",
+                command=" ".join(command),
+                exit_code=None,
+                stdout=exc.stdout or "",
+                stderr=(
+                    f"Lean verification timed out after {self.timeout_seconds} seconds."
+                    + (f"\n{exc.stderr}" if exc.stderr else "")
+                ),
+                elapsed_seconds=elapsed_seconds,
+                attempt_count=attempt_number,
+                artifact_path=str(resolved_path),
+            )
+
+        return VerificationResult(
+            status="verified" if completed.returncode == 0 else "failed",
+            command=" ".join(command),
+            exit_code=completed.returncode,
+            stdout=completed.stdout,
+            stderr=completed.stderr,
+            elapsed_seconds=elapsed_seconds,
+            attempt_count=attempt_number,
+            artifact_path=str(resolved_path),
         )

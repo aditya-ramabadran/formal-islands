@@ -51,9 +51,28 @@ def test_load_input_payload_reads_example_json(tmp_path: Path) -> None:
     payload = load_input_payload(input_path)
 
     assert payload["theorem_statement"] == "If A then B."
+    assert payload["theorem_title"] == "Toy theorem"
 
 
-def test_select_candidate_node_id_uses_highest_priority_then_id() -> None:
+def test_load_input_payload_backfills_theorem_title_from_legacy_hint(tmp_path: Path) -> None:
+    input_path = tmp_path / "input.json"
+    input_path.write_text(
+        json.dumps(
+            {
+                "theorem_title_hint": "Legacy title",
+                "theorem_statement": "If A then B.",
+                "raw_proof_text": "Assume A. Then B.",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    payload = load_input_payload(input_path)
+
+    assert payload["theorem_title"] == "Legacy title"
+
+
+def test_select_candidate_node_id_uses_lowest_priority_number_then_id() -> None:
     graph = ProofGraph(
         theorem_title="Toy theorem",
         theorem_statement="If A then B.",
@@ -96,7 +115,7 @@ def test_select_candidate_node_id_uses_highest_priority_then_id() -> None:
         edges=[ProofEdge(source_id="n1", target_id="n2")],
     )
 
-    assert select_candidate_node_id(graph) == "n3"
+    assert select_candidate_node_id(graph) == "n0"
 
 
 def test_smoke_stage_orchestration_writes_expected_outputs(tmp_path: Path) -> None:

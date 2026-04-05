@@ -1,13 +1,19 @@
-"""Prompt builders for single-node formalization requests."""
+"""Prompt builders and faithfulness assessment for single-node formalization requests."""
 
 from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass
 
 from formal_islands.backends import StructuredBackend, StructuredBackendRequest
 from formal_islands.formalization.schemas import FormalizationResult
-from formal_islands.models import FormalArtifact, ProofGraph, VerificationResult
+from formal_islands.models import (
+    FaithfulnessClassification,
+    FormalArtifact,
+    ProofGraph,
+    VerificationResult,
+)
 
 
 FORMALIZATION_SYSTEM_PROMPT = (
@@ -15,6 +21,7 @@ FORMALIZATION_SYSTEM_PROMPT = (
     "Return only JSON matching the schema. "
     "Keep the formalization local and conservative. "
     "Stay close to the node's actual mathematical content, avoid gratuitous abstraction, "
+    "prefer the most concrete faithful theorem you can manage, "
     "and do not game the task by replacing the node with an easier but low-value nearby fact. "
     "Treat the local Lean workspace as the source of truth for available imports and prefer "
     "small, concrete, stable import lists over broad or speculative boilerplate."
@@ -27,6 +34,14 @@ class FormalizationFaithfulnessError(ValueError):
     def __init__(self, message: str, artifact: FormalArtifact):
         super().__init__(message)
         self.artifact = artifact
+
+
+@dataclass(frozen=True)
+class FaithfulnessAssessment:
+    """Lightweight post-generation faithfulness classification."""
+
+    classification: FaithfulnessClassification
+    message: str | None = None
 
 
 def build_formalization_request(
@@ -69,6 +84,7 @@ def build_formalization_request(
 
     prompt_parts = [
             f"Theorem title: {graph.theorem_title}",
+            f"Ambient theorem statement:\n{graph.theorem_statement}",
             "Target node:",
             json.dumps(
                 {
@@ -114,9 +130,18 @@ def build_formalization_request(
                 "clearly requires that abstraction."
             ),
             (
+                "Preserve the ambient mathematical setting of the theorem and node. If the node is stated in a concrete "
+                "setting, keep that same setting in the Lean theorem unless the node itself explicitly states a more abstract generality."
+            ),
+            (
                 "If the full analytic statement is too heavy, prefer a smaller faithful local theorem "
                 "or a concrete algebraic consequence that still matches the node, rather than a highly "
                 "abstract schematic statement."
+            ),
+            (
+                "If you simplify, simplify the local inferential step while keeping the same concrete objects and "
+                "ambient setting. Prefer a concrete sublemma about the same named quantities, variables, operators, "
+                "or integrals over a theorem about an arbitrary type, arbitrary measure, or unrelated families of functions."
             ),
             (
                 "If the node mixes a reusable source estimate with a more concrete downstream application, "
@@ -180,44 +205,107 @@ def request_node_formalization(
         verification=VerificationResult(),
         attempt_history=[],
     )
-    _enforce_formalization_faithfulness(node=node, artifact=artifact)
-    return artifact
+    return enforce_formalization_faithfulness(node=node, artifact=artifact)
 
 
-def _enforce_formalization_faithfulness(node, artifact: FormalArtifact) -> None:
-    issues = _collect_faithfulness_issues(node, artifact)
-    if not issues:
-        return
+def enforce_formalization_faithfulness(node, artifact: FormalArtifact) -> FormalArtifact:
+    assessment = assess_formalization_faithfulness(node=node, artifact=artifact)
+    updated_artifact = artifact.model_copy(
+        update={
+            "faithfulness_classification": assessment.classification,
+            "faithfulness_notes": assessment.message,
+        }
+    )
+    if assessment.classification != FaithfulnessClassification.OVER_ABSTRACT:
+        return updated_artifact
     raise FormalizationFaithfulnessError(
         " ".join(
             [
                 "Formalization drifted too far from the target node.",
-                *issues,
+                assessment.message or "",
             ]
-        ),
-        artifact=artifact,
+        ).strip(),
+        artifact=updated_artifact,
     )
 
 
-def _collect_faithfulness_issues(node, artifact: FormalArtifact) -> list[str]:
+def assess_formalization_faithfulness(node, artifact: FormalArtifact) -> FaithfulnessAssessment:
+    issues = _collect_over_abstract_issues(node, artifact)
+    if issues:
+        return FaithfulnessAssessment(
+            classification=FaithfulnessClassification.OVER_ABSTRACT,
+            message=" ".join(issues),
+        )
+
+    if _looks_like_concrete_sublemma(node, artifact):
+        return FaithfulnessAssessment(
+            classification=FaithfulnessClassification.CONCRETE_SUBLEMMA,
+            message=(
+                "Accepted as a narrower concrete local core in the same ambient setting; "
+                "it should support the parent node rather than count as full-node certification."
+            ),
+        )
+
+    return FaithfulnessAssessment(classification=FaithfulnessClassification.FULL_NODE)
+
+
+def _collect_over_abstract_issues(node, artifact: FormalArtifact) -> list[str]:
     issues: list[str] = []
     lean_text = f"{artifact.lean_statement}\n{artifact.lean_code}"
     node_text = " ".join([node.title, node.informal_statement, node.informal_proof_text]).lower()
+    statement = artifact.lean_statement
 
     if "Type*" in lean_text or re.search(r"\bType u\b|\bType v\b", lean_text):
         issues.append(
             "Avoid introducing arbitrary `Type*` parameters when the node describes a concrete local claim."
         )
 
-    if ("InnerProductSpace" in lean_text or "NormedAddCommGroup" in lean_text) and not any(
-        marker in node_text for marker in ("inner product", "hilbert", "normed")
+    if (
+        ("[InnerProductSpace" in lean_text or "[NormedAddCommGroup" in lean_text)
+        and not any(marker in node_text for marker in ("inner product", "hilbert", "normed"))
     ):
         issues.append(
             "Avoid translating the node into an arbitrary normed/inner-product space unless the node itself calls for that abstraction."
         )
 
+    if _node_does_not_invite_measure_abstraction(node_text) and _looks_like_arbitrary_measure_abstraction(statement):
+        issues.append(
+            "Avoid replacing a concrete local claim with an arbitrary measure-space theorem."
+        )
+
+    if _has_multiple_unrelated_function_families(statement, node_text):
+        issues.append(
+            "Avoid replacing the node with unrelated families of functions or indexed maps absent from the original claim."
+        )
+
+    return issues
+
+
+def _node_does_not_invite_measure_abstraction(node_text: str) -> bool:
+    abstract_markers = (
+        "measure",
+        "measurable",
+        "almost everywhere",
+        "a.e.",
+        "integrable",
+        "measure space",
+    )
+    return not any(marker in node_text for marker in abstract_markers)
+
+
+def _looks_like_arbitrary_measure_abstraction(lean_text: str) -> bool:
+    markers = (
+        "MeasurableSpace",
+        "μ : Measure",
+        "(μ : Measure",
+        "∂μ",
+    )
+    return any(marker in lean_text for marker in markers)
+
+
+def _has_multiple_unrelated_function_families(statement: str, node_text: str) -> bool:
     suspicious_function_families: list[str] = []
-    for match in re.finditer(r"[\(\{]([^:\)\}]+)\s*:\s*([^\)\}]+)[\)\}]", artifact.lean_statement):
+    for match in re.finditer(r"[\(\{]([^:\)\}]+)\s*:\s*([^\)\}]+)[\)\}]", statement):
         names = [name for name in match.group(1).split() if name]
         annotation = match.group(2)
         if "→" not in annotation and "->" not in annotation:
@@ -227,10 +315,92 @@ def _collect_faithfulness_issues(node, artifact: FormalArtifact) -> list[str]:
             if len(name) <= 1 or lowered in node_text or lowered.startswith("h"):
                 continue
             suspicious_function_families.append(name)
+    return len(set(suspicious_function_families)) >= 2
 
-    if len(set(suspicious_function_families)) >= 2:
-        issues.append(
-            "Avoid replacing the node with unrelated families of functions or indexed maps absent from the original claim."
-        )
 
-    return issues
+def _looks_like_concrete_sublemma(node, artifact: FormalArtifact) -> bool:
+    statement = artifact.lean_statement
+    lean_text = f"{artifact.lean_statement}\n{artifact.lean_code}"
+    node_text = " ".join([node.title, node.informal_statement, node.informal_proof_text]).lower()
+
+    fresh_scalar_count = _count_fresh_scalar_placeholders(statement, node_text)
+    fresh_function_count = _count_fresh_function_placeholders(statement, node_text)
+    fresh_named_count = _count_fresh_named_placeholders(statement, node_text)
+    structural_hypotheses = len(re.findall(r"\b[hH][A-Za-z0-9_']*\b", statement))
+
+    node_concrete_markers = _count_concrete_markers(node_text)
+    theorem_concrete_markers = _count_concrete_markers(lean_text.lower())
+
+    if fresh_function_count >= 1:
+        return True
+    if fresh_scalar_count >= 2:
+        return True
+    if fresh_named_count >= 2:
+        return True
+    if structural_hypotheses >= 2 and fresh_scalar_count >= 1:
+        return True
+    if node_concrete_markers >= 2 and theorem_concrete_markers == 0:
+        return True
+    return False
+
+
+def _count_fresh_scalar_placeholders(statement: str, node_text: str) -> int:
+    fresh: set[str] = set()
+    for match in re.finditer(r"[\(\{]([^:\)\}]+)\s*:\s*ℝ[\)\}]", statement):
+        for name in [name for name in match.group(1).split() if name]:
+            lowered = name.lower()
+            if len(name) <= 1 or lowered.startswith("h") or lowered in node_text:
+                continue
+            fresh.add(name)
+    return len(fresh)
+
+
+def _count_fresh_function_placeholders(statement: str, node_text: str) -> int:
+    fresh: set[str] = set()
+    for match in re.finditer(r"[\(\{]([^:\)\}]+)\s*:\s*([^\)\}]+)[\)\}]", statement):
+        annotation = match.group(2)
+        if "→" not in annotation and "->" not in annotation:
+            continue
+        for name in [name for name in match.group(1).split() if name]:
+            lowered = name.lower()
+            if len(name) <= 1 or lowered.startswith("h") or lowered in node_text:
+                continue
+            fresh.add(name)
+    return len(fresh)
+
+
+def _count_fresh_named_placeholders(statement: str, node_text: str) -> int:
+    fresh: set[str] = set()
+    ambient_allowlist = {"Ω", "omega", "d", "p", "t", "x", "u", "v", "w", "f", "g", "e"}
+    for match in re.finditer(r"[\(\{]([^:\)\}]+)\s*:\s*([^\)\}]+)[\)\}]", statement):
+        for name in [name for name in match.group(1).split() if name]:
+            lowered = name.lower()
+            if (
+                len(name) <= 1
+                or lowered.startswith("h")
+                or lowered in node_text
+                or name in ambient_allowlist
+                or lowered in ambient_allowlist
+            ):
+                continue
+            fresh.add(name)
+    return len(fresh)
+
+
+def _count_concrete_markers(text: str) -> int:
+    markers = (
+        "∫",
+        "\\int",
+        "gradient",
+        "grad",
+        "\\nabla",
+        "∇",
+        "\\delta",
+        "Δ",
+        "laplac",
+        "volume.restrict",
+        "euclideanspace",
+        "domain",
+        "boundary",
+    )
+    return sum(1 for marker in markers if marker in text)

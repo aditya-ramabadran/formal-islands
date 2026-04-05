@@ -21,7 +21,7 @@ from formal_islands.review import derive_review_obligations
 
 
 DEFAULT_EXAMPLE_INPUT = {
-    "theorem_title_hint": "Nonnegative sum",
+    "theorem_title": "Nonnegative sum",
     "theorem_statement": TOY_THEOREM_STATEMENT,
     "raw_proof_text": TOY_RAW_PROOF,
 }
@@ -85,6 +85,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=4,
         help="Maximum number of bounded formalization attempts. The current prototype uses at most three repair retries after the initial attempt.",
     )
+    formalize_parser.add_argument(
+        "--formalization-mode",
+        choices=["agentic", "structured", "auto"],
+        default="agentic",
+        help="Formalization execution mode. Default: agentic Codex worker, with structured fallback available.",
+    )
     formalize_parser.set_defaults(func=cmd_formalize_one)
 
     report_parser = subparsers.add_parser("report")
@@ -106,6 +112,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=4,
         help="Maximum number of bounded formalization attempts. The current prototype uses at most three repair retries after the initial attempt.",
+    )
+    run_parser.add_argument(
+        "--formalization-mode",
+        choices=["agentic", "structured", "auto"],
+        default="agentic",
+        help="Formalization execution mode. Default: agentic Codex worker, with structured fallback available.",
     )
     run_parser.set_defaults(func=cmd_run_example)
 
@@ -130,7 +142,7 @@ def add_input_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--input",
         default="examples/nonnegative_sum_input.json",
-        help="JSON file with theorem_title_hint, theorem_statement, and raw_proof_text.",
+        help="JSON file with theorem_title, theorem_statement, and raw_proof_text.",
     )
 
 
@@ -163,7 +175,7 @@ def cmd_extract(args: argparse.Namespace) -> int:
         backend=backend,
         theorem_statement=input_payload["theorem_statement"],
         raw_proof_text=input_payload["raw_proof_text"],
-        theorem_title_hint=input_payload.get("theorem_title_hint", "Untitled theorem"),
+        theorem_title_hint=input_payload["theorem_title"],
     )
     path = output_dir / "01_extracted_graph.json"
     write_graph(graph, path)
@@ -184,7 +196,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
         backend=backend,
         theorem_statement=input_payload["theorem_statement"],
         raw_proof_text=input_payload["raw_proof_text"],
-        theorem_title_hint=input_payload.get("theorem_title_hint", "Untitled theorem"),
+        theorem_title_hint=input_payload["theorem_title"],
     )
     extracted_path = output_dir / "01_extracted_graph.json"
     candidate_path = output_dir / "02_candidate_graph.json"
@@ -237,6 +249,7 @@ def cmd_formalize_one(args: argparse.Namespace) -> int:
             node_id=node_id,
             max_attempts=args.max_attempts,
             on_update=write_progress,
+            mode=args.formalization_mode,
         )
     except BackendError as exc:
         failure_outcome = _backend_failure_outcome(graph=graph, node_id=node_id, error=exc)
@@ -287,6 +300,7 @@ def cmd_run_example(args: argparse.Namespace) -> int:
             workspace=args.workspace,
             node_id="auto",
             max_attempts=args.max_attempts,
+            formalization_mode=args.formalization_mode,
         )
     )
     formalized_graph_path = output_dir / "03_formalized_graph.json"
@@ -373,6 +387,8 @@ def load_input_payload(path: Path) -> dict[str, Any]:
     missing = sorted(required_keys - set(payload))
     if missing:
         raise ValueError(f"input payload is missing keys: {', '.join(missing)}")
+    if "theorem_title" not in payload:
+        payload["theorem_title"] = payload.get("theorem_title_hint", "Untitled theorem")
     return payload
 
 
@@ -408,7 +424,7 @@ def select_candidate_node_id(graph: ProofGraph, requested_node_id: str = "auto")
     chosen = sorted(
         candidates,
         key=lambda node: (
-            -(node.formalization_priority or 0),
+            (node.formalization_priority or 999),
             node.id,
         ),
     )[0]

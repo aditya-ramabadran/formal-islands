@@ -33,6 +33,36 @@ class CodexCLIBackend:
     log_dir: Path | None = None
 
     def run_structured(self, request: StructuredBackendRequest) -> StructuredBackendResponse:
+        return self._run_codex_exec(
+            request=request,
+            sandbox=self.sandbox,
+            timeout_seconds=self.timeout_seconds,
+            full_auto=False,
+        )
+
+    def run_agentic_structured(
+        self,
+        request: StructuredBackendRequest,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> StructuredBackendResponse:
+        """Run a one-shot Codex worker with file editing and shell access enabled."""
+
+        return self._run_codex_exec(
+            request=request,
+            sandbox="workspace-write",
+            timeout_seconds=timeout_seconds if timeout_seconds is not None else self.timeout_seconds,
+            full_auto=True,
+        )
+
+    def _run_codex_exec(
+        self,
+        *,
+        request: StructuredBackendRequest,
+        sandbox: str,
+        timeout_seconds: float | None,
+        full_auto: bool,
+    ) -> StructuredBackendResponse:
         executable_path = shutil.which(self.executable)
         if executable_path is None:
             raise BackendUnavailableError(
@@ -54,13 +84,15 @@ class CodexCLIBackend:
                 self.executable,
                 "exec",
                 "--skip-git-repo-check",
-                "--sandbox",
-                self.sandbox,
                 "--output-schema",
                 str(schema_path),
                 "--output-last-message",
                 str(output_path),
             ]
+            if full_auto:
+                command.append("--full-auto")
+            else:
+                command.extend(["--sandbox", sandbox])
             if self.model:
                 command.extend(["--model", self.model])
             if self.use_ephemeral_session:
@@ -81,9 +113,10 @@ class CodexCLIBackend:
                     "rendered_prompt": rendered_prompt,
                     "json_schema": self._normalize_schema_for_codex(request.json_schema),
                     "model": self.model,
-                    "sandbox": self.sandbox,
+                    "sandbox": sandbox,
+                    "full_auto": full_auto,
                     "use_ephemeral_session": self.use_ephemeral_session,
-                    "timeout_seconds": self.timeout_seconds,
+                    "timeout_seconds": timeout_seconds,
                     "started_at_epoch_seconds": time.time(),
                 },
             )
@@ -96,7 +129,7 @@ class CodexCLIBackend:
                     text=True,
                     cwd=request.cwd,
                     check=False,
-                    timeout=self.timeout_seconds,
+                    timeout=timeout_seconds,
                 )
             except subprocess.TimeoutExpired as exc:
                 self._write_log(
@@ -112,20 +145,21 @@ class CodexCLIBackend:
                         "rendered_prompt": rendered_prompt,
                         "json_schema": self._normalize_schema_for_codex(request.json_schema),
                         "model": self.model,
-                        "sandbox": self.sandbox,
+                        "sandbox": sandbox,
+                        "full_auto": full_auto,
                         "use_ephemeral_session": self.use_ephemeral_session,
-                        "timeout_seconds": self.timeout_seconds,
+                        "timeout_seconds": timeout_seconds,
                         "started_at_epoch_seconds": started_at,
                         "elapsed_seconds": time.time() - started_at,
                         "error": (
                             "Codex CLI timed out while waiting for structured output "
-                            f"for task '{request.task_name}' after {self.timeout_seconds} seconds."
+                            f"for task '{request.task_name}' after {timeout_seconds} seconds."
                         ),
                     },
                 )
                 raise BackendInvocationError(
                     "Codex CLI timed out while waiting for structured output "
-                    f"for task '{request.task_name}' after {self.timeout_seconds} seconds."
+                    f"for task '{request.task_name}' after {timeout_seconds} seconds."
                 ) from exc
             if completed.returncode != 0:
                 self._write_log(
@@ -141,9 +175,10 @@ class CodexCLIBackend:
                         "rendered_prompt": rendered_prompt,
                         "json_schema": self._normalize_schema_for_codex(request.json_schema),
                         "model": self.model,
-                        "sandbox": self.sandbox,
+                        "sandbox": sandbox,
+                        "full_auto": full_auto,
                         "use_ephemeral_session": self.use_ephemeral_session,
-                        "timeout_seconds": self.timeout_seconds,
+                        "timeout_seconds": timeout_seconds,
                         "started_at_epoch_seconds": started_at,
                         "elapsed_seconds": time.time() - started_at,
                         "exit_code": completed.returncode,
@@ -180,9 +215,10 @@ class CodexCLIBackend:
                 "rendered_prompt": rendered_prompt,
                 "json_schema": self._normalize_schema_for_codex(request.json_schema),
                 "model": self.model,
-                "sandbox": self.sandbox,
+                "sandbox": sandbox,
+                "full_auto": full_auto,
                 "use_ephemeral_session": self.use_ephemeral_session,
-                "timeout_seconds": self.timeout_seconds,
+                "timeout_seconds": timeout_seconds,
                 "started_at_epoch_seconds": started_at,
                 "elapsed_seconds": time.time() - started_at,
                 "exit_code": completed.returncode,

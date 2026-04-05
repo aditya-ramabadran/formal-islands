@@ -17,3 +17,11 @@ class FormalizationResult(FormalizationSchemaModel):
     lean_theorem_name: str = Field(min_length=1)
     lean_statement: str = Field(min_length=1)
     lean_code: str = Field(min_length=1)
+
+
+class AgenticFormalizationResult(FormalizationSchemaModel):
+    """Structured summary returned by a one-shot agentic formalization worker."""
+
+    lean_theorem_name: str = Field(min_length=1)
+    lean_statement: str = Field(min_length=1)
+    final_file_path: str = Field(min_length=1)

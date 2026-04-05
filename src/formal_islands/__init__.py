@@ -1,6 +1,7 @@
 """Formal Islands prototype package."""
 
 from formal_islands.models import (
+    FaithfulnessClassification,
     FormalArtifact,
     ProofEdge,
     ProofGraph,
@@ -12,6 +13,7 @@ from formal_islands.models import (
 
 __all__ = [
     "FormalArtifact",
+    "FaithfulnessClassification",
     "ProofEdge",
     "ProofGraph",
     "ProofNode",

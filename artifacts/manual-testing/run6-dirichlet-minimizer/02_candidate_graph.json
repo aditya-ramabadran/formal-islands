@@ -1,0 +1,54 @@
+{
+  "theorem_title": "Weak solution equals unique minimizer of the Dirichlet energy",
+  "theorem_statement": "Weak solution equals unique minimizer of the Dirichlet energy.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain with sufficiently regular boundary, and let \\(f \\in L^2(\\Omega)\\). Define\n\\[\nJ(v) := \\frac12 \\int_\\Omega |\\nabla v|^2 \\, dx - \\int_\\Omega f v \\, dx\n\\qquad \\text{for } v \\in H_0^1(\\Omega).\n\\]\n\nThen \\(u \\in H_0^1(\\Omega)\\) satisfies\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla \\varphi \\, dx\n=\n\\int_\\Omega f \\varphi \\, dx\n\\qquad \\text{for every } \\varphi \\in H_0^1(\\Omega)\n\\]\nif and only if \\(u\\) is the unique minimizer of \\(J\\) over \\(H_0^1(\\Omega)\\).",
+  "root_node_id": "n0",
+  "nodes": [
+    {
+      "id": "n0",
+      "title": "Main equivalence: weak solution \\(\\Leftrightarrow\\) unique minimizer of \\(J\\)",
+      "informal_statement": "For \\(u\\in H_0^1(\\Omega)\\), the weak formulation\n\\[\n\\int_\\Omega \\nabla u\\cdot \\nabla \\varphi\\,dx=\\int_\\Omega f\\varphi\\,dx\\quad \\forall\\,\\varphi\\in H_0^1(\\Omega)\n\\]\nis equivalent to \\(u\\) being the unique minimizer of\n\\[\nJ(v)=\\frac12\\int_\\Omega |\\nabla v|^2\\,dx-\\int_\\Omega f v\\,dx\n\\]\nover \\(H_0^1(\\Omega)\\).",
+      "informal_proof_text": "Combine the two directions: a weak solution satisfies the exact energy gap identity, hence minimizes uniquely; conversely, a minimizer has vanishing first variation along every direction, which is exactly the weak equation.",
+      "status": "informal",
+      "display_label": "Theorem",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "n1",
+      "title": "Energy gap identity from the weak equation",
+      "informal_statement": "If \\(u\\in H_0^1(\\Omega)\\) satisfies the weak equation, then for every \\(v\\in H_0^1(\\Omega)\\) one has\n\\[\nJ(v)=J(u)+\\frac12\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]\nIn particular, \\(J(v)\\ge J(u)\\), with equality only when \\(v=u\\) in \\(H_0^1(\\Omega)\\).",
+      "informal_proof_text": "Write \\(v=u+w\\) with \\(w\\in H_0^1(\\Omega)\\), expand \\(|\\nabla(u+w)|^2\\), and regroup terms as \\(J(u)\\) plus a linear bracket plus \\(\\frac12\\int |\\nabla w|^2\\). The weak formulation with test function \\(\\varphi=w\\) kills the linear bracket, leaving the exact gap identity. Nonnegativity of the last term gives minimality, and vanishing of the gap forces \\(\\nabla(v-u)=0\\), hence \\(v=u\\) in \\(H_0^1(\\Omega)\\).",
+      "status": "candidate_formal",
+      "display_label": "Gap identity",
+      "formalization_priority": 1,
+      "formalization_rationale": "Best formal island: the exact energy decomposition is compact, reusable, and directly yields both minimality and uniqueness from the weak equation.",
+      "formal_artifact": null
+    },
+    {
+      "id": "n2",
+      "title": "First variation of \\(J\\) along lines",
+      "informal_statement": "If \\(u\\in H_0^1(\\Omega)\\) is a minimizer of \\(J\\), then for every \\(\\varphi\\in H_0^1(\\Omega)\\) the function \\(g(t)=J(u+t\\varphi)\\) has \\(g'(0)=0\\), and\n\\[\ng'(0)=\\int_\\Omega \\nabla u\\cdot \\nabla \\varphi\\,dx-\\int_\\Omega f\\varphi\\,dx.\n\\]\nTherefore \\(u\\) satisfies the weak formulation.",
+      "informal_proof_text": "Fix \\(\\varphi\\in H_0^1(\\Omega)\\) and consider the one-variable restriction \\(g(t)=J(u+t\\varphi)\\). Since \\(u\\) minimizes \\(J\\), \\(t=0\\) is a minimum of \\(g\\), so \\(g'(0)=0\\). Expanding \\(|\\nabla(u+t\\varphi)|^2\\) gives a quadratic polynomial in \\(t\\), whose derivative at \\(0\\) is exactly \\(\\int_\\Omega \\nabla u\\cdot\\nabla\\varphi\\,dx-\\int_\\Omega f\\varphi\\,dx\\). Setting this equal to zero yields the weak equation.",
+      "status": "candidate_formal",
+      "display_label": "First variation",
+      "formalization_priority": 2,
+      "formalization_rationale": "Second key formal island: the one-dimensional variation argument is the cleanest route from minimizer to weak formulation and is easy to formalize locally.",
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "n1",
+      "target_id": "n0",
+      "label": "weak solution => minimizer",
+      "explanation": "The energy gap identity yields existence of a minimizer and uniqueness by strict positivity of the gap unless \\(v=u\\)."
+    },
+    {
+      "source_id": "n2",
+      "target_id": "n0",
+      "label": "minimizer => weak solution",
+      "explanation": "Vanishing first variation along every direction recovers the Euler-Lagrange equation, which is the weak formulation."
+    }
+  ]
+}

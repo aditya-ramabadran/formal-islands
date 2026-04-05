@@ -141,7 +141,8 @@ def test_codex_backend_writes_schema_and_reads_structured_output(tmp_path: Path)
         response = backend.run_structured(request)
 
     command = run_mock.call_args.args[0]
-    assert command[:4] == ["codex", "exec", "--skip-git-repo-check", "--sandbox"]
+    assert command[:3] == ["codex", "exec", "--skip-git-repo-check"]
+    assert "--sandbox" in command
     assert "--ephemeral" in command
     assert response.payload == {"candidates": []}
 
@@ -256,3 +257,48 @@ def test_codex_backend_writes_debug_log_when_log_dir_is_configured(tmp_path: Pat
     assert payload["payload"] == {"candidates": []}
     assert isinstance(payload["elapsed_seconds"], float)
     assert payload["elapsed_seconds"] >= 0.0
+
+
+def test_codex_backend_run_agentic_structured_uses_full_auto(tmp_path: Path) -> None:
+    backend = CodexCLIBackend(model="gpt-5.4")
+    request = StructuredBackendRequest(
+        prompt="Edit the scratch file and return JSON.",
+        system_prompt="Return JSON only.",
+        json_schema={
+            "type": "object",
+            "properties": {
+                "lean_theorem_name": {"type": "string"},
+                "lean_statement": {"type": "string"},
+                "final_file_path": {"type": "string"},
+            },
+        },
+        cwd=tmp_path,
+        task_name="formalize_node_agentic",
+    )
+
+    def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        output_path = Path(command[command.index("--output-last-message") + 1])
+        output_path.write_text(
+            json.dumps(
+                {
+                    "lean_theorem_name": "t",
+                    "lean_statement": "True",
+                    "final_file_path": "/tmp/t.lean",
+                }
+            ),
+            encoding="utf-8",
+        )
+        return subprocess.CompletedProcess(args=command, returncode=0, stdout="", stderr="")
+
+    auth_home = tmp_path / "codex-home"
+    auth_home.mkdir()
+    (auth_home / "auth.json").write_text("{}", encoding="utf-8")
+
+    with patch("shutil.which", return_value="/usr/bin/codex"), patch.dict(
+        "os.environ", {"CODEX_HOME": str(auth_home)}, clear=False
+    ), patch("subprocess.run", side_effect=fake_run) as run_mock:
+        backend.run_agentic_structured(request, timeout_seconds=420.0)
+
+    command = run_mock.call_args.args[0]
+    assert "--full-auto" in command
+    assert "--sandbox" not in command

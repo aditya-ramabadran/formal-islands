@@ -24,6 +24,14 @@ class VerificationStatus(StrEnum):
     FAILED = "failed"
 
 
+class FaithfulnessClassification(StrEnum):
+    """How closely a verified Lean theorem matches the target informal node."""
+
+    FULL_NODE = "full_node"
+    CONCRETE_SUBLEMMA = "concrete_sublemma"
+    OVER_ABSTRACT = "over_abstract"
+
+
 class ReviewObligationKind(StrEnum):
     """Deterministic review-check categories."""
 
@@ -57,6 +65,8 @@ class FormalArtifact(StrictModel):
     lean_theorem_name: str = Field(min_length=1)
     lean_statement: str = Field(min_length=1)
     lean_code: str = Field(min_length=1)
+    faithfulness_classification: FaithfulnessClassification = FaithfulnessClassification.FULL_NODE
+    faithfulness_notes: str | None = None
     verification: VerificationResult = Field(default_factory=VerificationResult)
     attempt_history: list[VerificationResult] = Field(default_factory=list)
 

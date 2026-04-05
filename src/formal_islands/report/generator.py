@@ -114,9 +114,18 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
     .math-text {{
       white-space: pre-wrap;
       line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }}
+    .math-text mjx-container {{
+      max-width: 100%;
     }}
     .math-text mjx-container[display="true"] {{
       margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
     }}
     .math-text mjx-container[jax="CHTML"][display="true"] {{
       padding: 0 !important;
@@ -138,19 +147,22 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       background: linear-gradient(180deg, rgba(255, 251, 242, 0.96), rgba(245, 238, 227, 0.96));
       padding: 0.5rem 0.75rem;
       overflow-x: auto;
-      overflow-y: hidden;
+      overflow-y: visible;
+    }}
+    .graph-frame {{
+      width: min(100%, 460px);
+      margin: 0 auto;
     }}
     .graph-widget {{
       display: block;
       width: 100%;
-      max-width: 460px;
-      margin: 0 auto;
       height: auto;
       min-width: 240px;
+      overflow: visible;
     }}
     .graph-edge {{
       stroke: var(--edge);
-      stroke-width: 3.5;
+      stroke-width: 2.8;
       fill: none;
       transition: stroke 140ms ease, stroke-width 140ms ease;
     }}
@@ -261,6 +273,12 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       color: var(--muted);
       font-size: 0.92rem;
     }}
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {{
+      min-width: 0;
+    }}
     .node-jump {{
       color: inherit;
       text-decoration: none;
@@ -281,6 +299,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
     }}
     pre {{
       overflow-x: auto;
+      max-width: 100%;
       padding: 0.75rem;
       background: #f4efe6;
       border-radius: 8px;
@@ -425,9 +444,17 @@ def _render_node_section(node: ProofNode) -> str:
     formal_block = ""
     if node.formal_artifact is not None:
         verification = node.formal_artifact.verification
+        coverage_note = (
+            f"<p><strong>Coverage:</strong> {escape(node.formal_artifact.faithfulness_classification)}</p>"
+        )
+        if node.formal_artifact.faithfulness_notes:
+            coverage_note += (
+                f"<p class=\"meta\">{escape(node.formal_artifact.faithfulness_notes)}</p>"
+            )
         formal_block = f"""
         <h4>Formal Artifact</h4>
         <p><strong>Lean theorem name:</strong> {escape(node.formal_artifact.lean_theorem_name)}</p>
+        {coverage_note}
         <div class="statement-code">
           <strong>Lean statement:</strong>
           {_render_lean_code_block(node.formal_artifact.lean_statement)}
@@ -600,15 +627,17 @@ def _render_graph_widget(graph: ProofGraph) -> str:
     edges_svg = "\n".join(_render_edge(edge, layout) for edge in graph.edges)
     nodes_svg = "\n".join(_render_node(node, layout) for node in graph.nodes)
     return f"""
-    <svg class="graph-widget" viewBox="0 0 {width} {height}" role="img" aria-label="Proof graph">
-      <defs>
-        <marker id="graph-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-          <path d="M0,0 L0,6 L9,3 z" fill="#b3aa9f"></path>
-        </marker>
-      </defs>
-      <g>{edges_svg}</g>
-      <g>{nodes_svg}</g>
-    </svg>
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 {width} {height}" width="{width}" height="{height}" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g>{edges_svg}</g>
+        <g>{nodes_svg}</g>
+      </svg>
+    </div>
     """
 
 
@@ -664,9 +693,11 @@ def _compute_graph_layout(graph: ProofGraph) -> dict:
                 queue.append(child_id)
 
     extra_start = max(depths.values(), default=0) + 1
-    for offset, node in enumerate(graph.nodes):
+    next_depth = extra_start
+    for node in graph.nodes:
         if node.id not in depths:
-            depths[node.id] = extra_start + offset
+            depths[node.id] = next_depth
+            next_depth += 1
 
     rows: dict[int, list[str]] = defaultdict(list)
     for node in graph.nodes:
@@ -674,7 +705,8 @@ def _compute_graph_layout(graph: ProofGraph) -> dict:
 
     max_row_size = max(len(row) for row in rows.values())
     width = max(420, MARGIN_X * 2 + max_row_size * NODE_WIDTH + max(0, max_row_size - 1) * COL_GAP)
-    height = MARGIN_Y * 2 + len(rows) * NODE_HEIGHT + max(0, len(rows) - 1) * ROW_GAP
+    max_depth = max(rows, default=0)
+    height = MARGIN_Y * 2 + (max_depth + 1) * NODE_HEIGHT + max_depth * ROW_GAP
 
     positions: dict[str, tuple[float, float]] = {}
     centers: dict[str, tuple[float, float]] = {}

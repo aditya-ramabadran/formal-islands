@@ -1,6 +1,7 @@
 """Validated core models for proof graphs and review output."""
 
 from formal_islands.models.proof import (
+    FaithfulnessClassification,
     FormalArtifact,
     ProofEdge,
     ProofGraph,
@@ -12,6 +13,7 @@ from formal_islands.models.proof import (
 
 __all__ = [
     "FormalArtifact",
+    "FaithfulnessClassification",
     "ProofEdge",
     "ProofGraph",
     "ProofNode",

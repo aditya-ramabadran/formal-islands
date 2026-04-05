@@ -1,0 +1,7 @@
+{
+  "node_id": "n2",
+  "status": "failed",
+  "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n2_worker.lean",
+  "attempt_count": 1,
+  "stderr": "Formalization drifted too far from the target node. Avoid introducing arbitrary `Type*` parameters when the node describes a concrete local claim. Avoid replacing the node with unrelated families of functions or indexed maps absent from the original claim."
+}

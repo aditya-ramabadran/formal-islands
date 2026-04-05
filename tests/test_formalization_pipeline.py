@@ -3,11 +3,13 @@ import pytest
 
 from formal_islands.backends import MockBackend
 from formal_islands.formalization.pipeline import (
+    FaithfulnessClassification,
     FormalizationFaithfulnessError,
+    assess_formalization_faithfulness,
     build_formalization_request,
     request_node_formalization,
 )
-from formal_islands.models import ProofEdge, ProofGraph, ProofNode
+from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode
 
 
 def build_graph() -> ProofGraph:
@@ -36,6 +38,38 @@ def build_graph() -> ProofGraph:
     )
 
 
+def build_pde_graph() -> ProofGraph:
+    return ProofGraph(
+        theorem_title="Weak maximum principle",
+        theorem_statement="If -Δu ≥ 0 in Ω and u ≥ 0 on ∂Ω, then u ≥ 0 in Ω.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Weak maximum principle",
+                informal_statement="If -Δu ≥ 0 in Ω and u ≥ 0 on ∂Ω, then u ≥ 0 in Ω.",
+                informal_proof_text="Use the negative part identity.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Negative-part identity",
+                informal_statement=(
+                    "On Ω, one has ∫_Ω ∇u · ∇u_- = -∫_Ω |∇u_-|^2 after splitting into the regions "
+                    "{u ≥ 0} and {u < 0}."
+                ),
+                informal_proof_text=(
+                    "Use the concrete domain Ω, the negative part u_-, and the pointwise identities "
+                    "for gradients on {u ≥ 0} and {u < 0}."
+                ),
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Concrete local PDE identity.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1")],
+    )
+
+
 def test_build_formalization_request_includes_local_context() -> None:
     request = build_formalization_request(build_graph(), "n2")
 
@@ -47,7 +81,34 @@ def test_build_formalization_request_includes_local_context() -> None:
     assert "easy side consequence" in request.prompt.lower()
     assert "do not default to `import mathlib`" in request.prompt.lower()
     assert "do not guess deep or speculative module paths" in request.prompt.lower()
-    assert "Theorem statement:" not in request.prompt
+    assert "Ambient theorem statement:" in request.prompt
+    assert "preserve the ambient mathematical setting" in request.prompt.lower()
+
+
+def test_request_node_formalization_rejects_measure_space_abstraction_for_concrete_node() -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "lean_theorem_name": "energy_identity",
+                "lean_statement": (
+                    "theorem energy_identity {α : Type*} [MeasurableSpace α] (μ : Measure α) "
+                    "{f g : α → ℝ} (h : ∀ x, f x = - g x) : "
+                    "∫ x, f x ∂μ = - ∫ x, g x ∂μ"
+                ),
+                "lean_code": (
+                    "import Mathlib.MeasureTheory.Integral.Bochner.Basic\n\n"
+                    "open MeasureTheory\n\n"
+                    "theorem energy_identity {α : Type*} [MeasurableSpace α] (μ : Measure α) "
+                    "{f g : α → ℝ} (h : ∀ x, f x = - g x) : "
+                    "∫ x, f x ∂μ = - ∫ x, g x ∂μ := by\n"
+                    "  sorry\n"
+                ),
+            }
+        ]
+    )
+
+    with pytest.raises(FormalizationFaithfulnessError, match="measure-space theorem"):
+        request_node_formalization(backend=backend, graph=build_pde_graph(), node_id="n1")
 
 
 def test_build_formalization_request_includes_previous_lean_file_on_repair() -> None:
@@ -78,6 +139,7 @@ def test_request_node_formalization_returns_unverified_artifact() -> None:
 
     assert artifact.lean_theorem_name == "sum_nonneg"
     assert artifact.verification.status == "not_attempted"
+    assert artifact.faithfulness_classification == FaithfulnessClassification.FULL_NODE
 
 
 def test_request_node_formalization_rejects_non_candidate_nodes() -> None:
@@ -114,3 +176,100 @@ def test_request_node_formalization_rejects_gratuitous_over_abstraction() -> Non
 
     with pytest.raises(FormalizationFaithfulnessError, match="Type\\*"):
         request_node_formalization(backend=backend, graph=build_graph(), node_id="n2")
+
+
+def test_request_node_formalization_accepts_concrete_narrower_sublemma() -> None:
+    graph = ProofGraph(
+        theorem_title="Harmonic minimization",
+        theorem_statement="Weakly harmonic u minimizes the Dirichlet energy.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Dirichlet principle",
+                informal_statement="Main theorem.",
+                informal_proof_text="Use n1.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Energy decomposition using the weak harmonicity test",
+                informal_statement=(
+                    "For w := v - u, one has ∫ |∇v|^2 = ∫ |∇u|^2 + ∫ |∇w|^2 after the cross term vanishes."
+                ),
+                informal_proof_text=(
+                    "Set w := v - u, expand |∇(u+w)|^2, and use the weak equation with test function w."
+                ),
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Concrete local energy identity.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1")],
+    )
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "lean_theorem_name": "narrow_energy_split",
+                "lean_statement": (
+                    "theorem narrow_energy_split "
+                    "(d : ℕ) (Ω : Set (EuclideanSpace ℝ (Fin d))) "
+                    "(grad_u grad_w : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) "
+                    "(horth : ∫ x, @inner ℝ _ _ (grad_u x) (grad_w x) ∂(volume.restrict Ω) = 0) : "
+                    "(∫ x, ‖grad_u x + grad_w x‖ ^ 2 ∂(volume.restrict Ω)) = "
+                    "(∫ x, ‖grad_u x‖ ^ 2 ∂(volume.restrict Ω)) + "
+                    "∫ x, ‖grad_w x‖ ^ 2 ∂(volume.restrict Ω)"
+                ),
+                "lean_code": (
+                    "import Mathlib.MeasureTheory.Integral.Bochner.Basic\n"
+                    "import Mathlib.Analysis.InnerProductSpace.Basic\n\n"
+                    "namespace FormalIslands\n\n"
+                    "theorem narrow_energy_split "
+                    "(d : ℕ) (Ω : Set (EuclideanSpace ℝ (Fin d))) "
+                    "(grad_u grad_w : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) "
+                    "(horth : ∫ x, @inner ℝ _ _ (grad_u x) (grad_w x) ∂(volume.restrict Ω) = 0) : "
+                    "(∫ x, ‖grad_u x + grad_w x‖ ^ 2 ∂(volume.restrict Ω)) = "
+                    "(∫ x, ‖grad_u x‖ ^ 2 ∂(volume.restrict Ω)) + "
+                    "∫ x, ‖grad_w x‖ ^ 2 ∂(volume.restrict Ω) := by\n"
+                    "  sorry\n\nend FormalIslands\n"
+                ),
+            }
+        ]
+    )
+
+    artifact = request_node_formalization(backend=backend, graph=graph, node_id="n1")
+
+    assert artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA
+    assert artifact.faithfulness_notes is not None
+
+
+def test_assess_formalization_faithfulness_marks_scalarized_core_as_sublemma() -> None:
+    node = ProofNode(
+        id="n1",
+        title="Differential inequality for Y",
+        informal_statement="One rewrites the exact identity for 1/2 Y'(t) using E(t) and concludes a lower bound.",
+        informal_proof_text="Differentiate Y, rewrite with the energy, and use E(t) ≤ 0.",
+        status="candidate_formal",
+        formalization_priority=1,
+        formalization_rationale="Concrete algebraic core.",
+    )
+    artifact = FormalArtifact(
+        lean_theorem_name="scalar_core",
+        lean_statement=(
+            "theorem scalar_core {p Y' gradIntegral nonlinIntegral E : ℝ} "
+            "(hp : 1 < p) (hY : (1 / 2 : ℝ) * Y' = -gradIntegral + nonlinIntegral) "
+            "(hE : E = (1 / 2 : ℝ) * gradIntegral - (1 / (p + 1)) * nonlinIntegral) "
+            "(hEnonpos : E ≤ 0) : (1 / 2 : ℝ) * Y' ≥ ((p - 1) / (p + 1)) * nonlinIntegral"
+        ),
+        lean_code=(
+            "import Mathlib.Data.Real.Basic\n\n"
+            "theorem scalar_core {p Y' gradIntegral nonlinIntegral E : ℝ} "
+            "(hp : 1 < p) (hY : (1 / 2 : ℝ) * Y' = -gradIntegral + nonlinIntegral) "
+            "(hE : E = (1 / 2 : ℝ) * gradIntegral - (1 / (p + 1)) * nonlinIntegral) "
+            "(hEnonpos : E ≤ 0) : (1 / 2 : ℝ) * Y' ≥ ((p - 1) / (p + 1)) * nonlinIntegral := by\n"
+            "  nlinarith [hY, hE, hEnonpos]\n"
+        ),
+    )
+
+    assessment = assess_formalization_faithfulness(node=node, artifact=artifact)
+
+    assert assessment.classification == FaithfulnessClassification.CONCRETE_SUBLEMMA

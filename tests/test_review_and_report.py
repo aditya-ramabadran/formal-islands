@@ -1,7 +1,12 @@
 import json
 
 from formal_islands.examples.fixtures import build_example_graph
-from formal_islands.report.generator import export_report_bundle, render_html_report
+from formal_islands.report.generator import (
+    NODE_HEIGHT,
+    _compute_graph_layout,
+    export_report_bundle,
+    render_html_report,
+)
 from formal_islands.review.extractor import derive_review_obligations
 
 
@@ -40,13 +45,17 @@ def test_render_html_report_includes_core_sections() -> None:
     assert "Verification logs" in html
     assert 'type="checkbox"' in html
     assert 'class="graph-widget"' in html
+    assert 'class="graph-frame"' in html
     assert 'class="graph-node-link node-n1 status-informal"' in html
     assert 'data-obligation-id="informal-proof-n1"' in html
     assert 'id="MathJax-script"' in html
-    assert "max-width: 460px;" in html
+    assert "width: min(100%, 460px);" in html
     assert "verified formal nodes use green" in html
     assert "language-lean" in html
     assert 'class="tok-keyword"' in html or 'class="tok-type"' in html
+    assert 'preserveAspectRatio="xMidYMin meet"' in html
+    assert "overflow-y: visible;" in html
+    assert "overflow-wrap: anywhere;" in html
 
 
 def test_render_html_report_preserves_latex_text_blocks() -> None:
@@ -119,3 +128,13 @@ def test_render_html_report_highlights_lean_tokens_locally() -> None:
 
     assert "tok-keyword" in html
     assert "tok-tactic" in html
+
+
+def test_compute_graph_layout_height_covers_all_nodes() -> None:
+    graph = build_example_graph()
+
+    layout = _compute_graph_layout(graph)
+
+    for node in graph.nodes:
+        _, y = layout["positions"][node.id]
+        assert y + NODE_HEIGHT <= layout["height"]

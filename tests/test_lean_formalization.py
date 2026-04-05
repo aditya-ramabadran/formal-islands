@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from formal_islands.backends import BackendInvocationError, MockBackend
+from formal_islands.formalization.agentic import build_agentic_formalization_request
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.formalization.loop import formalize_candidate_node
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
@@ -53,6 +54,31 @@ def test_lean_workspace_writes_scratch_file(tmp_path: Path) -> None:
 
     assert scratch_path.name == "node_1_attempt_2.lean"
     assert scratch_path.read_text(encoding="utf-8") == "theorem t : True := by trivial"
+
+
+def test_lean_workspace_prepares_agentic_worker_file(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+
+    scratch_path = workspace.prepare_worker_file("node/1")
+
+    assert scratch_path.name == "node_1_worker.lean"
+    assert "agentic formalization worker" in scratch_path.read_text(encoding="utf-8")
+
+
+def test_build_agentic_formalization_request_includes_concrete_setting_guidance(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+    scratch_path = workspace.prepare_worker_file("n2")
+
+    request = build_agentic_formalization_request(
+        graph=build_graph(),
+        node_id="n2",
+        workspace_root=workspace.root,
+        scratch_file_path=scratch_path,
+    )
+
+    assert "Ambient theorem statement:" in request.prompt
+    assert "preserve the ambient mathematical setting" in request.prompt.lower()
+    assert "arbitrary measure" in request.prompt.lower()
 
 
 def test_lean_verifier_captures_command_result(tmp_path: Path) -> None:
@@ -114,6 +140,30 @@ def test_lean_verifier_handles_relative_workspace_root(
     )
 
     assert result.status == "verified"
+
+
+def test_lean_verifier_verifies_existing_file(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+    worker_file = workspace.prepare_worker_file("n2")
+    worker_file.write_text("theorem t : True := by trivial", encoding="utf-8")
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        assert args[3] == str(worker_file.resolve())
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="ok", stderr="")
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    result = verifier.verify_existing_file(file_path=worker_file, attempt_number=1)
+
+    assert result.status == "verified"
+    assert result.artifact_path == str(worker_file.resolve())
 
 
 def test_lean_verifier_captures_timeout_as_failed_result(tmp_path: Path) -> None:
@@ -198,6 +248,338 @@ def test_formalize_candidate_node_records_retry_history(tmp_path: Path) -> None:
     assert "avoid both `import mathlib`" in backend.requests[1].prompt.lower()
     assert "previous failed lean file to revise" in backend.requests[1].prompt.lower()
     assert "theorem sum_nonneg_attempt_1" in backend.requests[1].prompt
+
+
+def test_formalize_candidate_node_agentic_mode_reverifies_worker_file(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+    worker_file = workspace.generated_dir / "n2_worker.lean"
+    worker_file.parent.mkdir(parents=True, exist_ok=True)
+
+    class FakeAgenticBackend:
+        timeout_seconds = 420.0
+
+        def run_agentic_structured(self, request, *, timeout_seconds=None):
+            worker_file.write_text(
+                "import Mathlib.Data.Real.Basic\n\n"
+                "theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b := by\n"
+                "  nlinarith\n",
+                encoding="utf-8",
+            )
+            from formal_islands.backends.base import StructuredBackendResponse
+
+            return StructuredBackendResponse(
+                payload={
+                    "lean_theorem_name": "sum_nonneg",
+                    "lean_statement": (
+                        "theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b"
+                    ),
+                    "final_file_path": str(worker_file.resolve()),
+                },
+                raw_stdout="",
+                raw_stderr="",
+                command=("codex", "exec"),
+                exit_code=0,
+                backend_name="codex_cli",
+            )
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    outcome = formalize_candidate_node(
+        backend=FakeAgenticBackend(),
+        verifier=verifier,
+        graph=build_graph(),
+        node_id="n2",
+        mode="agentic",
+    )
+
+    updated_node = next(node for node in outcome.graph.nodes if node.id == "n2")
+    assert updated_node.status == "formal_verified"
+    assert updated_node.formal_artifact is not None
+    assert updated_node.formal_artifact.lean_theorem_name == "sum_nonneg"
+    assert updated_node.formal_artifact.verification.status == "verified"
+
+
+def test_formalize_candidate_node_promotes_concrete_sublemma_to_child_node(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+    worker_file = workspace.generated_dir / "n2_worker.lean"
+    worker_file.parent.mkdir(parents=True, exist_ok=True)
+
+    class FakeAgenticBackend:
+        timeout_seconds = 420.0
+
+        def run_agentic_structured(self, request, *, timeout_seconds=None):
+            worker_file.write_text(
+                "import Mathlib.Data.Real.Basic\n\n"
+                "namespace FormalIslands\n\n"
+                "theorem differential_inequality_for_Y\n"
+                "    {p Y' gradIntegral nonlinIntegral E : ℝ}\n"
+                "    (hp : 1 < p)\n"
+                "    (hY : (1 / 2 : ℝ) * Y' = -gradIntegral + nonlinIntegral)\n"
+                "    (hE : E = (1 / 2 : ℝ) * gradIntegral - (1 / (p + 1)) * nonlinIntegral)\n"
+                "    (hEnonpos : E ≤ 0) :\n"
+                "    (1 / 2 : ℝ) * Y' ≥ ((p - 1) / (p + 1)) * nonlinIntegral := by\n"
+                "  nlinarith [hY, hE, hEnonpos]\n\n"
+                "end FormalIslands\n",
+                encoding="utf-8",
+            )
+            from formal_islands.backends.base import StructuredBackendResponse
+
+            return StructuredBackendResponse(
+                payload={
+                    "lean_theorem_name": "differential_inequality_for_Y",
+                    "lean_statement": (
+                        "theorem differential_inequality_for_Y "
+                        "{p Y' gradIntegral nonlinIntegral E : ℝ} "
+                        "(hp : 1 < p) "
+                        "(hY : (1 / 2 : ℝ) * Y' = -gradIntegral + nonlinIntegral) "
+                        "(hE : E = (1 / 2 : ℝ) * gradIntegral - (1 / (p + 1)) * nonlinIntegral) "
+                        "(hEnonpos : E ≤ 0) : "
+                        "(1 / 2 : ℝ) * Y' ≥ ((p - 1) / (p + 1)) * nonlinIntegral"
+                    ),
+                    "final_file_path": str(worker_file.resolve()),
+                },
+                raw_stdout="",
+                raw_stderr="",
+                command=("codex", "exec"),
+                exit_code=0,
+                backend_name="codex_cli",
+            )
+
+    graph = ProofGraph(
+        theorem_title="Toy blow-up theorem",
+        theorem_statement="Main PDE theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Toy blow-up theorem",
+                informal_statement="Main theorem.",
+                informal_proof_text="Use n2.",
+            ),
+            ProofNode(
+                id="n2",
+                title="Differential inequality for Y",
+                informal_statement=(
+                    "Differentiate Y, rewrite the identity using the energy, and conclude a lower bound."
+                ),
+                informal_proof_text="This is the concrete local core of the proof.",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Concrete local core.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n2")],
+    )
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    outcome = formalize_candidate_node(
+        backend=FakeAgenticBackend(),
+        verifier=verifier,
+        graph=graph,
+        node_id="n2",
+        mode="agentic",
+    )
+
+    parent = next(node for node in outcome.graph.nodes if node.id == "n2")
+    child = next(node for node in outcome.graph.nodes if node.id.startswith("n2__formal_core"))
+    support_edge = next(
+        edge for edge in outcome.graph.edges if edge.source_id == child.id and edge.target_id == "n2"
+    )
+
+    assert parent.status == "informal"
+    assert parent.formal_artifact is None
+    assert child.status == "formal_verified"
+    assert child.formal_artifact is not None
+    assert child.formal_artifact.faithfulness_classification == "concrete_sublemma"
+    assert support_edge.label == "formal_sublemma_for"
+
+
+def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failure(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+    worker_file = workspace.generated_dir / "n2_worker.lean"
+    worker_file.parent.mkdir(parents=True, exist_ok=True)
+
+    class FakeAgenticBackend:
+        timeout_seconds = 420.0
+
+        def __init__(self) -> None:
+            self.calls = 0
+            self.requests = []
+
+        def run_agentic_structured(self, request, *, timeout_seconds=None):
+            self.calls += 1
+            self.requests.append(request)
+            if self.calls == 1:
+                worker_file.write_text(
+                    "import Mathlib.MeasureTheory.Integral.Bochner.Basic\n\n"
+                    "open MeasureTheory\n\n"
+                    "theorem too_abstract {α : Type*} [MeasurableSpace α] (μ : Measure α) "
+                    "{f g : α → ℝ} (h : ∀ x, f x = - g x) : "
+                    "∫ x, f x ∂μ = - ∫ x, g x ∂μ := by\n"
+                    "  sorry\n",
+                    encoding="utf-8",
+                )
+                theorem_name = "too_abstract"
+                theorem_statement = (
+                    "theorem too_abstract {α : Type*} [MeasurableSpace α] (μ : Measure α) "
+                    "{f g : α → ℝ} (h : ∀ x, f x = - g x) : "
+                    "∫ x, f x ∂μ = - ∫ x, g x ∂μ"
+                )
+            else:
+                worker_file.write_text(
+                    "import Mathlib.Data.Real.Basic\n\n"
+                    "theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b := by\n"
+                    "  nlinarith\n",
+                    encoding="utf-8",
+                )
+                theorem_name = "sum_nonneg"
+                theorem_statement = (
+                    "theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b"
+                )
+            from formal_islands.backends.base import StructuredBackendResponse
+
+            return StructuredBackendResponse(
+                payload={
+                    "lean_theorem_name": theorem_name,
+                    "lean_statement": theorem_statement,
+                    "final_file_path": str(worker_file.resolve()),
+                },
+                raw_stdout="",
+                raw_stderr="",
+                command=("codex", "exec"),
+                exit_code=0,
+                backend_name="codex_cli",
+            )
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    backend = FakeAgenticBackend()
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    updates = []
+    outcome = formalize_candidate_node(
+        backend=backend,
+        verifier=verifier,
+        graph=build_graph(),
+        node_id="n2",
+        mode="agentic",
+        on_update=updates.append,
+    )
+
+    updated_node = next(node for node in outcome.graph.nodes if node.id == "n2")
+    assert backend.calls == 2
+    assert updated_node.status == "formal_verified"
+    assert updated_node.formal_artifact is not None
+    assert len(updated_node.formal_artifact.attempt_history) == 2
+    assert "faithfulness feedback from the previous agentic attempt" in backend.requests[1].prompt.lower()
+    assert "current scratch file to revise" in backend.requests[1].prompt.lower()
+    assert "theorem too_abstract" in backend.requests[1].prompt
+    assert worker_file.read_text(encoding="utf-8").startswith("import Mathlib.Data.Real.Basic")
+    assert len(updates) == 2
+
+
+def test_formalize_candidate_node_agentic_uses_at_most_one_faithfulness_retry(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+    worker_file = workspace.generated_dir / "n2_worker.lean"
+    worker_file.parent.mkdir(parents=True, exist_ok=True)
+
+    class FakeAgenticBackend:
+        timeout_seconds = 420.0
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def run_agentic_structured(self, request, *, timeout_seconds=None):
+            self.calls += 1
+            worker_file.write_text(
+                "import Mathlib.MeasureTheory.Integral.Bochner.Basic\n\n"
+                "open MeasureTheory\n\n"
+                "theorem too_abstract {α : Type*} [MeasurableSpace α] (μ : Measure α) "
+                "{f g : α → ℝ} (h : ∀ x, f x = - g x) : "
+                "∫ x, f x ∂μ = - ∫ x, g x ∂μ := by\n"
+                "  sorry\n",
+                encoding="utf-8",
+            )
+            from formal_islands.backends.base import StructuredBackendResponse
+
+            return StructuredBackendResponse(
+                payload={
+                    "lean_theorem_name": "too_abstract",
+                    "lean_statement": (
+                        "theorem too_abstract {α : Type*} [MeasurableSpace α] (μ : Measure α) "
+                        "{f g : α → ℝ} (h : ∀ x, f x = - g x) : "
+                        "∫ x, f x ∂μ = - ∫ x, g x ∂μ"
+                    ),
+                    "final_file_path": str(worker_file.resolve()),
+                },
+                raw_stdout="",
+                raw_stderr="",
+                command=("codex", "exec"),
+                exit_code=0,
+                backend_name="codex_cli",
+            )
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    backend = FakeAgenticBackend()
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    outcome = formalize_candidate_node(
+        backend=backend,
+        verifier=verifier,
+        graph=build_graph(),
+        node_id="n2",
+        mode="agentic",
+    )
+
+    updated_node = next(node for node in outcome.graph.nodes if node.id == "n2")
+    assert backend.calls == 2
+    assert updated_node.status == "formal_failed"
+    assert updated_node.formal_artifact is not None
+    assert len(updated_node.formal_artifact.attempt_history) == 2
 
 
 def test_formalize_candidate_node_marks_failure_after_bound(tmp_path: Path) -> None:

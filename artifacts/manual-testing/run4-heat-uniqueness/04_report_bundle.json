@@ -1,0 +1,148 @@
+{
+  "graph": {
+    "theorem_title": "Heat equation uniqueness by the energy method",
+    "theorem_statement": "Uniqueness for the heat equation by the energy method.\n\nLet \\(u,v\\) be sufficiently regular solutions of the heat equation on the interval \\((0,L)\\) for times \\(t \\in [0,T]\\):\n\\[\nu_t = u_{xx}, \\qquad v_t = v_{xx},\n\\]\nwith the same initial data\n\\[\nu(x,0)=v(x,0),\n\\]\nand the same homogeneous Dirichlet boundary conditions\n\\[\nu(0,t)=u(L,t)=v(0,t)=v(L,t)=0.\n\\]\nThen \\(u=v\\) on \\([0,L]\\times[0,T]\\).",
+    "root_node_id": "n0",
+    "nodes": [
+      {
+        "id": "n0",
+        "title": "Uniqueness for the heat equation by the energy method",
+        "informal_statement": "Show that two sufficiently regular solutions of the heat equation with the same initial data and homogeneous Dirichlet boundary conditions must coincide on \\([0,L]\\times[0,T]\\).",
+        "informal_proof_text": "Reduce to the difference \\(w=u-v\\), derive an energy identity for \\(E(t)=\\frac12\\int_0^L w(x,t)^2\\,dx\\), and use that \\(E\\) is nonincreasing with \\(E(0)=0\\) to conclude \\(E(t)=0\\) for all \\(t\\), hence \\(w\\equiv 0\\) and therefore \\(u=v\\).",
+        "status": "informal",
+        "display_label": "theorem",
+        "formalization_priority": null,
+        "formalization_rationale": null,
+        "formal_artifact": null
+      },
+      {
+        "id": "n1",
+        "title": "Difference solves the homogeneous heat equation",
+        "informal_statement": "With \\(w=u-v\\), the function \\(w\\) satisfies \\(w_t=w_{xx}\\) on \\((0,L)\\times(0,T)\\), with \\(w(x,0)=0\\) and \\(w(0,t)=w(L,t)=0\\).",
+        "informal_proof_text": "Subtract the equations for \\(u\\) and \\(v\\). The initial data cancel because \\(u(x,0)=v(x,0)\\), and the homogeneous Dirichlet boundary conditions imply \\(w(0,t)=w(L,t)=0\\).",
+        "status": "candidate_formal",
+        "display_label": "difference equation",
+        "formalization_priority": 3,
+        "formalization_rationale": "This reduction to the difference equation is a reusable setup step that cleanly packages the PDE, initial data, and boundary conditions before the energy argument.",
+        "formal_artifact": null
+      },
+      {
+        "id": "n2",
+        "title": "Energy identity and dissipation",
+        "informal_statement": "For \\(E(t)=\\frac12\\int_0^L w(x,t)^2\\,dx\\), one has \\(E'(t)=-\\int_0^L |w_x(x,t)|^2\\,dx\\le 0\\).",
+        "informal_proof_text": "Differentiate under the integral sign to get \\(E'(t)=\\int_0^L w\\,w_t\\,dx\\). Using \\(w_t=w_{xx}\\), integrate by parts in \\(x\\):\n\\[\n\\int_0^L w\\,w_{xx}\\,dx = \\bigl[w\\,w_x\\bigr]_0^L - \\int_0^L |w_x|^2\\,dx.\n\\]\nThe boundary term vanishes because \\(w(0,t)=w(L,t)=0\\), leaving \\(E'(t)=-\\int_0^L |w_x|^2\\,dx\\le 0\\).",
+        "status": "formal_verified",
+        "display_label": "energy identity",
+        "formalization_priority": 1,
+        "formalization_rationale": "This is the main formal island: the differentiated energy identity plus integration by parts is the key technical step and the one most worth checking carefully.",
+        "formal_artifact": {
+          "lean_theorem_name": "heat_energy_dissipation",
+          "lean_statement": "theorem heat_energy_dissipation\n    (Eprime dissipation : \u211d)\n    (hE : Eprime = -dissipation)\n    (hdissipation : 0 \u2264 dissipation) :\n    Eprime \u2264 0",
+          "lean_code": "import Mathlib.Data.Real.Basic\n\nnamespace FormalIslands\n\n/--\nAbstract energy dissipation step for the heat equation:\nif the energy derivative is the negative of a nonnegative quantity, then it is nonpositive.\n-/\ntheorem heat_energy_dissipation\n    (Eprime dissipation : \u211d)\n    (hE : Eprime = -dissipation)\n    (hdissipation : 0 \u2264 dissipation) :\n    Eprime \u2264 0 := by\n  rw [hE]\n  exact neg_nonpos.mpr hdissipation\n\nend FormalIslands\n",
+          "verification": {
+            "status": "verified",
+            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n2_worker.lean",
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "elapsed_seconds": 4.954126207856461,
+            "attempt_count": 1,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n2_worker.lean"
+          },
+          "attempt_history": [
+            {
+              "status": "verified",
+              "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n2_worker.lean",
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": "",
+              "elapsed_seconds": 4.954126207856461,
+              "attempt_count": 1,
+              "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n2_worker.lean"
+            }
+          ]
+        }
+      },
+      {
+        "id": "n3",
+        "title": "Zero initial energy forces \\(w\\equiv 0\\)",
+        "informal_statement": "Since \\(E\\ge 0\\), \\(E\\) is nonincreasing, and \\(E(0)=0\\), it follows that \\(E(t)=0\\) for all \\(t\\), hence \\(w(x,t)=0\\) for all \\((x,t)\\).",
+        "informal_proof_text": "From \\(w(x,0)=0\\), we have \\(E(0)=\\frac12\\int_0^L 0^2\\,dx=0\\). Because \\(E'(t)\\le 0\\), the function \\(E\\) is nonincreasing, and since it is also nonnegative by definition, it cannot drop below \\(0\\) or rise above its initial value. Therefore \\(E(t)=0\\) for every \\(t\\in[0,T]\\). A zero \\(L^2\\)-norm implies \\(w(\\cdot,t)=0\\) for each \\(t\\), so \\(w\\equiv 0\\).",
+        "status": "candidate_formal",
+        "display_label": "zero energy",
+        "formalization_priority": 2,
+        "formalization_rationale": "This is the decisive monotonicity argument turning the energy identity into uniqueness; it is compact but inferentially essential.",
+        "formal_artifact": null
+      }
+    ],
+    "edges": [
+      {
+        "source_id": "n1",
+        "target_id": "n2",
+        "label": "substitute",
+        "explanation": "The dissipation calculation uses the PDE \\(w_t=w_{xx}\\) and the boundary conditions for \\(w\\)."
+      },
+      {
+        "source_id": "n2",
+        "target_id": "n3",
+        "label": "monotonicity",
+        "explanation": "The inequality \\(E'(t)\\le 0\\) implies \\(E\\) is nonincreasing, and with \\(E(0)=0\\) this forces \\(E(t)=0\\)."
+      },
+      {
+        "source_id": "n1",
+        "target_id": "n3",
+        "label": "initial data",
+        "explanation": "The vanishing initial condition \\(w(x,0)=0\\) gives \\(E(0)=0\\)."
+      },
+      {
+        "source_id": "n3",
+        "target_id": "n0",
+        "label": "conclude",
+        "explanation": "Once \\(w\\equiv 0\\), it follows that \\(u=v\\) on \\([0,L]\\times[0,T]\\)."
+      }
+    ]
+  },
+  "review_obligations": [
+    {
+      "id": "informal-proof-n0",
+      "kind": "informal_proof_check",
+      "text": "Check that node 'n0' (Uniqueness for the heat equation by the energy method) has an informal proof that establishes its informal statement, assuming its child dependencies.",
+      "node_ids": [
+        "n0"
+      ]
+    },
+    {
+      "id": "informal-proof-n1",
+      "kind": "informal_proof_check",
+      "text": "Check that node 'n1' (Difference solves the homogeneous heat equation) has an informal proof that establishes its informal statement, assuming its child dependencies.",
+      "node_ids": [
+        "n1"
+      ]
+    },
+    {
+      "id": "semantic-match-n2",
+      "kind": "formal_semantic_match_check",
+      "text": "Check that node 'n2' (Energy identity and dissipation) matches the verified Lean statement 'theorem heat_energy_dissipation\n    (Eprime dissipation : \u211d)\n    (hE : Eprime = -dissipation)\n    (hdissipation : 0 \u2264 dissipation) :\n    Eprime \u2264 0'.",
+      "node_ids": [
+        "n2"
+      ]
+    },
+    {
+      "id": "informal-proof-n3",
+      "kind": "informal_proof_check",
+      "text": "Check that node 'n3' (Zero initial energy forces \\(w\\equiv 0\\)) has an informal proof that establishes its informal statement, assuming its child dependencies.",
+      "node_ids": [
+        "n3"
+      ]
+    },
+    {
+      "id": "boundary-n1-n2",
+      "kind": "boundary_interface_check",
+      "text": "Check that formal child 'n2' proves exactly what informal parent 'n1' uses across their dependency boundary.",
+      "node_ids": [
+        "n1",
+        "n2"
+      ]
+    }
+  ]
+}
