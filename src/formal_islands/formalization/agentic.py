@@ -1,4 +1,4 @@
-"""One-shot agentic Codex worker for local Lean formalization."""
+"""One-shot agentic worker for local Lean formalization."""
 
 from __future__ import annotations
 
@@ -21,8 +21,8 @@ from formal_islands.models import FormalArtifact, ProofGraph, VerificationResult
 
 AGENTIC_FORMALIZATION_SYSTEM_PROMPT = (
     "You are a focused Lean 4 formalization worker operating inside a local Mathlib project. "
-    "You may edit files and run local commands within this one Codex run. "
-    "Begin with a short explicit planning pass, then formalize. "
+    "You may edit files and run local commands within this one session. "
+    "Begin with a brief planning pass (try keeping the plan file under 15 lines), then move quickly to writing Lean code. "
     "Work on exactly one scratch file, keep the formalization local and faithful to the target node, "
     "prefer the most concrete faithful theorem you can manage, "
     "and stop when the scratch file is in its best current state. "
@@ -122,10 +122,9 @@ def build_agentic_formalization_request(
                 "file above first, then use it to decide the concrete theorem shape you will actually target."
             ),
             (
-                "Keep the plan concise. Include short sections for: target node/theorem, ambient setting to preserve, "
-                "important symbols or quantities that must remain in the theorem statement, abstractions to avoid, "
-                "intended theorem shape (whole node vs concrete sublemma), likely proof route, and likely Mathlib "
-                "lemmas or APIs to search for."
+                "Keep the plan brief — aim for under 10 lines total. Cover only: target theorem shape, key symbols "
+                "to preserve, intended proof route, and two or three likely Mathlib lemmas. Do not write a long "
+                "multi-section document."
             ),
             (
                 "Structure the Lean file around one designated main theorem that represents the certified result for this node. "
@@ -148,13 +147,10 @@ def build_agentic_formalization_request(
                 "why it looked infeasible, and why the narrower replacement still captures meaningful inferential load."
             ),
             (
-                "Use the plan to do brief local scouting before you commit to the final theorem. You may create tiny "
-                "scratch experiments, run `#check`, grep or ripgrep for likely lemma names, inspect imports, and read "
-                "nearby Mathlib files when that helps you choose the right concrete theorem shape."
-            ),
-            (
-                "Do not spend too long planning. This is a short planning layer meant to sharpen the theorem choice "
-                "and proof route before writing serious Lean code."
+                "Keep API scouting minimal. Prefer grep or ripgrep to search Mathlib source for lemma names rather "
+                "than repeated `lake env lean` compilation passes. Limit yourself to at most one or two `lake env lean` "
+                "calls during scouting before committing to the actual theorem. Move quickly to writing and compiling "
+                "real Lean code."
             ),
             (
                 "If you substantially change direction during the run, preserve visible plan history by appending a "

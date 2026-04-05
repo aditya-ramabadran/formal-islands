@@ -90,9 +90,9 @@ def test_build_agentic_formalization_request_includes_concrete_setting_guidance(
     assert str(plan_path) in request.prompt
     assert "start with a lightweight planning pass" in request.prompt.lower()
     assert "plan markdown file to create and maintain" in request.prompt.lower()
-    assert "target node/theorem" in request.prompt.lower()
-    assert "likely mathlib lemmas or apis to search for" in request.prompt.lower()
-    assert "`#check`" in request.prompt
+    assert "target theorem shape" in request.prompt.lower()
+    assert "likely mathlib lemmas" in request.prompt.lower()
+    assert "grep" in request.prompt.lower()
     assert "appending a new labeled section" in request.prompt.lower()
     assert "default to the most literal whole-node theorem shape" in request.prompt.lower()
     assert "only fall back to a narrower concrete sublemma" in request.prompt.lower()
@@ -162,7 +162,7 @@ def test_lean_verifier_captures_command_result(tmp_path: Path) -> None:
         check: bool,
         timeout: float | None = None,
     ) -> subprocess.CompletedProcess[str]:
-        assert args[:3] == ["lake", "env", "lean"]
+        assert args[1:3] == ["env", "lean"]
         assert cwd == tmp_path.resolve()
         assert args[3] == str((tmp_path / "FormalIslands" / "Generated" / "n2_attempt_1.lean").resolve())
         return subprocess.CompletedProcess(args=args, returncode=0, stdout="ok", stderr="")
@@ -654,7 +654,7 @@ def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failur
     assert "prefer ascii identifiers" in backend.requests[1].prompt.lower()
     assert "lambda1" in backend.requests[1].prompt
     assert "create the plan markdown file above first" in backend.requests[0].prompt.lower()
-    assert "do brief local scouting before you commit to the final theorem" in backend.requests[0].prompt.lower()
+    assert "keep api scouting minimal" in backend.requests[0].prompt.lower()
     assert "appending a new labeled section" in backend.requests[1].prompt.lower()
     assert "explicitly reconsider the most literal whole-node theorem shape first" in backend.requests[1].prompt.lower()
     assert worker_file.read_text(encoding="utf-8").startswith("import Mathlib.Data.Real.Basic")

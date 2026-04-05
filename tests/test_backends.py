@@ -144,7 +144,8 @@ def test_claude_backend_run_agentic_structured_uses_tool_mode(tmp_path: Path) ->
     assert "--dangerously-skip-permissions" in command
     assert "--tools" in command
     assert "default" in command
-    assert "--add-dir" in command
+    assert "--add-dir" not in command
+    assert "--setting-sources" in command
 
 
 def test_claude_backend_uses_common_fallback_executable_locations(tmp_path: Path) -> None:

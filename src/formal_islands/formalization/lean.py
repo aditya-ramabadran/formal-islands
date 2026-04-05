@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass
@@ -64,12 +65,25 @@ class LeanWorkspace:
         return scratch_path
 
     def prepare_worker_file(self, node_id: str) -> Path:
-        """Reserve the single-file workspace used by the one-shot agentic worker."""
+        """Reserve the single-file workspace used by the one-shot agentic worker.
+
+        If a non-placeholder worker file already exists for this node (from a prior run),
+        it is renamed with a timestamp before the new placeholder is written, so previous
+        runs are preserved rather than silently overwritten.
+        """
 
         self.validate()
         self.generated_dir.mkdir(parents=True, exist_ok=True)
         safe_node_id = node_id.replace("/", "_")
         scratch_path = self.generated_dir / f"{safe_node_id}_worker.lean"
+
+        if scratch_path.exists() and scratch_path.read_text(encoding="utf-8") != AGENTIC_WORKER_PLACEHOLDER:
+            ts = time.strftime("%Y%m%d-%H%M%S")
+            scratch_path.rename(self.generated_dir / f"{safe_node_id}_worker_{ts}.lean")
+            plan_path = self.generated_dir / f"{safe_node_id}_worker_plan.md"
+            if plan_path.exists():
+                plan_path.rename(self.generated_dir / f"{safe_node_id}_worker_{ts}_plan.md")
+
         scratch_path.write_text(AGENTIC_WORKER_PLACEHOLDER, encoding="utf-8")
         return scratch_path
 
@@ -82,6 +96,16 @@ class LeanVerifier:
     timeout_seconds: float | None = 120.0
     command_runner: CommandRunner = subprocess.run
 
+    @staticmethod
+    def _lake_executable() -> str:
+        """Resolve the lake executable, falling back to ~/.elan/bin if not on PATH."""
+        if shutil.which("lake") is not None:
+            return "lake"
+        elan_lake = Path.home() / ".elan" / "bin" / "lake"
+        if elan_lake.is_file():
+            return str(elan_lake)
+        return "lake"
+
     def verify_code(self, *, lean_code: str, node_id: str, attempt_number: int) -> VerificationResult:
         """Write Lean code into the workspace and verify it locally."""
 
@@ -91,7 +115,7 @@ class LeanVerifier:
             attempt_number=attempt_number,
             lean_code=lean_code,
         ).resolve()
-        command = ["lake", "env", "lean", str(scratch_path)]
+        command = [self._lake_executable(), "env", "lean", str(scratch_path)]
 
         start = time.monotonic()
         try:
@@ -136,7 +160,7 @@ class LeanVerifier:
 
         workspace_root = self.workspace.root.resolve()
         resolved_path = file_path.resolve()
-        command = ["lake", "env", "lean", str(resolved_path)]
+        command = [self._lake_executable(), "env", "lean", str(resolved_path)]
 
         start = time.monotonic()
         try:

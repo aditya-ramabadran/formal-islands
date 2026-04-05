@@ -1,0 +1,71 @@
+{
+  "theorem_title": "Two-point logarithmic Sobolev inequality",
+  "theorem_statement": "Two-point logarithmic Sobolev inequality.\n\nLet \\(\\mu\\) be the uniform probability measure on the two-point space \\(\\{-1,1\\}\\). For a function \\(f : \\{-1,1\\} \\to \\mathbb{R}\\), define the entropy of \\(f^2\\) by\n\\[\n\\operatorname{Ent}_{\\mu}(f^2)\n:=\n\\mathbb{E}_{\\mu}[f^2 \\log f^2]\n-\n\\mathbb{E}_{\\mu}[f^2] \\log \\bigl(\\mathbb{E}_{\\mu}[f^2]\\bigr),\n\\]\nwith the convention \\(0\\log 0 := 0\\). Then\n\\[\n\\operatorname{Ent}_{\\mu}(f^2)\n\\le\n\\frac{1}{2}\\bigl(f(1)-f(-1)\\bigr)^2.\n\\]\nEquivalently, if \\(a=f(1)\\) and \\(b=f(-1)\\), then\n\\[\na^2 \\log(a^2) + b^2 \\log(b^2)\n-\n(a^2+b^2)\\log\\!\\left(\\frac{a^2+b^2}{2}\\right)\n\\le\n(a-b)^2.\n\\]\nThis is the logarithmic Sobolev inequality on the two-point Bernoulli space, and it is the basic finite-state model underlying tensorization arguments toward the Gaussian logarithmic Sobolev inequality.",
+  "root_node_id": "N1",
+  "nodes": [
+    {
+      "id": "N1",
+      "title": "Two-point logarithmic Sobolev inequality",
+      "informal_statement": "For any $f:\\{-1,1\\}\\to\\mathbb{R}$, $\\operatorname{Ent}_{\\mu}(f^2)\\le\\tfrac{1}{2}(f(1)-f(-1))^2$, where $\\mu$ is the uniform measure on $\\{-1,1\\}$.",
+      "informal_proof_text": "Set $a:=f(1)$, $b:=f(-1)$. Because $\\mu$ is uniform, $\\mathbb{E}_{\\mu}[f^2]=(a^2+b^2)/2$ and $\\mathbb{E}_{\\mu}[f^2\\log f^2]=(a^2\\log(a^2)+b^2\\log(b^2))/2$. Multiplying the entropy inequality by $2$, the claim is equivalent to\n\\[\na^2\\log(a^2)+b^2\\log(b^2)-(a^2+b^2)\\log\\!\\left(\\frac{a^2+b^2}{2}\\right)\\le(a-b)^2.\n\\]\nThe left-hand side depends only on $a^2,b^2$, so replacing $(a,b)$ by $(|a|,|b|)$ leaves it unchanged; since $(|a|-|b|)^2\\le(a-b)^2$, it suffices to prove the inequality for $a,b\\ge 0$. The inequality is homogeneous of degree $2$ in $(a,b)$ (the extra $\\log(c^2)$ terms cancel when $(a,b)\\mapsto(ca,cb)$), so we may normalise to $a^2+b^2=2$. Under this normalisation the $\\log((a^2+b^2)/2)$ term vanishes and the claim reduces to the normalised scalar inequality (N2). Applying N2 with $u=a^2\\in[0,2]$ completes the proof.",
+      "status": "informal",
+      "display_label": "Main theorem: $\\operatorname{Ent}_{\\mu}(f^2)\\le\\tfrac{1}{2}(f(1)-f(-1))^2$",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "N2",
+      "title": "Normalised scalar inequality ($G(u)\\ge 0$)",
+      "informal_statement": "For every $u\\in[0,2]$ (with $0\\log 0:=0$),\n\\[\nG(u):=\\bigl(\\sqrt{u}-\\sqrt{2-u}\\bigr)^2-u\\log u-(2-u)\\log(2-u)\\ge 0.\n\\]",
+      "informal_proof_text": "$G$ is continuous on $[0,2]$ and smooth on $(0,2)$. Using $\\bigl(\\sqrt{u}-\\sqrt{2-u}\\bigr)^2=2-2\\sqrt{u(2-u)}$, one computes\n\\[\nG'(u)=\\frac{2(u-1)}{\\sqrt{u(2-u)}}-\\log\\!\\left(\\frac{u}{2-u}\\right).\n\\]\nBy the second-derivative formula (N3), $G''(u)\\ge 0$ on $(0,2)$, so $G$ is convex. Symmetry under $u\\mapsto 2-u$ forces $G'(1)=0$, and $G(1)=(\\sqrt{1}-\\sqrt{1})^2-1\\cdot 0-1\\cdot 0=0$. A convex function whose derivative vanishes at $u=1$ attains its global minimum there, so $G(u)\\ge G(1)=0$ for all $u\\in[0,2]$.",
+      "status": "informal",
+      "display_label": "Normalised scalar inequality: $u\\log u+(2-u)\\log(2-u)\\le(\\sqrt{u}-\\sqrt{2-u})^2$",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "N3",
+      "title": "Second derivative of $G$ is nonnegative",
+      "informal_statement": "For $0<u<2$,\n\\[\nG''(u)=\\frac{2\\bigl(1-\\sqrt{u(2-u)}\\bigr)}{\\bigl(u(2-u)\\bigr)^{3/2}}\\ge 0.\n\\]",
+      "informal_proof_text": "Differentiating $G'(u)=\\frac{2(u-1)}{\\sqrt{u(2-u)}}-\\log\\!\\left(\\frac{u}{2-u}\\right)$ gives\n\\[\n\\frac{d}{du}\\frac{2(u-1)}{\\sqrt{u(2-u)}}=\\frac{2}{(u(2-u))^{3/2}},\\qquad\\frac{d}{du}\\log\\!\\left(\\frac{u}{2-u}\\right)=\\frac{1}{u}+\\frac{1}{2-u}=\\frac{2}{u(2-u)},\n\\]\nso\n\\[\nG''(u)=\\frac{2}{(u(2-u))^{3/2}}-\\frac{2}{u(2-u)}=\\frac{2\\bigl(1-\\sqrt{u(2-u)}\\bigr)}{(u(2-u))^{3/2}}.\n\\]\nFor $u\\in(0,2)$ the AM\u2013GM inequality gives $u(2-u)=1-(u-1)^2\\le 1$, hence $\\sqrt{u(2-u)}\\le 1$, so the numerator $1-\\sqrt{u(2-u)}\\ge 0$ and $G''(u)\\ge 0$.",
+      "status": "candidate_formal",
+      "display_label": "Key convexity estimate: $G''(u)\\ge 0$ on $(0,2)$",
+      "formalization_priority": 1,
+      "formalization_rationale": "The second-derivative computation is the most concrete and self-contained formal island: it requires only symbolic differentiation, the AM\u2013GM bound u(2-u) \u2264 1, and elementary real-analysis facts. Formalizing it in Lean/Mathlib is tractable and immediately certifies the convexity conclusion on which the entire proof rests.",
+      "formal_artifact": null
+    },
+    {
+      "id": "N2_refined_local_claim",
+      "title": "Local estimate",
+      "informal_statement": "\\[\nG'(u)=\\frac{2(u-1)}{\\sqrt{u(2-u)}}-\\log\\!\\left(\\frac{u}{2-u}\\right).\n\\]",
+      "informal_proof_text": "$G$ is continuous on $[0,2]$ and smooth on $(0,2)$. Using $\\bigl(\\sqrt{u}-\\sqrt{2-u}\\bigr)^2=2-2\\sqrt{u(2-u)}$, one computes\n\\[\nG'(u)=\\frac{2(u-1)}{\\sqrt{u(2-u)}}-\\log\\!\\left(\\frac{u}{2-u}\\right).\n\\]\nBy the second-derivative formula (N3), $G''(u)\\ge 0$ on $(0,2)$, so $G$ is convex. Symmetry under $u\\mapsto 2-u$ forces $G'(1)=0$, and $G(1)=(\\sqrt{1}-\\sqrt{1})^2-1\\cdot 0-1\\cdot 0=0$. A convex function whose derivative vanishes at $u=1$ attains its global minimum there, so $G(u)\\ge G(1)=0$ for all $u\\in[0,2]$.",
+      "status": "candidate_formal",
+      "display_label": "Refined estimate",
+      "formalization_priority": 1,
+      "formalization_rationale": "Smaller concrete local consequence extracted because it is more directly formalizable than the broader surrounding node.",
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "N2",
+      "target_id": "N1",
+      "label": "implies (after WLOG nonnegativity and degree-2 homogeneity normalisation)",
+      "explanation": "The main theorem reduces, by sign reduction and homogeneity, to the normalised scalar inequality N2."
+    },
+    {
+      "source_id": "N3",
+      "target_id": "N2_refined_local_claim",
+      "label": "depends on",
+      "explanation": "Parent proof uses a more concrete downstream consequence extracted from its local argument."
+    },
+    {
+      "source_id": "N2_refined_local_claim",
+      "target_id": "N2",
+      "label": "uses",
+      "explanation": "This refined local claim depends on the broader supporting node it was carved out from."
+    }
+  ]
+}

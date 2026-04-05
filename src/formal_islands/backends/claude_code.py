@@ -80,10 +80,10 @@ class ClaudeCodeBackend:
                     "--permission-mode",
                     "bypassPermissions",
                     "--dangerously-skip-permissions",
+                    "--setting-sources",
+                    "",
                 ]
             )
-            if request.cwd is not None:
-                command.extend(["--add-dir", str(request.cwd.resolve())])
         else:
             command.extend(["--tools", ""])
         command.extend(["--json-schema", json.dumps(request.json_schema)])
