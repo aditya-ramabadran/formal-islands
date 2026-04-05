@@ -5,12 +5,15 @@ import subprocess
 from argparse import Namespace
 from pathlib import Path
 
+import pytest
+
 from formal_islands.backends import BackendInvocationError, MockBackend
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
 from formal_islands.review import derive_review_obligations
 from formal_islands.smoke import (
     _backend_failure_outcome,
+    cmd_plan,
     ensure_output_dir,
     load_graph,
     load_input_payload,
@@ -181,6 +184,69 @@ def test_smoke_stage_orchestration_writes_expected_outputs(tmp_path: Path) -> No
     final_graph = load_graph(output_dir / "03_formalized_graph.json")
     assert any(node.status == "formal_verified" for node in final_graph.nodes)
     assert (output_dir / "04_report.html").exists()
+
+
+def test_cmd_plan_writes_both_planning_artifacts(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "theorem_title": "Nonnegative sum",
+                "theorem_statement": "If a and b are nonnegative, then a + b is nonnegative.",
+                "root_node_id": "n1",
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "title": "Main conclusion",
+                        "informal_statement": "0 <= a + b.",
+                        "informal_proof_text": "Use n2.",
+                    },
+                    {
+                        "id": "n2",
+                        "title": "Arithmetic lemma",
+                        "informal_statement": "0 <= a + b.",
+                        "informal_proof_text": "Local arithmetic fact.",
+                    },
+                ],
+                "edges": [{"source_id": "n1", "target_id": "n2"}],
+                "candidates": [
+                    {
+                        "node_id": "n2",
+                        "priority": 2,
+                        "rationale": "Leaf technical node.",
+                    }
+                ],
+            }
+        ]
+    )
+
+    monkeypatch.setattr("formal_islands.smoke.build_backend", lambda *args, **kwargs: backend)
+    output_dir = tmp_path / "artifacts"
+    input_path = tmp_path / "input.json"
+    input_path.write_text(
+        json.dumps(
+            {
+                "theorem_title_hint": "Nonnegative sum",
+                "theorem_statement": "If a and b are nonnegative, then a + b is nonnegative.",
+                "raw_proof_text": "Assume 0 <= a and 0 <= b. Then 0 <= a + b.",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    exit_code = cmd_plan(
+        Namespace(
+            backend="codex",
+            model=None,
+            input=str(input_path),
+            output_dir=str(output_dir),
+        )
+    )
+
+    assert exit_code == 0
+    extracted_graph = load_graph(output_dir / "01_extracted_graph.json")
+    candidate_graph = load_graph(output_dir / "02_candidate_graph.json")
+    assert all(node.status == "informal" for node in extracted_graph.nodes)
+    assert any(node.status == "candidate_formal" for node in candidate_graph.nodes)
 
 
 def test_backend_failure_outcome_marks_node_and_captures_logs() -> None:

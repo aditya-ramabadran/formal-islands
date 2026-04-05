@@ -61,3 +61,18 @@ class CandidateSelectionResult(ExtractionSchemaModel):
             duplicate_list = ", ".join(sorted(duplicates))
             raise ValueError(f"duplicate candidate node ids: {duplicate_list}")
         return self
+
+
+class PlannedProofGraph(ExtractedProofGraph):
+    """Merged theorem-level planning payload: graph plus ranked formalization candidates."""
+
+    candidates: list[CandidateSelection] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_unique_candidate_node_ids(self) -> PlannedProofGraph:
+        node_ids = [candidate.node_id for candidate in self.candidates]
+        duplicates = {node_id for node_id in node_ids if node_ids.count(node_id) > 1}
+        if duplicates:
+            duplicate_list = ", ".join(sorted(duplicates))
+            raise ValueError(f"duplicate candidate node ids: {duplicate_list}")
+        return self

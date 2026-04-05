@@ -5,13 +5,23 @@ from __future__ import annotations
 import json
 import re
 from collections import defaultdict
+from dataclasses import dataclass
 
 from formal_islands.backends import StructuredBackend, StructuredBackendRequest
 from formal_islands.extraction.schemas import (
     CandidateSelectionResult,
     ExtractedProofGraph,
+    PlannedProofGraph,
 )
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
+
+
+@dataclass(frozen=True)
+class TheoremPlanningArtifacts:
+    """Explicit theorem-level planning outputs from a single backend call."""
+
+    extracted_graph: ProofGraph
+    candidate_graph: ProofGraph
 
 
 EXTRACTION_SYSTEM_PROMPT = (
@@ -27,6 +37,14 @@ CANDIDATE_SELECTION_SYSTEM_PROMPT = (
     "Prefer a small, high-yield candidate set with technical, self-contained, inferentially important nodes. "
     "Avoid selecting near-duplicate parent/child claims, generic library facts, or easy but low-value side consequences. "
     "Return only JSON that matches the supplied schema."
+)
+
+THEOREM_PLANNING_SYSTEM_PROMPT = (
+    "Plan a compact, faithful, formalization-sensitive proof graph for the user's theorem. "
+    "Return only JSON that matches the supplied schema. "
+    "In one pass, choose the graph shape and rank the best local formalization candidates. "
+    "Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. "
+    "Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible."
 )
 
 LOCAL_CLAIM_CUE_PHRASES = (
@@ -133,6 +151,73 @@ def build_extraction_request(
     )
 
 
+def build_theorem_planning_request(
+    theorem_statement: str,
+    raw_proof_text: str,
+    theorem_title_hint: str = "Untitled theorem",
+) -> StructuredBackendRequest:
+    """Build a single theorem-level planning request that emits graph plus candidates."""
+
+    prompt = "\n\n".join(
+        [
+            f"Theorem title hint: {theorem_title_hint}",
+            f"Theorem statement:\n{theorem_statement}",
+            f"Raw informal proof:\n{raw_proof_text}",
+            (
+                "Return one JSON object with top-level keys theorem_title, theorem_statement, "
+                "root_node_id, nodes, edges, and candidates."
+            ),
+            (
+                "The nodes and edges must follow the same informal extraction schema as before: "
+                "nodes include id, title, informal_statement, informal_proof_text, and optional "
+                "display_label; edges include source_id, target_id, and optional label and explanation."
+            ),
+            (
+                "The candidates array must include objects with node_id, priority, and rationale. "
+                "Candidates should refer only to node ids that exist in the graph you emit."
+            ),
+            (
+                "Plan the graph and candidate ranking jointly. Optimize for a compact, faithful, "
+                "formalization-sensitive graph with a small, high-yield candidate set."
+            ),
+            (
+                "A node should exist only if it is the root theorem, a nontrivial intermediate claim, "
+                "a meaningful candidate formal island, a reused claim, a separate review obligation, "
+                "or a conceptually distinct proof step that improves the final mixed informal/formal report."
+            ),
+            (
+                "Do not create separate nodes for bare assumptions, local variable setup, trivial restatements, "
+                "goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims."
+            ),
+            (
+                "When choosing graph granularity, preserve one or two local technical subclaims if they are concrete, "
+                "inferentially important, plausibly formalizable, and substantially used by the surrounding proof. "
+                "Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic "
+                "simplifications, monotonicity or concavity consequences, and concrete local estimates."
+            ),
+            (
+                "Keep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce "
+                "real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims "
+                "that are much weaker than the surrounding local argument."
+            ),
+            (
+                "For a tiny proof, prefer a single root node unless a second node for a reusable or conceptually "
+                "distinct lemma clearly improves the graph."
+            ),
+            (
+                "Preserve the original mathematical notation in your output whenever feasible. "
+                "Do not normalize LaTeX into plain ASCII unless absolutely necessary."
+            ),
+        ]
+    )
+    return StructuredBackendRequest(
+        prompt=prompt,
+        system_prompt=THEOREM_PLANNING_SYSTEM_PROMPT,
+        json_schema=PlannedProofGraph.model_json_schema(),
+        task_name="plan_theorem",
+    )
+
+
 def extract_proof_graph(
     backend: StructuredBackend,
     theorem_statement: str,
@@ -175,6 +260,38 @@ def extract_proof_graph(
         ],
     )
     return simplify_proof_graph(graph)
+
+
+def plan_proof_graph(
+    backend: StructuredBackend,
+    theorem_statement: str,
+    raw_proof_text: str,
+    theorem_title_hint: str = "Untitled theorem",
+) -> TheoremPlanningArtifacts:
+    """Run a single theorem-level planning pass and emit explicit graph artifacts."""
+
+    response = backend.run_structured(
+        build_theorem_planning_request(
+            theorem_statement=theorem_statement,
+            raw_proof_text=raw_proof_text,
+            theorem_title_hint=theorem_title_hint,
+        )
+    )
+    planned = PlannedProofGraph.model_validate(response.payload)
+    extracted_graph = _build_internal_graph(
+        extracted=planned,
+        theorem_statement=theorem_statement,
+    )
+    protected_ids = {candidate.node_id for candidate in planned.candidates}
+    simplified_graph = simplify_proof_graph(extracted_graph, protected_node_ids=protected_ids)
+    candidate_graph = _apply_candidate_selection_result(
+        graph=simplified_graph,
+        selection=CandidateSelectionResult(candidates=planned.candidates),
+    )
+    return TheoremPlanningArtifacts(
+        extracted_graph=simplified_graph,
+        candidate_graph=candidate_graph,
+    )
 
 
 def build_candidate_selection_request(graph: ProofGraph) -> StructuredBackendRequest:
@@ -227,7 +344,46 @@ def select_formalization_candidates(
 
     response = backend.run_structured(build_candidate_selection_request(graph))
     selection = CandidateSelectionResult.model_validate(response.payload)
+    return _apply_candidate_selection_result(graph=graph, selection=selection)
 
+
+def _build_internal_graph(
+    *,
+    extracted: ExtractedProofGraph,
+    theorem_statement: str,
+) -> ProofGraph:
+    return ProofGraph(
+        theorem_title=extracted.theorem_title,
+        theorem_statement=theorem_statement,
+        root_node_id=extracted.root_node_id,
+        nodes=[
+            ProofNode(
+                id=node.id,
+                title=node.title,
+                informal_statement=node.informal_statement,
+                informal_proof_text=node.informal_proof_text,
+                display_label=node.display_label,
+                status="informal",
+            )
+            for node in extracted.nodes
+        ],
+        edges=[
+            ProofEdge(
+                source_id=edge.source_id,
+                target_id=edge.target_id,
+                label=edge.label,
+                explanation=edge.explanation,
+            )
+            for edge in extracted.edges
+        ],
+    )
+
+
+def _apply_candidate_selection_result(
+    *,
+    graph: ProofGraph,
+    selection: CandidateSelectionResult,
+) -> ProofGraph:
     candidate_map = {candidate.node_id: candidate for candidate in selection.candidates}
     graph_node_ids = {node.id for node in graph.nodes}
     unknown_ids = sorted(set(candidate_map) - graph_node_ids)
@@ -429,13 +585,17 @@ DERIVED_RESTATEMENT_KEYWORDS = (
 )
 
 
-def simplify_proof_graph(graph: ProofGraph) -> ProofGraph:
+def simplify_proof_graph(
+    graph: ProofGraph,
+    protected_node_ids: set[str] | None = None,
+) -> ProofGraph:
     """Deterministically collapse obviously over-segmented extraction output."""
 
+    protected = protected_node_ids or set()
     current = graph
     while True:
-        updated = _remove_assumption_nodes(current)
-        updated = _collapse_trivial_restatement_nodes(updated)
+        updated = _remove_assumption_nodes(current, protected_node_ids=protected)
+        updated = _collapse_trivial_restatement_nodes(updated, protected_node_ids=protected)
         if updated == current:
             return updated
         current = updated
@@ -525,13 +685,18 @@ def _apply_candidate_refinement(
     return graph.model_copy(update={"nodes": updated_nodes, "edges": _dedupe_edges(updated_edges)})
 
 
-def _remove_assumption_nodes(graph: ProofGraph) -> ProofGraph:
+def _remove_assumption_nodes(
+    graph: ProofGraph,
+    *,
+    protected_node_ids: set[str],
+) -> ProofGraph:
     incoming = _incoming_edges(graph)
     outgoing = _outgoing_edges(graph)
     removable_ids = {
         node.id
         for node in graph.nodes
         if node.id != graph.root_node_id
+        and node.id not in protected_node_ids
         and not outgoing.get(node.id)
         and _looks_like_assumption_node(node)
     }
@@ -835,13 +1000,19 @@ def _context_window(text: str, start: int, end: int) -> str:
     return snippet[:417].rstrip() + "..."
 
 
-def _collapse_trivial_restatement_nodes(graph: ProofGraph) -> ProofGraph:
+def _collapse_trivial_restatement_nodes(
+    graph: ProofGraph,
+    *,
+    protected_node_ids: set[str],
+) -> ProofGraph:
     incoming = _incoming_edges(graph)
     outgoing = _outgoing_edges(graph)
     node_by_id = {node.id: node for node in graph.nodes}
 
     for node in graph.nodes:
         if node.id == graph.root_node_id:
+            continue
+        if node.id in protected_node_ids:
             continue
         parents = incoming.get(node.id, [])
         if len(parents) != 1:

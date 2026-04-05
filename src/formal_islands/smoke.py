@@ -9,7 +9,11 @@ from typing import Any
 
 from formal_islands.backends import BackendError, CodexCLIBackend
 from formal_islands.examples import TOY_RAW_PROOF, TOY_THEOREM_STATEMENT
-from formal_islands.extraction import extract_proof_graph, select_formalization_candidates
+from formal_islands.extraction import (
+    extract_proof_graph,
+    plan_proof_graph,
+    select_formalization_candidates,
+)
 from formal_islands.formalization import LeanVerifier, LeanWorkspace, formalize_candidate_node
 from formal_islands.models import FormalArtifact, ProofGraph, VerificationResult
 from formal_islands.report import export_report_bundle, render_html_report
@@ -48,6 +52,12 @@ def build_parser() -> argparse.ArgumentParser:
     add_input_args(extract_parser)
     add_output_dir_arg(extract_parser)
     extract_parser.set_defaults(func=cmd_extract)
+
+    plan_parser = subparsers.add_parser("plan")
+    add_backend_args(plan_parser)
+    add_input_args(plan_parser)
+    add_output_dir_arg(plan_parser)
+    plan_parser.set_defaults(func=cmd_plan)
 
     select_parser = subparsers.add_parser("select-candidates")
     add_backend_args(select_parser)
@@ -161,6 +171,30 @@ def cmd_extract(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_plan(args: argparse.Namespace) -> int:
+    input_payload = load_input_payload(Path(args.input))
+    output_dir = ensure_output_dir(Path(args.output_dir))
+    backend = build_backend(
+        args.backend,
+        args.model,
+        output_dir / "_backend_logs",
+        timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
+    )
+    artifacts = plan_proof_graph(
+        backend=backend,
+        theorem_statement=input_payload["theorem_statement"],
+        raw_proof_text=input_payload["raw_proof_text"],
+        theorem_title_hint=input_payload.get("theorem_title_hint", "Untitled theorem"),
+    )
+    extracted_path = output_dir / "01_extracted_graph.json"
+    candidate_path = output_dir / "02_candidate_graph.json"
+    write_graph(artifacts.extracted_graph, extracted_path)
+    write_graph(artifacts.candidate_graph, candidate_path)
+    print(extracted_path)
+    print(candidate_path)
+    return 0
+
+
 def cmd_select_candidates(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
     backend = build_backend(
@@ -235,20 +269,11 @@ def cmd_report(args: argparse.Namespace) -> int:
 
 def cmd_run_example(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
-    cmd_extract(
+    cmd_plan(
         argparse.Namespace(
             backend=args.backend,
             model=args.model,
             input=args.input,
-            output_dir=str(output_dir),
-        )
-    )
-    extracted_graph_path = output_dir / "01_extracted_graph.json"
-    cmd_select_candidates(
-        argparse.Namespace(
-            backend=args.backend,
-            model=args.model,
-            graph=str(extracted_graph_path),
             output_dir=str(output_dir),
         )
     )

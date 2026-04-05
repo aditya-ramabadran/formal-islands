@@ -5,8 +5,11 @@ from formal_islands.backends import MockBackend
 from formal_islands.extraction.pipeline import (
     build_candidate_selection_request,
     build_extraction_request,
+    build_theorem_planning_request,
     extract_proof_graph,
+    plan_proof_graph,
     refine_candidate_nodes,
+    simplify_proof_graph,
     select_formalization_candidates,
 )
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
@@ -49,6 +52,19 @@ def test_build_extraction_request_uses_explicit_schema() -> None:
     assert "compact, faithful, formalization-sensitive graph" in request.prompt
 
 
+def test_build_theorem_planning_request_uses_merged_schema() -> None:
+    request = build_theorem_planning_request(
+        theorem_statement="If A then B.",
+        raw_proof_text="Assume A and deduce B.",
+        theorem_title_hint="Lemma",
+    )
+
+    assert request.task_name == "plan_theorem"
+    assert request.json_schema["type"] == "object"
+    assert "candidates" in request.prompt
+    assert "plan the graph and candidate ranking jointly" in request.prompt.lower()
+
+
 def test_extract_proof_graph_validates_schema_and_maps_to_internal_graph() -> None:
     backend = MockBackend(
         queued_payloads=[
@@ -87,6 +103,51 @@ def test_extract_proof_graph_validates_schema_and_maps_to_internal_graph() -> No
     assert graph.nodes[1].display_label == "technical estimate"
 
 
+def test_plan_proof_graph_returns_explicit_extracted_and_candidate_graphs() -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "theorem_title": "Toy theorem",
+                "theorem_statement": "If A then B.",
+                "root_node_id": "n1",
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "title": "Main claim",
+                        "informal_statement": "B holds.",
+                        "informal_proof_text": "Use n2.",
+                    },
+                    {
+                        "id": "n2",
+                        "title": "Lemma",
+                        "informal_statement": "A implies B.",
+                        "informal_proof_text": "By inspection.",
+                    },
+                ],
+                "edges": [{"source_id": "n1", "target_id": "n2"}],
+                "candidates": [
+                    {
+                        "node_id": "n2",
+                        "priority": 3,
+                        "rationale": "Self-contained technical node.",
+                    }
+                ],
+            }
+        ]
+    )
+
+    artifacts = plan_proof_graph(
+        backend=backend,
+        theorem_statement="If A then B.",
+        raw_proof_text="Assume A and deduce B.",
+    )
+
+    assert all(node.status == "informal" for node in artifacts.extracted_graph.nodes)
+    selected = next(node for node in artifacts.candidate_graph.nodes if node.id == "n2")
+    assert selected.status == "candidate_formal"
+    assert selected.formalization_priority == 3
+
+
 def test_extract_proof_graph_preserves_input_theorem_statement_exactly() -> None:
     original_statement = r"Let \(f : \mathbb{R}^d \to \mathbb{C}\). Then \[\|f\|_{L^2}^2 \le 1.\]"
     backend = MockBackend(
@@ -122,6 +183,41 @@ def test_extract_proof_graph_rejects_malformed_payload() -> None:
 
     with pytest.raises(ValidationError):
         extract_proof_graph(
+            backend=backend,
+            theorem_statement="If A then B.",
+            raw_proof_text="Assume A and deduce B.",
+        )
+
+
+def test_plan_proof_graph_rejects_unknown_candidate_node_ids() -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "theorem_title": "Toy theorem",
+                "theorem_statement": "If A then B.",
+                "root_node_id": "n1",
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "title": "Main claim",
+                        "informal_statement": "B holds.",
+                        "informal_proof_text": "Use n2.",
+                    }
+                ],
+                "edges": [],
+                "candidates": [
+                    {
+                        "node_id": "missing",
+                        "priority": 2,
+                        "rationale": "Bad id.",
+                    }
+                ],
+            }
+        ]
+    )
+
+    with pytest.raises(ValueError, match="unknown node ids"):
+        plan_proof_graph(
             backend=backend,
             theorem_statement="If A then B.",
             raw_proof_text="Assume A and deduce B.",
@@ -221,6 +317,36 @@ def test_select_formalization_candidates_updates_matching_nodes() -> None:
     assert updated.nodes[0].status == "informal"
     assert updated.nodes[1].status == "candidate_formal"
     assert updated.nodes[1].formalization_priority == 3
+
+
+def test_simplify_proof_graph_preserves_protected_candidate_node_ids() -> None:
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="If A then B.",
+        root_node_id="n1",
+        nodes=[
+            ProofNode(
+                id="n1",
+                title="Main claim",
+                informal_statement="If A then B.",
+                informal_proof_text="Use n2.",
+            ),
+            ProofNode(
+                id="n2",
+                title="Derived conclusion",
+                informal_statement="B.",
+                informal_proof_text="Conclusion under assumptions.",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Planner chose this node.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n1", target_id="n2")],
+    )
+
+    simplified = simplify_proof_graph(graph, protected_node_ids={"n2"})
+
+    assert any(node.id == "n2" for node in simplified.nodes)
 
 
 def test_select_formalization_candidates_rejects_unknown_node_ids() -> None:
