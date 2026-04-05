@@ -12,6 +12,7 @@ from formal_islands.formalization.lean import LeanVerifier
 from formal_islands.formalization.pipeline import (
     FaithfulnessClassification,
     FormalizationFaithfulnessError,
+    request_concrete_sublemma_summary,
     request_node_formalization,
 )
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode, VerificationResult
@@ -154,6 +155,7 @@ def _formalize_candidate_node_structured(
         )
         current_graph = _integrate_successful_formalization(
             graph=current_graph,
+            backend=backend,
             node_id=node_id,
             artifact=latest_artifact,
             verification_status=verification.status,
@@ -252,6 +254,7 @@ def _formalize_candidate_node_agentic(
         )
         updated_graph = _integrate_successful_formalization(
             graph=current_graph,
+            backend=backend,
             node_id=node_id,
             artifact=artifact,
             verification_status=verification.status,
@@ -347,6 +350,7 @@ def _update_node(
 def _integrate_successful_formalization(
     *,
     graph: ProofGraph,
+    backend: StructuredBackend | None,
     node_id: str,
     artifact: FormalArtifact,
     verification_status: str,
@@ -358,7 +362,12 @@ def _integrate_successful_formalization(
         return _update_node(graph, node_id, "formal_verified", artifact)
 
     if artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA:
-        return _promote_concrete_sublemma(graph=graph, parent_node_id=node_id, artifact=artifact)
+        return _promote_concrete_sublemma(
+            graph=graph,
+            backend=backend,
+            parent_node_id=node_id,
+            artifact=artifact,
+        )
 
     return _update_node(graph, node_id, "formal_failed", artifact)
 
@@ -366,20 +375,18 @@ def _integrate_successful_formalization(
 def _promote_concrete_sublemma(
     *,
     graph: ProofGraph,
+    backend: StructuredBackend | None,
     parent_node_id: str,
     artifact: FormalArtifact,
 ) -> ProofGraph:
     parent = next(node for node in graph.nodes if node.id == parent_node_id)
     child_id = _fresh_support_node_id(graph, parent_node_id)
     child_title = f"Certified local core for {parent.title}"
-    child_statement = (
-        "Lean verifies a narrower concrete local core supporting this parent step. "
-        "See the attached Lean statement and code for the exact certified sublemma."
-    )
-    child_proof = (
-        f"This node records a verified supporting sublemma extracted from the formalization of parent node "
-        f"'{parent_node_id}'. It certifies part of the parent's local proof burden without claiming to cover "
-        "the full informal node."
+    child_statement, child_proof = _build_concrete_sublemma_text(
+        graph=graph,
+        backend=backend,
+        parent_node_id=parent_node_id,
+        artifact=artifact,
     )
 
     support_node = ProofNode(
@@ -421,6 +428,42 @@ def _promote_concrete_sublemma(
         )
     )
     return graph.model_copy(update={"nodes": updated_nodes, "edges": updated_edges})
+
+
+def _build_concrete_sublemma_text(
+    *,
+    graph: ProofGraph,
+    backend: StructuredBackend | None,
+    parent_node_id: str,
+    artifact: FormalArtifact,
+) -> tuple[str, str]:
+    default_statement = (
+        "Lean verifies a narrower concrete local core supporting this parent step. "
+        "See the attached Lean statement and code for the exact certified sublemma."
+    )
+    prefix = (
+        f"This node records a verified supporting sublemma extracted from the formalization of parent node "
+        f"'{parent_node_id}'. "
+    )
+    default_proof = (
+        prefix
+        + "It certifies part of the parent's local proof burden without claiming to cover the full informal node."
+    )
+    if backend is None or not hasattr(backend, "run_structured"):
+        return default_statement, default_proof
+    try:
+        summary = request_concrete_sublemma_summary(
+            backend=backend,
+            graph=graph,
+            parent_node_id=parent_node_id,
+            artifact=artifact,
+        )
+    except BackendError:
+        return default_statement, default_proof
+    return (
+        summary.informal_statement,
+        prefix + summary.informal_proof_text,
+    )
 
 
 def _fresh_support_node_id(graph: ProofGraph, parent_node_id: str) -> str:

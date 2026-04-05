@@ -637,6 +637,7 @@ In particular, \(J(v)\ge J(u)\), with equality only when \(v=u\) in \(H_0^1(\Ome
       
         <h4>Formal Artifact</h4>
         <p><strong>Lean theorem name:</strong> energy_gap_identity_of_weak_solution</p>
+        <p><strong>Coverage:</strong> full_node</p>
         <div class="statement-code">
           <strong>Lean statement:</strong>
           <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> energy_gap_identity_of_weak_solution {E : <span class="tok-type">Type</span>*} [SeminormedAddCommGroup E] [InnerProductSpace <span class="tok-type">ℝ</span> E] {u f v : E} (hweak : ∀ w : E, inner <span class="tok-type">ℝ</span> u w = inner <span class="tok-type">ℝ</span> f w) : (<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * ‖v‖ ^ <span class="tok-number">2</span> - inner <span class="tok-type">ℝ</span> f v = ((<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * ‖u‖ ^ <span class="tok-number">2</span> - inner <span class="tok-type">ℝ</span> f u) + (<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * ‖v - u‖ ^ <span class="tok-number">2</span></code></pre>

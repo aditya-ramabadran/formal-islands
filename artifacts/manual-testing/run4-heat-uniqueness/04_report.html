@@ -76,9 +76,18 @@
     .math-text {
       white-space: pre-wrap;
       line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .math-text mjx-container {
+      max-width: 100%;
     }
     .math-text mjx-container[display="true"] {
       margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
     }
     .math-text mjx-container[jax="CHTML"][display="true"] {
       padding: 0 !important;
@@ -100,19 +109,22 @@
       background: linear-gradient(180deg, rgba(255, 251, 242, 0.96), rgba(245, 238, 227, 0.96));
       padding: 0.5rem 0.75rem;
       overflow-x: auto;
-      overflow-y: hidden;
+      overflow-y: visible;
+    }
+    .graph-frame {
+      width: min(100%, 460px);
+      margin: 0 auto;
     }
     .graph-widget {
       display: block;
       width: 100%;
-      max-width: 460px;
-      margin: 0 auto;
       height: auto;
       min-width: 240px;
+      overflow: visible;
     }
     .graph-edge {
       stroke: var(--edge);
-      stroke-width: 3.5;
+      stroke-width: 2.8;
       fill: none;
       transition: stroke 140ms ease, stroke-width 140ms ease;
     }
@@ -223,6 +235,12 @@
       color: var(--muted);
       font-size: 0.92rem;
     }
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {
+      min-width: 0;
+    }
     .node-jump {
       color: inherit;
       text-decoration: none;
@@ -243,6 +261,7 @@
     }
     pre {
       overflow-x: auto;
+      max-width: 100%;
       padding: 0.75rem;
       background: #f4efe6;
       border-radius: 8px;
@@ -587,17 +606,18 @@ Then \(u=v\) on \([0,L]\times[0,T]\).</div>
       </p>
       <div class="graph-shell">
         
-    <svg class="graph-widget" viewBox="0 0 420 460" role="img" aria-label="Proof graph">
-      <defs>
-        <marker id="graph-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-          <path d="M0,0 L0,6 L9,3 z" fill="#b3aa9f"></path>
-        </marker>
-      </defs>
-      <g><line class="graph-edge edge-n1-n2" x1="210.0" y1="319.0" x2="210.0" y2="377.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-n2-n3" x1="210.0" y1="437.0" x2="210.0" y2="495.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-n1-n3" x1="210.0" y1="319.0" x2="210.0" y2="495.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-n3-n0" x1="210.0" y1="555.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line></g>
-      <g>
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 460" width="420" height="460" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><line class="graph-edge edge-n1-n2" x1="210.0" y1="201.0" x2="210.0" y2="259.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-n2-n3" x1="210.0" y1="319.0" x2="210.0" y2="377.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-n1-n3" x1="210.0" y1="201.0" x2="210.0" y2="377.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-n3-n0" x1="210.0" y1="437.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line></g>
+        <g>
     <a class="graph-node-link node-n0 status-informal" href="#node-n0">
       <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
       <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
@@ -607,30 +627,31 @@ Then \(u=v\) on \([0,L]\times[0,T]\).</div>
     
 
     <a class="graph-node-link node-n1 status-candidate-formal" href="#node-n1">
-      <rect class="graph-node-box status-candidate-formal" x="144.0" y="256" rx="22" ry="22" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="268" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="278">difference</tspan>
-<tspan x="210.0" y="290">equation</tspan></text>
-      <text class="graph-node-id" x="210.0" y="304">n1</text>
+      <rect class="graph-node-box status-candidate-formal" x="144.0" y="138" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="160">difference</tspan>
+<tspan x="210.0" y="172">equation</tspan></text>
+      <text class="graph-node-id" x="210.0" y="186">n1</text>
     </a>
     
 
     <a class="graph-node-link node-n2 status-formal-verified" href="#node-n2">
-      <rect class="graph-node-box status-formal-verified" x="144.0" y="374" rx="28" ry="28" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="386" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="401">energy identity</tspan></text>
-      <text class="graph-node-id" x="210.0" y="422">n2</text>
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="283">energy identity</tspan></text>
+      <text class="graph-node-id" x="210.0" y="304">n2</text>
     </a>
     
 
     <a class="graph-node-link node-n3 status-candidate-formal" href="#node-n3">
-      <rect class="graph-node-box status-candidate-formal" x="144.0" y="492" rx="22" ry="22" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="504" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="519">zero energy</tspan></text>
-      <text class="graph-node-id" x="210.0" y="540">n3</text>
+      <rect class="graph-node-box status-candidate-formal" x="144.0" y="374" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="386" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="401">zero energy</tspan></text>
+      <text class="graph-node-id" x="210.0" y="422">n3</text>
     </a>
     </g>
-    </svg>
+      </svg>
+    </div>
     
       </div>
       <p class="graph-caption">
@@ -764,6 +785,7 @@ The boundary term vanishes because \(w(0,t)=w(L,t)=0\), leaving \(E&#x27;(t)=-\i
       
         <h4>Formal Artifact</h4>
         <p><strong>Lean theorem name:</strong> heat_energy_dissipation</p>
+        <p><strong>Coverage:</strong> full_node</p>
         <div class="statement-code">
           <strong>Lean statement:</strong>
           <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> heat_energy_dissipation

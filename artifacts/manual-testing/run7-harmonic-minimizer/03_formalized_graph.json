@@ -28,8 +28,8 @@
     {
       "id": "n_energy_split__formal_core",
       "title": "Certified local core for Energy decomposition using the weak harmonicity test \\(\\varphi=v-u\\)",
-      "informal_statement": "Lean verifies a narrower concrete local core supporting this parent step. See the attached Lean statement and code for the exact certified sublemma.",
-      "informal_proof_text": "This node records a verified supporting sublemma extracted from the formalization of parent node 'n_energy_split'. It certifies part of the parent's local proof burden without claiming to cover the full informal node.",
+      "informal_statement": "If `grad_u` and `grad_w` are square-integrable on \\(\\Omega\\), their inner product is integrable, and the cross term satisfies \\(\\int_\\Omega \\langle grad_u, grad_w\\rangle \\,dx = 0\\), then the Dirichlet energy of the sum splits as\n\\[\n\\int_\\Omega |grad_u + grad_w|^2\\,dx\n=\n\\int_\\Omega |grad_u|^2\\,dx + \\int_\\Omega |grad_w|^2\\,dx.\n\\]",
+      "informal_proof_text": "This node records a verified supporting sublemma extracted from the formalization of parent node 'n_energy_split'. Use the pointwise identity\n\\[\n|grad_u(x)+grad_w(x)|^2 = |grad_u(x)|^2 + 2\\langle grad_u(x), grad_w(x)\\rangle + |grad_w(x)|^2.\n\\]\nAfter integrating over \\(\\Omega\\), the left-hand side becomes the sum of the three corresponding integrals. The first and third terms are the energies of `grad_u` and `grad_w`, and the middle term vanishes by the hypothesis `horth`. Rearranging gives the stated energy decomposition.",
       "status": "formal_verified",
       "display_label": "Certified core",
       "formalization_priority": null,

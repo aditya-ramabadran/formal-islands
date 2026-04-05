@@ -947,9 +947,20 @@ For \(\alpha=\frac{p+1}{2}&gt;1\), solutions of \(z&#x27;=c z^\alpha\) with posi
       <p class="meta">Display label: Certified core</p>
       
       <p><strong>Informal statement:</strong></p>
-      <div class="math-text">Lean verifies a narrower concrete local core supporting this parent step. See the attached Lean statement and code for the exact certified sublemma.</div>
+      <div class="math-text">Assume the identities \(\tfrac12 Y&#x27;=-\mathrm{gradIntegral}+\mathrm{nonlinIntegral}\) and \(E=\tfrac12\mathrm{gradIntegral}-\tfrac1{p+1}\mathrm{nonlinIntegral}\), with \(p&gt;1\) and \(E\le 0\). Then one can rewrite
+\[
+\tfrac12 Y&#x27;=-2E+\frac{p-1}{p+1}\,\mathrm{nonlinIntegral},
+\]
+and therefore also
+\[
+\tfrac12 Y&#x27;\ge \frac{p-1}{p+1}\,\mathrm{nonlinIntegral}.
+\]</div>
       <p><strong>Informal proof:</strong></p>
-      <div class="math-text">This node records a verified supporting sublemma extracted from the formalization of parent node &#x27;n2&#x27;. It certifies part of the parent&#x27;s local proof burden without claiming to cover the full informal node.</div>
+      <div class="math-text">This node records a verified supporting sublemma extracted from the formalization of parent node &#x27;n2&#x27;. Start from \(\tfrac12 Y&#x27;=-\mathrm{gradIntegral}+\mathrm{nonlinIntegral}\). Using \(E=\tfrac12\mathrm{gradIntegral}-\tfrac1{p+1}\mathrm{nonlinIntegral}\), solve for \(-\mathrm{gradIntegral}+\mathrm{nonlinIntegral}\) to get
+\[
+-\mathrm{gradIntegral}+\mathrm{nonlinIntegral}=-2E+\frac{p-1}{p+1}\,\mathrm{nonlinIntegral}.
+\]
+This gives the equality. Since \(E\le 0\), the term \(-2E\) is nonnegative, so dropping it yields the lower bound \(\tfrac12 Y&#x27;\ge \frac{p-1}{p+1}\,\mathrm{nonlinIntegral}\).</div>
       
         <h4>Formal Artifact</h4>
         <p><strong>Lean theorem name:</strong> FormalIslands.differential_inequality_for_Y</p>

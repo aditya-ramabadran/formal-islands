@@ -29,9 +29,18 @@
       --accent-soft: #f5e8d6;
       --highlight: #d97c2b;
       --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
       --checked: #2f8f5b;
       --checked-soft: #e6f5eb;
       --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: rgba(255, 250, 241, 0.98);
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
     }
     * {
       box-sizing: border-box;
@@ -66,7 +75,22 @@
     }
     .math-text {
       white-space: pre-wrap;
-      line-height: 1.55;
+      line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .math-text mjx-container {
+      max-width: 100%;
+    }
+    .math-text mjx-container[display="true"] {
+      margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .math-text mjx-container[jax="CHTML"][display="true"] {
+      padding: 0 !important;
     }
     .pill {
       display: inline-block;
@@ -83,18 +107,24 @@
       border: 1px solid var(--border);
       border-radius: 16px;
       background: linear-gradient(180deg, rgba(255, 251, 242, 0.96), rgba(245, 238, 227, 0.96));
+      padding: 0.5rem 0.75rem;
       overflow-x: auto;
-      overflow-y: hidden;
+      overflow-y: visible;
+    }
+    .graph-frame {
+      width: min(100%, 460px);
+      margin: 0 auto;
     }
     .graph-widget {
       display: block;
       width: 100%;
       height: auto;
-      min-width: 420px;
+      min-width: 240px;
+      overflow: visible;
     }
     .graph-edge {
       stroke: var(--edge);
-      stroke-width: 3.5;
+      stroke-width: 2.8;
       fill: none;
       transition: stroke 140ms ease, stroke-width 140ms ease;
     }
@@ -103,15 +133,34 @@
       text-decoration: none;
     }
     .graph-node-box {
-      fill: rgba(255, 250, 241, 0.98);
-      stroke: var(--accent);
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
       stroke-width: 2.25;
-      transition: fill 140ms ease, stroke 140ms ease;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
       filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-candidate-fill);
+      stroke: var(--status-candidate-stroke);
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
     }
     .graph-node-title {
       fill: var(--ink);
-      font-size: 12px;
+      font-size: 10.5px;
       font-weight: 700;
       text-anchor: middle;
       dominant-baseline: middle;
@@ -119,10 +168,27 @@
     }
     .graph-node-id {
       fill: var(--muted);
-      font-size: 11px;
+      font-size: 9.5px;
       text-anchor: middle;
       dominant-baseline: middle;
       pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-candidate-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
     }
     .graph-caption {
       margin-top: 0.7rem;
@@ -169,6 +235,12 @@
       color: var(--muted);
       font-size: 0.92rem;
     }
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {
+      min-width: 0;
+    }
     .node-jump {
       color: inherit;
       text-decoration: none;
@@ -189,13 +261,55 @@
     }
     pre {
       overflow-x: auto;
+      max-width: 100%;
       padding: 0.75rem;
       background: #f4efe6;
       border-radius: 8px;
       border: 1px solid var(--border);
+      margin: 0.6rem 0;
     }
     code {
       font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    code.inline-code {
+      background: #f4efe6;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.95em;
+      white-space: break-spaces;
+    }
+    .statement-code {
+      margin-top: 0.35rem;
+    }
+    .statement-code pre,
+    .checklist-code pre {
+      margin-top: 0.35rem;
+      background: #f4efe6;
+    }
+    .lean-code {
+      color: #2a241f;
+    }
+    .lean-code .tok-keyword {
+      color: #8b2f18;
+      font-weight: 700;
+    }
+    .lean-code .tok-tactic {
+      color: #9d5d17;
+      font-weight: 600;
+    }
+    .lean-code .tok-type {
+      color: #245f7a;
+    }
+    .lean-code .tok-number {
+      color: #7442a8;
+    }
+    .lean-code .tok-comment {
+      color: #6e7a60;
+      font-style: italic;
+    }
+    .lean-code .tok-string {
+      color: #2d7f4d;
     }
     
             .report-root:has(a.node-n1:hover) .node-n1.node-card,
@@ -214,16 +328,30 @@
             
 
                 .report-root:has(.obligation-informal-proof-n1:hover) a.node-n1 .graph-node-box,
-.report-root:has(#obligation-check-informal-proof-n1:checked) a.node-n1 .graph-node-box,
-.report-root:has(.obligation-informal-proof-n1:hover) .node-n1.node-card,
+.report-root:has(.obligation-informal-proof-n1:hover) .node-n1.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-n1:checked) a.node-n1 .graph-node-box,
 .report-root:has(#obligation-check-informal-proof-n1:checked) .node-n1.node-card {
                   border-color: var(--checked);
                   stroke: var(--checked);
+                  stroke-width: 2.9;
                   background: var(--checked-soft);
                   fill: var(--checked-soft);
                 }
                 
 
+            .report-root:has(.obligation-informal-proof-n1:hover) .obligation-informal-proof-n1 {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
             .report-root:has(#obligation-check-informal-proof-n1:checked) .obligation-informal-proof-n1 {
               border-color: var(--checked);
               background: var(--checked-soft);
@@ -243,7 +371,6 @@
       <div class="math-text">Weighted \(L^2\) inequality on \(\mathbb{R}^d\).
 
 Let \(d \ge 1\) and let \(f : \mathbb{R}^d \to \mathbb{C}\) be sufficiently regular and sufficiently decaying at infinity so that the integrations by parts below are justified, with \(f \in H^1(\mathbb{R}^d)\) and \(x f \in L^2(\mathbb{R}^d)\). Then
-
 \[
 \|f\|_{L^2(\mathbb{R}^d)}^2 \le \frac{2}{d}\,\|x f\|_{L^2(\mathbb{R}^d)}\,\|\nabla f\|_{L^2(\mathbb{R}^d)}.
 \]</div>
@@ -261,26 +388,32 @@ Let \(d \ge 1\) and let \(f : \mathbb{R}^d \to \mathbb{C}\) be sufficiently regu
       </p>
       <div class="graph-shell">
         
-    <svg class="graph-widget" viewBox="0 0 420 138" role="img" aria-label="Proof graph">
-      <defs>
-        <marker id="graph-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-          <path d="M0,0 L0,6 L9,3 z" fill="#b3aa9f"></path>
-        </marker>
-      </defs>
-      <g></g>
-      <g>
-    <a class="graph-node-link node-n1" href="#node-n1">
-      <rect class="graph-node-box" x="132.0" y="30" rx="22" ry="22" width="156" height="78"></rect>
-      <text class="graph-node-title"><tspan x="210.0" y="55">Weighted \(L^2\)</tspan>
-<tspan x="210.0" y="70">inequality</tspan></text>
-      <text class="graph-node-id" x="210.0" y="90">n1</text>
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 106" width="420" height="106" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g></g>
+        <g>
+    <a class="graph-node-link node-n1 status-formal-failed" href="#node-n1">
+      <rect class="graph-node-box status-formal-failed" x="144.0" y="20" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="32" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="42">Weighted \(L^2\)</tspan>
+<tspan x="210.0" y="54">inequality</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">n1</text>
     </a>
     </g>
-    </svg>
+      </svg>
+    </div>
     
       </div>
       <p class="graph-caption">
         Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+      </p>
+      <p class="graph-caption">
+        Informal nodes use dashed amber outlines, candidates use solid orange, verified formal nodes use green, and failed formal nodes use red.
       </p>
     </section>
     <section>
@@ -293,6 +426,7 @@ Let \(d \ge 1\) and let \(f : \mathbb{R}^d \to \mathbb{C}\) be sufficiently regu
         <span>
           <span class="checklist-kind">informal_proof_check</span><br />
           Check that node &#x27;n1&#x27; (Weighted \(L^2\) inequality on \(\mathbb{R}^d\)) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n1">n1</a></div>
         </span>
       </label>
@@ -358,49 +492,52 @@ as claimed.</div>
       
         <h4>Formal Artifact</h4>
         <p><strong>Lean theorem name:</strong> weighted_L2_inequality</p>
-        <p><strong>Lean statement:</strong> theorem weighted_L2_inequality {d : ℕ} (hd : 0 &lt; d) {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E] {f xf gradf : E} (hId : ‖f‖ ^ (2 : ℕ) = ((2 : ℝ) / (d : ℝ)) * (-(Complex.re ⟪xf, gradf⟫_ℂ))) : ‖f‖ ^ (2 : ℕ) ≤ ((2 : ℝ) / (d : ℝ)) * ‖xf‖ * ‖gradf‖</p>
+        <p><strong>Coverage:</strong> full_node</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> weighted_L2_inequality {d : <span class="tok-type">ℕ</span>} (hd : <span class="tok-number">0</span> &lt; d) {E : <span class="tok-type">Type</span>*} [NormedAddCommGroup E] [InnerProductSpace ℂ E] {f xf gradf : E} (hId : ‖f‖ ^ (<span class="tok-number">2</span> : <span class="tok-type">ℕ</span>) = ((<span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) / (d : <span class="tok-type">ℝ</span>)) * (-(Complex.re ⟪xf, gradf⟫_ℂ))) : ‖f‖ ^ (<span class="tok-number">2</span> : <span class="tok-type">ℕ</span>) ≤ ((<span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) / (d : <span class="tok-type">ℝ</span>)) * ‖xf‖ * ‖gradf‖</code></pre>
+        </div>
         <p><strong>Verification status:</strong> failed</p>
         <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_attempt_1.lean</code></p>
         <details>
           <summary>Lean code</summary>
-          <pre><code>import Mathlib
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
 
-/--
-A local Hilbert-space version of the weighted `L^2` inequality.
+/<span class="tok-comment">--</span>
+A local Hilbert-space version of the weighted `L^<span class="tok-number">2</span>` inequality.
 
-In the intended application to `L^2(ℝ^d)`, the element `xf` represents the weighted
+In the intended application to `L^<span class="tok-number">2</span>(<span class="tok-type">ℝ</span>^d)`, the element `xf` represents the weighted
 function `x ↦ x • f x`, the element `gradf` represents the weak gradient, and `hId`
-packages the integration-by-parts identity coming from `div x = d`.
+packages the integration-<span class="tok-tactic">by</span>-parts identity coming from `div x = d`.
 -/
-theorem weighted_L2_inequality
-    {d : ℕ} (hd : 0 &lt; d)
-    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+<span class="tok-keyword">theorem</span> weighted_L2_inequality
+    {d : <span class="tok-type">ℕ</span>} (hd : <span class="tok-number">0</span> &lt; d)
+    {E : <span class="tok-type">Type</span>*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
     {f xf gradf : E}
-    (hId : ‖f‖ ^ (2 : ℕ) =
-      ((2 : ℝ) / (d : ℝ)) * (-(Complex.re ⟪xf, gradf⟫_ℂ))) :
-    ‖f‖ ^ (2 : ℕ) ≤ ((2 : ℝ) / (d : ℝ)) * ‖xf‖ * ‖gradf‖ := by
-  let c : ℝ := (2 : ℝ) / (d : ℝ)
-  have hdR : 0 &lt; (d : ℝ) := by
+    (hId : ‖f‖ ^ (<span class="tok-number">2</span> : <span class="tok-type">ℕ</span>) =
+      ((<span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) / (d : <span class="tok-type">ℝ</span>)) * (-(Complex.re ⟪xf, gradf⟫_ℂ))) :
+    ‖f‖ ^ (<span class="tok-number">2</span> : <span class="tok-type">ℕ</span>) ≤ ((<span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) / (d : <span class="tok-type">ℝ</span>)) * ‖xf‖ * ‖gradf‖ := <span class="tok-tactic">by</span>
+  <span class="tok-keyword">let</span> c : <span class="tok-type">ℝ</span> := (<span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) / (d : <span class="tok-type">ℝ</span>)
+  <span class="tok-tactic">have</span> hdR : <span class="tok-number">0</span> &lt; (d : <span class="tok-type">ℝ</span>) := <span class="tok-tactic">by</span>
     exact_mod_cast hd
-  have hc : 0 ≤ c := by
+  <span class="tok-tactic">have</span> hc : <span class="tok-number">0</span> ≤ c := <span class="tok-tactic">by</span>
     dsimp [c]
-    exact div_nonneg (by positivity) hdR.le
-  have hre : -(Complex.re ⟪xf, gradf⟫_ℂ) ≤ ‖xf‖ * ‖gradf‖ := by
-    have h1 : -(Complex.re ⟪xf, gradf⟫_ℂ) ≤ |Complex.re ⟪xf, gradf⟫_ℂ| := by
-      exact neg_le_abs _
-    have h2 : |Complex.re ⟪xf, gradf⟫_ℂ| ≤ ‖⟪xf, gradf⟫_ℂ‖ := by
-      simpa using Complex.abs_re_le_abs ⟪xf, gradf⟫_ℂ
-    exact le_trans h1 (le_trans h2 (norm_inner_le_norm _ _))
-  calc
-    ‖f‖ ^ (2 : ℕ) = c * (-(Complex.re ⟪xf, gradf⟫_ℂ)) := by
-      simpa [c] using hId
-    _ ≤ c * (‖xf‖ * ‖gradf‖) := by
-      exact mul_le_mul_of_nonneg_left hre hc
-    _ = c * ‖xf‖ * ‖gradf‖ := by
-      simp [mul_assoc]
-    _ = ((2 : ℝ) / (d : ℝ)) * ‖xf‖ * ‖gradf‖ := by
-      simp [c]
-</code></pre>
+    <span class="tok-tactic">exact</span> div_nonneg (<span class="tok-tactic">by</span> positivity) hdR.le
+  <span class="tok-tactic">have</span> hre : -(Complex.re ⟪xf, gradf⟫_ℂ) ≤ ‖xf‖ * ‖gradf‖ := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h1 : -(Complex.re ⟪xf, gradf⟫_ℂ) ≤ |Complex.re ⟪xf, gradf⟫_ℂ| := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">exact</span> neg_le_abs _
+    <span class="tok-tactic">have</span> h2 : |Complex.re ⟪xf, gradf⟫_ℂ| ≤ ‖⟪xf, gradf⟫_ℂ‖ := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">simpa</span> using Complex.abs_re_le_abs ⟪xf, gradf⟫_ℂ
+    <span class="tok-tactic">exact</span> le_trans h1 (le_trans h2 (norm_inner_le_norm _ _))
+  <span class="tok-tactic">calc</span>
+    ‖f‖ ^ (<span class="tok-number">2</span> : <span class="tok-type">ℕ</span>) = c * (-(Complex.re ⟪xf, gradf⟫_ℂ)) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">simpa</span> [c] using hId
+    _ ≤ c * (‖xf‖ * ‖gradf‖) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">exact</span> mul_le_mul_of_nonneg_left hre hc
+    _ = c * ‖xf‖ * ‖gradf‖ := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">simp</span> [mul_assoc]
+    _ = ((<span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) / (d : <span class="tok-type">ℝ</span>)) * ‖xf‖ * ‖gradf‖ := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">simp</span> [c]</code></pre>
         </details>
         <details>
           <summary>Verification logs</summary>

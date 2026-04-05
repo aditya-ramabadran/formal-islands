@@ -4,6 +4,7 @@ from formal_islands.examples.fixtures import build_example_graph
 from formal_islands.report.generator import (
     NODE_HEIGHT,
     _compute_graph_layout,
+    _render_math_text,
     export_report_bundle,
     render_html_report,
 )
@@ -138,3 +139,10 @@ def test_compute_graph_layout_height_covers_all_nodes() -> None:
     for node in graph.nodes:
         _, y = layout["positions"][node.id]
         assert y + NODE_HEIGHT <= layout["height"]
+
+
+def test_render_math_text_formats_backticks_as_inline_code() -> None:
+    html = _render_math_text("Use `grad_u` and `horth`.")
+
+    assert '<code class="inline-code">grad_u</code>' in html
+    assert '<code class="inline-code">horth</code>' in html

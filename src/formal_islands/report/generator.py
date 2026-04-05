@@ -493,7 +493,18 @@ stderr:
 
 def _render_math_text(text: str) -> str:
     compacted = _compact_report_text(text)
-    return f'<div class="math-text">{escape(compacted)}</div>'
+    return f'<div class="math-text">{_render_inline_code_html(compacted)}</div>'
+
+
+def _render_inline_code_html(text: str) -> str:
+    parts = re.split(r"(`[^`]+`)", text)
+    rendered: list[str] = []
+    for part in parts:
+        if len(part) >= 2 and part.startswith("`") and part.endswith("`"):
+            rendered.append(f'<code class="inline-code">{escape(part[1:-1])}</code>')
+        else:
+            rendered.append(escape(part))
+    return "".join(rendered)
 
 
 def _render_obligation_code_block(obligation: ReviewObligation, graph: ProofGraph) -> str:

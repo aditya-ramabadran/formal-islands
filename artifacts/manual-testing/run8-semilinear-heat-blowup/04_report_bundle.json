@@ -51,8 +51,8 @@
       {
         "id": "n2__formal_core",
         "title": "Certified local core for Differential inequality for \\(Y(t)\\)",
-        "informal_statement": "Lean verifies a narrower concrete local core supporting this parent step. See the attached Lean statement and code for the exact certified sublemma.",
-        "informal_proof_text": "This node records a verified supporting sublemma extracted from the formalization of parent node 'n2'. It certifies part of the parent's local proof burden without claiming to cover the full informal node.",
+        "informal_statement": "Assume the identities \\(\\tfrac12 Y'=-\\mathrm{gradIntegral}+\\mathrm{nonlinIntegral}\\) and \\(E=\\tfrac12\\mathrm{gradIntegral}-\\tfrac1{p+1}\\mathrm{nonlinIntegral}\\), with \\(p>1\\) and \\(E\\le 0\\). Then one can rewrite\n\\[\n\\tfrac12 Y'=-2E+\\frac{p-1}{p+1}\\,\\mathrm{nonlinIntegral},\n\\]\nand therefore also\n\\[\n\\tfrac12 Y'\\ge \\frac{p-1}{p+1}\\,\\mathrm{nonlinIntegral}.\n\\]",
+        "informal_proof_text": "This node records a verified supporting sublemma extracted from the formalization of parent node 'n2'. Start from \\(\\tfrac12 Y'=-\\mathrm{gradIntegral}+\\mathrm{nonlinIntegral}\\). Using \\(E=\\tfrac12\\mathrm{gradIntegral}-\\tfrac1{p+1}\\mathrm{nonlinIntegral}\\), solve for \\(-\\mathrm{gradIntegral}+\\mathrm{nonlinIntegral}\\) to get\n\\[\n-\\mathrm{gradIntegral}+\\mathrm{nonlinIntegral}=-2E+\\frac{p-1}{p+1}\\,\\mathrm{nonlinIntegral}.\n\\]\nThis gives the equality. Since \\(E\\le 0\\), the term \\(-2E\\) is nonnegative, so dropping it yields the lower bound \\(\\tfrac12 Y'\\ge \\frac{p-1}{p+1}\\,\\mathrm{nonlinIntegral}\\).",
         "status": "formal_verified",
         "display_label": "Certified core",
         "formalization_priority": null,

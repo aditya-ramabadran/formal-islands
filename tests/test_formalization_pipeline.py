@@ -5,8 +5,11 @@ from formal_islands.backends import MockBackend
 from formal_islands.formalization.pipeline import (
     FaithfulnessClassification,
     FormalizationFaithfulnessError,
+    _normalize_concrete_sublemma_summary_text,
     assess_formalization_faithfulness,
+    build_concrete_sublemma_summary_request,
     build_formalization_request,
+    request_concrete_sublemma_summary,
     request_node_formalization,
 )
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode
@@ -122,6 +125,83 @@ def test_build_formalization_request_includes_previous_lean_file_on_repair() -> 
     assert "previous failed lean file to revise" in request.prompt.lower()
     assert "make the smallest changes needed" in request.prompt.lower()
     assert "```lean\nimport Mathlib" in request.prompt
+
+
+def test_build_concrete_sublemma_summary_request_mentions_parent_and_lean_theorem() -> None:
+    graph = build_graph()
+    artifact = FormalArtifact(
+        lean_theorem_name="sum_nonneg",
+        lean_statement="theorem sum_nonneg (a b : ℝ) : 0 ≤ a + b",
+        lean_code="theorem sum_nonneg (a b : ℝ) : 0 ≤ a + b := by\n  nlinarith",
+    )
+
+    request = build_concrete_sublemma_summary_request(
+        graph=graph,
+        parent_node_id="n2",
+        artifact=artifact,
+    )
+
+    assert "Parent informal node:" in request.prompt
+    assert "Verified Lean sublemma:" in request.prompt
+    assert "sum_nonneg" in request.prompt
+    assert "narrower than the parent node" in request.prompt.lower()
+    assert "use latex math delimiters" in request.prompt.lower()
+    assert "do not put latex commands" in request.prompt.lower()
+
+
+def test_request_concrete_sublemma_summary_returns_generated_text() -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "informal_statement": "For nonnegative real numbers a and b, one has 0 ≤ a + b.",
+                "informal_proof_text": "Add the two nonnegative quantities and use basic order properties of ℝ.",
+            }
+        ]
+    )
+    graph = build_graph()
+    artifact = FormalArtifact(
+        lean_theorem_name="sum_nonneg",
+        lean_statement="theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b",
+        lean_code="theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b := by\n  nlinarith",
+    )
+
+    summary = request_concrete_sublemma_summary(
+        backend=backend,
+        graph=graph,
+        parent_node_id="n2",
+        artifact=artifact,
+    )
+
+    assert summary.informal_statement.startswith("For nonnegative real numbers")
+    assert "basic order properties" in summary.informal_proof_text
+
+
+def test_normalize_concrete_sublemma_summary_text_converts_tex_inside_backticks_to_math() -> None:
+    text = (
+        "Expand `\\lVert a+b\\rVert^2 = \\lVert a\\rVert^2 + 2\\langle a,b\\rangle + \\lVert b\\rVert^2` "
+        "and keep `grad_u` as an identifier."
+    )
+
+    normalized = _normalize_concrete_sublemma_summary_text(text)
+
+    assert r"\(\lVert a+b\rVert^2 = \lVert a\rVert^2 + 2\langle a,b\rangle + \lVert b\rVert^2\)" in normalized
+    assert "`grad_u`" in normalized
+
+
+def test_normalize_concrete_sublemma_summary_text_strips_control_characters() -> None:
+    normalized = _normalize_concrete_sublemma_summary_text("On \x00`grad_u`\x01 over \x02\\(\\Omega\\)")
+
+    assert "\x00" not in normalized
+    assert "\x01" not in normalized
+    assert "\x02" not in normalized
+    assert "`grad_u`" in normalized
+
+
+def test_normalize_concrete_sublemma_summary_text_unescapes_double_latex_delimiters() -> None:
+    normalized = _normalize_concrete_sublemma_summary_text(r"If `grad_u` lives on \\(\Omega\\), proceed.")
+
+    assert r"\(\Omega\)" in normalized
+    assert r"\\(\Omega\\)" not in normalized
 
 
 def test_request_node_formalization_returns_unverified_artifact() -> None:

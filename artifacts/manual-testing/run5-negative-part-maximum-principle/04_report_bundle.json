@@ -39,6 +39,8 @@
           "lean_theorem_name": "energy_identity_for_negative_part",
           "lean_statement": "theorem energy_identity_for_negative_part\n    {\u03b1 : Type*} [MeasurableSpace \u03b1] (\u03bc : Measure \u03b1)\n    {grad_u grad_u_neg : \u03b1 \u2192 \u211d}\n    (h : \u2200 x, grad_u x * grad_u_neg x = - (grad_u_neg x) ^ 2) :\n    \u222b x, grad_u x * grad_u_neg x \u2202\u03bc = - \u222b x, (grad_u_neg x) ^ 2 \u2202\u03bc",
           "lean_code": "import Mathlib.MeasureTheory.Integral.Bochner.Basic\n\nnamespace FormalIslands\n\nopen MeasureTheory\n\ntheorem energy_identity_for_negative_part\n    {\u03b1 : Type*} [MeasurableSpace \u03b1] (\u03bc : Measure \u03b1)\n    {grad_u grad_u_neg : \u03b1 \u2192 \u211d}\n    (h : \u2200 x, grad_u x * grad_u_neg x = - (grad_u_neg x) ^ 2) :\n    \u222b x, grad_u x * grad_u_neg x \u2202\u03bc = - \u222b x, (grad_u_neg x) ^ 2 \u2202\u03bc := by\n  have h' : (fun x => grad_u x * grad_u_neg x) = fun x => - (grad_u_neg x) ^ 2 := by\n    funext x\n    exact h x\n  rw [h']\n  simpa using (MeasureTheory.integral_neg (\u03bc := \u03bc) (fun x => (grad_u_neg x) ^ 2))\n\nend FormalIslands\n",
+          "faithfulness_classification": "full_node",
+          "faithfulness_notes": null,
           "verification": {
             "status": "failed",
             "command": "faithfulness_guard",

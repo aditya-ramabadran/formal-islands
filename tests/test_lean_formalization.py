@@ -258,6 +258,9 @@ def test_formalize_candidate_node_agentic_mode_reverifies_worker_file(tmp_path: 
     class FakeAgenticBackend:
         timeout_seconds = 420.0
 
+        def __init__(self) -> None:
+            self.summary_calls = 0
+
         def run_agentic_structured(self, request, *, timeout_seconds=None):
             worker_file.write_text(
                 "import Mathlib.Data.Real.Basic\n\n"
@@ -274,6 +277,26 @@ def test_formalize_candidate_node_agentic_mode_reverifies_worker_file(tmp_path: 
                         "theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b"
                     ),
                     "final_file_path": str(worker_file.resolve()),
+                },
+                raw_stdout="",
+                raw_stderr="",
+                command=("codex", "exec"),
+                exit_code=0,
+                backend_name="codex_cli",
+            )
+
+        def run_structured(self, request):
+            self.summary_calls += 1
+            from formal_islands.backends.base import StructuredBackendResponse
+
+            return StructuredBackendResponse(
+                payload={
+                    "informal_statement": (
+                        "Assuming the scalar mass identity and the energy relation, one obtains the lower bound for the derivative of Y."
+                    ),
+                    "informal_proof_text": (
+                        "Use the verified scalar rewrite and the sign condition on E to conclude the desired inequality."
+                    ),
                 },
                 raw_stdout="",
                 raw_stderr="",
@@ -319,6 +342,9 @@ def test_formalize_candidate_node_promotes_concrete_sublemma_to_child_node(
     class FakeAgenticBackend:
         timeout_seconds = 420.0
 
+        def __init__(self) -> None:
+            self.summary_calls = 0
+
         def run_agentic_structured(self, request, *, timeout_seconds=None):
             worker_file.write_text(
                 "import Mathlib.Data.Real.Basic\n\n"
@@ -349,6 +375,26 @@ def test_formalize_candidate_node_promotes_concrete_sublemma_to_child_node(
                         "(1 / 2 : ℝ) * Y' ≥ ((p - 1) / (p + 1)) * nonlinIntegral"
                     ),
                     "final_file_path": str(worker_file.resolve()),
+                },
+                raw_stdout="",
+                raw_stderr="",
+                command=("codex", "exec"),
+                exit_code=0,
+                backend_name="codex_cli",
+            )
+
+        def run_structured(self, request):
+            self.summary_calls += 1
+            from formal_islands.backends.base import StructuredBackendResponse
+
+            return StructuredBackendResponse(
+                payload={
+                    "informal_statement": (
+                        "Assuming the scalar mass identity and the energy relation, one obtains the lower bound for the derivative of Y."
+                    ),
+                    "informal_proof_text": (
+                        "Use the verified scalar rewrite and the sign condition on E to conclude the desired inequality."
+                    ),
                 },
                 raw_stdout="",
                 raw_stderr="",
@@ -395,8 +441,9 @@ def test_formalize_candidate_node_promotes_concrete_sublemma_to_child_node(
         return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
 
     verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    backend = FakeAgenticBackend()
     outcome = formalize_candidate_node(
-        backend=FakeAgenticBackend(),
+        backend=backend,
         verifier=verifier,
         graph=graph,
         node_id="n2",
@@ -414,6 +461,9 @@ def test_formalize_candidate_node_promotes_concrete_sublemma_to_child_node(
     assert child.status == "formal_verified"
     assert child.formal_artifact is not None
     assert child.formal_artifact.faithfulness_classification == "concrete_sublemma"
+    assert "scalar mass identity" in child.informal_statement
+    assert "verified supporting sublemma extracted from the formalization of parent node 'n2'." in child.informal_proof_text
+    assert backend.summary_calls == 1
     assert support_edge.label == "formal_sublemma_for"
 
 

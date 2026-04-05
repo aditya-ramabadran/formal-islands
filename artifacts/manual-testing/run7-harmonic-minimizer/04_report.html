@@ -701,9 +701,18 @@ Therefore the cross term vanishes and the stated identity follows. Replacing \(w
       <p class="meta">Display label: Certified core</p>
       
       <p><strong>Informal statement:</strong></p>
-      <div class="math-text">Lean verifies a narrower concrete local core supporting this parent step. See the attached Lean statement and code for the exact certified sublemma.</div>
+      <div class="math-text">If <code class="inline-code">grad_u</code> and <code class="inline-code">grad_w</code> are square-integrable on \(\Omega\), their inner product is integrable, and the cross term satisfies \(\int_\Omega \langle grad_u, grad_w\rangle \,dx = 0\), then the Dirichlet energy of the sum splits as
+\[
+\int_\Omega |grad_u + grad_w|^2\,dx
+=
+\int_\Omega |grad_u|^2\,dx + \int_\Omega |grad_w|^2\,dx.
+\]</div>
       <p><strong>Informal proof:</strong></p>
-      <div class="math-text">This node records a verified supporting sublemma extracted from the formalization of parent node &#x27;n_energy_split&#x27;. It certifies part of the parent&#x27;s local proof burden without claiming to cover the full informal node.</div>
+      <div class="math-text">This node records a verified supporting sublemma extracted from the formalization of parent node &#x27;n_energy_split&#x27;. Use the pointwise identity
+\[
+|grad_u(x)+grad_w(x)|^2 = |grad_u(x)|^2 + 2\langle grad_u(x), grad_w(x)\rangle + |grad_w(x)|^2.
+\]
+After integrating over \(\Omega\), the left-hand side becomes the sum of the three corresponding integrals. The first and third terms are the energies of <code class="inline-code">grad_u</code> and <code class="inline-code">grad_w</code>, and the middle term vanishes by the hypothesis <code class="inline-code">horth</code>. Rearranging gives the stated energy decomposition.</div>
       
         <h4>Formal Artifact</h4>
         <p><strong>Lean theorem name:</strong> FormalIslands.n_energy_split</p>

@@ -44,6 +44,14 @@ class FaithfulnessAssessment:
     message: str | None = None
 
 
+@dataclass(frozen=True)
+class ConcreteSublemmaSummary:
+    """Short informal rendering of a verified supporting sublemma."""
+
+    informal_statement: str
+    informal_proof_text: str
+
+
 def build_formalization_request(
     graph: ProofGraph,
     node_id: str,
@@ -206,6 +214,111 @@ def request_node_formalization(
         attempt_history=[],
     )
     return enforce_formalization_faithfulness(node=node, artifact=artifact)
+
+
+def build_concrete_sublemma_summary_request(
+    *,
+    graph: ProofGraph,
+    parent_node_id: str,
+    artifact: FormalArtifact,
+) -> StructuredBackendRequest:
+    parent = next(node for node in graph.nodes if node.id == parent_node_id)
+    prompt = "\n\n".join(
+        [
+            f"Theorem title: {graph.theorem_title}",
+            "Parent informal node:",
+            json.dumps(
+                {
+                    "id": parent.id,
+                    "title": parent.title,
+                    "informal_statement": parent.informal_statement,
+                    "informal_proof_text": parent.informal_proof_text,
+                },
+                indent=2,
+            ),
+            "Verified Lean sublemma:",
+            json.dumps(
+                {
+                    "lean_theorem_name": artifact.lean_theorem_name,
+                    "lean_statement": artifact.lean_statement,
+                },
+                indent=2,
+            ),
+            (
+                "Write a short informal statement and a short informal proof text for a supporting local sublemma "
+                "that matches the verified Lean theorem. Keep it concrete, close to the parent node's mathematical setting, "
+                "and honest about being narrower than the parent node if it is narrower."
+            ),
+            (
+                "Do not introduce arbitrary ambient abstraction not already present in the Lean theorem. "
+                "Do not claim this sublemma proves the whole parent node."
+            ),
+            (
+                "Formatting guidance: use LaTeX math delimiters like \\(...\\) or \\[...\\] for mathematical expressions. "
+                "Use backticks only for literal Lean identifiers, theorem names, or simple variable names such as `horth` or `grad_u`. "
+                "Do not put LaTeX commands like \\int, \\lVert, \\Omega, \\langle, or \\cdot inside backticks."
+            ),
+            (
+                "Return a JSON object with keys informal_statement and informal_proof_text."
+            ),
+        ]
+    )
+    return StructuredBackendRequest(
+        prompt=prompt,
+        system_prompt=(
+            "You are summarizing a verified Lean theorem as a concrete supporting informal sublemma. "
+            "Return only JSON matching the schema."
+        ),
+        json_schema={
+            "type": "object",
+            "properties": {
+                "informal_statement": {"type": "string", "minLength": 1},
+                "informal_proof_text": {"type": "string", "minLength": 1},
+            },
+            "required": ["informal_statement", "informal_proof_text"],
+            "additionalProperties": False,
+        },
+        task_name="summarize_concrete_sublemma",
+    )
+
+
+def request_concrete_sublemma_summary(
+    *,
+    backend: StructuredBackend,
+    graph: ProofGraph,
+    parent_node_id: str,
+    artifact: FormalArtifact,
+) -> ConcreteSublemmaSummary:
+    response = backend.run_structured(
+        build_concrete_sublemma_summary_request(
+            graph=graph,
+            parent_node_id=parent_node_id,
+            artifact=artifact,
+        )
+    )
+    payload = response.payload
+    return ConcreteSublemmaSummary(
+        informal_statement=_normalize_concrete_sublemma_summary_text(
+            str(payload["informal_statement"]).strip()
+        ),
+        informal_proof_text=_normalize_concrete_sublemma_summary_text(
+            str(payload["informal_proof_text"]).strip()
+        ),
+    )
+
+
+def _normalize_concrete_sublemma_summary_text(text: str) -> str:
+    text = "".join(ch for ch in text if ch in ("\n", "\t") or ord(ch) >= 32)
+    text = text.replace("\\\\(", r"\(").replace("\\\\)", r"\)")
+    text = text.replace("\\\\[", r"\[").replace("\\\\]", r"\]")
+
+    def replace(match: re.Match[str]) -> str:
+        inner = match.group(1).strip()
+        if "\\" in inner:
+            return rf"\({inner}\)"
+        return match.group(0)
+
+    return re.sub(r"`([^`]+)`", replace, text)
 
 
 def enforce_formalization_faithfulness(node, artifact: FormalArtifact) -> FormalArtifact:
