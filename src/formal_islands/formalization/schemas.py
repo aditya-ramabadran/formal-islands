@@ -25,3 +25,4 @@ class AgenticFormalizationResult(FormalizationSchemaModel):
     lean_theorem_name: str = Field(min_length=1)
     lean_statement: str = Field(min_length=1)
     final_file_path: str = Field(min_length=1)
+    plan_file_path: str = Field(min_length=1)

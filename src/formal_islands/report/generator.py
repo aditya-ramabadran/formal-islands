@@ -223,8 +223,9 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       stroke-dasharray: 5 4;
     }}
     .graph-node-box.status-candidate-formal {{
-      fill: var(--status-candidate-fill);
-      stroke: var(--status-candidate-stroke);
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
     }}
     .graph-node-box.status-formal-verified {{
       fill: var(--status-verified-fill);
@@ -260,7 +261,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       fill: var(--status-informal-stroke);
     }}
     .graph-node-badge.status-candidate-formal {{
-      fill: var(--status-candidate-stroke);
+      fill: var(--status-informal-stroke);
     }}
     .graph-node-badge.status-formal-verified {{
       fill: var(--status-verified-stroke);
@@ -444,7 +445,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
         Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
       </p>
       <p class="graph-caption">
-        Informal nodes use dashed amber outlines, candidates use solid orange, verified formal nodes use green, and failed formal nodes use red.
+        Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
       </p>
     </section>
     <section>
@@ -733,8 +734,9 @@ def _render_node(node: ProofNode, layout: dict) -> str:
     title_lines = _wrap_title_lines(node.display_label or node.title)
     title_y_positions = _title_y_positions(y, len(title_lines))
     node_key = _node_class(node.id)
-    status_class = _status_class(node.status)
-    rx = _node_corner_radius(node.status)
+    visual_status = _graph_visual_status(node)
+    status_class = _status_class(visual_status)
+    rx = _node_corner_radius(visual_status)
     title_tspans = "\n".join(
         f'<tspan x="{cx}" y="{title_y_positions[index]}">{escape(line)}</tspan>'
         for index, line in enumerate(title_lines)
@@ -986,6 +988,12 @@ def _node_corner_radius(status: str) -> int:
     if status == "candidate_formal":
         return 22
     return 14
+
+
+def _graph_visual_status(node: ProofNode) -> str:
+    if node.status in {"formal_verified", "formal_failed"} and node.formal_artifact is not None:
+        return node.status
+    return "informal"
 
 
 def _slugify(value: str) -> str:

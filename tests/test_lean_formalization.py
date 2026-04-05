@@ -6,7 +6,10 @@ from pathlib import Path
 import pytest
 
 from formal_islands.backends import BackendInvocationError, MockBackend
-from formal_islands.formalization.agentic import build_agentic_formalization_request
+from formal_islands.formalization.agentic import (
+    agentic_worker_plan_path,
+    build_agentic_formalization_request,
+)
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.formalization.loop import formalize_candidate_node
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
@@ -68,6 +71,7 @@ def test_lean_workspace_prepares_agentic_worker_file(tmp_path: Path) -> None:
 def test_build_agentic_formalization_request_includes_concrete_setting_guidance(tmp_path: Path) -> None:
     workspace = create_workspace(tmp_path)
     scratch_path = workspace.prepare_worker_file("n2")
+    plan_path = agentic_worker_plan_path(scratch_path)
 
     request = build_agentic_formalization_request(
         graph=build_graph(),
@@ -82,6 +86,13 @@ def test_build_agentic_formalization_request_includes_concrete_setting_guidance(
     assert "prefer ascii identifiers" in request.prompt.lower()
     assert "lambda1" in request.prompt
     assert "most boring lean surface syntax" in request.prompt.lower()
+    assert str(plan_path) in request.prompt
+    assert "start with a lightweight planning pass" in request.prompt.lower()
+    assert "plan markdown file to create and maintain" in request.prompt.lower()
+    assert "target node/theorem" in request.prompt.lower()
+    assert "likely mathlib lemmas or apis to search for" in request.prompt.lower()
+    assert "`#check`" in request.prompt
+    assert "appending a new labeled section" in request.prompt.lower()
 
 
 def test_lean_verifier_captures_command_result(tmp_path: Path) -> None:
@@ -265,6 +276,11 @@ def test_formalize_candidate_node_agentic_mode_reverifies_worker_file(tmp_path: 
             self.summary_calls = 0
 
         def run_agentic_structured(self, request, *, timeout_seconds=None):
+            plan_file = agentic_worker_plan_path(worker_file)
+            plan_file.write_text(
+                "# Plan\n\n- Target theorem: sum_nonneg\n- Intended theorem shape: whole node\n",
+                encoding="utf-8",
+            )
             worker_file.write_text(
                 "import Mathlib.Data.Real.Basic\n\n"
                 "theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b := by\n"
@@ -280,6 +296,7 @@ def test_formalize_candidate_node_agentic_mode_reverifies_worker_file(tmp_path: 
                         "theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b"
                     ),
                     "final_file_path": str(worker_file.resolve()),
+                    "plan_file_path": str(plan_file.resolve()),
                 },
                 raw_stdout="",
                 raw_stderr="",
@@ -349,6 +366,11 @@ def test_formalize_candidate_node_promotes_concrete_sublemma_to_child_node(
             self.summary_calls = 0
 
         def run_agentic_structured(self, request, *, timeout_seconds=None):
+            plan_file = agentic_worker_plan_path(worker_file)
+            plan_file.write_text(
+                "# Plan\n\n- Target theorem: differential_inequality_for_Y\n- Intended theorem shape: concrete sublemma\n",
+                encoding="utf-8",
+            )
             worker_file.write_text(
                 "import Mathlib.Data.Real.Basic\n\n"
                 "namespace FormalIslands\n\n"
@@ -378,6 +400,7 @@ def test_formalize_candidate_node_promotes_concrete_sublemma_to_child_node(
                         "(1 / 2 : ℝ) * Y' ≥ ((p - 1) / (p + 1)) * nonlinIntegral"
                     ),
                     "final_file_path": str(worker_file.resolve()),
+                    "plan_file_path": str(plan_file.resolve()),
                 },
                 raw_stdout="",
                 raw_stderr="",
@@ -485,6 +508,18 @@ def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failur
             self.requests = []
 
         def run_agentic_structured(self, request, *, timeout_seconds=None):
+            plan_file = agentic_worker_plan_path(worker_file)
+            if not plan_file.exists():
+                plan_file.write_text(
+                    "# Initial plan\n\n- Intended theorem shape: whole node\n",
+                    encoding="utf-8",
+                )
+            else:
+                plan_file.write_text(
+                    plan_file.read_text(encoding="utf-8")
+                    + "\n## Revision 2\n\n- Previous draft was too abstract; stay concrete.\n",
+                    encoding="utf-8",
+                )
             self.calls += 1
             self.requests.append(request)
             if self.calls == 1:
@@ -521,6 +556,7 @@ def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failur
                     "lean_theorem_name": theorem_name,
                     "lean_statement": theorem_statement,
                     "final_file_path": str(worker_file.resolve()),
+                    "plan_file_path": str(plan_file.resolve()),
                 },
                 raw_stdout="",
                 raw_stderr="",
@@ -562,6 +598,9 @@ def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failur
     assert "theorem too_abstract" in backend.requests[1].prompt
     assert "prefer ascii identifiers" in backend.requests[1].prompt.lower()
     assert "lambda1" in backend.requests[1].prompt
+    assert "create the plan markdown file above first" in backend.requests[0].prompt.lower()
+    assert "do brief local scouting before you commit to the final theorem" in backend.requests[0].prompt.lower()
+    assert "appending a new labeled section" in backend.requests[1].prompt.lower()
     assert worker_file.read_text(encoding="utf-8").startswith("import Mathlib.Data.Real.Basic")
     assert len(updates) == 2
 
@@ -580,6 +619,11 @@ def test_formalize_candidate_node_agentic_uses_at_most_one_faithfulness_retry(
             self.calls = 0
 
         def run_agentic_structured(self, request, *, timeout_seconds=None):
+            plan_file = agentic_worker_plan_path(worker_file)
+            plan_file.write_text(
+                "# Plan\n\n- Intended theorem shape: whole node\n",
+                encoding="utf-8",
+            )
             self.calls += 1
             worker_file.write_text(
                 "import Mathlib.MeasureTheory.Integral.Bochner.Basic\n\n"
@@ -601,6 +645,7 @@ def test_formalize_candidate_node_agentic_uses_at_most_one_faithfulness_retry(
                         "∫ x, f x ∂μ = - ∫ x, g x ∂μ"
                     ),
                     "final_file_path": str(worker_file.resolve()),
+                    "plan_file_path": str(plan_file.resolve()),
                 },
                 raw_stdout="",
                 raw_stderr="",
@@ -648,6 +693,11 @@ def test_formalize_candidate_node_agentic_recovers_from_backend_failure_with_wor
         timeout_seconds = 420.0
 
         def run_agentic_structured(self, request, *, timeout_seconds=None):
+            plan_file = agentic_worker_plan_path(worker_file)
+            plan_file.write_text(
+                "# Plan\n\n- Target theorem: sum_nonneg\n",
+                encoding="utf-8",
+            )
             worker_file.write_text(
                 "import Mathlib.Data.Real.Basic\n\n"
                 "theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b := by\n"

@@ -18,6 +18,7 @@ from formal_islands.models import FormalArtifact, ProofGraph, VerificationResult
 AGENTIC_FORMALIZATION_SYSTEM_PROMPT = (
     "You are a focused Lean 4 formalization worker operating inside a local Mathlib project. "
     "You may edit files and run local commands within this one Codex run. "
+    "Begin with a short explicit planning pass, then formalize. "
     "Work on exactly one scratch file, keep the formalization local and faithful to the target node, "
     "prefer the most concrete faithful theorem you can manage, "
     "and stop when the scratch file is in its best current state. "
@@ -25,6 +26,12 @@ AGENTIC_FORMALIZATION_SYSTEM_PROMPT = (
 )
 
 AGENTIC_WORKER_PLACEHOLDER = "-- agentic formalization worker scratch file\n"
+
+
+def agentic_worker_plan_path(scratch_file_path: Path) -> Path:
+    """Return the sibling markdown plan file used by the agentic worker."""
+
+    return scratch_file_path.with_name(f"{scratch_file_path.stem}_plan.md")
 
 
 def build_agentic_formalization_request(
@@ -41,6 +48,8 @@ def build_agentic_formalization_request(
         raise ValueError(f"node '{node_id}' was not found in the graph")
     if node.status != "candidate_formal":
         raise ValueError(f"node '{node_id}' must be candidate_formal before formalization")
+
+    plan_file_path = agentic_worker_plan_path(scratch_file_path).resolve()
 
     parents = [edge.source_id for edge in graph.edges if edge.target_id == node_id]
     children = [edge.target_id for edge in graph.edges if edge.source_id == node_id]
@@ -94,14 +103,38 @@ def build_agentic_formalization_request(
             ),
             f"Lean workspace root: {workspace_root}",
             f"Scratch file to create and edit: {scratch_file_path}",
+            f"Plan markdown file to create and maintain: {plan_file_path}",
             (
                 "Operate only inside the Lean workspace above, and only edit the specified scratch file. "
-                "Do not modify other repository files."
+                "Do not modify other repository files, except for the required plan markdown file above."
             ),
             (
                 "Within this single run, you may inspect local files, write the scratch file, run "
                 "`lake env lean <scratch_file_path>` from the Lean workspace root, read compiler feedback, "
                 "and revise the same file until it succeeds or you run out of time."
+            ),
+            (
+                "Start with a lightweight planning pass before serious Lean formalization. Create the plan markdown "
+                "file above first, then use it to decide the concrete theorem shape you will actually target."
+            ),
+            (
+                "Keep the plan concise. Include short sections for: target node/theorem, ambient setting to preserve, "
+                "important symbols or quantities that must remain in the theorem statement, abstractions to avoid, "
+                "intended theorem shape (whole node vs concrete sublemma), likely proof route, and likely Mathlib "
+                "lemmas or APIs to search for."
+            ),
+            (
+                "Use the plan to do brief local scouting before you commit to the final theorem. You may create tiny "
+                "scratch experiments, run `#check`, grep or ripgrep for likely lemma names, inspect imports, and read "
+                "nearby Mathlib files when that helps you choose the right concrete theorem shape."
+            ),
+            (
+                "Do not spend too long planning. This is a short planning layer meant to sharpen the theorem choice "
+                "and proof route before writing serious Lean code."
+            ),
+            (
+                "If you substantially change direction during the run, preserve visible plan history by appending a "
+                "new labeled section to the same markdown file instead of silently overwriting the old plan."
             ),
             (
                 "Prefer narrow, specific imports that match the identifiers actually used in the theorem. "
@@ -141,8 +174,9 @@ def build_agentic_formalization_request(
                 "replacement should still carry meaningful inferential load in the parent proof."
             ),
             (
-                "Return a JSON object with keys lean_theorem_name, lean_statement, and final_file_path. "
-                "The final_file_path must be exactly the scratch file path above."
+                "Return a JSON object with keys lean_theorem_name, lean_statement, final_file_path, and plan_file_path. "
+                "The final_file_path must be exactly the scratch file path above, and the plan_file_path must be exactly "
+                "the plan markdown path above."
             ),
         ]
         + (
@@ -201,14 +235,25 @@ def request_agentic_formalization(
 
     final_path = Path(formalization.final_file_path).resolve()
     expected_path = scratch_file_path.resolve()
+    plan_path = Path(formalization.plan_file_path).resolve()
+    expected_plan_path = agentic_worker_plan_path(scratch_file_path).resolve()
     if final_path != expected_path:
         raise BackendOutputError(
             "Agentic formalization returned an unexpected final file path: "
             f"{formalization.final_file_path}"
         )
+    if plan_path != expected_plan_path:
+        raise BackendOutputError(
+            "Agentic formalization returned an unexpected plan file path: "
+            f"{formalization.plan_file_path}"
+        )
     if not final_path.exists():
         raise BackendOutputError(
             f"Agentic formalization did not produce the expected scratch file: {final_path}"
+        )
+    if not plan_path.exists():
+        raise BackendOutputError(
+            f"Agentic formalization did not produce the expected plan markdown file: {plan_path}"
         )
 
     lean_code = final_path.read_text(encoding="utf-8")

@@ -51,7 +51,7 @@ def test_render_html_report_includes_core_sections() -> None:
     assert 'data-obligation-id="informal-proof-n1"' in html
     assert 'id="MathJax-script"' in html
     assert "width: min(100%, 460px);" in html
-    assert "verified formal nodes use green" in html
+    assert "Nodes without attached Lean artifacts use dashed amber outlines." in html
     assert "language-lean" in html
     assert 'class="tok-keyword"' in html or 'class="tok-type"' in html
     assert 'preserveAspectRatio="xMidYMin meet"' in html

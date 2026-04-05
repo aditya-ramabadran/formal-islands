@@ -294,6 +294,7 @@ def test_codex_backend_run_agentic_structured_uses_full_auto(tmp_path: Path) -> 
                 "lean_theorem_name": {"type": "string"},
                 "lean_statement": {"type": "string"},
                 "final_file_path": {"type": "string"},
+                "plan_file_path": {"type": "string"},
             },
         },
         cwd=tmp_path,
@@ -308,6 +309,7 @@ def test_codex_backend_run_agentic_structured_uses_full_auto(tmp_path: Path) -> 
                     "lean_theorem_name": "t",
                     "lean_statement": "True",
                     "final_file_path": "/tmp/t.lean",
+                    "plan_file_path": "/tmp/t_plan.md",
                 }
             ),
             encoding="utf-8",

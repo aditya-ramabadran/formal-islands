@@ -185,8 +185,9 @@
       stroke-dasharray: 5 4;
     }
     .graph-node-box.status-candidate-formal {
-      fill: var(--status-candidate-fill);
-      stroke: var(--status-candidate-stroke);
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
     }
     .graph-node-box.status-formal-verified {
       fill: var(--status-verified-fill);
@@ -222,7 +223,7 @@
       fill: var(--status-informal-stroke);
     }
     .graph-node-badge.status-candidate-formal {
-      fill: var(--status-candidate-stroke);
+      fill: var(--status-informal-stroke);
     }
     .graph-node-badge.status-formal-verified {
       fill: var(--status-verified-stroke);
@@ -375,21 +376,6 @@
       }
     }
     
-            .report-root:has(a.node-n0:hover) .node-n0.node-card,
-            .report-root:has(#node-n0:target) a.node-n0 .graph-node-box {
-              border-color: var(--highlight);
-              stroke: var(--highlight);
-              background: var(--highlight-soft);
-              fill: var(--highlight-soft);
-            }
-            .report-root:has(a.node-n0:hover) .node-n0.node-card,
-            .report-root:has(#node-n0:target).report-root .node-n0.node-card {
-              border-color: var(--highlight);
-              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
-              background: var(--target-panel);
-            }
-            
-
             .report-root:has(a.node-n1:hover) .node-n1.node-card,
             .report-root:has(#node-n1:target) a.node-n1 .graph-node-box {
               border-color: var(--highlight);
@@ -435,73 +421,6 @@
             }
             
 
-            .report-root:has(a.node-n4:hover) .node-n4.node-card,
-            .report-root:has(#node-n4:target) a.node-n4 .graph-node-box {
-              border-color: var(--highlight);
-              stroke: var(--highlight);
-              background: var(--highlight-soft);
-              fill: var(--highlight-soft);
-            }
-            .report-root:has(a.node-n4:hover) .node-n4.node-card,
-            .report-root:has(#node-n4:target).report-root .node-n4.node-card {
-              border-color: var(--highlight);
-              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
-              background: var(--target-panel);
-            }
-            
-
-            .report-root:has(a.node-n1__formal_core:hover) .node-n1__formal_core.node-card,
-            .report-root:has(#node-n1__formal_core:target) a.node-n1__formal_core .graph-node-box {
-              border-color: var(--highlight);
-              stroke: var(--highlight);
-              background: var(--highlight-soft);
-              fill: var(--highlight-soft);
-            }
-            .report-root:has(a.node-n1__formal_core:hover) .node-n1__formal_core.node-card,
-            .report-root:has(#node-n1__formal_core:target).report-root .node-n1__formal_core.node-card {
-              border-color: var(--highlight);
-              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
-              background: var(--target-panel);
-            }
-            
-
-                .report-root:has(.obligation-informal-proof-n0:hover) a.node-n0 .graph-node-box,
-.report-root:has(.obligation-informal-proof-n0:hover) .node-n0.node-card {
-                  border-color: var(--highlight);
-                  stroke: var(--highlight);
-                  stroke-width: 2.8;
-                  background: var(--preview-soft);
-                  fill: var(--preview-soft);
-                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
-                }
-                
-
-                .report-root:has(#obligation-check-informal-proof-n0:checked) a.node-n0 .graph-node-box,
-.report-root:has(#obligation-check-informal-proof-n0:checked) .node-n0.node-card {
-                  border-color: var(--checked);
-                  stroke: var(--checked);
-                  stroke-width: 2.9;
-                  background: var(--checked-soft);
-                  fill: var(--checked-soft);
-                }
-                
-
-                .report-root:has(#obligation-check-informal-proof-n0:checked) .edge-n4-n0 {
-                  stroke: var(--checked);
-                  stroke-width: 4.5;
-                }
-                
-
-            .report-root:has(.obligation-informal-proof-n0:hover) .obligation-informal-proof-n0 {
-              border-color: var(--highlight);
-              background: var(--preview-soft);
-            }
-            .report-root:has(#obligation-check-informal-proof-n0:checked) .obligation-informal-proof-n0 {
-              border-color: var(--checked);
-              background: var(--checked-soft);
-            }
-            
-
                 .report-root:has(.obligation-informal-proof-n1:hover) a.node-n1 .graph-node-box,
 .report-root:has(.obligation-informal-proof-n1:hover) .node-n1.node-card {
                   border-color: var(--highlight);
@@ -523,8 +442,8 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-n1:checked) .edge-n1-n4,
-.report-root:has(#obligation-check-informal-proof-n1:checked) .edge-n1__formal_core-n1 {
+                .report-root:has(#obligation-check-informal-proof-n1:checked) .edge-n2-n1,
+.report-root:has(#obligation-check-informal-proof-n1:checked) .edge-n3-n1 {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
@@ -561,7 +480,7 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-n2:checked) .edge-n2-n4 {
+                .report-root:has(#obligation-check-informal-proof-n2:checked) .edge-n2-n1 {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
@@ -598,7 +517,7 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-n3:checked) .edge-n3-n4 {
+                .report-root:has(#obligation-check-informal-proof-n3:checked) .edge-n3-n1 {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
@@ -609,83 +528,6 @@
               background: var(--preview-soft);
             }
             .report-root:has(#obligation-check-informal-proof-n3:checked) .obligation-informal-proof-n3 {
-              border-color: var(--checked);
-              background: var(--checked-soft);
-            }
-            
-
-                .report-root:has(.obligation-informal-proof-n4:hover) a.node-n4 .graph-node-box,
-.report-root:has(.obligation-informal-proof-n4:hover) .node-n4.node-card {
-                  border-color: var(--highlight);
-                  stroke: var(--highlight);
-                  stroke-width: 2.8;
-                  background: var(--preview-soft);
-                  fill: var(--preview-soft);
-                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
-                }
-                
-
-                .report-root:has(#obligation-check-informal-proof-n4:checked) a.node-n4 .graph-node-box,
-.report-root:has(#obligation-check-informal-proof-n4:checked) .node-n4.node-card {
-                  border-color: var(--checked);
-                  stroke: var(--checked);
-                  stroke-width: 2.9;
-                  background: var(--checked-soft);
-                  fill: var(--checked-soft);
-                }
-                
-
-                .report-root:has(#obligation-check-informal-proof-n4:checked) .edge-n1-n4,
-.report-root:has(#obligation-check-informal-proof-n4:checked) .edge-n2-n4,
-.report-root:has(#obligation-check-informal-proof-n4:checked) .edge-n3-n4,
-.report-root:has(#obligation-check-informal-proof-n4:checked) .edge-n4-n0 {
-                  stroke: var(--checked);
-                  stroke-width: 4.5;
-                }
-                
-
-            .report-root:has(.obligation-informal-proof-n4:hover) .obligation-informal-proof-n4 {
-              border-color: var(--highlight);
-              background: var(--preview-soft);
-            }
-            .report-root:has(#obligation-check-informal-proof-n4:checked) .obligation-informal-proof-n4 {
-              border-color: var(--checked);
-              background: var(--checked-soft);
-            }
-            
-
-                .report-root:has(.obligation-semantic-match-n1__formal_core:hover) a.node-n1__formal_core .graph-node-box,
-.report-root:has(.obligation-semantic-match-n1__formal_core:hover) .node-n1__formal_core.node-card {
-                  border-color: var(--highlight);
-                  stroke: var(--highlight);
-                  stroke-width: 2.8;
-                  background: var(--preview-soft);
-                  fill: var(--preview-soft);
-                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
-                }
-                
-
-                .report-root:has(#obligation-check-semantic-match-n1__formal_core:checked) a.node-n1__formal_core .graph-node-box,
-.report-root:has(#obligation-check-semantic-match-n1__formal_core:checked) .node-n1__formal_core.node-card {
-                  border-color: var(--checked);
-                  stroke: var(--checked);
-                  stroke-width: 2.9;
-                  background: var(--checked-soft);
-                  fill: var(--checked-soft);
-                }
-                
-
-                .report-root:has(#obligation-check-semantic-match-n1__formal_core:checked) .edge-n1__formal_core-n1 {
-                  stroke: var(--checked);
-                  stroke-width: 4.5;
-                }
-                
-
-            .report-root:has(.obligation-semantic-match-n1__formal_core:hover) .obligation-semantic-match-n1__formal_core {
-              border-color: var(--highlight);
-              background: var(--preview-soft);
-            }
-            .report-root:has(#obligation-check-semantic-match-n1__formal_core:checked) .obligation-semantic-match-n1__formal_core {
               border-color: var(--checked);
               background: var(--checked-soft);
             }
@@ -714,82 +556,54 @@ Moreover,
 \[
 \|u\|_{H_0^1(\Omega)} \le C \|f\|_{L^2(\Omega)}.
 \]</div>
-      <p class="meta">Root node: n0</p>
+      <p class="meta">Root node: n1</p>
     </section>
     <section>
       <h2>Graph Summary</h2>
       <p>
-        <span class="pill">Nodes: 6</span>
-        <span class="pill">Edges: 5</span>
-        <span class="pill">Informal: 2</span>
-        <span class="pill">Candidates: 3</span>
-        <span class="pill">Verified: 1</span>
-        <span class="pill">Failed: 0</span>
+        <span class="pill">Nodes: 3</span>
+        <span class="pill">Edges: 2</span>
+        <span class="pill">Informal: 0</span>
+        <span class="pill">Candidates: 2</span>
+        <span class="pill">Verified: 0</span>
+        <span class="pill">Failed: 1</span>
       </p>
       <div class="graph-shell">
         
     <div class="graph-frame">
-      <svg class="graph-widget" viewBox="0 0 420 696" width="420" height="696" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+      <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
         <defs>
           <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
             <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
           </marker>
         </defs>
-        <g><line class="graph-edge edge-n1-n4" x1="210.0" y1="201.0" x2="210.0" y2="495.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-n2-n4" x1="210.0" y1="319.0" x2="210.0" y2="495.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-n3-n4" x1="210.0" y1="437.0" x2="210.0" y2="495.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-n4-n0" x1="210.0" y1="555.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-n1__formal_core-n1" x1="210.0" y1="673.0" x2="210.0" y2="141.0" marker-end="url(#graph-arrow)"></line></g>
+        <g><line class="graph-edge edge-n2-n1" x1="210.0" y1="201.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-n3-n1" x1="210.0" y1="319.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line></g>
         <g>
-    <a class="graph-node-link node-n0 status-informal" href="#node-n0">
-      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
+    <a class="graph-node-link node-n1 status-formal-failed" href="#node-n1">
+      <rect class="graph-node-box status-formal-failed" x="144.0" y="20" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="32" r="4.6"></circle>
       <text class="graph-node-title"><tspan x="210.0" y="42">Poisson weak</tspan>
-<tspan x="210.0" y="54">solution via La…</tspan></text>
-      <text class="graph-node-id" x="210.0" y="68">n0</text>
+<tspan x="210.0" y="54">solution exists…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">n1</text>
     </a>
     
 
-    <a class="graph-node-link node-n1 status-informal" href="#node-n1">
+    <a class="graph-node-link node-n2 status-informal" href="#node-n2">
       <rect class="graph-node-box status-informal" x="144.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
       <circle class="graph-node-badge status-informal" cx="262.0" cy="150" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="160">boundedness of</tspan>
-<tspan x="210.0" y="172">\(a\)</tspan></text>
-      <text class="graph-node-id" x="210.0" y="186">n1</text>
+      <text class="graph-node-title"><tspan x="210.0" y="160">Boundedness and</tspan>
+<tspan x="210.0" y="172">coercivity of \…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="186">n2</text>
     </a>
     
 
-    <a class="graph-node-link node-n2 status-candidate-formal" href="#node-n2">
-      <rect class="graph-node-box status-candidate-formal" x="144.0" y="256" rx="22" ry="22" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="268" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="278">coercivity of</tspan>
-<tspan x="210.0" y="290">\(a\)</tspan></text>
-      <text class="graph-node-id" x="210.0" y="304">n2</text>
-    </a>
-    
-
-    <a class="graph-node-link node-n3 status-candidate-formal" href="#node-n3">
-      <rect class="graph-node-box status-candidate-formal" x="144.0" y="374" rx="22" ry="22" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="386" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="396">continuity of</tspan>
-<tspan x="210.0" y="408">\(\ell\)</tspan></text>
-      <text class="graph-node-id" x="210.0" y="422">n3</text>
-    </a>
-    
-
-    <a class="graph-node-link node-n4 status-candidate-formal" href="#node-n4">
-      <rect class="graph-node-box status-candidate-formal" x="144.0" y="492" rx="22" ry="22" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="504" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="519">Lax–Milgram step</tspan></text>
-      <text class="graph-node-id" x="210.0" y="540">n4</text>
-    </a>
-    
-
-    <a class="graph-node-link node-n1__formal_core status-formal-verified" href="#node-n1__formal_core">
-      <rect class="graph-node-box status-formal-verified" x="144.0" y="610" rx="28" ry="28" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="622" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="637">Certified core</tspan></text>
-      <text class="graph-node-id" x="210.0" y="658">n1__formal_core</text>
+    <a class="graph-node-link node-n3 status-informal" href="#node-n3">
+      <rect class="graph-node-box status-informal" x="144.0" y="256" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="278">Continuity of</tspan>
+<tspan x="210.0" y="290">\(\ell\)</tspan></text>
+      <text class="graph-node-id" x="210.0" y="304">n3</text>
     </a>
     </g>
       </svg>
@@ -800,32 +614,19 @@ Moreover,
         Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
       </p>
       <p class="graph-caption">
-        Informal nodes use dashed amber outlines, candidates use solid orange, verified formal nodes use green, and failed formal nodes use red.
+        Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
       </p>
     </section>
     <section>
       <h2>Review Checklist</h2>
       <ul class="checklist">
         
-    <li class="checklist-item obligation-informal-proof-n0" data-obligation-id="informal-proof-n0">
-      <label class="checklist-label" for="obligation-check-informal-proof-n0">
-        <input id="obligation-check-informal-proof-n0" type="checkbox" />
-        <span>
-          <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;n0&#x27; (Weak formulation of the Poisson problem via Lax–Milgram) has an informal proof that establishes its informal statement, assuming its child dependencies.
-          
-          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n0">n0</a></div>
-        </span>
-      </label>
-    </li>
-    
-
     <li class="checklist-item obligation-informal-proof-n1" data-obligation-id="informal-proof-n1">
       <label class="checklist-label" for="obligation-check-informal-proof-n1">
         <input id="obligation-check-informal-proof-n1" type="checkbox" />
         <span>
           <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;n1&#x27; (Boundedness of the Dirichlet bilinear form) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          Check that node &#x27;n1&#x27; (Weak formulation of the Poisson problem via Lax–Milgram) has an informal proof that establishes its informal statement, assuming its child dependencies.
           
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n1">n1</a></div>
         </span>
@@ -838,7 +639,7 @@ Moreover,
         <input id="obligation-check-informal-proof-n2" type="checkbox" />
         <span>
           <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;n2&#x27; (Coercivity of the Dirichlet bilinear form) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          Check that node &#x27;n2&#x27; (The energy form is bounded and coercive on \(H_0^1(\Omega)\)) has an informal proof that establishes its informal statement, assuming its child dependencies.
           
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n2">n2</a></div>
         </span>
@@ -851,45 +652,9 @@ Moreover,
         <input id="obligation-check-informal-proof-n3" type="checkbox" />
         <span>
           <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;n3&#x27; (Continuity of the load functional) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          Check that node &#x27;n3&#x27; (The load functional is continuous on \(H_0^1(\Omega)\)) has an informal proof that establishes its informal statement, assuming its child dependencies.
           
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n3">n3</a></div>
-        </span>
-      </label>
-    </li>
-    
-
-    <li class="checklist-item obligation-informal-proof-n4" data-obligation-id="informal-proof-n4">
-      <label class="checklist-label" for="obligation-check-informal-proof-n4">
-        <input id="obligation-check-informal-proof-n4" type="checkbox" />
-        <span>
-          <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;n4&#x27; (Lax–Milgram application and a priori estimate) has an informal proof that establishes its informal statement, assuming its child dependencies.
-          
-          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n4">n4</a></div>
-        </span>
-      </label>
-    </li>
-    
-
-    <li class="checklist-item obligation-semantic-match-n1__formal_core" data-obligation-id="semantic-match-n1__formal_core">
-      <label class="checklist-label" for="obligation-check-semantic-match-n1__formal_core">
-        <input id="obligation-check-semantic-match-n1__formal_core" type="checkbox" />
-        <span>
-          <span class="checklist-kind">formal_semantic_match_check</span><br />
-          Check that node &#x27;n1__formal_core&#x27; (Certified local core for Boundedness of the Dirichlet bilinear form) matches the verified Lean statement &#x27;theorem dirichlet_form_bounded
-    {d : ℕ}
-    (Ω : Set (EuclideanSpace ℝ (Fin d)))
-    (grad_u grad_v :
-      MeasureTheory.Lp (EuclideanSpace ℝ (Fin d)) 2 (volume.restrict Ω)) :
-    |∫ x, ⟪grad_u x, grad_v x⟫ ∂(volume.restrict Ω)| ≤ ‖grad_u‖ * ‖grad_v‖&#x27;.
-          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> dirichlet_form_bounded
-    {d : <span class="tok-type">ℕ</span>}
-    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
-    (grad_u grad_v :
-      MeasureTheory.Lp (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)) <span class="tok-number">2</span> (volume.restrict Ω)) :
-    |∫ x, ⟪grad_u x, grad_v x⟫ ∂(volume.restrict Ω)| ≤ ‖grad_u‖ * ‖grad_v‖</code></pre></div>
-          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n1__formal_core">n1__formal_core</a></div>
         </span>
       </label>
     </li>
@@ -900,152 +665,38 @@ Moreover,
       <h2>Nodes</h2>
       <div class="nodes-grid">
         
-    <article class="node-card node-n0" id="node-n0" data-node-id="n0">
-      <h3>Weak formulation of the Poisson problem via Lax–Milgram</h3>
-      <p class="meta">Node id: n0 | Status: informal</p>
-      <p class="meta">Display label: Poisson weak solution via Lax–Milgram</p>
-      
-      <p><strong>Informal statement:</strong></p>
-      <div class="math-text">With \(U:=H_0^1(\Omega)\), define \(a(u,v):=\int_\Omega \nabla u\cdot\nabla v\,dx\) and \(\ell(v):=\int_\Omega f v\,dx\). Then there exists a unique \(u\in U\) such that \(a(u,v)=\ell(v)\) for all \(v\in U\), i.e.
-\[
-\int_\Omega \nabla u \cdot \nabla v\,dx = \int_\Omega f v\,dx
-\qquad \forall v\in H_0^1(\Omega),
-\]
-and \(\|u\|_{H_0^1(\Omega)} \le C\|f\|_{L^2(\Omega)}\).</div>
-      <p><strong>Informal proof:</strong></p>
-      <div class="math-text">Check the hypotheses of Lax–Milgram on \(U=H_0^1(\Omega)\): the form \(a\) is bilinear, bounded, and coercive, and the functional \(\ell\) is continuous. Then apply the Lax–Milgram theorem to obtain existence and uniqueness of \(u\in U\) with \(a(u,v)=\ell(v)\) for all \(v\in U\). Unwinding the definitions gives the weak formulation. The standard a priori estimate from Lax–Milgram yields \(\|u\|_{H_0^1(\Omega)} \le C\|f\|_{L^2(\Omega)}\).</div>
-      
-    </article>
-    
-
     <article class="node-card node-n1" id="node-n1" data-node-id="n1">
-      <h3>Boundedness of the Dirichlet bilinear form</h3>
-      <p class="meta">Node id: n1 | Status: informal</p>
-      <p class="meta">Display label: boundedness of \(a\)</p>
-      
+      <h3>Weak formulation of the Poisson problem via Lax–Milgram</h3>
+      <p class="meta">Node id: n1 | Status: formal_failed</p>
+      <p class="meta">Display label: Poisson weak solution exists uniquely</p>
+      <p class="meta">Formalization priority: 3. Rationale: Once the two bounds are formalized, the remaining step is a clean application of Lax–Milgram plus its standard norm estimate, making the root theorem a reasonable final assembly target.</p>
       <p><strong>Informal statement:</strong></p>
-      <div class="math-text">For all \(u,v\in H_0^1(\Omega)\),
+      <div class="math-text">With \(U:=H_0^1(\Omega)\), there exists a unique \(u\in U\) such that
 \[
-|a(u,v)|=\left|\int_\Omega \nabla u\cdot\nabla v\,dx\right|
-\le \|u\|_{H_0^1(\Omega)}\,\|v\|_{H_0^1(\Omega)}.
+\int_\Omega \nabla u\cdot\nabla v\,dx=\int_\Omega f v\,dx
+\qquad \forall v\in U,
 \]
-Hence \(a\) is bounded on \(H_0^1(\Omega)\times H_0^1(\Omega)\).</div>
+and \(\|u\|_{H_0^1(\Omega)}\le C\|f\|_{L^2(\Omega)}\).</div>
       <p><strong>Informal proof:</strong></p>
-      <div class="math-text">Apply Cauchy–Schwarz to the integral of \(\nabla u\cdot\nabla v\):
+      <div class="math-text">Define \(a(u,v):=\int_\Omega \nabla u\cdot\nabla v\,dx\) and \(\ell(v):=\int_\Omega f v\,dx\). By the auxiliary claims, \(a\) is a bilinear, bounded, coercive form on \(U\), and \(\ell\) is a continuous linear functional on \(U\). Therefore the hypotheses of the Lax–Milgram theorem are satisfied, so there exists a unique \(u\in U\) such that \(a(u,v)=\ell(v)\) for all \(v\in U\). Writing this out gives exactly
 \[
-\left|\int_\Omega \nabla u\cdot\nabla v\,dx\right|
-\le \left(\int_\Omega |\nabla u|^2\,dx\right)^{1/2}
-\left(\int_\Omega |\nabla v|^2\,dx\right)^{1/2}.
+\int_\Omega \nabla u\cdot\nabla v\,dx=\int_\Omega f v\,dx
+\qquad \forall v\in H_0^1(\Omega).
 \]
-On \(H_0^1(\Omega)\), this is exactly the \(H_0^1\)-norm bound used here.</div>
-      
-    </article>
-    
-
-    <article class="node-card node-n2" id="node-n2" data-node-id="n2">
-      <h3>Coercivity of the Dirichlet bilinear form</h3>
-      <p class="meta">Node id: n2 | Status: candidate_formal</p>
-      <p class="meta">Display label: coercivity of \(a\)</p>
-      <p class="meta">Formalization priority: 2. Rationale: High-yield formal node because the coercivity constant is explicit and feeds directly into the final a priori bound.</p>
-      <p><strong>Informal statement:</strong></p>
-      <div class="math-text">For all \(u\in H_0^1(\Omega)\),
-\[
-a(u,u)=\int_\Omega |\nabla u|^2\,dx=\|u\|_{H_0^1(\Omega)}^2.
-\]
-Therefore \(a\) is coercive on \(H_0^1(\Omega)\).</div>
-      <p><strong>Informal proof:</strong></p>
-      <div class="math-text">By definition of \(a\),
-\[
-a(u,u)=\int_\Omega |\nabla u|^2\,dx.
-\]
-Using the standard norm on \(H_0^1(\Omega)\), given by the \(L^2\)-norm of the gradient, this equals \(\|u\|_{H_0^1(\Omega)}^2\). Hence the coercivity constant is \(1\).</div>
-      
-    </article>
-    
-
-    <article class="node-card node-n3" id="node-n3" data-node-id="n3">
-      <h3>Continuity of the load functional</h3>
-      <p class="meta">Node id: n3 | Status: candidate_formal</p>
-      <p class="meta">Display label: continuity of \(\ell\)</p>
-      <p class="meta">Formalization priority: 1. Rationale: Most valuable local formal island: it packages the concrete estimate for \(\ell\), combining Cauchy–Schwarz with Poincaré, and removes a real analytic obligation in the Lax–Milgram setup.</p>
-      <p><strong>Informal statement:</strong></p>
-      <div class="math-text">For all \(v\in H_0^1(\Omega)\),
-\[
-|\ell(v)|=\left|\int_\Omega f v\,dx\right|
-\le C_P\|f\|_{L^2(\Omega)}\,\|v\|_{H_0^1(\Omega)}.
-\]
-Hence \(\ell\) is continuous on \(H_0^1(\Omega)\).</div>
-      <p><strong>Informal proof:</strong></p>
-      <div class="math-text">First apply Cauchy–Schwarz:
-\[
-\left|\int_\Omega f v\,dx\right|\le \|f\|_{L^2(\Omega)}\|v\|_{L^2(\Omega)}.
-\]
-Then use the Poincaré inequality on \(H_0^1(\Omega)\),
-\[
-\|v\|_{L^2(\Omega)}\le C_P\|\nabla v\|_{L^2(\Omega)},
-\]
-to obtain the claimed bound in terms of \(\|v\|_{H_0^1(\Omega)}\).</div>
-      
-    </article>
-    
-
-    <article class="node-card node-n4" id="node-n4" data-node-id="n4">
-      <h3>Lax–Milgram application and a priori estimate</h3>
-      <p class="meta">Node id: n4 | Status: candidate_formal</p>
-      <p class="meta">Display label: Lax–Milgram step</p>
-      <p class="meta">Formalization priority: 3. Rationale: Reasonable formal target if the library already contains Lax–Milgram in a near-ready form; otherwise better treated as an application wrapper around the local analytic checks.</p>
-      <p><strong>Informal statement:</strong></p>
-      <div class="math-text">Since \(a\) is bilinear, bounded, and coercive on \(H_0^1(\Omega)\), and \(\ell\) is continuous, the Lax–Milgram theorem gives a unique \(u\in H_0^1(\Omega)\) such that \(a(u,v)=\ell(v)\) for all \(v\in H_0^1(\Omega)\). Moreover,
-\[
-\|u\|_{H_0^1(\Omega)}\le C\|f\|_{L^2(\Omega)}.
-\]</div>
-      <p><strong>Informal proof:</strong></p>
-      <div class="math-text">Invoke Lax–Milgram with the previously verified properties. Existence and uniqueness follow immediately. The norm estimate is the standard estimate from the theorem, with constant determined by the continuity bound for \(\ell\) and the coercivity constant of \(a\). This yields the claimed weak solution and stability bound.</div>
-      
-    </article>
-    
-
-    <article class="node-card node-n1__formal_core" id="node-n1__formal_core" data-node-id="n1__formal_core">
-      <h3>Certified local core for Boundedness of the Dirichlet bilinear form</h3>
-      <p class="meta">Node id: n1__formal_core | Status: formal_verified</p>
-      <p class="meta">Display label: Certified core</p>
-      
-      <p><strong>Informal statement:</strong></p>
-      <div class="math-text">Lean verifies a narrower concrete local core supporting this parent step. See the attached Lean statement and code for the exact certified sublemma.</div>
-      <p><strong>Informal proof:</strong></p>
-      <div class="math-text">This node records a verified supporting sublemma extracted from the formalization of parent node &#x27;n1&#x27;. It certifies part of the parent&#x27;s local proof burden without claiming to cover the full informal node.</div>
+The standard Lax–Milgram estimate then yields \(\|u\|_{H_0^1(\Omega)}\le C\|f\|_{L^2(\Omega)}\), where \(C\) depends on the continuity bound for \(\ell\) and the coercivity constant of \(a\).</div>
       
         <h4>Formal Artifact</h4>
-        <p><strong>Lean theorem name:</strong> dirichlet_form_bounded</p>
-        <p><strong>Coverage:</strong> concrete_sublemma</p><p class="meta">Accepted as a narrower concrete local core in the same ambient setting; it should support the parent node rather than count as full-node certification.</p>
+        <p><strong>Lean theorem name:</strong> n1_backend_failure</p>
+        <p><strong>Coverage:</strong> full_node</p>
         <div class="statement-code">
           <strong>Lean statement:</strong>
-          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> dirichlet_form_bounded
-    {d : <span class="tok-type">ℕ</span>}
-    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
-    (grad_u grad_v :
-      MeasureTheory.Lp (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)) <span class="tok-number">2</span> (volume.restrict Ω)) :
-    |∫ x, ⟪grad_u x, grad_v x⟫ ∂(volume.restrict Ω)| ≤ ‖grad_u‖ * ‖grad_v‖</code></pre>
+          <pre><code class="language-lean lean-code"><span class="tok-comment">-- backend did not return a Lean statement</span></code></pre>
         </div>
-        <p><strong>Verification status:</strong> verified</p>
-        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_worker.lean</code></p>
+        <p><strong>Verification status:</strong> failed</p>
+        <p><strong>Verification command:</strong> <code>backend_request</code></p>
         <details>
           <summary>Lean code</summary>
-          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib.MeasureTheory.Function.L2Space
-<span class="tok-keyword">import</span> Mathlib.Analysis.InnerProductSpace.PiL2
-<span class="tok-keyword">import</span> Mathlib.MeasureTheory.Measure.Haar.InnerProductSpace
-
-<span class="tok-keyword">open</span> MeasureTheory
-
-local notation <span class="tok-string">&quot;⟪&quot;</span> x <span class="tok-string">&quot;, &quot;</span> y <span class="tok-string">&quot;⟫&quot;</span> =&gt; inner <span class="tok-type">ℝ</span> x y
-
-<span class="tok-keyword">theorem</span> dirichlet_form_bounded
-    {d : <span class="tok-type">ℕ</span>}
-    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
-    (grad_u grad_v :
-      MeasureTheory.Lp (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)) <span class="tok-number">2</span> (volume.restrict Ω)) :
-    |∫ x, ⟪grad_u x, grad_v x⟫ ∂(volume.restrict Ω)| ≤ ‖grad_u‖ * ‖grad_v‖ := <span class="tok-tactic">by</span>
-  <span class="tok-tactic">simpa</span> [MeasureTheory.L2.inner_def] using abs_real_inner_le_norm grad_u grad_v</code></pre>
+          <pre><code class="language-lean lean-code"><span class="tok-comment">-- backend did not return Lean code</span></code></pre>
         </details>
         <details>
           <summary>Verification logs</summary>
@@ -1053,9 +704,70 @@ local notation <span class="tok-string">&quot;⟪&quot;</span> x <span class="to
 
 
 stderr:
-</code></pre>
+Codex CLI timed out while waiting for structured output for task &#x27;formalize_node_agentic&#x27; after 420.0 seconds.</code></pre>
         </details>
         
+    </article>
+    
+
+    <article class="node-card node-n2" id="node-n2" data-node-id="n2">
+      <h3>The energy form is bounded and coercive on \(H_0^1(\Omega)\)</h3>
+      <p class="meta">Node id: n2 | Status: candidate_formal</p>
+      <p class="meta">Display label: Boundedness and coercivity of \(a\)</p>
+      <p class="meta">Formalization priority: 1. Rationale: High-yield local formal island: a concrete inequality plus the exact coercivity identity \(a(u,u)=\|u\|_{H_0^1(\Omega)}^2\), which carries the main operator-side verification for Lax–Milgram.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For \(a(u,v):=\int_\Omega \nabla u\cdot\nabla v\,dx\) on \(U=H_0^1(\Omega)\), the form \(a\) is bilinear, bounded, and coercive. In fact,
+\[
+|a(u,v)|\le \|u\|_{H_0^1(\Omega)}\|v\|_{H_0^1(\Omega)},
+\qquad
+ a(u,u)=\|u\|_{H_0^1(\Omega)}^2.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Bilinearity is immediate from linearity of the integral and the gradient. For boundedness, apply Cauchy–Schwarz:
+\[
+|a(u,v)|=\left|\int_\Omega \nabla u\cdot\nabla v\,dx\right|
+\le \left(\int_\Omega |\nabla u|^2\,dx\right)^{1/2}
+\left(\int_\Omega |\nabla v|^2\,dx\right)^{1/2}.
+\]
+Since on \(H_0^1(\Omega)\) the chosen norm is the gradient norm, this is exactly
+\[
+|a(u,v)|\le \|u\|_{H_0^1(\Omega)}\|v\|_{H_0^1(\Omega)}.
+\]
+For coercivity,
+\[
+a(u,u)=\int_\Omega |\nabla u|^2\,dx=\|u\|_{H_0^1(\Omega)}^2,
+\]
+so \(a(u,u)\ge 1\cdot \|u\|_{H_0^1(\Omega)}^2\). Thus the coercivity constant is \(\alpha=1\).</div>
+      
+    </article>
+    
+
+    <article class="node-card node-n3" id="node-n3" data-node-id="n3">
+      <h3>The load functional is continuous on \(H_0^1(\Omega)\)</h3>
+      <p class="meta">Node id: n3 | Status: candidate_formal</p>
+      <p class="meta">Display label: Continuity of \(\ell\)</p>
+      <p class="meta">Formalization priority: 2. Rationale: Concrete functional estimate combining Cauchy–Schwarz with Poincaré; this is the main data-side bound and is plausibly reusable in nearby elliptic weak-form arguments.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For \(\ell(v):=\int_\Omega f v\,dx\) with \(f\in L^2(\Omega)\), the functional \(\ell\) is linear and continuous on \(H_0^1(\Omega)\). More precisely,
+\[
+|\ell(v)|\le C_P\|f\|_{L^2(\Omega)}\|v\|_{H_0^1(\Omega)}.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Linearity is immediate from linearity of the integral. For continuity, Cauchy–Schwarz gives
+\[
+|\ell(v)|=\left|\int_\Omega f v\,dx\right|
+\le \|f\|_{L^2(\Omega)}\|v\|_{L^2(\Omega)}.
+\]
+Using the Poincaré inequality on \(H_0^1(\Omega)\),
+\[
+\|v\|_{L^2(\Omega)}\le C_P\|\nabla v\|_{L^2(\Omega)}=C_P\|v\|_{H_0^1(\Omega)},
+\]
+we obtain
+\[
+|\ell(v)|\le C_P\|f\|_{L^2(\Omega)}\|v\|_{H_0^1(\Omega)}.
+\]
+Hence \(\ell\) is a bounded linear functional on \(H_0^1(\Omega)\).</div>
+      
     </article>
     
       </div>

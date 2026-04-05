@@ -11,4 +11,4 @@ dist/
 lean_project/.lake/
 lean_project/build/
 lean_project/.cache/
-lean_project/FormalIslands/Generated/*.lean
+lean_project/FormalIslands/Generated/*

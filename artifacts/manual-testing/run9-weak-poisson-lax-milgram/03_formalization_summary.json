@@ -1,7 +1,7 @@
 {
   "node_id": "n1",
-  "status": "verified",
-  "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_worker.lean",
+  "status": "failed",
+  "artifact_path": null,
   "attempt_count": 1,
-  "stderr": ""
+  "stderr": "Codex CLI timed out while waiting for structured output for task 'formalize_node_agentic' after 420.0 seconds."
 }
