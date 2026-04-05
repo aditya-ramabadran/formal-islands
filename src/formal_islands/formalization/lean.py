@@ -5,6 +5,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -60,32 +61,31 @@ class LeanWorkspace:
         self.validate()
         self.generated_dir.mkdir(parents=True, exist_ok=True)
         safe_node_id = node_id.replace("/", "_")
-        scratch_path = self.generated_dir / f"{safe_node_id}_attempt_{attempt_number}.lean"
+        scratch_path = self.generated_dir / self._unique_generated_filename(
+            f"{safe_node_id}_attempt_{attempt_number}",
+            "lean",
+        )
         scratch_path.write_text(lean_code, encoding="utf-8")
         return scratch_path
 
     def prepare_worker_file(self, node_id: str) -> Path:
-        """Reserve the single-file workspace used by the one-shot agentic worker.
-
-        If a non-placeholder worker file already exists for this node (from a prior run),
-        it is renamed with a timestamp before the new placeholder is written, so previous
-        runs are preserved rather than silently overwritten.
-        """
+        """Reserve the single-file workspace used by the one-shot agentic worker."""
 
         self.validate()
         self.generated_dir.mkdir(parents=True, exist_ok=True)
         safe_node_id = node_id.replace("/", "_")
-        scratch_path = self.generated_dir / f"{safe_node_id}_worker.lean"
-
-        if scratch_path.exists() and scratch_path.read_text(encoding="utf-8") != AGENTIC_WORKER_PLACEHOLDER:
-            ts = time.strftime("%Y%m%d-%H%M%S")
-            scratch_path.rename(self.generated_dir / f"{safe_node_id}_worker_{ts}.lean")
-            plan_path = self.generated_dir / f"{safe_node_id}_worker_plan.md"
-            if plan_path.exists():
-                plan_path.rename(self.generated_dir / f"{safe_node_id}_worker_{ts}_plan.md")
-
+        scratch_path = self.generated_dir / self._unique_generated_filename(
+            f"{safe_node_id}_worker",
+            "lean",
+        )
         scratch_path.write_text(AGENTIC_WORKER_PLACEHOLDER, encoding="utf-8")
         return scratch_path
+
+    @staticmethod
+    def _unique_generated_filename(stem: str, suffix: str) -> str:
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        nonce = uuid.uuid4().hex[:8]
+        return f"{stem}_{timestamp}_{nonce}.{suffix}"
 
 
 @dataclass(frozen=True)

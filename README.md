@@ -171,6 +171,8 @@ Supported backends:
   Uses the local `codex` CLI for structured planning and one-shot agentic formalization.
 - `claude`
   Uses the local Claude Code CLI for structured planning and one-shot agentic formalization.
+- `gemini`
+  Uses the local Gemini CLI for structured planning and one-shot agentic formalization.
 
 Agentic formalization also writes into:
 

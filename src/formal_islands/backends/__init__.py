@@ -12,6 +12,7 @@ from formal_islands.backends.base import (
 )
 from formal_islands.backends.claude_code import ClaudeCodeBackend
 from formal_islands.backends.codex_cli import CodexCLIBackend
+from formal_islands.backends.gemini_cli import GeminiCLIBackend
 from formal_islands.backends.mock import MockBackend
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "BackendUnavailableError",
     "ClaudeCodeBackend",
     "CodexCLIBackend",
+    "GeminiCLIBackend",
     "MockBackend",
     "AgenticStructuredBackend",
     "StructuredBackend",

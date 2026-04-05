@@ -7,7 +7,13 @@ import json
 from pathlib import Path
 from typing import Any
 
-from formal_islands.backends import BackendError, ClaudeCodeBackend, CodexCLIBackend, StructuredBackend
+from formal_islands.backends import (
+    BackendError,
+    ClaudeCodeBackend,
+    CodexCLIBackend,
+    GeminiCLIBackend,
+    StructuredBackend,
+)
 from formal_islands.examples import TOY_RAW_PROOF, TOY_THEOREM_STATEMENT
 from formal_islands.extraction import (
     extract_proof_graph,
@@ -96,6 +102,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="agentic",
         help="Formalization execution mode. Default: one-shot agentic worker when supported by the selected backend.",
     )
+    add_formalization_timeout_arg(formalize_parser)
     formalize_parser.set_defaults(func=cmd_formalize_one)
 
     formalize_all_parser = subparsers.add_parser("formalize-all-candidates")
@@ -119,6 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="agentic",
         help="Formalization execution mode. Default: one-shot agentic worker when supported by the selected backend.",
     )
+    add_formalization_timeout_arg(formalize_all_parser)
     formalize_all_parser.set_defaults(func=cmd_formalize_all_candidates)
 
     report_parser = subparsers.add_parser("report")
@@ -147,6 +155,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="agentic",
         help="Formalization execution mode. Default: agentic Codex worker, with structured fallback available.",
     )
+    add_formalization_timeout_arg(run_parser)
     run_parser.set_defaults(func=cmd_run_example)
 
     benchmark_parser = subparsers.add_parser("run-benchmark")
@@ -182,6 +191,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="agentic",
         help="Formalization execution mode. Default: one-shot agentic worker when supported by the selected backend.",
     )
+    add_formalization_timeout_arg(benchmark_parser)
     benchmark_parser.set_defaults(func=cmd_run_benchmark)
 
     return parser
@@ -190,7 +200,7 @@ def build_parser() -> argparse.ArgumentParser:
 def add_backend_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--backend",
-        choices=["codex", "claude"],
+        choices=["codex", "claude", "gemini"],
         default="codex",
         help="Structured backend to use.",
     )
@@ -222,6 +232,18 @@ def add_output_dir_arg(parser: argparse.ArgumentParser) -> None:
         "--output-dir",
         required=True,
         help="Directory where stage outputs should be written.",
+    )
+
+
+def add_formalization_timeout_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--formalization-timeout-seconds",
+        type=float,
+        default=FORMALIZATION_BACKEND_TIMEOUT_SECONDS,
+        help=(
+            "Timeout for the formalization backend worker in seconds. "
+            "Default: 420."
+        ),
     )
 
 
@@ -292,7 +314,9 @@ def cmd_formalize_one(args: argparse.Namespace) -> int:
         args.backend,
         args.model,
         output_dir / "_backend_logs",
-        timeout_seconds=FORMALIZATION_BACKEND_TIMEOUT_SECONDS,
+        timeout_seconds=getattr(
+            args, "formalization_timeout_seconds", FORMALIZATION_BACKEND_TIMEOUT_SECONDS
+        ),
     )
     graph = load_graph(Path(args.graph))
     node_id = select_candidate_node_id(graph, requested_node_id=args.node_id)
@@ -333,7 +357,9 @@ def cmd_formalize_all_candidates(args: argparse.Namespace) -> int:
         args.backend,
         args.model,
         output_dir / "_backend_logs",
-        timeout_seconds=FORMALIZATION_BACKEND_TIMEOUT_SECONDS,
+        timeout_seconds=getattr(
+            args, "formalization_timeout_seconds", FORMALIZATION_BACKEND_TIMEOUT_SECONDS
+        ),
     )
     graph = load_graph(Path(args.graph))
     verifier = LeanVerifier(workspace=LeanWorkspace(root=Path(args.workspace)))
@@ -410,6 +436,9 @@ def cmd_run_example(args: argparse.Namespace) -> int:
             node_id="auto",
             max_attempts=args.max_attempts,
             formalization_mode=args.formalization_mode,
+            formalization_timeout_seconds=getattr(
+                args, "formalization_timeout_seconds", FORMALIZATION_BACKEND_TIMEOUT_SECONDS
+            ),
         )
     )
     formalized_graph_path = output_dir / "03_formalized_graph.json"
@@ -446,6 +475,9 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
             node_id=args.node_id,
             max_attempts=args.max_attempts,
             formalization_mode=args.formalization_mode,
+            formalization_timeout_seconds=getattr(
+                args, "formalization_timeout_seconds", FORMALIZATION_BACKEND_TIMEOUT_SECONDS
+            ),
         )
     )
     formalized_graph_path = output_dir / "03_formalized_graph.json"
@@ -470,6 +502,8 @@ def build_backend(
         return CodexCLIBackend(model=model, log_dir=log_dir, timeout_seconds=timeout_seconds)
     if name == "claude":
         return ClaudeCodeBackend(model=model, log_dir=log_dir, timeout_seconds=timeout_seconds)
+    if name == "gemini":
+        return GeminiCLIBackend(model=model, log_dir=log_dir, timeout_seconds=timeout_seconds)
     raise ValueError(f"unsupported backend: {name}")
 
 

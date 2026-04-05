@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Two-point logarithmic Sobolev inequality - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: rgba(255, 250, 241, 0.98);
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
+      --graph-shell-top: rgba(255, 251, 242, 0.96);
+      --graph-shell-bottom: rgba(245, 238, 227, 0.96);
+      --checklist-panel: rgba(255, 250, 241, 0.95);
+      --target-panel: #fff8ee;
+      --code-surface: #f4efe6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161311;
+        --panel: #211b17;
+        --ink: #f3ede5;
+        --muted: #c0b2a3;
+        --border: #4a3d32;
+        --accent: #f0b47b;
+        --accent-soft: #3a2b20;
+        --highlight: #ffb25c;
+        --highlight-soft: #3f2d19;
+        --preview-soft: #312419;
+        --checked: #65c08a;
+        --checked-soft: #213126;
+        --edge: #8f8172;
+        --status-informal-stroke: #d69760;
+        --status-informal-fill: rgba(46, 34, 26, 0.96);
+        --status-candidate-stroke: #f0a64e;
+        --status-candidate-fill: #3f2d18;
+        --status-verified-stroke: #65c08a;
+        --status-verified-fill: #213126;
+        --status-failed-stroke: #dd8a79;
+        --status-failed-fill: #3b2320;
+        --graph-shell-top: rgba(44, 34, 27, 0.98);
+        --graph-shell-bottom: rgba(32, 25, 21, 0.98);
+        --checklist-panel: rgba(36, 29, 24, 0.98);
+        --target-panel: #31261f;
+        --code-surface: #2a231e;
+      }
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(circle at top, #2a211b, var(--bg));
+      }
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .math-text mjx-container {
+      max-width: 100%;
+    }
+    .math-text mjx-container[display="true"] {
+      margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .math-text mjx-container[jax="CHTML"][display="true"] {
+      padding: 0 !important;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--graph-shell-top), var(--graph-shell-bottom));
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+    .graph-frame {
+      width: min(100%, 460px);
+      margin: 0 auto;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 240px;
+      overflow: visible;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 2.8;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-box {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-title {
+      fill: var(--ink);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 9.5px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--checklist-panel);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {
+      min-width: 0;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: var(--target-panel);
+    }
+    pre {
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 0.75rem;
+      background: var(--code-surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin: 0.6rem 0;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    code.inline-code {
+      background: var(--code-surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.95em;
+      white-space: break-spaces;
+    }
+    .statement-code {
+      margin-top: 0.35rem;
+    }
+    .statement-code pre,
+    .checklist-code pre {
+      margin-top: 0.35rem;
+      background: var(--code-surface);
+    }
+    .lean-code {
+      color: #2a241f;
+    }
+    .lean-code .tok-keyword {
+      color: #8b2f18;
+      font-weight: 700;
+    }
+    .lean-code .tok-tactic {
+      color: #9d5d17;
+      font-weight: 600;
+    }
+    .lean-code .tok-type {
+      color: #245f7a;
+    }
+    .lean-code .tok-number {
+      color: #7442a8;
+    }
+    .lean-code .tok-comment {
+      color: #6e7a60;
+      font-style: italic;
+    }
+    .lean-code .tok-string {
+      color: #2d7f4d;
+    }
+    @media (prefers-color-scheme: dark) {
+      .lean-code {
+        color: #f2e8dc;
+      }
+      .lean-code .tok-keyword {
+        color: #f08f63;
+      }
+      .lean-code .tok-tactic {
+        color: #f4b35d;
+      }
+      .lean-code .tok-type {
+        color: #73c7ff;
+      }
+      .lean-code .tok-number {
+        color: #be8cff;
+      }
+      .lean-code .tok-comment {
+        color: #97b18b;
+      }
+      .lean-code .tok-string {
+        color: #67d59a;
+      }
+    }
+    
+            .report-root:has(a.node-two_point_lsi:hover) .node-two_point_lsi.node-card,
+            .report-root:has(#node-two_point_lsi:target) a.node-two_point_lsi .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-two_point_lsi:hover) .node-two_point_lsi.node-card,
+            .report-root:has(#node-two_point_lsi:target).report-root .node-two_point_lsi.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-scalar_inequality_lemma:hover) .node-scalar_inequality_lemma.node-card,
+            .report-root:has(#node-scalar_inequality_lemma:target) a.node-scalar_inequality_lemma .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-scalar_inequality_lemma:hover) .node-scalar_inequality_lemma.node-card,
+            .report-root:has(#node-scalar_inequality_lemma:target).report-root .node-scalar_inequality_lemma.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-scalar_inequality_lemma_refined_local_claim:hover) .node-scalar_inequality_lemma_refined_local_claim.node-card,
+            .report-root:has(#node-scalar_inequality_lemma_refined_local_claim:target) a.node-scalar_inequality_lemma_refined_local_claim .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-scalar_inequality_lemma_refined_local_claim:hover) .node-scalar_inequality_lemma_refined_local_claim.node-card,
+            .report-root:has(#node-scalar_inequality_lemma_refined_local_claim:target).report-root .node-scalar_inequality_lemma_refined_local_claim.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-scalar_inequality_lemma_refined_local_claim__formal_core:hover) .node-scalar_inequality_lemma_refined_local_claim__formal_core.node-card,
+            .report-root:has(#node-scalar_inequality_lemma_refined_local_claim__formal_core:target) a.node-scalar_inequality_lemma_refined_local_claim__formal_core .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-scalar_inequality_lemma_refined_local_claim__formal_core:hover) .node-scalar_inequality_lemma_refined_local_claim__formal_core.node-card,
+            .report-root:has(#node-scalar_inequality_lemma_refined_local_claim__formal_core:target).report-root .node-scalar_inequality_lemma_refined_local_claim__formal_core.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-two_point_lsi:hover) a.node-two_point_lsi .graph-node-box,
+.report-root:has(.obligation-informal-proof-two_point_lsi:hover) .node-two_point_lsi.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-two_point_lsi:checked) a.node-two_point_lsi .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-two_point_lsi:checked) .node-two_point_lsi.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-two_point_lsi:checked) .edge-two_point_lsi-scalar_inequality_lemma_refined_local_claim {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-two_point_lsi:hover) .obligation-informal-proof-two_point_lsi {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-two_point_lsi:checked) .obligation-informal-proof-two_point_lsi {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-scalar_inequality_lemma:hover) a.node-scalar_inequality_lemma .graph-node-box,
+.report-root:has(.obligation-informal-proof-scalar_inequality_lemma:hover) .node-scalar_inequality_lemma.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-scalar_inequality_lemma:checked) a.node-scalar_inequality_lemma .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-scalar_inequality_lemma:checked) .node-scalar_inequality_lemma.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-scalar_inequality_lemma:checked) .edge-scalar_inequality_lemma_refined_local_claim-scalar_inequality_lemma {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-scalar_inequality_lemma:hover) .obligation-informal-proof-scalar_inequality_lemma {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-scalar_inequality_lemma:checked) .obligation-informal-proof-scalar_inequality_lemma {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-scalar_inequality_lemma_refined_local_claim:hover) a.node-scalar_inequality_lemma_refined_local_claim .graph-node-box,
+.report-root:has(.obligation-informal-proof-scalar_inequality_lemma_refined_local_claim:hover) .node-scalar_inequality_lemma_refined_local_claim.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-scalar_inequality_lemma_refined_local_claim:checked) a.node-scalar_inequality_lemma_refined_local_claim .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-scalar_inequality_lemma_refined_local_claim:checked) .node-scalar_inequality_lemma_refined_local_claim.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-scalar_inequality_lemma_refined_local_claim:checked) .edge-scalar_inequality_lemma_refined_local_claim-scalar_inequality_lemma,
+.report-root:has(#obligation-check-informal-proof-scalar_inequality_lemma_refined_local_claim:checked) .edge-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim,
+.report-root:has(#obligation-check-informal-proof-scalar_inequality_lemma_refined_local_claim:checked) .edge-two_point_lsi-scalar_inequality_lemma_refined_local_claim {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-scalar_inequality_lemma_refined_local_claim:hover) .obligation-informal-proof-scalar_inequality_lemma_refined_local_claim {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-scalar_inequality_lemma_refined_local_claim:checked) .obligation-informal-proof-scalar_inequality_lemma_refined_local_claim {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-scalar_inequality_lemma_refined_local_claim__formal_core:hover) a.node-scalar_inequality_lemma_refined_local_claim__formal_core .graph-node-box,
+.report-root:has(.obligation-semantic-match-scalar_inequality_lemma_refined_local_claim__formal_core:hover) .node-scalar_inequality_lemma_refined_local_claim__formal_core.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-scalar_inequality_lemma_refined_local_claim__formal_core:checked) a.node-scalar_inequality_lemma_refined_local_claim__formal_core .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-scalar_inequality_lemma_refined_local_claim__formal_core:checked) .node-scalar_inequality_lemma_refined_local_claim__formal_core.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-scalar_inequality_lemma_refined_local_claim__formal_core:checked) .edge-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-scalar_inequality_lemma_refined_local_claim__formal_core:hover) .obligation-semantic-match-scalar_inequality_lemma_refined_local_claim__formal_core {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-scalar_inequality_lemma_refined_local_claim__formal_core:checked) .obligation-semantic-match-scalar_inequality_lemma_refined_local_claim__formal_core {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim:hover) a.node-scalar_inequality_lemma_refined_local_claim__formal_core .graph-node-box,
+.report-root:has(.obligation-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim:hover) a.node-scalar_inequality_lemma_refined_local_claim .graph-node-box,
+.report-root:has(.obligation-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim:hover) .node-scalar_inequality_lemma_refined_local_claim__formal_core.node-card,
+.report-root:has(.obligation-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim:hover) .node-scalar_inequality_lemma_refined_local_claim.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim:checked) a.node-scalar_inequality_lemma_refined_local_claim__formal_core .graph-node-box,
+.report-root:has(#obligation-check-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim:checked) a.node-scalar_inequality_lemma_refined_local_claim .graph-node-box,
+.report-root:has(#obligation-check-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim:checked) .node-scalar_inequality_lemma_refined_local_claim__formal_core.node-card,
+.report-root:has(#obligation-check-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim:checked) .node-scalar_inequality_lemma_refined_local_claim.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim:checked) .edge-scalar_inequality_lemma_refined_local_claim-scalar_inequality_lemma,
+.report-root:has(#obligation-check-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim:checked) .edge-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim,
+.report-root:has(#obligation-check-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim:checked) .edge-two_point_lsi-scalar_inequality_lemma_refined_local_claim {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim:hover) .obligation-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim:checked) .obligation-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-root">
+    <section>
+      <h1>Two-point logarithmic Sobolev inequality</h1>
+      <div class="math-text">Two-point logarithmic Sobolev inequality.
+
+Let \(\mu\) be the uniform probability measure on the two-point space \(\{-1,1\}\). For a function \(f : \{-1,1\} \to \mathbb{R}\), define the entropy of \(f^2\) by
+\[
+\operatorname{Ent}_{\mu}(f^2)
+:=
+\mathbb{E}_{\mu}[f^2 \log f^2]
+-
+\mathbb{E}_{\mu}[f^2] \log \bigl(\mathbb{E}_{\mu}[f^2]\bigr),
+\]
+with the convention \(0\log 0 := 0\). Then
+\[
+\operatorname{Ent}_{\mu}(f^2)
+\le
+\frac{1}{2}\bigl(f(1)-f(-1)\bigr)^2.
+\]
+Equivalently, if \(a=f(1)\) and \(b=f(-1)\), then
+\[
+a^2 \log(a^2) + b^2 \log(b^2)
+-
+(a^2+b^2)\log\!\left(\frac{a^2+b^2}{2}\right)
+\le
+(a-b)^2.
+\]
+This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and it is the basic finite-state model underlying tensorization arguments toward the Gaussian logarithmic Sobolev inequality.</div>
+      <p class="meta">Root node: two_point_lsi</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 4</span>
+        <span class="pill">Edges: 3</span>
+        <span class="pill">Informal: 3</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 1</span>
+        <span class="pill">Failed: 0</span>
+      </p>
+      <div class="graph-shell">
+        
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 460" width="420" height="460" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><line class="graph-edge edge-two_point_lsi-scalar_inequality_lemma_refined_local_claim" x1="210.0" y1="83.0" x2="210.0" y2="141.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-scalar_inequality_lemma_refined_local_claim-scalar_inequality_lemma" x1="210.0" y1="201.0" x2="210.0" y2="259.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim" x1="210.0" y1="437.0" x2="210.0" y2="141.0" marker-end="url(#graph-arrow)"></line></g>
+        <g>
+    <a class="graph-node-link node-two_point_lsi status-informal" href="#node-two_point_lsi">
+      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="42">Two-point</tspan>
+<tspan x="210.0" y="54">logarithmic Sob…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">two_point_lsi</text>
+    </a>
+    
+
+    <a class="graph-node-link node-scalar_inequality_lemma status-informal" href="#node-scalar_inequality_lemma">
+      <rect class="graph-node-box status-informal" x="144.0" y="256" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="278">One-dimensional</tspan>
+<tspan x="210.0" y="290">scalar inequali…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="304">scalar_inequality_lemma</text>
+    </a>
+    
+
+    <a class="graph-node-link node-scalar_inequality_lemma_refined_local_claim status-informal" href="#node-scalar_inequality_lemma_refined_local_claim">
+      <rect class="graph-node-box status-informal" x="144.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="165">Refined identity</tspan></text>
+      <text class="graph-node-id" x="210.0" y="186">scalar_inequality_lemma_refined_local_claim</text>
+    </a>
+    
+
+    <a class="graph-node-link node-scalar_inequality_lemma_refined_local_claim__formal_core status-formal-verified" href="#node-scalar_inequality_lemma_refined_local_claim__formal_core">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="374" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="386" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="401">Certified core</tspan></text>
+      <text class="graph-node-id" x="210.0" y="422">scalar_inequality_lemma_refined_local_claim__formal_core</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+      </div>
+      <p class="graph-caption">
+        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+      </p>
+      <p class="graph-caption">
+        Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
+      </p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-informal-proof-two_point_lsi" data-obligation-id="informal-proof-two_point_lsi">
+      <label class="checklist-label" for="obligation-check-informal-proof-two_point_lsi">
+        <input id="obligation-check-informal-proof-two_point_lsi" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;two_point_lsi&#x27; (Two-point logarithmic Sobolev inequality) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-two_point_lsi">two_point_lsi</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-scalar_inequality_lemma" data-obligation-id="informal-proof-scalar_inequality_lemma">
+      <label class="checklist-label" for="obligation-check-informal-proof-scalar_inequality_lemma">
+        <input id="obligation-check-informal-proof-scalar_inequality_lemma" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;scalar_inequality_lemma&#x27; (One-dimensional scalar inequality for the two-point space) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-scalar_inequality_lemma">scalar_inequality_lemma</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-scalar_inequality_lemma_refined_local_claim" data-obligation-id="informal-proof-scalar_inequality_lemma_refined_local_claim">
+      <label class="checklist-label" for="obligation-check-informal-proof-scalar_inequality_lemma_refined_local_claim">
+        <input id="obligation-check-informal-proof-scalar_inequality_lemma_refined_local_claim" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;scalar_inequality_lemma_refined_local_claim&#x27; (Local identity) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-scalar_inequality_lemma_refined_local_claim">scalar_inequality_lemma_refined_local_claim</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-scalar_inequality_lemma_refined_local_claim__formal_core" data-obligation-id="semantic-match-scalar_inequality_lemma_refined_local_claim__formal_core">
+      <label class="checklist-label" for="obligation-check-semantic-match-scalar_inequality_lemma_refined_local_claim__formal_core">
+        <input id="obligation-check-semantic-match-scalar_inequality_lemma_refined_local_claim__formal_core" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;scalar_inequality_lemma_refined_local_claim__formal_core&#x27; (Certified local core for Local identity) honestly represents a narrower verified Lean supporting sublemma with statement &#x27;theorem local_identity (u : ℝ) (h0 : 0 &lt; u) (h2 : u &lt; 2) :
+    (Real.sqrt u - Real.sqrt (2 - u))^2 = 2 - 2 * Real.sqrt (u * (2 - u))&#x27;, rather than overclaiming full coverage of its parent informal step.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> local_identity (u : <span class="tok-type">ℝ</span>) (h0 : <span class="tok-number">0</span> &lt; u) (h2 : u &lt; <span class="tok-number">2</span>) :
+    (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u))^<span class="tok-number">2</span> = <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (u * (<span class="tok-number">2</span> - u))</code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-scalar_inequality_lemma_refined_local_claim__formal_core">scalar_inequality_lemma_refined_local_claim__formal_core</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim" data-obligation-id="boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim">
+      <label class="checklist-label" for="obligation-check-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim">
+        <input id="obligation-check-boundary-scalar_inequality_lemma_refined_local_claim__formal_core-scalar_inequality_lemma_refined_local_claim" type="checkbox" />
+        <span>
+          <span class="checklist-kind">boundary_interface_check</span><br />
+          Check that verified supporting sublemma &#x27;scalar_inequality_lemma_refined_local_claim__formal_core&#x27; certifies the specific concrete local core that informal parent &#x27;scalar_inequality_lemma_refined_local_claim&#x27; relies on, without overclaiming full coverage of the parent node.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-scalar_inequality_lemma_refined_local_claim__formal_core">scalar_inequality_lemma_refined_local_claim__formal_core</a>, <a class="node-jump" href="#node-scalar_inequality_lemma_refined_local_claim">scalar_inequality_lemma_refined_local_claim</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="nodes-grid">
+        
+    <article class="node-card node-two_point_lsi" id="node-two_point_lsi" data-node-id="two_point_lsi">
+      <h3>Two-point logarithmic Sobolev inequality</h3>
+      <p class="meta">Node id: two_point_lsi | Status: informal</p>
+      
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \(\mu\) be the uniform probability measure on the two-point space \(\{-1,1\}\). For a function \(f : \{-1,1\} \to \mathbb{R}\), define the entropy of \(f^2\) by
+\[
+\operatorname{Ent}_{\mu}(f^2) := \mathbb{E}_{\mu}[f^2 \log f^2] - \mathbb{E}_{\mu}[f^2] \log \bigl(\mathbb{E}_{\mu}[f^2]\bigr),
+\]
+with the convention \(0\log 0 := 0\). Then
+\[
+\operatorname{Ent}_{\mu}(f^2) \le \frac{1}{2}\bigl(f(1)-f(-1)\bigr)^2.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Write
+\[
+a := f(1), \qquad b := f(-1).
+\]
+Because \(\mu\) is the uniform measure on two points, the entropy inequality is exactly equivalent, after multiplying both sides by \(2\), to
+\[
+a^2 \log(a^2) + b^2 \log(b^2)
+-
+(a^2+b^2)\log\!\left(\frac{a^2+b^2}{2}\right)
+\le
+(a-b)^2.
+\]
+So it suffices to prove this scalar inequality.
+
+We first reduce to the case \(a,b\ge 0\). The left-hand side depends only on \(a^2\) and \(b^2\), so replacing \(a,b\) by \(|a|,|b|\) leaves it unchanged. On the other hand, \((|a|-|b|)^2 \le (a-b)^2\) by the reverse triangle inequality. Thus if the inequality holds for nonnegative values, it also holds for the original \(a,b\). Hence we may assume \(a,b\ge 0\).
+
+Next we use homogeneity to normalize. If we replace \((a,b)\) by \((ca,cb)\) with \(c\ge 0\), both sides of the inequality are multiplied by \(c^2\) (the extra \(\log(c^2)\) terms on the left cancel). Therefore the inequality is homogeneous of degree two. If \(a=b=0\), the claim is trivial. Otherwise let \(c = \sqrt{2/(a^2+b^2)}\). After scaling by \(c\), we may assume \(a^2+b^2=2\).
+
+Under this normalization, the desired inequality becomes
+\[
+a^2\log(a^2)+b^2\log(b^2) \le (a-b)^2.
+\]
+Since \(a,b\ge 0\) and \(a^2+b^2=2\), there exists \(u\in[0,2]\) such that
+\[
+u = a^2, \qquad b^2 = 2-u,
+\]
+so that \(a = \sqrt{u}\) and \(b = \sqrt{2-u}\). Thus it remains to prove that for every \(u\in[0,2]\),
+\[
+u\log u + (2-u)\log(2-u) \le \bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2.
+\]
+This scalar inequality holds by a separate lemma. Undoing the substitution \(u=a^2\), \(2-u=b^2\) and reversing the homogeneity and absolute value reductions yields the desired entropy bound.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-scalar_inequality_lemma" id="node-scalar_inequality_lemma" data-node-id="scalar_inequality_lemma">
+      <h3>One-dimensional scalar inequality for the two-point space</h3>
+      <p class="meta">Node id: scalar_inequality_lemma | Status: informal</p>
+      
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For every \(u\in[0,2]\),
+\[
+u\log u + (2-u)\log(2-u)
+\le
+\bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2,
+\]
+using the convention \(0\log 0 = 0\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Define
+\[
+G(u) := \bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2 - u\log u - (2-u)\log(2-u)
+\qquad (0\le u\le 2).
+\]
+We will show that \(G(u)\ge 0\) on \([0,2]\).
+
+First note that \(G\) is continuous on \([0,2]\) and smooth on \((0,2)\). Also \(G\) is symmetric under \(u\mapsto 2-u\). In particular,
+\[
+G(1)=0,
+\]
+since \(\bigl(\sqrt1-\sqrt1\bigr)^2 = 0\) and \(1\log1 + 1\log1 = 0\).
+
+Now compute derivatives for \(0&lt;u&lt;2\). We have \(\bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2 = 2 - 2\sqrt{u(2-u)}\), which gives
+\[
+\frac{d}{du}\bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2
+= \frac{2(u-1)}{\sqrt{u(2-u)}}.
+\]
+Also,
+\[
+\frac{d}{du}\bigl(u\log u + (2-u)\log(2-u)\bigr)
+= \log\!\left(\frac{u}{2-u}\right).
+\]
+Hence
+\[
+G&#x27;(u)= \frac{2(u-1)}{\sqrt{u(2-u)}} - \log\!\left(\frac{u}{2-u}\right).
+\]
+Differentiating again yields
+\[
+\frac{d}{du}\left(\frac{2(u-1)}{\sqrt{u(2-u)}}\right)
+= \frac{2}{\bigl(u(2-u)\bigr)^{3/2}},
+\]
+while
+\[
+\frac{d}{du}\log\!\left(\frac{u}{2-u}\right)
+= \frac1u + \frac{1}{2-u}
+= \frac{2}{u(2-u)}.
+\]
+Therefore
+\[
+G&#x27;&#x27;(u)
+=
+\frac{2}{\bigl(u(2-u)\bigr)^{3/2}} - \frac{2}{u(2-u)}
+=
+\frac{2\bigl(1-\sqrt{u(2-u)}\bigr)}{\bigl(u(2-u)\bigr)^{3/2}}.
+\]
+For \(u\in[0,2]\), we have \(u(2-u)=1-(u-1)^2 \le 1\), so \(\sqrt{u(2-u)}\le 1\). Hence \(G&#x27;&#x27;(u)\ge 0\) for \(0&lt;u&lt;2\).
+
+Thus \(G\) is convex on \((0,2)\), and therefore on \([0,2]\) by continuity. Since \(G\) is symmetric under \(u\mapsto 2-u\), the point \(u=1\) is its center of symmetry, so \(G&#x27;(1)=0\). Because a convex function with a vanishing derivative at a point has a global minimum there, \(u=1\) is a global minimizer of \(G\). Therefore
+\[
+G(u)\ge G(1)=0
+\qquad\text{for all }u\in[0,2],
+\]
+which proves the inequality.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-scalar_inequality_lemma_refined_local_claim" id="node-scalar_inequality_lemma_refined_local_claim" data-node-id="scalar_inequality_lemma_refined_local_claim">
+      <h3>Local identity</h3>
+      <p class="meta">Node id: scalar_inequality_lemma_refined_local_claim | Status: informal</p>
+      <p class="meta">Display label: Refined identity</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">\[
+\frac{d}{du}\bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2
+= \frac{2(u-1)}{\sqrt{u(2-u)}}.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">In particular,
+\[
+G(1)=0,
+\]
+since \(\bigl(\sqrt1-\sqrt1\bigr)^2 = 0\) and \(1\log1 + 1\log1 = 0\).
+
+Now compute derivatives for \(0&lt;u&lt;2\). We have \(\bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2 = 2 - 2\sqrt{u(2-u)}\), which gives
+\[
+\frac{d}{du}\bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2
+= \frac{2(u-1)}{\sqrt{u(2-u)}}.
+\]
+Also,
+\[
+\frac{d}{du}\bigl(u\log u + (2-u)\log(2-u)\bigr)
+= \log\!\left(\frac{u}{2-u}\right).
+\]
+Hence
+\[
+G&#x27;(u)=...</div>
+      
+    </article>
+    
+
+    <article class="node-card node-scalar_inequality_lemma_refined_local_claim__formal_core" id="node-scalar_inequality_lemma_refined_local_claim__formal_core" data-node-id="scalar_inequality_lemma_refined_local_claim__formal_core">
+      <h3>Certified local core for Local identity</h3>
+      <p class="meta">Node id: scalar_inequality_lemma_refined_local_claim__formal_core | Status: formal_verified</p>
+      <p class="meta">Display label: Certified core</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For any real number \(u\) such that \(0 &lt; u &lt; 2\), the algebraic identity \(\bigl(\sqrt{u} - \sqrt{2-u}\bigr)^2 = 2 - 2\sqrt{u(2-u)}\) holds.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">This node records a verified supporting sublemma extracted from the formalization of parent node &#x27;scalar_inequality_lemma_refined_local_claim&#x27;. Expanding the square yields \(\bigl(\sqrt{u}\bigr)^2 - 2\sqrt{u}\sqrt{2-u} + \bigl(\sqrt{2-u}\bigr)^2\). Given the bounds \(0 &lt; u &lt; 2\), both \(u\) and \(2-u\) are strictly positive. This allows us to simplify the squared square roots to \(u\) and \(2-u\) respectively, and to combine the product of square roots into \(\sqrt{u(2-u)}\). Summing these terms gives \(u - 2\sqrt{u(2-u)} + 2 - u\), which simplifies directly to \(2 - 2\sqrt{u(2-u)}\).</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> local_identity</p>
+        <p><strong>Coverage:</strong> concrete_sublemma</p><p class="meta">Accepted as a narrower concrete local core in the same ambient setting; it should support the parent node rather than count as full-node certification.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> local_identity (u : <span class="tok-type">ℝ</span>) (h0 : <span class="tok-number">0</span> &lt; u) (h2 : u &lt; <span class="tok-number">2</span>) :
+    (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u))^<span class="tok-number">2</span> = <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (u * (<span class="tok-number">2</span> - u))</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/scalar_inequality_lemma_refined_local_claim_worker.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib.Analysis.SpecialFunctions.Sqrt
+<span class="tok-keyword">import</span> Mathlib.Data.Real.Basic
+<span class="tok-keyword">import</span> Mathlib.Algebra.Order.Field.Basic
+
+<span class="tok-keyword">open</span> Real
+
+<span class="tok-keyword">lemma</span> alg_id (u : <span class="tok-type">ℝ</span>) (h0 : <span class="tok-number">0</span> &lt; u) (h2 : u &lt; <span class="tok-number">2</span>) :
+    (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u))^<span class="tok-number">2</span> = <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (u * (<span class="tok-number">2</span> - u)) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> hu : <span class="tok-number">0</span> ≤ u := le_of_lt h0
+  <span class="tok-tactic">have</span> h2u : <span class="tok-number">0</span> ≤ <span class="tok-number">2</span> - u := <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span>
+  <span class="tok-tactic">calc</span> (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u))^<span class="tok-number">2</span>
+    _ = (Real.sqrt u)^<span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt u * Real.sqrt (<span class="tok-number">2</span> - u) + (Real.sqrt (<span class="tok-number">2</span> - u))^<span class="tok-number">2</span> := <span class="tok-tactic">by</span> <span class="tok-tactic">ring</span>
+    _ = u - <span class="tok-number">2</span> * Real.sqrt u * Real.sqrt (<span class="tok-number">2</span> - u) + (<span class="tok-number">2</span> - u) := <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [Real.sq_sqrt hu, Real.sq_sqrt h2u]
+    _ = <span class="tok-number">2</span> - <span class="tok-number">2</span> * (Real.sqrt u * Real.sqrt (<span class="tok-number">2</span> - u)) := <span class="tok-tactic">by</span> <span class="tok-tactic">ring</span>
+    _ = <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (u * (<span class="tok-number">2</span> - u)) := <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [← Real.sqrt_mul hu]
+
+<span class="tok-keyword">theorem</span> local_identity (u : <span class="tok-type">ℝ</span>) (h0 : <span class="tok-number">0</span> &lt; u) (h2 : u &lt; <span class="tok-number">2</span>) :
+    (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u))^<span class="tok-number">2</span> = <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (u * (<span class="tok-number">2</span> - u)) :=
+  alg_id u h0 h2</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+      </div>
+    </section>
+  </main>
+</body>
+</html>

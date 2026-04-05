@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -14,6 +15,14 @@ from formal_islands.formalization.agentic import (
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.formalization.loop import formalize_candidate_node
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
+
+
+def extract_agentic_paths(prompt: str) -> tuple[Path, Path]:
+    scratch_match = re.search(r"Scratch file to create and edit: ([^\n]+)", prompt)
+    plan_match = re.search(r"Plan markdown file to create and maintain: ([^\n]+)", prompt)
+    assert scratch_match is not None
+    assert plan_match is not None
+    return Path(scratch_match.group(1)), Path(plan_match.group(1))
 
 
 def build_graph() -> ProofGraph:
@@ -56,7 +65,8 @@ def test_lean_workspace_writes_scratch_file(tmp_path: Path) -> None:
 
     scratch_path = workspace.write_scratch_file("node/1", 2, "theorem t : True := by trivial")
 
-    assert scratch_path.name == "node_1_attempt_2.lean"
+    assert scratch_path.name.startswith("node_1_attempt_2_")
+    assert scratch_path.name.endswith(".lean")
     assert scratch_path.read_text(encoding="utf-8") == "theorem t : True := by trivial"
 
 
@@ -65,7 +75,8 @@ def test_lean_workspace_prepares_agentic_worker_file(tmp_path: Path) -> None:
 
     scratch_path = workspace.prepare_worker_file("node/1")
 
-    assert scratch_path.name == "node_1_worker.lean"
+    assert scratch_path.name.startswith("node_1_worker_")
+    assert scratch_path.name.endswith(".lean")
     assert "agentic formalization worker" in scratch_path.read_text(encoding="utf-8")
 
 
@@ -104,7 +115,7 @@ def test_build_agentic_formalization_request_includes_concrete_setting_guidance(
 
 def test_recover_agentic_artifact_prefers_expected_main_theorem(tmp_path: Path) -> None:
     workspace = create_workspace(tmp_path)
-    scratch_path = workspace.generated_dir / "n3_worker.lean"
+    scratch_path = workspace.prepare_worker_file("n3")
     scratch_path.write_text(
         "import Mathlib.Data.Real.Basic\n\n"
         "theorem helper_small : 1 = 1 := by\n"
@@ -164,7 +175,9 @@ def test_lean_verifier_captures_command_result(tmp_path: Path) -> None:
     ) -> subprocess.CompletedProcess[str]:
         assert args[1:3] == ["env", "lean"]
         assert cwd == tmp_path.resolve()
-        assert args[3] == str((tmp_path / "FormalIslands" / "Generated" / "n2_attempt_1.lean").resolve())
+        assert args[3].startswith(str((tmp_path / "FormalIslands" / "Generated").resolve()))
+        assert "_attempt_1_" in args[3]
+        assert args[3].endswith(".lean")
         return subprocess.CompletedProcess(args=args, returncode=0, stdout="ok", stderr="")
 
     verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
@@ -196,9 +209,9 @@ def test_lean_verifier_handles_relative_workspace_root(
         timeout: float | None = None,
     ) -> subprocess.CompletedProcess[str]:
         assert cwd == (tmp_path / "lean_project").resolve()
-        assert args[3] == str(
-            (tmp_path / "lean_project" / "FormalIslands" / "Generated" / "n2_attempt_1.lean").resolve()
-        )
+        assert args[3].startswith(str((tmp_path / "lean_project" / "FormalIslands" / "Generated").resolve()))
+        assert "_attempt_1_" in args[3]
+        assert args[3].endswith(".lean")
         return subprocess.CompletedProcess(args=args, returncode=0, stdout="ok", stderr="")
 
     verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
@@ -321,8 +334,7 @@ def test_formalize_candidate_node_records_retry_history(tmp_path: Path) -> None:
 
 def test_formalize_candidate_node_agentic_mode_reverifies_worker_file(tmp_path: Path) -> None:
     workspace = create_workspace(tmp_path)
-    worker_file = workspace.generated_dir / "n2_worker.lean"
-    worker_file.parent.mkdir(parents=True, exist_ok=True)
+    worker_file = workspace.prepare_worker_file("n2")
 
     class FakeAgenticBackend:
         timeout_seconds = 420.0
@@ -331,7 +343,9 @@ def test_formalize_candidate_node_agentic_mode_reverifies_worker_file(tmp_path: 
             self.summary_calls = 0
 
         def run_agentic_structured(self, request, *, timeout_seconds=None):
-            plan_file = agentic_worker_plan_path(worker_file)
+            worker_file, plan_file = extract_agentic_paths(request.prompt)
+            self.worker_file = worker_file
+            self.plan_file = plan_file
             plan_file.write_text(
                 "# Plan\n\n- Target theorem: sum_nonneg\n- Intended theorem shape: whole node\n",
                 encoding="utf-8",
@@ -411,8 +425,7 @@ def test_formalize_candidate_node_promotes_concrete_sublemma_to_child_node(
     tmp_path: Path,
 ) -> None:
     workspace = create_workspace(tmp_path)
-    worker_file = workspace.generated_dir / "n2_worker.lean"
-    worker_file.parent.mkdir(parents=True, exist_ok=True)
+    worker_file = workspace.prepare_worker_file("n2")
 
     class FakeAgenticBackend:
         timeout_seconds = 420.0
@@ -421,7 +434,9 @@ def test_formalize_candidate_node_promotes_concrete_sublemma_to_child_node(
             self.summary_calls = 0
 
         def run_agentic_structured(self, request, *, timeout_seconds=None):
-            plan_file = agentic_worker_plan_path(worker_file)
+            worker_file, plan_file = extract_agentic_paths(request.prompt)
+            self.worker_file = worker_file
+            self.plan_file = plan_file
             plan_file.write_text(
                 "# Plan\n\n- Target theorem: differential_inequality_for_Y\n- Intended theorem shape: concrete sublemma\n",
                 encoding="utf-8",
@@ -552,8 +567,7 @@ def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failur
     tmp_path: Path,
 ) -> None:
     workspace = create_workspace(tmp_path)
-    worker_file = workspace.generated_dir / "n2_worker.lean"
-    worker_file.parent.mkdir(parents=True, exist_ok=True)
+    worker_file = workspace.prepare_worker_file("n2")
 
     class FakeAgenticBackend:
         timeout_seconds = 420.0
@@ -563,7 +577,9 @@ def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failur
             self.requests = []
 
         def run_agentic_structured(self, request, *, timeout_seconds=None):
-            plan_file = agentic_worker_plan_path(worker_file)
+            worker_file, plan_file = extract_agentic_paths(request.prompt)
+            self.worker_file = worker_file
+            self.plan_file = plan_file
             if not plan_file.exists():
                 plan_file.write_text(
                     "# Initial plan\n\n- Intended theorem shape: whole node\n",
@@ -657,7 +673,7 @@ def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failur
     assert "keep api scouting minimal" in backend.requests[0].prompt.lower()
     assert "appending a new labeled section" in backend.requests[1].prompt.lower()
     assert "explicitly reconsider the most literal whole-node theorem shape first" in backend.requests[1].prompt.lower()
-    assert worker_file.read_text(encoding="utf-8").startswith("import Mathlib.Data.Real.Basic")
+    assert backend.worker_file.read_text(encoding="utf-8").startswith("import Mathlib.Data.Real.Basic")
     assert len(updates) == 2
 
 
@@ -665,8 +681,7 @@ def test_formalize_candidate_node_agentic_uses_at_most_one_faithfulness_retry(
     tmp_path: Path,
 ) -> None:
     workspace = create_workspace(tmp_path)
-    worker_file = workspace.generated_dir / "n2_worker.lean"
-    worker_file.parent.mkdir(parents=True, exist_ok=True)
+    worker_file = workspace.prepare_worker_file("n2")
 
     class FakeAgenticBackend:
         timeout_seconds = 420.0
@@ -675,7 +690,9 @@ def test_formalize_candidate_node_agentic_uses_at_most_one_faithfulness_retry(
             self.calls = 0
 
         def run_agentic_structured(self, request, *, timeout_seconds=None):
-            plan_file = agentic_worker_plan_path(worker_file)
+            worker_file, plan_file = extract_agentic_paths(request.prompt)
+            self.worker_file = worker_file
+            self.plan_file = plan_file
             plan_file.write_text(
                 "# Plan\n\n- Intended theorem shape: whole node\n",
                 encoding="utf-8",
@@ -742,14 +759,15 @@ def test_formalize_candidate_node_agentic_recovers_from_backend_failure_with_wor
     tmp_path: Path,
 ) -> None:
     workspace = create_workspace(tmp_path)
-    worker_file = workspace.generated_dir / "n2_worker.lean"
-    worker_file.parent.mkdir(parents=True, exist_ok=True)
+    worker_file = workspace.prepare_worker_file("n2")
 
     class FakeAgenticBackend:
         timeout_seconds = 420.0
 
         def run_agentic_structured(self, request, *, timeout_seconds=None):
-            plan_file = agentic_worker_plan_path(worker_file)
+            worker_file, plan_file = extract_agentic_paths(request.prompt)
+            self.worker_file = worker_file
+            self.plan_file = plan_file
             plan_file.write_text(
                 "# Plan\n\n- Target theorem: sum_nonneg\n",
                 encoding="utf-8",
@@ -795,8 +813,7 @@ def test_formalize_candidate_node_agentic_expands_verified_sublemma_once(
     tmp_path: Path,
 ) -> None:
     workspace = create_workspace(tmp_path)
-    worker_file = workspace.generated_dir / "n2_worker.lean"
-    worker_file.parent.mkdir(parents=True, exist_ok=True)
+    worker_file = workspace.prepare_worker_file("n2")
 
     graph = ProofGraph(
         theorem_title="Toy theorem",
@@ -830,7 +847,9 @@ def test_formalize_candidate_node_agentic_expands_verified_sublemma_once(
 
         def run_agentic_structured(self, request, *, timeout_seconds=None):
             self.calls += 1
-            plan_file = agentic_worker_plan_path(worker_file)
+            worker_file, plan_file = extract_agentic_paths(request.prompt)
+            self.worker_file = worker_file
+            self.plan_file = plan_file
             plan_file.write_text("# Plan\n", encoding="utf-8")
             if self.calls == 1:
                 worker_file.write_text(

@@ -1,0 +1,105 @@
+{
+  "status": "completed",
+  "task_name": "summarize_concrete_sublemma",
+  "backend_name": "gemini_cli",
+  "command": [
+    "/opt/homebrew/bin/gemini",
+    "-p",
+    "System instructions:\n\nYou are summarizing a verified Lean theorem as a concrete supporting informal sublemma. Return only JSON matching the schema.\n\nUser task:\n\nTheorem title: Two-point logarithmic Sobolev inequality\n\nParent informal node:\n\n{\n  \"id\": \"scalar_inequality_lemma_refined_local_claim\",\n  \"title\": \"Local identity\",\n  \"informal_statement\": \"\\\\[\\n\\\\frac{d}{du}\\\\bigl(\\\\sqrt{u}-\\\\sqrt{2-u}\\\\bigr)^2\\n= \\\\frac{2(u-1)}{\\\\sqrt{u(2-u)}}.\\n\\\\]\",\n  \"informal_proof_text\": \"In particular,\\n\\\\[\\nG(1)=0,\\n\\\\]\\nsince \\\\(\\\\bigl(\\\\sqrt1-\\\\sqrt1\\\\bigr)^2 = 0\\\\) and \\\\(1\\\\log1 + 1\\\\log1 = 0\\\\).\\n\\nNow compute derivatives for \\\\(0<u<2\\\\). We have \\\\(\\\\bigl(\\\\sqrt{u}-\\\\sqrt{2-u}\\\\bigr)^2 = 2 - 2\\\\sqrt{u(2-u)}\\\\), which gives\\n\\\\[\\n\\\\frac{d}{du}\\\\bigl(\\\\sqrt{u}-\\\\sqrt{2-u}\\\\bigr)^2\\n= \\\\frac{2(u-1)}{\\\\sqrt{u(2-u)}}.\\n\\\\]\\nAlso,\\n\\\\[\\n\\\\frac{d}{du}\\\\bigl(u\\\\log u + (2-u)\\\\log(2-u)\\\\bigr)\\n= \\\\log\\\\!\\\\left(\\\\frac{u}{2-u}\\\\right).\\n\\\\]\\nHence\\n\\\\[\\nG'(u)=...\"\n}\n\nVerified Lean sublemma:\n\n{\n  \"lean_theorem_name\": \"local_identity\",\n  \"lean_statement\": \"theorem local_identity (u : \\u211d) (h0 : 0 < u) (h2 : u < 2) :\\n    (Real.sqrt u - Real.sqrt (2 - u))^2 = 2 - 2 * Real.sqrt (u * (2 - u))\"\n}\n\nWrite a short informal statement and a short informal proof text for a supporting local sublemma that matches the verified Lean theorem. Keep it concrete, close to the parent node's mathematical setting, and honest about being narrower than the parent node if it is narrower.\n\nDo not introduce arbitrary ambient abstraction not already present in the Lean theorem. Do not claim this sublemma proves the whole parent node.\n\nFormatting guidance: use LaTeX math delimiters like \\(...\\) or \\[...\\] for mathematical expressions. Use backticks only for literal Lean identifiers, theorem names, or simple variable names such as `horth` or `grad_u`. Do not put LaTeX commands like \\int, \\lVert, \\Omega, \\langle, or \\cdot inside backticks.\n\nReturn a JSON object with keys informal_statement and informal_proof_text.",
+    "--output-format",
+    "json"
+  ],
+  "cwd": null,
+  "system_prompt": "You are summarizing a verified Lean theorem as a concrete supporting informal sublemma. Return only JSON matching the schema.",
+  "prompt": "Theorem title: Two-point logarithmic Sobolev inequality\n\nParent informal node:\n\n{\n  \"id\": \"scalar_inequality_lemma_refined_local_claim\",\n  \"title\": \"Local identity\",\n  \"informal_statement\": \"\\\\[\\n\\\\frac{d}{du}\\\\bigl(\\\\sqrt{u}-\\\\sqrt{2-u}\\\\bigr)^2\\n= \\\\frac{2(u-1)}{\\\\sqrt{u(2-u)}}.\\n\\\\]\",\n  \"informal_proof_text\": \"In particular,\\n\\\\[\\nG(1)=0,\\n\\\\]\\nsince \\\\(\\\\bigl(\\\\sqrt1-\\\\sqrt1\\\\bigr)^2 = 0\\\\) and \\\\(1\\\\log1 + 1\\\\log1 = 0\\\\).\\n\\nNow compute derivatives for \\\\(0<u<2\\\\). We have \\\\(\\\\bigl(\\\\sqrt{u}-\\\\sqrt{2-u}\\\\bigr)^2 = 2 - 2\\\\sqrt{u(2-u)}\\\\), which gives\\n\\\\[\\n\\\\frac{d}{du}\\\\bigl(\\\\sqrt{u}-\\\\sqrt{2-u}\\\\bigr)^2\\n= \\\\frac{2(u-1)}{\\\\sqrt{u(2-u)}}.\\n\\\\]\\nAlso,\\n\\\\[\\n\\\\frac{d}{du}\\\\bigl(u\\\\log u + (2-u)\\\\log(2-u)\\\\bigr)\\n= \\\\log\\\\!\\\\left(\\\\frac{u}{2-u}\\\\right).\\n\\\\]\\nHence\\n\\\\[\\nG'(u)=...\"\n}\n\nVerified Lean sublemma:\n\n{\n  \"lean_theorem_name\": \"local_identity\",\n  \"lean_statement\": \"theorem local_identity (u : \\u211d) (h0 : 0 < u) (h2 : u < 2) :\\n    (Real.sqrt u - Real.sqrt (2 - u))^2 = 2 - 2 * Real.sqrt (u * (2 - u))\"\n}\n\nWrite a short informal statement and a short informal proof text for a supporting local sublemma that matches the verified Lean theorem. Keep it concrete, close to the parent node's mathematical setting, and honest about being narrower than the parent node if it is narrower.\n\nDo not introduce arbitrary ambient abstraction not already present in the Lean theorem. Do not claim this sublemma proves the whole parent node.\n\nFormatting guidance: use LaTeX math delimiters like \\(...\\) or \\[...\\] for mathematical expressions. Use backticks only for literal Lean identifiers, theorem names, or simple variable names such as `horth` or `grad_u`. Do not put LaTeX commands like \\int, \\lVert, \\Omega, \\langle, or \\cdot inside backticks.\n\nReturn a JSON object with keys informal_statement and informal_proof_text.",
+  "rendered_prompt": "System instructions:\n\nYou are summarizing a verified Lean theorem as a concrete supporting informal sublemma. Return only JSON matching the schema.\n\nUser task:\n\nTheorem title: Two-point logarithmic Sobolev inequality\n\nParent informal node:\n\n{\n  \"id\": \"scalar_inequality_lemma_refined_local_claim\",\n  \"title\": \"Local identity\",\n  \"informal_statement\": \"\\\\[\\n\\\\frac{d}{du}\\\\bigl(\\\\sqrt{u}-\\\\sqrt{2-u}\\\\bigr)^2\\n= \\\\frac{2(u-1)}{\\\\sqrt{u(2-u)}}.\\n\\\\]\",\n  \"informal_proof_text\": \"In particular,\\n\\\\[\\nG(1)=0,\\n\\\\]\\nsince \\\\(\\\\bigl(\\\\sqrt1-\\\\sqrt1\\\\bigr)^2 = 0\\\\) and \\\\(1\\\\log1 + 1\\\\log1 = 0\\\\).\\n\\nNow compute derivatives for \\\\(0<u<2\\\\). We have \\\\(\\\\bigl(\\\\sqrt{u}-\\\\sqrt{2-u}\\\\bigr)^2 = 2 - 2\\\\sqrt{u(2-u)}\\\\), which gives\\n\\\\[\\n\\\\frac{d}{du}\\\\bigl(\\\\sqrt{u}-\\\\sqrt{2-u}\\\\bigr)^2\\n= \\\\frac{2(u-1)}{\\\\sqrt{u(2-u)}}.\\n\\\\]\\nAlso,\\n\\\\[\\n\\\\frac{d}{du}\\\\bigl(u\\\\log u + (2-u)\\\\log(2-u)\\\\bigr)\\n= \\\\log\\\\!\\\\left(\\\\frac{u}{2-u}\\\\right).\\n\\\\]\\nHence\\n\\\\[\\nG'(u)=...\"\n}\n\nVerified Lean sublemma:\n\n{\n  \"lean_theorem_name\": \"local_identity\",\n  \"lean_statement\": \"theorem local_identity (u : \\u211d) (h0 : 0 < u) (h2 : u < 2) :\\n    (Real.sqrt u - Real.sqrt (2 - u))^2 = 2 - 2 * Real.sqrt (u * (2 - u))\"\n}\n\nWrite a short informal statement and a short informal proof text for a supporting local sublemma that matches the verified Lean theorem. Keep it concrete, close to the parent node's mathematical setting, and honest about being narrower than the parent node if it is narrower.\n\nDo not introduce arbitrary ambient abstraction not already present in the Lean theorem. Do not claim this sublemma proves the whole parent node.\n\nFormatting guidance: use LaTeX math delimiters like \\(...\\) or \\[...\\] for mathematical expressions. Use backticks only for literal Lean identifiers, theorem names, or simple variable names such as `horth` or `grad_u`. Do not put LaTeX commands like \\int, \\lVert, \\Omega, \\langle, or \\cdot inside backticks.\n\nReturn a JSON object with keys informal_statement and informal_proof_text.",
+  "json_schema": {
+    "type": "object",
+    "properties": {
+      "informal_statement": {
+        "type": "string",
+        "minLength": 1
+      },
+      "informal_proof_text": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "informal_statement",
+      "informal_proof_text"
+    ],
+    "additionalProperties": false
+  },
+  "model": null,
+  "agentic": false,
+  "use_yolo": false,
+  "approval_mode": null,
+  "timeout_seconds": 900.0,
+  "started_at_epoch_seconds": 1775429550.943212,
+  "elapsed_seconds": 26.368388175964355,
+  "exit_code": 0,
+  "raw_stdout": "{\n  \"session_id\": \"b8f666a1-5dc0-4f34-9728-fd3fcd3fe8a9\",\n  \"response\": \"```json\\n{\\n  \\\"informal_statement\\\": \\\"For any real number \\\\\\\\(u\\\\\\\\) such that \\\\\\\\(0 < u < 2\\\\\\\\), the algebraic identity \\\\\\\\(\\\\\\\\bigl(\\\\\\\\sqrt{u} - \\\\\\\\sqrt{2-u}\\\\\\\\bigr)^2 = 2 - 2\\\\\\\\sqrt{u(2-u)}\\\\\\\\) holds.\\\",\\n  \\\"informal_proof_text\\\": \\\"Expanding the square yields \\\\\\\\(\\\\\\\\bigl(\\\\\\\\sqrt{u}\\\\\\\\bigr)^2 - 2\\\\\\\\sqrt{u}\\\\\\\\sqrt{2-u} + \\\\\\\\bigl(\\\\\\\\sqrt{2-u}\\\\\\\\bigr)^2\\\\\\\\). Given the bounds \\\\\\\\(0 < u < 2\\\\\\\\), both \\\\\\\\(u\\\\\\\\) and \\\\\\\\(2-u\\\\\\\\) are strictly positive. This allows us to simplify the squared square roots to \\\\\\\\(u\\\\\\\\) and \\\\\\\\(2-u\\\\\\\\) respectively, and to combine the product of square roots into \\\\\\\\(\\\\\\\\sqrt{u(2-u)}\\\\\\\\). Summing these terms gives \\\\\\\\(u - 2\\\\\\\\sqrt{u(2-u)} + 2 - u\\\\\\\\), which simplifies directly to \\\\\\\\(2 - 2\\\\\\\\sqrt{u(2-u)}\\\\\\\\).\\\"\\n}\\n```\",\n  \"stats\": {\n    \"models\": {\n      \"gemini-3.1-pro-preview\": {\n        \"api\": {\n          \"totalRequests\": 2,\n          \"totalErrors\": 1,\n          \"totalLatencyMs\": 12126\n        },\n        \"tokens\": {\n          \"input\": 9484,\n          \"prompt\": 9484,\n          \"candidates\": 258,\n          \"total\": 10919,\n          \"cached\": 0,\n          \"thoughts\": 1177,\n          \"tool\": 0\n        },\n        \"roles\": {\n          \"main\": {\n            \"totalRequests\": 2,\n            \"totalErrors\": 1,\n            \"totalLatencyMs\": 12126,\n            \"tokens\": {\n              \"input\": 9484,\n              \"prompt\": 9484,\n              \"candidates\": 258,\n              \"total\": 10919,\n              \"cached\": 0,\n              \"thoughts\": 1177,\n              \"tool\": 0\n            }\n          }\n        }\n      }\n    },\n    \"tools\": {\n      \"totalCalls\": 0,\n      \"totalSuccess\": 0,\n      \"totalFail\": 0,\n      \"totalDurationMs\": 0,\n      \"totalDecisions\": {\n        \"accept\": 0,\n        \"reject\": 0,\n        \"modify\": 0,\n        \"auto_accept\": 0\n      },\n      \"byName\": {}\n    },\n    \"files\": {\n      \"totalLinesAdded\": 0,\n      \"totalLinesRemoved\": 0\n    }\n  }\n}",
+  "raw_stderr": "Keychain initialization encountered an error: Cannot find module '../build/Release/keytar.node'\nRequire stack:\n- /opt/homebrew/Cellar/gemini-cli/0.36.0/libexec/lib/node_modules/@google/gemini-cli/node_modules/keytar/lib/keytar.js\nUsing FileKeychain fallback for secure storage.\nLoaded cached credentials.\nAttempt 1 failed: You have exhausted your capacity on this model. Your quota will reset after 7s.. Retrying after 10066ms...\n",
+  "payload": {
+    "informal_statement": "For any real number \\(u\\) such that \\(0 < u < 2\\), the algebraic identity \\(\\bigl(\\sqrt{u} - \\sqrt{2-u}\\bigr)^2 = 2 - 2\\sqrt{u(2-u)}\\) holds.",
+    "informal_proof_text": "Expanding the square yields \\(\\bigl(\\sqrt{u}\\bigr)^2 - 2\\sqrt{u}\\sqrt{2-u} + \\bigl(\\sqrt{2-u}\\bigr)^2\\). Given the bounds \\(0 < u < 2\\), both \\(u\\) and \\(2-u\\) are strictly positive. This allows us to simplify the squared square roots to \\(u\\) and \\(2-u\\) respectively, and to combine the product of square roots into \\(\\sqrt{u(2-u)}\\). Summing these terms gives \\(u - 2\\sqrt{u(2-u)} + 2 - u\\), which simplifies directly to \\(2 - 2\\sqrt{u(2-u)}\\)."
+  },
+  "response_wrapper": {
+    "session_id": "b8f666a1-5dc0-4f34-9728-fd3fcd3fe8a9",
+    "response": "```json\n{\n  \"informal_statement\": \"For any real number \\\\(u\\\\) such that \\\\(0 < u < 2\\\\), the algebraic identity \\\\(\\\\bigl(\\\\sqrt{u} - \\\\sqrt{2-u}\\\\bigr)^2 = 2 - 2\\\\sqrt{u(2-u)}\\\\) holds.\",\n  \"informal_proof_text\": \"Expanding the square yields \\\\(\\\\bigl(\\\\sqrt{u}\\\\bigr)^2 - 2\\\\sqrt{u}\\\\sqrt{2-u} + \\\\bigl(\\\\sqrt{2-u}\\\\bigr)^2\\\\). Given the bounds \\\\(0 < u < 2\\\\), both \\\\(u\\\\) and \\\\(2-u\\\\) are strictly positive. This allows us to simplify the squared square roots to \\\\(u\\\\) and \\\\(2-u\\\\) respectively, and to combine the product of square roots into \\\\(\\\\sqrt{u(2-u)}\\\\). Summing these terms gives \\\\(u - 2\\\\sqrt{u(2-u)} + 2 - u\\\\), which simplifies directly to \\\\(2 - 2\\\\sqrt{u(2-u)}\\\\).\"\n}\n```",
+    "stats": {
+      "models": {
+        "gemini-3.1-pro-preview": {
+          "api": {
+            "totalRequests": 2,
+            "totalErrors": 1,
+            "totalLatencyMs": 12126
+          },
+          "tokens": {
+            "input": 9484,
+            "prompt": 9484,
+            "candidates": 258,
+            "total": 10919,
+            "cached": 0,
+            "thoughts": 1177,
+            "tool": 0
+          },
+          "roles": {
+            "main": {
+              "totalRequests": 2,
+              "totalErrors": 1,
+              "totalLatencyMs": 12126,
+              "tokens": {
+                "input": 9484,
+                "prompt": 9484,
+                "candidates": 258,
+                "total": 10919,
+                "cached": 0,
+                "thoughts": 1177,
+                "tool": 0
+              }
+            }
+          }
+        }
+      },
+      "tools": {
+        "totalCalls": 0,
+        "totalSuccess": 0,
+        "totalFail": 0,
+        "totalDurationMs": 0,
+        "totalDecisions": {
+          "accept": 0,
+          "reject": 0,
+          "modify": 0,
+          "auto_accept": 0
+        },
+        "byName": {}
+      },
+      "files": {
+        "totalLinesAdded": 0,
+        "totalLinesRemoved": 0
+      }
+    }
+  }
+}

@@ -26,7 +26,7 @@ from formal_islands.smoke import (
 from formal_islands.report import export_report_bundle, render_html_report
 from formal_islands.extraction import extract_proof_graph, select_formalization_candidates
 from formal_islands.formalization import formalize_candidate_node
-from formal_islands.backends import ClaudeCodeBackend, CodexCLIBackend
+from formal_islands.backends import ClaudeCodeBackend, CodexCLIBackend, GeminiCLIBackend
 
 
 def build_workspace(root: Path) -> LeanWorkspace:
@@ -330,6 +330,17 @@ def test_build_backend_supports_claude(tmp_path: Path) -> None:
     assert backend.timeout_seconds == 180.0
 
 
+def test_build_backend_supports_gemini(tmp_path: Path) -> None:
+    from formal_islands.smoke import build_backend
+
+    backend = build_backend("gemini", "gemini-2.5-flash", tmp_path / "_backend_logs")
+
+    assert isinstance(backend, GeminiCLIBackend)
+    assert backend.model == "gemini-2.5-flash"
+    assert backend.log_dir == tmp_path / "_backend_logs"
+    assert backend.timeout_seconds == 180.0
+
+
 def test_build_backend_allows_formalization_timeout_override(tmp_path: Path) -> None:
     from formal_islands.smoke import build_backend
 
@@ -356,6 +367,7 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls: list[tuple[str, str]] = []
+    seen_timeout: list[float] = []
     input_path = tmp_path / "run11_two_point_log_sobolev.json"
     input_path.write_text(
         json.dumps(
@@ -402,6 +414,7 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
 
     def fake_formalize(args: Namespace) -> int:
         calls.append(("formalize", args.output_dir))
+        seen_timeout.append(args.formalization_timeout_seconds)
         out = Path(args.output_dir)
         write_graph(load_graph(out / "02_candidate_graph.json"), out / "03_formalized_graph.json")
         return 0
@@ -426,6 +439,7 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
             node_id="auto",
             max_attempts=4,
             formalization_mode="agentic",
+            formalization_timeout_seconds=900.0,
         )
     )
 
@@ -436,6 +450,7 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
         ("formalize", str(expected_output_dir)),
         ("report", str(expected_output_dir)),
     ]
+    assert seen_timeout == [900.0]
 
 
 def test_cmd_formalize_all_candidates_writes_batch_summary(

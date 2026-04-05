@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import os
 import shutil
-import subprocess
 import time
 import uuid
 from dataclasses import dataclass
@@ -19,6 +18,7 @@ from formal_islands.backends.base import (
     StructuredBackendRequest,
     StructuredBackendResponse,
 )
+from formal_islands.backends._streaming import run_streaming_command
 
 
 @dataclass(frozen=True)
@@ -65,7 +65,14 @@ class ClaudeCodeBackend:
                 "Claude Code CLI is not available on PATH. Install `claude` separately to use this backend."
             )
 
-        command = [str(executable_path), "-p", "--output-format", "json", "--input-format", "text"]
+        command = [
+            str(executable_path),
+            "-p",
+            "--output-format",
+            "stream-json",
+            "--input-format",
+            "text",
+        ]
         if self.use_no_session_persistence:
             command.append("--no-session-persistence")
         if self.model:
@@ -116,18 +123,17 @@ class ClaudeCodeBackend:
             },
         )
 
-        try:
-            completed = subprocess.run(
-                command,
-                input=request.prompt,
-                capture_output=True,
-                text=True,
-                cwd=request.cwd,
-                env=env,
-                check=False,
-                timeout=timeout_seconds,
-            )
-        except subprocess.TimeoutExpired as exc:
+        stream_result = run_streaming_command(
+            command,
+            input_text=request.prompt,
+            cwd=request.cwd,
+            env=env,
+            timeout_seconds=timeout_seconds,
+        )
+
+        stream_events = self._build_stream_events(stream_result.stdout_lines)
+
+        if stream_result.timed_out:
             self._write_log(
                 log_path,
                 {
@@ -146,6 +152,9 @@ class ClaudeCodeBackend:
                     "timeout_seconds": timeout_seconds,
                     "started_at_epoch_seconds": started_at,
                     "elapsed_seconds": time.time() - started_at,
+                    "stream_events": stream_events,
+                    "raw_stdout": stream_result.raw_stdout,
+                    "raw_stderr": stream_result.raw_stderr,
                     "error": (
                         "Claude CLI timed out while waiting for structured output "
                         f"for task '{request.task_name}' after {timeout_seconds} seconds."
@@ -155,9 +164,9 @@ class ClaudeCodeBackend:
             raise BackendInvocationError(
                 "Claude CLI timed out while waiting for structured output "
                 f"for task '{request.task_name}' after {timeout_seconds} seconds."
-            ) from exc
+            )
 
-        if completed.returncode != 0:
+        if stream_result.returncode != 0:
             self._write_log(
                 log_path,
                 {
@@ -176,18 +185,22 @@ class ClaudeCodeBackend:
                     "timeout_seconds": timeout_seconds,
                     "started_at_epoch_seconds": started_at,
                     "elapsed_seconds": time.time() - started_at,
-                    "exit_code": completed.returncode,
-                    "raw_stdout": completed.stdout,
-                    "raw_stderr": completed.stderr,
-                    "error": f"Claude CLI failed with exit code {completed.returncode}: {completed.stderr.strip()}",
+                    "exit_code": stream_result.returncode,
+                    "stream_events": stream_events,
+                    "raw_stdout": stream_result.raw_stdout,
+                    "raw_stderr": stream_result.raw_stderr,
+                    "error": (
+                        f"Claude CLI failed with exit code {stream_result.returncode}: "
+                        f"{stream_result.raw_stderr.strip()}"
+                    ),
                 },
             )
             raise BackendInvocationError(
-                f"Claude CLI failed with exit code {completed.returncode}: {completed.stderr.strip()}"
+                f"Claude CLI failed with exit code {stream_result.returncode}: {stream_result.raw_stderr.strip()}"
             )
 
         try:
-            payload = self._parse_payload(completed.stdout)
+            payload = self._parse_stream_payload(stream_result.stdout_lines)
         except BackendOutputError as exc:
             self._write_log(
                 log_path,
@@ -207,9 +220,10 @@ class ClaudeCodeBackend:
                     "timeout_seconds": timeout_seconds,
                     "started_at_epoch_seconds": started_at,
                     "elapsed_seconds": time.time() - started_at,
-                    "exit_code": completed.returncode,
-                    "raw_stdout": completed.stdout,
-                    "raw_stderr": completed.stderr,
+                    "exit_code": stream_result.returncode,
+                    "stream_events": stream_events,
+                    "raw_stdout": stream_result.raw_stdout,
+                    "raw_stderr": stream_result.raw_stderr,
                     "error": str(exc),
                 },
             )
@@ -233,21 +247,25 @@ class ClaudeCodeBackend:
                 "timeout_seconds": timeout_seconds,
                 "started_at_epoch_seconds": started_at,
                 "elapsed_seconds": time.time() - started_at,
-                "exit_code": completed.returncode,
-                "raw_stdout": completed.stdout,
-                "raw_stderr": completed.stderr,
+                "exit_code": stream_result.returncode,
+                "stream_events": stream_events,
+                "raw_stdout": stream_result.raw_stdout,
+                "raw_stderr": stream_result.raw_stderr,
                 "payload": payload,
             },
         )
 
         return StructuredBackendResponse(
             payload=payload,
-            raw_stdout=completed.stdout,
-            raw_stderr=completed.stderr,
+            raw_stdout=stream_result.raw_stdout,
+            raw_stderr=stream_result.raw_stderr,
             command=tuple(command),
-            exit_code=completed.returncode,
+            exit_code=stream_result.returncode,
             backend_name="claude_code",
-            metadata={"executable_path": str(executable_path)},
+            metadata={
+                "executable_path": str(executable_path),
+                "stream_events": stream_events,
+            },
         )
 
     def _resolve_executable(self) -> Path | None:
@@ -280,23 +298,155 @@ class ClaudeCodeBackend:
             return
         path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
-    @staticmethod
-    def _parse_payload(stdout: str) -> dict[str, Any]:
+    @classmethod
+    def _parse_stream_payload(cls, stdout_lines: list[str]) -> dict[str, Any]:
+        assembled_chunks: list[str] = []
+
+        for line in stdout_lines:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            try:
+                event = json.loads(stripped)
+            except json.JSONDecodeError:
+                continue
+
+            payload = cls._extract_payload(event)
+            if payload is not None:
+                return payload
+
+            assembled_chunks.extend(cls._extract_text_chunks(event))
+
+        if assembled_chunks:
+            reconstructed = "".join(assembled_chunks).strip()
+            if reconstructed:
+                payload = cls._parse_payload_text(reconstructed)
+                if payload is not None:
+                    return payload
+
+        joined = "".join(stdout_lines)
+        return cls._parse_payload_text(joined)
+
+    @classmethod
+    def _parse_payload_text(cls, stdout: str) -> dict[str, Any]:
         try:
             raw = json.loads(stdout)
         except json.JSONDecodeError as exc:
             raise BackendOutputError("Claude CLI returned invalid JSON") from exc
 
-        if "structured_output" in raw:
-            payload = raw["structured_output"]
-        elif "result" in raw:
-            try:
-                payload = json.loads(raw["result"])
-            except json.JSONDecodeError as exc:
-                raise BackendOutputError("Claude CLI result field did not contain valid JSON") from exc
-        else:
+        payload = cls._extract_payload(raw)
+        if payload is None:
             raise BackendOutputError("Claude CLI output did not include structured output")
 
-        if not isinstance(payload, dict):
-            raise BackendOutputError("Claude CLI structured output must be a JSON object")
         return payload
+
+    @classmethod
+    def _extract_payload(cls, value: Any) -> dict[str, Any] | None:
+        if isinstance(value, dict):
+            if "structured_output" in value:
+                payload = value["structured_output"]
+                if isinstance(payload, dict):
+                    return payload
+                raise BackendOutputError("Claude CLI structured output must be a JSON object")
+
+            if "result" in value:
+                payload = cls._decode_json_candidate(value["result"])
+                if payload is None:
+                    raise BackendOutputError("Claude CLI result field did not contain valid JSON")
+                if isinstance(payload, dict):
+                    return cls._extract_payload(payload) or payload
+                raise BackendOutputError("Claude CLI structured output must be a JSON object")
+
+            if "response" in value:
+                payload = cls._decode_json_candidate(value["response"])
+                if payload is None:
+                    raise BackendOutputError("Claude CLI response field did not contain valid JSON")
+                if isinstance(payload, dict):
+                    return cls._extract_payload(payload) or payload
+                raise BackendOutputError("Claude CLI structured output must be a JSON object")
+
+            if not cls._looks_like_stream_event(value):
+                return value
+            return None
+
+        if isinstance(value, str):
+            payload = cls._decode_json_candidate(value)
+            if isinstance(payload, dict):
+                return cls._extract_payload(payload) or payload
+            return None
+
+        return None
+
+    @staticmethod
+    def _decode_json_candidate(value: Any) -> Any | None:
+        if not isinstance(value, str):
+            return value
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return None
+
+    @staticmethod
+    def _looks_like_stream_event(value: dict[str, Any]) -> bool:
+        return any(key in value for key in ("type", "delta", "message", "content_block"))
+
+    @classmethod
+    def _extract_text_chunks(cls, event: Any) -> list[str]:
+        if not isinstance(event, dict):
+            return []
+
+        chunks: list[str] = []
+        for key in ("text", "partial_json"):
+            value = event.get(key)
+            if isinstance(value, str) and value:
+                chunks.append(value)
+
+        delta = event.get("delta")
+        if isinstance(delta, dict):
+            for key in ("text", "partial_json"):
+                value = delta.get(key)
+                if isinstance(value, str) and value:
+                    chunks.append(value)
+
+        content = event.get("content")
+        if isinstance(content, list):
+            for item in content:
+                if isinstance(item, dict):
+                    text = item.get("text")
+                    if isinstance(text, str) and text:
+                        chunks.append(text)
+
+        message = event.get("message")
+        if isinstance(message, dict):
+            content = message.get("content")
+            if isinstance(content, list):
+                for item in content:
+                    if isinstance(item, dict):
+                        text = item.get("text")
+                        if isinstance(text, str) and text:
+                            chunks.append(text)
+
+        return chunks
+
+    @classmethod
+    def _build_stream_events(cls, stdout_lines: list[str]) -> list[dict[str, Any]]:
+        events: list[dict[str, Any]] = []
+        for index, line in enumerate(stdout_lines, start=1):
+            stripped = line.strip()
+            parsed: Any | None
+            if stripped:
+                try:
+                    parsed = json.loads(stripped)
+                except json.JSONDecodeError:
+                    parsed = None
+            else:
+                parsed = None
+
+            events.append(
+                {
+                    "line_number": index,
+                    "raw": line.rstrip("\n"),
+                    "event": parsed,
+                }
+            )
+        return events
