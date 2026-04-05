@@ -739,6 +739,108 @@ def test_formalize_candidate_node_agentic_recovers_from_backend_failure_with_wor
     assert "Recovered from an agentic backend failure" in updated_node.formal_artifact.attempt_history[0].stderr
 
 
+def test_formalize_candidate_node_agentic_expands_verified_sublemma_once(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+    worker_file = workspace.generated_dir / "n2_worker.lean"
+    worker_file.parent.mkdir(parents=True, exist_ok=True)
+
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="If c = a + b and a,b are nonnegative, then c is nonnegative.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Main theorem",
+                informal_statement="Main theorem.",
+                informal_proof_text="Use n2.",
+            ),
+            ProofNode(
+                id="n2",
+                title="Transfer nonnegativity across a rewrite",
+                informal_statement="If c = a + b and 0 <= a and 0 <= b, then 0 <= c.",
+                informal_proof_text="First prove 0 <= a + b, then rewrite using c = a + b.",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Concrete local step.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n2")],
+    )
+
+    class FakeAgenticBackend:
+        timeout_seconds = 420.0
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def run_agentic_structured(self, request, *, timeout_seconds=None):
+            self.calls += 1
+            plan_file = agentic_worker_plan_path(worker_file)
+            plan_file.write_text("# Plan\n", encoding="utf-8")
+            if self.calls == 1:
+                worker_file.write_text(
+                    "import Mathlib.Data.Real.Basic\n\n"
+                    "theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b := by\n"
+                    "  nlinarith\n",
+                    encoding="utf-8",
+                )
+                theorem_name = "sum_nonneg"
+                theorem_statement = "theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b"
+            else:
+                worker_file.write_text(
+                    "import Mathlib.Data.Real.Basic\n\n"
+                    "theorem transfer_nonneg (a b c : ℝ) (hsum : c = a + b) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ c := by\n"
+                    "  nlinarith [hsum, ha, hb]\n",
+                    encoding="utf-8",
+                )
+                theorem_name = "transfer_nonneg"
+                theorem_statement = (
+                    "theorem transfer_nonneg (a b c : ℝ) (hsum : c = a + b) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ c"
+                )
+            from formal_islands.backends.base import StructuredBackendResponse
+
+            return StructuredBackendResponse(
+                payload={
+                    "lean_theorem_name": theorem_name,
+                    "lean_statement": theorem_statement,
+                    "final_file_path": str(worker_file.resolve()),
+                    "plan_file_path": str(plan_file.resolve()),
+                },
+                raw_stdout="",
+                raw_stderr="",
+                command=("codex", "exec"),
+                exit_code=0,
+                backend_name="codex_cli",
+            )
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    outcome = formalize_candidate_node(
+        backend=FakeAgenticBackend(),
+        verifier=LeanVerifier(workspace=workspace, command_runner=fake_run),
+        graph=graph,
+        node_id="n2",
+        mode="agentic",
+    )
+
+    updated_node = next(node for node in outcome.graph.nodes if node.id == "n2")
+    assert updated_node.status == "formal_verified"
+    assert updated_node.formal_artifact is not None
+    assert updated_node.formal_artifact.lean_theorem_name == "transfer_nonneg"
+
+
 def test_formalize_candidate_node_marks_failure_after_bound(tmp_path: Path) -> None:
     workspace = create_workspace(tmp_path)
 

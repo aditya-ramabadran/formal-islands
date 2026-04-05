@@ -42,6 +42,7 @@ class FaithfulnessAssessment:
 
     classification: FaithfulnessClassification
     message: str | None = None
+    coverage_score: int = 0
 
 
 @dataclass(frozen=True)
@@ -348,18 +349,29 @@ def assess_formalization_faithfulness(node, artifact: FormalArtifact) -> Faithfu
         return FaithfulnessAssessment(
             classification=FaithfulnessClassification.OVER_ABSTRACT,
             message=" ".join(issues),
+            coverage_score=0,
         )
 
-    if _looks_like_concrete_sublemma(node, artifact):
+    coverage_score = _coverage_match_score(node, artifact)
+
+    if _looks_like_concrete_sublemma(node, artifact) or _looks_undercovered_for_node_complexity(
+        node=node,
+        artifact=artifact,
+        coverage_score=coverage_score,
+    ):
         return FaithfulnessAssessment(
             classification=FaithfulnessClassification.CONCRETE_SUBLEMMA,
             message=(
                 "Accepted as a narrower concrete local core in the same ambient setting; "
                 "it should support the parent node rather than count as full-node certification."
             ),
+            coverage_score=coverage_score,
         )
 
-    return FaithfulnessAssessment(classification=FaithfulnessClassification.FULL_NODE)
+    return FaithfulnessAssessment(
+        classification=FaithfulnessClassification.FULL_NODE,
+        coverage_score=coverage_score,
+    )
 
 
 def _collect_over_abstract_issues(node, artifact: FormalArtifact) -> list[str]:
@@ -455,6 +467,273 @@ def _looks_like_concrete_sublemma(node, artifact: FormalArtifact) -> bool:
     if node_concrete_markers >= 2 and theorem_concrete_markers == 0:
         return True
     return False
+
+
+GENERIC_STEP_WORDS = (
+    "define",
+    "set",
+    "write",
+    "rewrite",
+    "expand",
+    "compute",
+    "differentiate",
+    "derive",
+    "show",
+    "prove",
+    "deduce",
+    "conclude",
+    "substitute",
+    "specialize",
+    "apply",
+    "use",
+    "evaluate",
+    "normalize",
+    "reduce",
+    "combine",
+    "test",
+    "split",
+    "identify",
+    "construct",
+)
+
+STOPWORDS = {
+    "the",
+    "and",
+    "if",
+    "by",
+    "for",
+    "with",
+    "that",
+    "this",
+    "from",
+    "then",
+    "have",
+    "using",
+    "gives",
+    "gives",
+    "hence",
+    "thus",
+    "therefore",
+    "over",
+    "into",
+    "onto",
+    "when",
+    "where",
+    "under",
+    "after",
+    "before",
+    "which",
+    "because",
+    "claim",
+    "node",
+    "proof",
+    "local",
+    "step",
+    "same",
+    "showing",
+    "proving",
+}
+
+
+def _looks_undercovered_for_node_complexity(
+    *,
+    node,
+    artifact: FormalArtifact,
+    coverage_score: int,
+) -> bool:
+    node_text = " ".join([node.title, node.informal_statement, node.informal_proof_text])
+    theorem_text = f"{artifact.lean_statement}\n{artifact.lean_code}"
+    node_complexity = _node_complexity_score(node_text)
+    theorem_relation_count = _relation_count(theorem_text)
+    node_relation_count = _relation_count(node_text)
+    node_math_span_count = _math_span_count(node_text)
+    overlap = _meaningful_token_overlap(node_text.lower(), theorem_text.lower())
+    theorem_step_count = _node_complexity_score(theorem_text)
+    theorem_word_count = len(re.findall(r"[A-Za-z_][A-Za-z0-9_']*", theorem_text))
+    node_word_count = len(re.findall(r"[A-Za-z_][A-Za-z0-9_']*", node_text))
+    missing_keywords = _missing_node_keywords(node_text.lower(), theorem_text.lower())
+    omitted_named_ingredients = _omitted_named_ingredients(node_text.lower(), theorem_text.lower())
+    missing_short_symbols = _missing_short_symbols(node_text.lower(), theorem_text.lower())
+
+    if (
+        node_complexity >= 5
+        and coverage_score >= 4
+        and theorem_relation_count >= max(1, node_relation_count - 1)
+        and missing_short_symbols == 0
+    ):
+        return False
+
+    if node_complexity >= 6 and theorem_relation_count <= 1:
+        return True
+    if node_relation_count >= 3 and theorem_relation_count <= 1:
+        return True
+    if node_math_span_count >= 3 and coverage_score <= 2:
+        return True
+    if node_complexity >= 4 and coverage_score <= 1:
+        return True
+    if node_complexity >= 8 and overlap <= 3 and theorem_step_count <= 3:
+        return True
+    if node_word_count >= 20 and theorem_word_count * 2 < node_word_count and coverage_score <= 3:
+        return True
+    if node_complexity >= 5 and missing_keywords >= 3:
+        return True
+    if node_relation_count >= 2 and node_complexity >= 5 and theorem_relation_count <= 3 and missing_keywords >= 2:
+        return True
+    if node_complexity >= 5 and omitted_named_ingredients >= 2 and coverage_score <= 4:
+        return True
+    if omitted_named_ingredients >= 1 and node_complexity >= 5 and theorem_step_count <= 2:
+        return True
+    return False
+
+
+def _coverage_match_score(node, artifact: FormalArtifact) -> int:
+    node_text = " ".join([node.title, node.informal_statement, node.informal_proof_text]).lower()
+    theorem_text = f"{artifact.lean_statement}\n{artifact.lean_code}".lower()
+    overlap = _meaningful_token_overlap(node_text, theorem_text)
+    theorem_relation_count = _relation_count(theorem_text)
+    theorem_math_span_count = _math_span_count(artifact.lean_statement)
+    short_symbol_overlap = _short_symbol_overlap(node_text, theorem_text)
+
+    score = 0
+    if overlap >= 2:
+        score += 1
+    if overlap >= 4:
+        score += 1
+    if overlap >= 6:
+        score += 1
+    if theorem_relation_count >= 2:
+        score += 1
+    if theorem_relation_count >= 3:
+        score += 1
+    if theorem_math_span_count >= 1:
+        score += 1
+    if short_symbol_overlap >= 2:
+        score += 1
+    if short_symbol_overlap >= 3:
+        score += 1
+    return score
+
+
+def _node_complexity_score(text: str) -> int:
+    lowered = text.lower()
+    step_word_hits = sum(lowered.count(word) for word in GENERIC_STEP_WORDS)
+    return step_word_hits + _relation_count(text) + _math_span_count(text)
+
+
+def _relation_count(text: str) -> int:
+    return len(re.findall(r"\\le|\\ge|≤|≥|<=|>=|=|<|>", text))
+
+
+def _math_span_count(text: str) -> int:
+    return len(re.findall(r"\\\(|\\\[", text))
+
+
+def _meaningful_token_overlap(node_text: str, theorem_text: str) -> int:
+    node_tokens = _meaningful_tokens(node_text)
+    theorem_tokens = _meaningful_tokens(theorem_text)
+    return len(node_tokens & theorem_tokens)
+
+
+def _missing_node_keywords(node_text: str, theorem_text: str) -> int:
+    return len(_meaningful_tokens(node_text) - _meaningful_tokens(theorem_text))
+
+
+def _missing_short_symbols(node_text: str, theorem_text: str) -> int:
+    return len(_short_symbols(node_text) - _short_symbols(theorem_text))
+
+
+def _omitted_named_ingredients(node_text: str, theorem_text: str) -> int:
+    node_tokens = _meaningful_tokens(node_text)
+    theorem_tokens = _meaningful_tokens(theorem_text)
+    named = {
+        token
+        for token in node_tokens
+        if token not in INFERENTIAL_WORDS and not _looks_generic_math_word(token)
+    }
+    return len(named - theorem_tokens)
+
+
+def _short_symbol_overlap(node_text: str, theorem_text: str) -> int:
+    return len(_short_symbols(node_text) & _short_symbols(theorem_text))
+
+
+def _meaningful_tokens(text: str) -> set[str]:
+    normalized = text.lower().replace("_", " ")
+    tokens = {
+        token
+        for token in re.findall(r"[A-Za-z_][A-Za-z0-9_']*", normalized)
+        if len(token) >= 3 and token not in STOPWORDS and token not in GENERIC_STEP_WORDS
+    }
+    return tokens
+
+
+def _short_symbols(text: str) -> set[str]:
+    normalized = text.lower().replace("_", " ")
+    return {
+        token
+        for token in re.findall(r"[A-Za-z][A-Za-z0-9_']*", normalized)
+        if len(token) <= 2
+        and token not in STOPWORDS
+        and token not in INFERENTIAL_WORDS
+        and not token.startswith("h")
+    }
+
+
+INFERENTIAL_WORDS = {
+    "proof",
+    "step",
+    "claim",
+    "theorem",
+    "local",
+    "core",
+    "result",
+    "show",
+    "prove",
+    "deduce",
+    "conclude",
+    "define",
+    "compute",
+    "rewrite",
+    "expand",
+    "apply",
+    "use",
+    "then",
+    "thus",
+    "hence",
+    "therefore",
+}
+
+
+def _looks_generic_math_word(token: str) -> bool:
+    generic_prefixes = (
+        "nonneg",
+        "nonnegative",
+        "convex",
+        "minimum",
+        "minimizer",
+        "global",
+        "local",
+        "equal",
+        "equality",
+        "identity",
+        "equation",
+        "lemma",
+        "theorem",
+        "proof",
+        "function",
+        "derivative",
+        "second",
+        "first",
+        "bounded",
+        "continu",
+        "coerc",
+        "estimate",
+        "inequal",
+        "positiv",
+        "negative",
+        "value",
+    )
+    return token.startswith(generic_prefixes)
 
 
 def _count_fresh_scalar_placeholders(statement: str, node_text: str) -> int:

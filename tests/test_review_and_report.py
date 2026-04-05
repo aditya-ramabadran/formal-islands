@@ -1,5 +1,6 @@
 import json
 
+from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode
 from formal_islands.examples.fixtures import build_example_graph
 from formal_islands.report.generator import (
     NODE_HEIGHT,
@@ -152,3 +153,47 @@ def test_render_math_text_formats_backticks_as_inline_code() -> None:
 
     assert '<code class="inline-code">grad_u</code>' in html
     assert '<code class="inline-code">horth</code>' in html
+
+
+def test_derive_review_obligations_words_supporting_sublemma_honestly() -> None:
+    artifact = FormalArtifact(
+        lean_theorem_name="core",
+        lean_statement="theorem core : True",
+        lean_code="theorem core : True := by trivial",
+        faithfulness_classification="concrete_sublemma",
+    )
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Main theorem",
+                informal_statement="Main theorem.",
+                informal_proof_text="Use n1.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Broad informal step",
+                informal_statement="Broad informal step.",
+                informal_proof_text="Use supporting core.",
+            ),
+            ProofNode(
+                id="n1__formal_core",
+                title="Certified local core",
+                informal_statement="Supporting core.",
+                informal_proof_text="Verified core.",
+                status="formal_verified",
+                formal_artifact=artifact,
+            ),
+        ],
+        edges=[ProofEdge(source_id="n1__formal_core", target_id="n1", label="formal_sublemma_for")],
+    )
+
+    obligations = derive_review_obligations(graph)
+    semantic = next(item for item in obligations if item.kind == "formal_semantic_match_check")
+    boundary = next(item for item in obligations if item.kind == "boundary_interface_check")
+
+    assert "narrower verified lean supporting sublemma" in semantic.text.lower()
+    assert "without overclaiming full coverage" in boundary.text.lower()

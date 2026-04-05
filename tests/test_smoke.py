@@ -15,6 +15,7 @@ from formal_islands.smoke import (
     _backend_failure_outcome,
     cmd_plan,
     cmd_run_benchmark,
+    cmd_formalize_all_candidates,
     default_output_dir_for_input,
     ensure_output_dir,
     load_graph,
@@ -424,3 +425,88 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
         ("formalize", str(expected_output_dir)),
         ("report", str(expected_output_dir)),
     ]
+
+
+def test_cmd_formalize_all_candidates_writes_batch_summary(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_dir = tmp_path / "artifacts"
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="If A then B.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Main",
+                informal_statement="Main.",
+                informal_proof_text="Use leaves.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Leaf 1",
+                informal_statement="L1.",
+                informal_proof_text="...",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="first",
+            ),
+            ProofNode(
+                id="n2",
+                title="Leaf 2",
+                informal_statement="L2.",
+                informal_proof_text="...",
+                status="candidate_formal",
+                formalization_priority=2,
+                formalization_rationale="second",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1"), ProofEdge(source_id="n0", target_id="n2")],
+    )
+    output_dir.mkdir(parents=True)
+    write_graph(graph, output_dir / "02_candidate_graph.json")
+
+    class FakeOutcome:
+        def __init__(self, graph, node_id):
+            from formal_islands.models import FormalArtifact, VerificationResult
+
+            self.graph = graph
+            self.node_id = node_id
+            self.artifact = FormalArtifact(
+                lean_theorem_name=f"{node_id}_thm",
+                lean_statement="theorem t : True",
+                lean_code="theorem t : True := by trivial",
+                verification=VerificationResult(
+                    status="verified",
+                    command="lake env lean test.lean",
+                    attempt_count=1,
+                    artifact_path="test.lean",
+                ),
+            )
+
+    class FakeBatch:
+        def __init__(self, graph):
+            self.graph = graph
+            self.outcomes = [FakeOutcome(graph, "n1"), FakeOutcome(graph, "n2")]
+
+    monkeypatch.setattr("formal_islands.smoke.build_backend", lambda *args, **kwargs: object())
+    monkeypatch.setattr("formal_islands.smoke.LeanVerifier", lambda *args, **kwargs: object())
+    monkeypatch.setattr("formal_islands.smoke.LeanWorkspace", lambda *args, **kwargs: object())
+    monkeypatch.setattr("formal_islands.smoke.formalize_candidate_nodes", lambda **kwargs: FakeBatch(graph))
+
+    exit_code = cmd_formalize_all_candidates(
+        Namespace(
+            backend="codex",
+            model=None,
+            graph=str(output_dir / "02_candidate_graph.json"),
+            output_dir=str(output_dir),
+            workspace="lean_project",
+            max_attempts=4,
+            formalization_mode="agentic",
+        )
+    )
+
+    summaries = json.loads((output_dir / "03_formalization_summaries.json").read_text(encoding="utf-8"))
+    assert exit_code == 0
+    assert [item["node_id"] for item in summaries] == ["n1", "n2"]

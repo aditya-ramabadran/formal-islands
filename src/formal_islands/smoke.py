@@ -14,7 +14,12 @@ from formal_islands.extraction import (
     plan_proof_graph,
     select_formalization_candidates,
 )
-from formal_islands.formalization import LeanVerifier, LeanWorkspace, formalize_candidate_node
+from formal_islands.formalization import (
+    LeanVerifier,
+    LeanWorkspace,
+    formalize_candidate_node,
+    formalize_candidate_nodes,
+)
 from formal_islands.models import FormalArtifact, ProofGraph, VerificationResult
 from formal_islands.report import export_report_bundle, render_html_report
 from formal_islands.review import derive_review_obligations
@@ -92,6 +97,29 @@ def build_parser() -> argparse.ArgumentParser:
         help="Formalization execution mode. Default: agentic Codex worker, with structured fallback available.",
     )
     formalize_parser.set_defaults(func=cmd_formalize_one)
+
+    formalize_all_parser = subparsers.add_parser("formalize-all-candidates")
+    add_backend_args(formalize_all_parser)
+    add_graph_input_arg(formalize_all_parser)
+    add_output_dir_arg(formalize_all_parser)
+    formalize_all_parser.add_argument(
+        "--workspace",
+        default="lean_project",
+        help="Path to the local Lean workspace.",
+    )
+    formalize_all_parser.add_argument(
+        "--max-attempts",
+        type=int,
+        default=4,
+        help="Maximum number of bounded formalization attempts per node.",
+    )
+    formalize_all_parser.add_argument(
+        "--formalization-mode",
+        choices=["agentic", "structured", "auto"],
+        default="agentic",
+        help="Formalization execution mode. Default: agentic Codex worker, with structured fallback available.",
+    )
+    formalize_all_parser.set_defaults(func=cmd_formalize_all_candidates)
 
     report_parser = subparsers.add_parser("report")
     add_graph_input_arg(report_parser)
@@ -299,6 +327,52 @@ def cmd_formalize_one(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_formalize_all_candidates(args: argparse.Namespace) -> int:
+    output_dir = ensure_output_dir(Path(args.output_dir))
+    backend = build_backend(
+        args.backend,
+        args.model,
+        output_dir / "_backend_logs",
+        timeout_seconds=FORMALIZATION_BACKEND_TIMEOUT_SECONDS,
+    )
+    graph = load_graph(Path(args.graph))
+    verifier = LeanVerifier(workspace=LeanWorkspace(root=Path(args.workspace)))
+    graph_path = output_dir / "03_formalized_graph.json"
+    summary_path = output_dir / "03_formalization_summaries.json"
+
+    summaries: list[dict[str, Any]] = []
+
+    def write_progress(outcome) -> None:
+        write_graph(outcome.graph, graph_path)
+
+    outcomes = formalize_candidate_nodes(
+        backend=backend,
+        verifier=verifier,
+        graph=graph,
+        max_attempts=args.max_attempts,
+        on_update=write_progress,
+        mode=args.formalization_mode,
+    )
+
+    write_graph(outcomes.graph, graph_path)
+    for outcome in outcomes.outcomes:
+        summaries.append(
+            {
+                "node_id": outcome.node_id,
+                "status": outcome.artifact.verification.status,
+                "artifact_path": outcome.artifact.verification.artifact_path,
+                "attempt_count": outcome.artifact.verification.attempt_count,
+                "stderr": outcome.artifact.verification.stderr,
+                "faithfulness_classification": outcome.artifact.faithfulness_classification,
+                "lean_theorem_name": outcome.artifact.lean_theorem_name,
+            }
+        )
+    summary_path.write_text(json.dumps(summaries, indent=2) + "\n", encoding="utf-8")
+    print(graph_path)
+    print(summary_path)
+    return 0
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
     graph = load_graph(Path(args.graph))
@@ -406,6 +480,8 @@ def _write_formalization_summary(path: Path, outcome) -> None:
                 "artifact_path": outcome.artifact.verification.artifact_path,
                 "attempt_count": outcome.artifact.verification.attempt_count,
                 "stderr": outcome.artifact.verification.stderr,
+                "faithfulness_classification": outcome.artifact.faithfulness_classification,
+                "lean_theorem_name": outcome.artifact.lean_theorem_name,
             },
             indent=2,
         )

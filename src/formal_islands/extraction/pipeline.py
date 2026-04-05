@@ -412,6 +412,7 @@ def _apply_candidate_selection_result(
 
     updated_graph = graph.model_copy(update={"nodes": updated_nodes})
     updated_graph = _promote_high_yield_technical_candidate(updated_graph)
+    updated_graph = _calibrate_candidate_set(updated_graph)
     return refine_candidate_nodes(updated_graph)
 
 
@@ -498,6 +499,42 @@ def _promote_high_yield_technical_candidate(graph: ProofGraph) -> ProofGraph:
                         "formalization_rationale": (
                             "Promoted as a more concrete high-yield local island within the same proof neighborhood."
                         ),
+                    }
+                )
+            )
+        else:
+            updated_nodes.append(node)
+    return graph.model_copy(update={"nodes": updated_nodes})
+
+
+def _calibrate_candidate_set(graph: ProofGraph) -> ProofGraph:
+    candidates = [node for node in graph.nodes if node.status == "candidate_formal"]
+    if len(candidates) <= 1:
+        return graph
+
+    max_candidates = 2 if len(graph.nodes) <= 5 else 3
+    ranked_ids = {
+        node.id
+        for node in sorted(
+            candidates,
+            key=lambda node: (
+                node.formalization_priority or 999,
+                -_candidate_usefulness_score(node),
+                node.id == graph.root_node_id,
+                node.id,
+            ),
+        )[:max_candidates]
+    }
+
+    updated_nodes: list[ProofNode] = []
+    for node in graph.nodes:
+        if node.status == "candidate_formal" and node.id not in ranked_ids:
+            updated_nodes.append(
+                node.model_copy(
+                    update={
+                        "status": "informal",
+                        "formalization_priority": None,
+                        "formalization_rationale": None,
                     }
                 )
             )

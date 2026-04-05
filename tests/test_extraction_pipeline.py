@@ -148,6 +148,63 @@ def test_plan_proof_graph_returns_explicit_extracted_and_candidate_graphs() -> N
     assert selected.formalization_priority == 3
 
 
+def test_plan_proof_graph_calibrates_small_candidate_set() -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "theorem_title": "Toy theorem",
+                "theorem_statement": "If A then B.",
+                "root_node_id": "n0",
+                "nodes": [
+                    {
+                        "id": "n0",
+                        "title": "Main theorem",
+                        "informal_statement": "If A then B.",
+                        "informal_proof_text": "Assemble n1, n2, n3.",
+                    },
+                    {
+                        "id": "n1",
+                        "title": "Setup reduction",
+                        "informal_statement": "Rewrite the theorem in a reduced form.",
+                        "informal_proof_text": "This is setup.",
+                    },
+                    {
+                        "id": "n2",
+                        "title": "Normalization step",
+                        "informal_statement": "Normalize the variables into a local range.",
+                        "informal_proof_text": "This is useful.",
+                    },
+                    {
+                        "id": "n3",
+                        "title": "Local inequality",
+                        "informal_statement": r"\[ x^2 + y^2 \le 1 \]",
+                        "informal_proof_text": "Concrete local estimate.",
+                    },
+                ],
+                "edges": [
+                    {"source_id": "n1", "target_id": "n0"},
+                    {"source_id": "n2", "target_id": "n0"},
+                    {"source_id": "n3", "target_id": "n0"},
+                ],
+                "candidates": [
+                    {"node_id": "n1", "priority": 3, "rationale": "Setup."},
+                    {"node_id": "n2", "priority": 2, "rationale": "Secondary."},
+                    {"node_id": "n3", "priority": 1, "rationale": "Best local node."},
+                ],
+            }
+        ]
+    )
+
+    artifacts = plan_proof_graph(
+        backend=backend,
+        theorem_statement="If A then B.",
+        raw_proof_text="Proof.",
+    )
+
+    candidates = [node.id for node in artifacts.candidate_graph.nodes if node.status == "candidate_formal"]
+    assert candidates == ["n2", "n3"]
+
+
 def test_extract_proof_graph_preserves_input_theorem_statement_exactly() -> None:
     original_statement = r"Let \(f : \mathbb{R}^d \to \mathbb{C}\). Then \[\|f\|_{L^2}^2 \le 1.\]"
     backend = MockBackend(

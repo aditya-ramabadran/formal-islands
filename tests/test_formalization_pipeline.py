@@ -353,3 +353,33 @@ def test_assess_formalization_faithfulness_marks_scalarized_core_as_sublemma() -
     assessment = assess_formalization_faithfulness(node=node, artifact=artifact)
 
     assert assessment.classification == FaithfulnessClassification.CONCRETE_SUBLEMMA
+
+
+def test_assess_formalization_faithfulness_marks_broad_multistep_node_as_sublemma() -> None:
+    node = ProofNode(
+        id="n3",
+        title="Convexity of the one-variable function",
+        informal_statement=(
+            "Define G, compute G' and G'', prove the explicit second-derivative formula, show it is nonnegative, "
+            "deduce convexity, and conclude the global minimum and nonnegativity."
+        ),
+        informal_proof_text=(
+            "Define G, compute derivatives, rewrite the explicit formula, show the sign, then conclude convexity "
+            "and the minimum at the base point."
+        ),
+        status="candidate_formal",
+        formalization_priority=1,
+        formalization_rationale="Concrete calculus core.",
+    )
+    artifact = FormalArtifact(
+        lean_theorem_name="second_derivative_rhs_nonneg",
+        lean_statement=(
+            "theorem second_derivative_rhs_nonneg (u : ℝ) (hu0 : 0 < u) (hu2 : u < 2) : "
+            "0 <= 2 * (1 - Real.sqrt (u * (2 - u))) / ((u * (2 - u)) * Real.sqrt (u * (2 - u)))"
+        ),
+        lean_code="theorem second_derivative_rhs_nonneg (u : ℝ) (hu0 : 0 < u) (hu2 : u < 2) : 0 <= 1 := by nlinarith",
+    )
+
+    assessment = assess_formalization_faithfulness(node=node, artifact=artifact)
+
+    assert assessment.classification == FaithfulnessClassification.CONCRETE_SUBLEMMA

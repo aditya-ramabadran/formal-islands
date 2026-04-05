@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
 from typing import Callable
 
 from formal_islands.backends import BackendError, CodexCLIBackend, StructuredBackend
@@ -28,6 +29,14 @@ class FormalizationOutcome:
     graph: ProofGraph
     node_id: str
     artifact: FormalArtifact
+
+
+@dataclass(frozen=True)
+class MultiFormalizationOutcome:
+    """Result summary for a sequential multi-node formalization pass."""
+
+    graph: ProofGraph
+    outcomes: list[FormalizationOutcome]
 
 
 FormalizationUpdateCallback = Callable[[FormalizationOutcome], None]
@@ -68,6 +77,47 @@ def formalize_candidate_node(
         max_attempts=max_attempts,
         on_update=on_update,
     )
+
+
+def formalize_candidate_nodes(
+    *,
+    backend: StructuredBackend,
+    verifier: LeanVerifier,
+    graph: ProofGraph,
+    node_ids: list[str] | None = None,
+    max_attempts: int = MAX_TOTAL_FORMALIZATION_ATTEMPTS,
+    on_update: FormalizationUpdateCallback | None = None,
+    mode: str = "auto",
+) -> MultiFormalizationOutcome:
+    """Formalize multiple candidate nodes sequentially, reusing the updated graph each time."""
+
+    current_graph = graph
+    outcomes: list[FormalizationOutcome] = []
+    target_ids = node_ids or [
+        node.id
+        for node in sorted(
+            [node for node in current_graph.nodes if node.status == "candidate_formal"],
+            key=lambda node: ((node.formalization_priority or 999), node.id),
+        )
+    ]
+
+    for node_id in target_ids:
+        current_node = next((node for node in current_graph.nodes if node.id == node_id), None)
+        if current_node is None or current_node.status != "candidate_formal":
+            continue
+        outcome = formalize_candidate_node(
+            backend=backend,
+            verifier=verifier,
+            graph=current_graph,
+            node_id=node_id,
+            max_attempts=max_attempts,
+            on_update=on_update,
+            mode=mode,
+        )
+        current_graph = outcome.graph
+        outcomes.append(outcome)
+
+    return MultiFormalizationOutcome(graph=current_graph, outcomes=outcomes)
 
 
 def _formalize_candidate_node_structured(
@@ -156,6 +206,16 @@ def _formalize_candidate_node_structured(
                 "attempt_history": attempt_history.copy(),
             }
         )
+        expanded_artifact = _attempt_structured_coverage_expansion(
+            backend=backend,
+            verifier=verifier,
+            graph=current_graph,
+            node_id=node_id,
+            artifact=latest_artifact,
+            attempt_history=attempt_history,
+        )
+        if expanded_artifact is not None:
+            latest_artifact = expanded_artifact
         current_graph = _integrate_successful_formalization(
             graph=current_graph,
             backend=backend,
@@ -280,6 +340,17 @@ def _formalize_candidate_node_agentic(
                 "attempt_history": attempt_history.copy(),
             }
         )
+        expanded_artifact = _attempt_agentic_coverage_expansion(
+            backend=backend,
+            verifier=verifier,
+            graph=current_graph,
+            node_id=node_id,
+            artifact=artifact,
+            scratch_path=scratch_path,
+            attempt_history=attempt_history,
+        )
+        if expanded_artifact is not None:
+            artifact = expanded_artifact
         updated_graph = _integrate_successful_formalization(
             graph=current_graph,
             backend=backend,
@@ -467,6 +538,107 @@ def _promote_concrete_sublemma(
     return graph.model_copy(update={"nodes": updated_nodes, "edges": updated_edges})
 
 
+def _attempt_structured_coverage_expansion(
+    *,
+    backend: StructuredBackend,
+    verifier: LeanVerifier,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+    attempt_history: list[VerificationResult],
+) -> FormalArtifact | None:
+    if (
+        artifact.verification.status != "verified"
+        or artifact.faithfulness_classification != FaithfulnessClassification.CONCRETE_SUBLEMMA
+    ):
+        return None
+
+    try:
+        expanded = request_node_formalization(
+            backend=backend,
+            graph=_graph_for_retry_request(graph, node_id),
+            node_id=node_id,
+            compiler_feedback=_build_coverage_expansion_feedback(
+                node=next(node for node in graph.nodes if node.id == node_id),
+                artifact=artifact,
+            ),
+            previous_lean_code=artifact.lean_code,
+        )
+    except (BackendError, FormalizationFaithfulnessError):
+        return None
+
+    verification = verifier.verify_code(
+        lean_code=expanded.lean_code,
+        node_id=node_id,
+        attempt_number=(artifact.verification.attempt_count or 1) + 1,
+    )
+    if verification.status != "verified":
+        return None
+    expanded = expanded.model_copy(
+        update={
+            "verification": verification,
+            "attempt_history": attempt_history.copy() + [verification],
+        }
+    )
+    if expanded.faithfulness_classification == FaithfulnessClassification.FULL_NODE:
+        return expanded
+    return None
+
+
+def _attempt_agentic_coverage_expansion(
+    *,
+    backend: CodexCLIBackend,
+    verifier: LeanVerifier,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+    scratch_path: Path,
+    attempt_history: list[VerificationResult],
+) -> FormalArtifact | None:
+    if (
+        artifact.verification.status != "verified"
+        or artifact.faithfulness_classification != FaithfulnessClassification.CONCRETE_SUBLEMMA
+    ):
+        return None
+
+    original_code = artifact.lean_code
+    try:
+        expanded = request_agentic_formalization(
+            backend=backend,
+            graph=_graph_for_retry_request(graph, node_id),
+            node_id=node_id,
+            workspace_root=verifier.workspace.root.resolve(),
+            scratch_file_path=scratch_path,
+            faithfulness_feedback=_build_coverage_expansion_feedback(
+                node=next(node for node in graph.nodes if node.id == node_id),
+                artifact=artifact,
+            ),
+            previous_lean_code=artifact.lean_code,
+        )
+    except (BackendError, FormalizationFaithfulnessError):
+        scratch_path.write_text(original_code, encoding="utf-8")
+        return None
+
+    verification = verifier.verify_existing_file(
+        file_path=scratch_path,
+        attempt_number=(artifact.verification.attempt_count or 1) + 1,
+    )
+    if verification.status != "verified":
+        scratch_path.write_text(original_code, encoding="utf-8")
+        return None
+    expanded = expanded.model_copy(
+        update={
+            "verification": verification,
+            "attempt_history": attempt_history.copy() + [verification],
+        }
+    )
+    if expanded.faithfulness_classification == FaithfulnessClassification.FULL_NODE:
+        return expanded
+
+    scratch_path.write_text(original_code, encoding="utf-8")
+    return None
+
+
 def _build_concrete_sublemma_text(
     *,
     graph: ProofGraph,
@@ -501,6 +673,76 @@ def _build_concrete_sublemma_text(
         summary.informal_statement,
         prefix + summary.informal_proof_text,
     )
+
+
+def _build_coverage_expansion_feedback(*, node: ProofNode, artifact: FormalArtifact) -> str:
+    targets = _node_coverage_targets(node)
+    target_lines = "\n".join(f"- {item}" for item in targets) or "- Broaden coverage toward the full node."
+    return "\n\n".join(
+        [
+            "Coverage expansion follow-up:",
+            (
+                "A verified Lean theorem was accepted as a narrower concrete local core, not as full-node coverage. "
+                "Continue from the already verified code and try to enlarge coverage upward while staying in the same concrete setting."
+            ),
+            "Currently verified Lean theorem:",
+            artifact.lean_statement,
+            "Broader target node:",
+            f"{node.title}: {node.informal_statement}",
+            (
+                "Aim first at the closest broader theorem that still directly mirrors the parent node, preserving the "
+                "same ambient setting, symbols, quantities, and inferential role."
+            ),
+            (
+                "Do not switch to a more abstract ambient theorem. Build upward from the verified core toward adjacent "
+                "missing steps in the same local argument."
+            ),
+            "Potential missing substeps from the parent node:",
+            target_lines,
+        ]
+    )
+
+
+def _node_coverage_targets(node: ProofNode) -> list[str]:
+    text = f"{node.informal_statement}\n{node.informal_proof_text}"
+    clauses = re.split(r"(?<=[.;])\s+|\n+", text)
+    targets: list[str] = []
+    for clause in clauses:
+        cleaned = clause.strip()
+        lowered = cleaned.lower()
+        if not cleaned:
+            continue
+        if any(
+            word in lowered
+            for word in (
+                "define",
+                "set",
+                "write",
+                "rewrite",
+                "expand",
+                "compute",
+                "differentiate",
+                "derive",
+                "show",
+                "prove",
+                "deduce",
+                "conclude",
+                "substitute",
+                "apply",
+                "use",
+                "evaluate",
+                "normalize",
+                "reduce",
+                "combine",
+                "test",
+                "split",
+                "identify",
+            )
+        ) or any(marker in cleaned for marker in ("=", "\\le", "\\ge", "≤", "≥", "∫", "\\int")):
+            targets.append(cleaned.rstrip("."))
+        if len(targets) >= 4:
+            break
+    return targets
 
 
 def _fresh_support_node_id(graph: ProofGraph, parent_node_id: str) -> str:
