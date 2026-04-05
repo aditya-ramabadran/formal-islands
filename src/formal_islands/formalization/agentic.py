@@ -124,6 +124,18 @@ def build_agentic_formalization_request(
                 "lemmas or APIs to search for."
             ),
             (
+                "Default to the most literal whole-node theorem shape that directly mirrors the target node's stated "
+                "mathematical claim. Treat that literal whole-node target as the starting point, not as an optional stretch goal."
+            ),
+            (
+                "Only fall back to a narrower concrete sublemma if your local scouting or compiler experiments show that "
+                "the literal whole-node target is infeasible in the available time or Mathlib surface area."
+            ),
+            (
+                "If you do fall back, record that explicitly in the plan file: note the literal whole-node target you tried, "
+                "why it looked infeasible, and why the narrower replacement still captures meaningful inferential load."
+            ),
+            (
                 "Use the plan to do brief local scouting before you commit to the final theorem. You may create tiny "
                 "scratch experiments, run `#check`, grep or ripgrep for likely lemma names, inspect imports, and read "
                 "nearby Mathlib files when that helps you choose the right concrete theorem shape."
@@ -172,6 +184,11 @@ def build_agentic_formalization_request(
             (
                 "Do not game the task by collapsing the node to an easy nearby side fact. If you simplify, the "
                 "replacement should still carry meaningful inferential load in the parent proof."
+            ),
+            (
+                "Before settling on a fallback theorem, spend a short attempt on the literal node-level statement or the "
+                "closest direct transcription that seems syntactically realistic. Do not jump immediately to a more abstract "
+                "or indirect theorem just because it is familiar."
             ),
             (
                 "Return a JSON object with keys lean_theorem_name, lean_statement, final_file_path, and plan_file_path. "

@@ -93,6 +93,9 @@ def test_build_agentic_formalization_request_includes_concrete_setting_guidance(
     assert "likely mathlib lemmas or apis to search for" in request.prompt.lower()
     assert "`#check`" in request.prompt
     assert "appending a new labeled section" in request.prompt.lower()
+    assert "default to the most literal whole-node theorem shape" in request.prompt.lower()
+    assert "only fall back to a narrower concrete sublemma" in request.prompt.lower()
+    assert "do not jump immediately to a more abstract or indirect theorem" in request.prompt.lower()
 
 
 def test_lean_verifier_captures_command_result(tmp_path: Path) -> None:
@@ -601,6 +604,7 @@ def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failur
     assert "create the plan markdown file above first" in backend.requests[0].prompt.lower()
     assert "do brief local scouting before you commit to the final theorem" in backend.requests[0].prompt.lower()
     assert "appending a new labeled section" in backend.requests[1].prompt.lower()
+    assert "explicitly reconsider the most literal whole-node theorem shape first" in backend.requests[1].prompt.lower()
     assert worker_file.read_text(encoding="utf-8").startswith("import Mathlib.Data.Real.Basic")
     assert len(updates) == 2
 

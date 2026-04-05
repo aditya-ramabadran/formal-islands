@@ -14,6 +14,8 @@ from formal_islands.review import derive_review_obligations
 from formal_islands.smoke import (
     _backend_failure_outcome,
     cmd_plan,
+    cmd_run_benchmark,
+    default_output_dir_for_input,
     ensure_output_dir,
     load_graph,
     load_input_payload,
@@ -327,3 +329,98 @@ def test_build_backend_allows_formalization_timeout_override(tmp_path: Path) -> 
     )
 
     assert backend.timeout_seconds == 420.0
+
+
+def test_default_output_dir_for_input_uses_manual_testing_slug() -> None:
+    path = Path("examples/manual-testing/run11_two_point_log_sobolev.json")
+
+    assert default_output_dir_for_input(path) == Path(
+        "artifacts/manual-testing/run11-two-point-log-sobolev"
+    )
+
+
+def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, str]] = []
+    input_path = tmp_path / "run11_two_point_log_sobolev.json"
+    input_path.write_text(
+        json.dumps(
+            {
+                "theorem_title": "Run 11",
+                "theorem_statement": "If A then B.",
+                "raw_proof_text": "Proof.",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    def fake_plan(args: Namespace) -> int:
+        calls.append(("plan", args.output_dir))
+        out = Path(args.output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        write_graph(
+            ProofGraph(
+                theorem_title="Run 11",
+                theorem_statement="If A then B.",
+                root_node_id="n1",
+                nodes=[
+                    ProofNode(
+                        id="n1",
+                        title="Main claim",
+                        informal_statement="B",
+                        informal_proof_text="Use n2",
+                    ),
+                    ProofNode(
+                        id="n2",
+                        title="Leaf",
+                        informal_statement="A -> B",
+                        informal_proof_text="...",
+                        status="candidate_formal",
+                        formalization_priority=1,
+                        formalization_rationale="leaf",
+                    ),
+                ],
+                edges=[ProofEdge(source_id="n1", target_id="n2")],
+            ),
+            out / "02_candidate_graph.json",
+        )
+        return 0
+
+    def fake_formalize(args: Namespace) -> int:
+        calls.append(("formalize", args.output_dir))
+        out = Path(args.output_dir)
+        write_graph(load_graph(out / "02_candidate_graph.json"), out / "03_formalized_graph.json")
+        return 0
+
+    def fake_report(args: Namespace) -> int:
+        calls.append(("report", args.output_dir))
+        out = Path(args.output_dir)
+        (out / "04_report.html").write_text("<html></html>", encoding="utf-8")
+        return 0
+
+    monkeypatch.setattr("formal_islands.smoke.cmd_plan", fake_plan)
+    monkeypatch.setattr("formal_islands.smoke.cmd_formalize_one", fake_formalize)
+    monkeypatch.setattr("formal_islands.smoke.cmd_report", fake_report)
+
+    exit_code = cmd_run_benchmark(
+        Namespace(
+            backend="codex",
+            model=None,
+            input=str(input_path),
+            output_dir=None,
+            workspace="lean_project",
+            node_id="auto",
+            max_attempts=4,
+            formalization_mode="agentic",
+        )
+    )
+
+    expected_output_dir = Path("artifacts/manual-testing/run11-two-point-log-sobolev")
+    assert exit_code == 0
+    assert calls == [
+        ("plan", str(expected_output_dir)),
+        ("formalize", str(expected_output_dir)),
+        ("report", str(expected_output_dir)),
+    ]

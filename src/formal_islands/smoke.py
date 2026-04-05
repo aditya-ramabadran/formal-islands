@@ -121,6 +121,41 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_parser.set_defaults(func=cmd_run_example)
 
+    benchmark_parser = subparsers.add_parser("run-benchmark")
+    add_backend_args(benchmark_parser)
+    add_input_args(benchmark_parser)
+    benchmark_parser.add_argument(
+        "--output-dir",
+        default=None,
+        help=(
+            "Directory where outputs should be written. Default: "
+            "artifacts/manual-testing/<input-stem-with-hyphens>"
+        ),
+    )
+    benchmark_parser.add_argument(
+        "--workspace",
+        default="lean_project",
+        help="Path to the local Lean workspace.",
+    )
+    benchmark_parser.add_argument(
+        "--node-id",
+        default="auto",
+        help="Candidate node id to formalize. Default: auto-pick highest-priority candidate.",
+    )
+    benchmark_parser.add_argument(
+        "--max-attempts",
+        type=int,
+        default=4,
+        help="Maximum number of bounded formalization attempts.",
+    )
+    benchmark_parser.add_argument(
+        "--formalization-mode",
+        choices=["agentic", "structured", "auto"],
+        default="agentic",
+        help="Formalization execution mode. Default: agentic Codex worker, with structured fallback available.",
+    )
+    benchmark_parser.set_defaults(func=cmd_run_benchmark)
+
     return parser
 
 
@@ -313,6 +348,42 @@ def cmd_run_example(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_run_benchmark(args: argparse.Namespace) -> int:
+    input_path = Path(args.input)
+    output_dir = ensure_output_dir(
+        Path(args.output_dir) if args.output_dir is not None else default_output_dir_for_input(input_path)
+    )
+    cmd_plan(
+        argparse.Namespace(
+            backend=args.backend,
+            model=args.model,
+            input=str(input_path),
+            output_dir=str(output_dir),
+        )
+    )
+    candidate_graph_path = output_dir / "02_candidate_graph.json"
+    cmd_formalize_one(
+        argparse.Namespace(
+            backend=args.backend,
+            model=args.model,
+            graph=str(candidate_graph_path),
+            output_dir=str(output_dir),
+            workspace=args.workspace,
+            node_id=args.node_id,
+            max_attempts=args.max_attempts,
+            formalization_mode=args.formalization_mode,
+        )
+    )
+    formalized_graph_path = output_dir / "03_formalized_graph.json"
+    cmd_report(
+        argparse.Namespace(
+            graph=str(formalized_graph_path),
+            output_dir=str(output_dir),
+        )
+    )
+    return 0
+
+
 def build_backend(
     name: str,
     model: str | None,
@@ -409,6 +480,12 @@ def ensure_output_dir(path: Path) -> Path:
 
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def default_output_dir_for_input(path: Path) -> Path:
+    """Derive a sensible artifact directory from an input JSON path."""
+
+    return Path("artifacts/manual-testing") / path.stem.replace("_", "-")
 
 
 def select_candidate_node_id(graph: ProofGraph, requested_node_id: str = "auto") -> str:

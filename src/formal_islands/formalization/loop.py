@@ -360,6 +360,11 @@ def _build_agentic_faithfulness_feedback(*, previous_result: VerificationResult)
                 "If the full node is too hard, replace it with a smaller but still concrete local sublemma in the "
                 "same ambient setting rather than a more abstract theorem."
             ),
+            (
+                "For this revision, explicitly reconsider the most literal whole-node theorem shape first. If you still "
+                "cannot make that work, keep the fallback concrete, document the reason for the fallback in the plan file, "
+                "and do not jump to a more abstract ambient theorem."
+            ),
         ]
     )
 
