@@ -1,0 +1,7 @@
+{
+  "node_id": "n2",
+  "status": "failed",
+  "artifact_path": null,
+  "attempt_count": 1,
+  "stderr": "Recovered locally from existing worker file; no backend rerun performed."
+}

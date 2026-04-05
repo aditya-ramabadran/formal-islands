@@ -1,0 +1,54 @@
+{
+  "theorem_title": "First Dirichlet eigenfunction via the Rayleigh quotient",
+  "theorem_statement": "First Dirichlet eigenfunction via the Rayleigh quotient.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain with sufficiently regular boundary. Define\n\\[\n\\lambda_1\n:=\n\\inf\\left\\{\n\\int_\\Omega |\\nabla u|^2\\,dx\n:u\\in H_0^1(\\Omega),\\ \\int_\\Omega u^2\\,dx = 1\n\\right\\}.\n\\]\nThen the infimum is attained: there exists \\(u_1\\in H_0^1(\\Omega)\\) with\n\\[\n\\int_\\Omega u_1^2\\,dx=1\n\\]\nsuch that\n\\[\n\\lambda_1=\\int_\\Omega |\\nabla u_1|^2\\,dx.\n\\]\nMoreover, \\(u_1\\) satisfies the weak eigenvalue equation\n\\[\n\\int_\\Omega \\nabla u_1\\cdot\\nabla\\varphi\\,dx\n=\n\\lambda_1 \\int_\\Omega u_1\\varphi\\,dx\n\\qquad \\forall \\varphi\\in H_0^1(\\Omega).\n\\]",
+  "root_node_id": "n0",
+  "nodes": [
+    {
+      "id": "n0",
+      "title": "First Dirichlet eigenfunction via the Rayleigh quotient",
+      "informal_statement": "There exists \\(u_1\\in H_0^1(\\Omega)\\) such that \\(\\int_\\Omega u_1^2\\,dx=1\\), \\(\\int_\\Omega |\\nabla u_1|^2\\,dx=\\lambda_1\\), and\n\\[\n\\int_\\Omega \\nabla u_1\\cdot\\nabla\\varphi\\,dx\n=\n\\lambda_1\\int_\\Omega u_1\\varphi\\,dx\n\\qquad \\forall \\varphi\\in H_0^1(\\Omega).\n\\]",
+      "informal_proof_text": "Choose a minimizing sequence \\((u_n)\\subset H_0^1(\\Omega)\\) with \\(\\int_\\Omega u_n^2\\,dx=1\\) and \\(\\int_\\Omega |\\nabla u_n|^2\\,dx\\to \\lambda_1\\). By boundedness in \\(H_0^1(\\Omega)\\), weak compactness, compactness of the embedding \\(H_0^1(\\Omega)\\hookrightarrow L^2(\\Omega)\\), and weak lower semicontinuity, obtain an admissible limit \\(u_1\\) attaining the infimum. Then apply the constrained Euler\u2013Lagrange/Lagrange multiplier argument to the minimizer \\(u_1\\): there is \\(\\mu\\) such that \\(\\int_\\Omega \\nabla u_1\\cdot\\nabla\\varphi\\,dx = \\mu \\int_\\Omega u_1\\varphi\\,dx\\) for all \\(\\varphi\\in H_0^1(\\Omega)\\). Testing with \\(\\varphi=u_1\\) and using \\(\\int_\\Omega u_1^2\\,dx=1\\) and \\(\\int_\\Omega |\\nabla u_1|^2\\,dx=\\lambda_1\\), deduce \\(\\mu=\\lambda_1\\).",
+      "status": "informal",
+      "display_label": "Main theorem",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "n1",
+      "title": "A minimizing sequence has an admissible limit that attains \\(\\lambda_1\\)",
+      "informal_statement": "If \\((u_n)\\subset H_0^1(\\Omega)\\) satisfies \\(\\int_\\Omega u_n^2\\,dx=1\\) for all \\(n\\) and \\(\\int_\\Omega |\\nabla u_n|^2\\,dx\\to \\lambda_1\\), then after passing to a subsequence there exists \\(u_1\\in H_0^1(\\Omega)\\) such that \\(u_n\\rightharpoonup u_1\\) weakly in \\(H_0^1(\\Omega)\\), \\(u_n\\to u_1\\) strongly in \\(L^2(\\Omega)\\), \\(\\int_\\Omega u_1^2\\,dx=1\\), and \\(\\int_\\Omega |\\nabla u_1|^2\\,dx=\\lambda_1\\).",
+      "informal_proof_text": "Because \\(\\int_\\Omega |\\nabla u_n|^2\\,dx\\) stays bounded and \\(\\int_\\Omega u_n^2\\,dx=1\\), the sequence is bounded in \\(H_0^1(\\Omega)\\). Extract a subsequence converging weakly in \\(H_0^1(\\Omega)\\) to some \\(u_1\\). By compactness of \\(H_0^1(\\Omega)\\hookrightarrow L^2(\\Omega)\\), pass to a further subsequence with \\(u_n\\to u_1\\) strongly in \\(L^2(\\Omega)\\). Hence \\(\\int_\\Omega u_1^2\\,dx=\\lim_n \\int_\\Omega u_n^2\\,dx=1\\), so \\(u_1\\) is admissible. By weak lower semicontinuity,\n\\[\n\\int_\\Omega |\\nabla u_1|^2\\,dx\\le \\liminf_{n\\to\\infty}\\int_\\Omega |\\nabla u_n|^2\\,dx=\\lambda_1.\n\\]\nSince \\(u_1\\) is admissible and \\(\\lambda_1\\) is the infimum over admissible functions, also \\(\\lambda_1\\le \\int_\\Omega |\\nabla u_1|^2\\,dx\\). Therefore equality holds.",
+      "status": "informal",
+      "display_label": "Attainment via compactness",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "n2",
+      "title": "Euler\u2013Lagrange equation for the constrained minimizer",
+      "informal_statement": "If \\(u_1\\in H_0^1(\\Omega)\\) minimizes \\(\\int_\\Omega |\\nabla u|^2\\,dx\\) under the constraint \\(\\int_\\Omega u^2\\,dx=1\\), then there exists \\(\\mu\\in\\mathbb{R}\\) such that\n\\[\n\\int_\\Omega \\nabla u_1\\cdot\\nabla\\varphi\\,dx\n=\n\\mu \\int_\\Omega u_1\\varphi\\,dx\n\\qquad \\forall \\varphi\\in H_0^1(\\Omega).\n\\]\nIf moreover \\(\\int_\\Omega |\\nabla u_1|^2\\,dx=\\lambda_1\\), then \\(\\mu=\\lambda_1\\).",
+      "informal_proof_text": "Apply the usual Lagrange multiplier principle to the functional \\(J(u)=\\int_\\Omega |\\nabla u|^2\\,dx\\) on the constraint manifold \\(\\{u\\in H_0^1(\\Omega): \\int_\\Omega u^2\\,dx=1\\}\\). This yields a constant \\(\\mu\\) with\n\\[\n\\int_\\Omega \\nabla u_1\\cdot\\nabla\\varphi\\,dx\n=\n\\mu \\int_\\Omega u_1\\varphi\\,dx\n\\qquad \\forall \\varphi\\in H_0^1(\\Omega).\n\\]\nTesting with \\(\\varphi=u_1\\) gives\n\\[\n\\int_\\Omega |\\nabla u_1|^2\\,dx = \\mu \\int_\\Omega u_1^2\\,dx.\n\\]\nUsing \\(\\int_\\Omega u_1^2\\,dx=1\\), obtain \\(\\mu=\\int_\\Omega |\\nabla u_1|^2\\,dx\\). If \\(u_1\\) is already known to attain the infimum, then \\(\\mu=\\lambda_1\\), and substituting back yields the weak eigenvalue equation.",
+      "status": "informal",
+      "display_label": "Constrained EL step",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "n1",
+      "target_id": "n0",
+      "label": "proves existence/attainment",
+      "explanation": "The compactness and lower-semicontinuity argument produces an admissible minimizer \\(u_1\\) with energy \\(\\lambda_1\\)."
+    },
+    {
+      "source_id": "n2",
+      "target_id": "n0",
+      "label": "proves weak eigenvalue equation",
+      "explanation": "Applying the constrained Euler\u2013Lagrange equation to the minimizer and identifying the multiplier with \\(\\lambda_1\\) yields the weak eigenfunction identity."
+    }
+  ]
+}

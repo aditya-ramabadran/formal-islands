@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Weak solution equals unique minimizer of the Dirichlet energy - Formal Islands Report</title>
+  <title>First Dirichlet eigenfunction via the Rayleigh quotient - Formal Islands Report</title>
   <script>
     window.MathJax = {
       tex: {
@@ -541,22 +541,33 @@
 <body>
   <main class="report-root">
     <section>
-      <h1>Weak solution equals unique minimizer of the Dirichlet energy</h1>
-      <div class="math-text">Weak solution equals unique minimizer of the Dirichlet energy.
+      <h1>First Dirichlet eigenfunction via the Rayleigh quotient</h1>
+      <div class="math-text">First Dirichlet eigenfunction via the Rayleigh quotient.
 
-Let \(\Omega \subset \mathbb{R}^d\) be a bounded domain with sufficiently regular boundary, and let \(f \in L^2(\Omega)\). Define
+Let \(\Omega \subset \mathbb{R}^d\) be a bounded domain with sufficiently regular boundary. Define
 \[
-J(v) := \frac12 \int_\Omega |\nabla v|^2 \, dx - \int_\Omega f v \, dx
-\qquad \text{for } v \in H_0^1(\Omega).
+\lambda_1
+:=
+\inf\left\{
+\int_\Omega |\nabla u|^2\,dx
+:u\in H_0^1(\Omega),\ \int_\Omega u^2\,dx = 1
+\right\}.
 \]
-Then \(u \in H_0^1(\Omega)\) satisfies
+Then the infimum is attained: there exists \(u_1\in H_0^1(\Omega)\) with
 \[
-\int_\Omega \nabla u \cdot \nabla \varphi \, dx
+\int_\Omega u_1^2\,dx=1
+\]
+such that
+\[
+\lambda_1=\int_\Omega |\nabla u_1|^2\,dx.
+\]
+Moreover, \(u_1\) satisfies the weak eigenvalue equation
+\[
+\int_\Omega \nabla u_1\cdot\nabla\varphi\,dx
 =
-\int_\Omega f \varphi \, dx
-\qquad \text{for every } \varphi \in H_0^1(\Omega)
-\]
-if and only if \(u\) is the unique minimizer of \(J\) over \(H_0^1(\Omega)\).</div>
+\lambda_1 \int_\Omega u_1\varphi\,dx
+\qquad \forall \varphi\in H_0^1(\Omega).
+\]</div>
       <p class="meta">Root node: n0</p>
     </section>
     <section>
@@ -564,8 +575,8 @@ if and only if \(u\) is the unique minimizer of \(J\) over \(H_0^1(\Omega)\).</d
       <p>
         <span class="pill">Nodes: 3</span>
         <span class="pill">Edges: 2</span>
-        <span class="pill">Informal: 1</span>
-        <span class="pill">Candidates: 1</span>
+        <span class="pill">Informal: 0</span>
+        <span class="pill">Candidates: 2</span>
         <span class="pill">Verified: 0</span>
         <span class="pill">Failed: 1</span>
       </p>
@@ -581,26 +592,28 @@ if and only if \(u\) is the unique minimizer of \(J\) over \(H_0^1(\Omega)\).</d
         <g><line class="graph-edge edge-n1-n0" x1="210.0" y1="201.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
 <line class="graph-edge edge-n2-n0" x1="210.0" y1="319.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line></g>
         <g>
-    <a class="graph-node-link node-n0 status-informal" href="#node-n0">
-      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="47">Theorem</tspan></text>
+    <a class="graph-node-link node-n0 status-candidate-formal" href="#node-n0">
+      <rect class="graph-node-box status-candidate-formal" x="144.0" y="20" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="32" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="47">Main theorem</tspan></text>
       <text class="graph-node-id" x="210.0" y="68">n0</text>
     </a>
     
 
-    <a class="graph-node-link node-n1 status-formal-failed" href="#node-n1">
-      <rect class="graph-node-box status-formal-failed" x="144.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="150" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="165">Gap identity</tspan></text>
+    <a class="graph-node-link node-n1 status-candidate-formal" href="#node-n1">
+      <rect class="graph-node-box status-candidate-formal" x="144.0" y="138" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="160">Attainment via</tspan>
+<tspan x="210.0" y="172">compactness</tspan></text>
       <text class="graph-node-id" x="210.0" y="186">n1</text>
     </a>
     
 
-    <a class="graph-node-link node-n2 status-candidate-formal" href="#node-n2">
-      <rect class="graph-node-box status-candidate-formal" x="144.0" y="256" rx="22" ry="22" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="268" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="283">First variation</tspan></text>
+    <a class="graph-node-link node-n2 status-formal-failed" href="#node-n2">
+      <rect class="graph-node-box status-formal-failed" x="144.0" y="256" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="278">Constrained EL</tspan>
+<tspan x="210.0" y="290">step</tspan></text>
       <text class="graph-node-id" x="210.0" y="304">n2</text>
     </a>
     </g>
@@ -624,7 +637,7 @@ if and only if \(u\) is the unique minimizer of \(J\) over \(H_0^1(\Omega)\).</d
         <input id="obligation-check-informal-proof-n0" type="checkbox" />
         <span>
           <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;n0&#x27; (Main equivalence: weak solution \(\Leftrightarrow\) unique minimizer of \(J\)) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          Check that node &#x27;n0&#x27; (First Dirichlet eigenfunction via the Rayleigh quotient) has an informal proof that establishes its informal statement, assuming its child dependencies.
           
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n0">n0</a></div>
         </span>
@@ -637,7 +650,7 @@ if and only if \(u\) is the unique minimizer of \(J\) over \(H_0^1(\Omega)\).</d
         <input id="obligation-check-informal-proof-n1" type="checkbox" />
         <span>
           <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;n1&#x27; (Energy gap identity from the weak equation) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          Check that node &#x27;n1&#x27; (A minimizing sequence has an admissible limit that attains \(\lambda_1\)) has an informal proof that establishes its informal statement, assuming its child dependencies.
           
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n1">n1</a></div>
         </span>
@@ -650,7 +663,7 @@ if and only if \(u\) is the unique minimizer of \(J\) over \(H_0^1(\Omega)\).</d
         <input id="obligation-check-informal-proof-n2" type="checkbox" />
         <span>
           <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;n2&#x27; (First variation of \(J\) along lines) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          Check that node &#x27;n2&#x27; (Euler–Lagrange equation for the constrained minimizer) has an informal proof that establishes its informal statement, assuming its child dependencies.
           
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-n2">n2</a></div>
         </span>
@@ -664,84 +677,81 @@ if and only if \(u\) is the unique minimizer of \(J\) over \(H_0^1(\Omega)\).</d
       <div class="nodes-grid">
         
     <article class="node-card node-n0" id="node-n0" data-node-id="n0">
-      <h3>Main equivalence: weak solution \(\Leftrightarrow\) unique minimizer of \(J\)</h3>
-      <p class="meta">Node id: n0 | Status: informal</p>
-      <p class="meta">Display label: Theorem</p>
-      
+      <h3>First Dirichlet eigenfunction via the Rayleigh quotient</h3>
+      <p class="meta">Node id: n0 | Status: candidate_formal</p>
+      <p class="meta">Display label: Main theorem</p>
+      <p class="meta">Formalization priority: 3. Rationale: Natural wrapper theorem once the two substantive subclaims are available; lower priority because most formal burden sits in the two intermediate nodes.</p>
       <p><strong>Informal statement:</strong></p>
-      <div class="math-text">For \(u\in H_0^1(\Omega)\), the weak formulation
+      <div class="math-text">There exists \(u_1\in H_0^1(\Omega)\) such that \(\int_\Omega u_1^2\,dx=1\), \(\int_\Omega |\nabla u_1|^2\,dx=\lambda_1\), and
 \[
-\int_\Omega \nabla u\cdot \nabla \varphi\,dx=\int_\Omega f\varphi\,dx\quad \forall\,\varphi\in H_0^1(\Omega)
-\]
-is equivalent to \(u\) being the unique minimizer of
-\[
-J(v)=\frac12\int_\Omega |\nabla v|^2\,dx-\int_\Omega f v\,dx
-\]
-over \(H_0^1(\Omega)\).</div>
+\int_\Omega \nabla u_1\cdot\nabla\varphi\,dx
+=
+\lambda_1\int_\Omega u_1\varphi\,dx
+\qquad \forall \varphi\in H_0^1(\Omega).
+\]</div>
       <p><strong>Informal proof:</strong></p>
-      <div class="math-text">Combine the two directions: a weak solution satisfies the exact energy gap identity, hence minimizes uniquely; conversely, a minimizer has vanishing first variation along every direction, which is exactly the weak equation.</div>
+      <div class="math-text">Choose a minimizing sequence \((u_n)\subset H_0^1(\Omega)\) with \(\int_\Omega u_n^2\,dx=1\) and \(\int_\Omega |\nabla u_n|^2\,dx\to \lambda_1\). By boundedness in \(H_0^1(\Omega)\), weak compactness, compactness of the embedding \(H_0^1(\Omega)\hookrightarrow L^2(\Omega)\), and weak lower semicontinuity, obtain an admissible limit \(u_1\) attaining the infimum. Then apply the constrained Euler–Lagrange/Lagrange multiplier argument to the minimizer \(u_1\): there is \(\mu\) such that \(\int_\Omega \nabla u_1\cdot\nabla\varphi\,dx = \mu \int_\Omega u_1\varphi\,dx\) for all \(\varphi\in H_0^1(\Omega)\). Testing with \(\varphi=u_1\) and using \(\int_\Omega u_1^2\,dx=1\) and \(\int_\Omega |\nabla u_1|^2\,dx=\lambda_1\), deduce \(\mu=\lambda_1\).</div>
       
     </article>
     
 
     <article class="node-card node-n1" id="node-n1" data-node-id="n1">
-      <h3>Energy gap identity from the weak equation</h3>
-      <p class="meta">Node id: n1 | Status: formal_failed</p>
-      <p class="meta">Display label: Gap identity</p>
-      <p class="meta">Formalization priority: 1. Rationale: Best formal island: the exact energy decomposition is compact, reusable, and directly yields both minimality and uniqueness from the weak equation.</p>
+      <h3>A minimizing sequence has an admissible limit that attains \(\lambda_1\)</h3>
+      <p class="meta">Node id: n1 | Status: candidate_formal</p>
+      <p class="meta">Display label: Attainment via compactness</p>
+      <p class="meta">Formalization priority: 1. Rationale: Highest-yield formal island: combines weak compactness, compact \(H_0^1\to L^2\) embedding, preservation of the \(L^2\)-constraint, and weak lower semicontinuity to prove attainment.</p>
       <p><strong>Informal statement:</strong></p>
-      <div class="math-text">If \(u\in H_0^1(\Omega)\) satisfies the weak equation, then for every \(v\in H_0^1(\Omega)\) one has
-\[
-J(v)=J(u)+\frac12\int_\Omega |\nabla(v-u)|^2\,dx.
-\]
-In particular, \(J(v)\ge J(u)\), with equality only when \(v=u\) in \(H_0^1(\Omega)\).</div>
+      <div class="math-text">If \((u_n)\subset H_0^1(\Omega)\) satisfies \(\int_\Omega u_n^2\,dx=1\) for all \(n\) and \(\int_\Omega |\nabla u_n|^2\,dx\to \lambda_1\), then after passing to a subsequence there exists \(u_1\in H_0^1(\Omega)\) such that \(u_n\rightharpoonup u_1\) weakly in \(H_0^1(\Omega)\), \(u_n\to u_1\) strongly in \(L^2(\Omega)\), \(\int_\Omega u_1^2\,dx=1\), and \(\int_\Omega |\nabla u_1|^2\,dx=\lambda_1\).</div>
       <p><strong>Informal proof:</strong></p>
-      <div class="math-text">Write \(v=u+w\) with \(w\in H_0^1(\Omega)\), expand \(|\nabla(u+w)|^2\), and regroup terms as \(J(u)\) plus a linear bracket plus \(\frac12\int |\nabla w|^2\). The weak formulation with test function \(\varphi=w\) kills the linear bracket, leaving the exact gap identity. Nonnegativity of the last term gives minimality, and vanishing of the gap forces \(\nabla(v-u)=0\), hence \(v=u\) in \(H_0^1(\Omega)\).</div>
+      <div class="math-text">Because \(\int_\Omega |\nabla u_n|^2\,dx\) stays bounded and \(\int_\Omega u_n^2\,dx=1\), the sequence is bounded in \(H_0^1(\Omega)\). Extract a subsequence converging weakly in \(H_0^1(\Omega)\) to some \(u_1\). By compactness of \(H_0^1(\Omega)\hookrightarrow L^2(\Omega)\), pass to a further subsequence with \(u_n\to u_1\) strongly in \(L^2(\Omega)\). Hence \(\int_\Omega u_1^2\,dx=\lim_n \int_\Omega u_n^2\,dx=1\), so \(u_1\) is admissible. By weak lower semicontinuity,
+\[
+\int_\Omega |\nabla u_1|^2\,dx\le \liminf_{n\to\infty}\int_\Omega |\nabla u_n|^2\,dx=\lambda_1.
+\]
+Since \(u_1\) is admissible and \(\lambda_1\) is the infimum over admissible functions, also \(\lambda_1\le \int_\Omega |\nabla u_1|^2\,dx\). Therefore equality holds.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-n2" id="node-n2" data-node-id="n2">
+      <h3>Euler–Lagrange equation for the constrained minimizer</h3>
+      <p class="meta">Node id: n2 | Status: formal_failed</p>
+      <p class="meta">Display label: Constrained EL step</p>
+      <p class="meta">Formalization priority: 2. Rationale: Local formalization target with clear inferential load: the constrained first-variation statement and the identification \(\mu=\lambda_1\) turn the minimizer into a weak eigenfunction.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">If \(u_1\in H_0^1(\Omega)\) minimizes \(\int_\Omega |\nabla u|^2\,dx\) under the constraint \(\int_\Omega u^2\,dx=1\), then there exists \(\mu\in\mathbb{R}\) such that
+\[
+\int_\Omega \nabla u_1\cdot\nabla\varphi\,dx
+=
+\mu \int_\Omega u_1\varphi\,dx
+\qquad \forall \varphi\in H_0^1(\Omega).
+\]
+If moreover \(\int_\Omega |\nabla u_1|^2\,dx=\lambda_1\), then \(\mu=\lambda_1\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Apply the usual Lagrange multiplier principle to the functional \(J(u)=\int_\Omega |\nabla u|^2\,dx\) on the constraint manifold \(\{u\in H_0^1(\Omega): \int_\Omega u^2\,dx=1\}\). This yields a constant \(\mu\) with
+\[
+\int_\Omega \nabla u_1\cdot\nabla\varphi\,dx
+=
+\mu \int_\Omega u_1\varphi\,dx
+\qquad \forall \varphi\in H_0^1(\Omega).
+\]
+Testing with \(\varphi=u_1\) gives
+\[
+\int_\Omega |\nabla u_1|^2\,dx = \mu \int_\Omega u_1^2\,dx.
+\]
+Using \(\int_\Omega u_1^2\,dx=1\), obtain \(\mu=\int_\Omega |\nabla u_1|^2\,dx\). If \(u_1\) is already known to attain the infimum, then \(\mu=\lambda_1\), and substituting back yields the weak eigenvalue equation.</div>
       
         <h4>Formal Artifact</h4>
-        <p><strong>Lean theorem name:</strong> energy_gap_identity_of_weak_solution</p>
+        <p><strong>Lean theorem name:</strong> n2_backend_failure</p>
         <p><strong>Coverage:</strong> full_node</p>
         <div class="statement-code">
           <strong>Lean statement:</strong>
-          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> energy_gap_identity_of_weak_solution {E : <span class="tok-type">Type</span>*} [SeminormedAddCommGroup E] [InnerProductSpace <span class="tok-type">ℝ</span> E] {u f v : E} (hweak : ∀ w : E, inner <span class="tok-type">ℝ</span> u w = inner <span class="tok-type">ℝ</span> f w) : (<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * ‖v‖ ^ <span class="tok-number">2</span> - inner <span class="tok-type">ℝ</span> f v = ((<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * ‖u‖ ^ <span class="tok-number">2</span> - inner <span class="tok-type">ℝ</span> f u) + (<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * ‖v - u‖ ^ <span class="tok-number">2</span></code></pre>
+          <pre><code class="language-lean lean-code"><span class="tok-comment">-- backend did not return a Lean statement</span></code></pre>
         </div>
         <p><strong>Verification status:</strong> failed</p>
-        <p><strong>Verification command:</strong> <code>faithfulness_guard</code></p>
+        <p><strong>Verification command:</strong> <code>backend_request</code></p>
         <details>
           <summary>Lean code</summary>
-          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib.Analysis.InnerProductSpace.Basic
-
-<span class="tok-keyword">namespace</span> FormalIslands
-
-/<span class="tok-comment">--</span>
-If a vector `u` satisfies the weak equation against every test vector, <span class="tok-keyword">then</span> the quadratic energy
-splits into the value at `u` plus the <span class="tok-tactic">exact</span> nonnegative gap `<span class="tok-number">1</span>/<span class="tok-number">2</span> ‖v - u‖^<span class="tok-number">2</span>`.
--/
-<span class="tok-keyword">theorem</span> energy_gap_identity_of_weak_solution
-    {E : <span class="tok-type">Type</span>*} [SeminormedAddCommGroup E] [InnerProductSpace <span class="tok-type">ℝ</span> E]
-    {u f v : E}
-    (hweak : ∀ w : E, inner <span class="tok-type">ℝ</span> u w = inner <span class="tok-type">ℝ</span> f w) :
-    (<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * ‖v‖ ^ <span class="tok-number">2</span> - inner <span class="tok-type">ℝ</span> f v =
-      ((<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * ‖u‖ ^ <span class="tok-number">2</span> - inner <span class="tok-type">ℝ</span> f u) + (<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * ‖v - u‖ ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
-  <span class="tok-tactic">have</span> hv : v = u + (v - u) := <span class="tok-tactic">by</span>
-    symm
-    <span class="tok-tactic">exact</span> add_sub_cancel u v
-  <span class="tok-tactic">have</span> hweak&#x27; : inner <span class="tok-type">ℝ</span> u (v - u) = inner <span class="tok-type">ℝ</span> f (v - u) := hweak (v - u)
-  <span class="tok-tactic">calc</span>
-    (<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * ‖v‖ ^ <span class="tok-number">2</span> - inner <span class="tok-type">ℝ</span> f v
-        = (<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * ‖u + (v - u)‖ ^ <span class="tok-number">2</span> - inner <span class="tok-type">ℝ</span> f (u + (v - u)) := <span class="tok-tactic">by</span>
-          conv_lhs =&gt; <span class="tok-tactic">rw</span> [hv]
-    _ = (<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * (‖u‖ ^ <span class="tok-number">2</span> + <span class="tok-number">2</span> * inner <span class="tok-type">ℝ</span> u (v - u) + ‖v - u‖ ^ <span class="tok-number">2</span>) -
-          (inner <span class="tok-type">ℝ</span> f u + inner <span class="tok-type">ℝ</span> f (v - u)) := <span class="tok-tactic">by</span>
-        <span class="tok-tactic">rw</span> [← real_inner_self_eq_norm_sq (x := u + (v - u)),
-          real_inner_add_add_self, inner_add_right,
-          real_inner_self_eq_norm_sq (x := u),
-          real_inner_self_eq_norm_sq (x := v - u)]
-    _ = ((<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * ‖u‖ ^ <span class="tok-number">2</span> - inner <span class="tok-type">ℝ</span> f u) + (<span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) * ‖v - u‖ ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
-        <span class="tok-tactic">rw</span> [hweak&#x27;]
-        <span class="tok-tactic">ring</span>
-
-<span class="tok-keyword">end</span> FormalIslands</code></pre>
+          <pre><code class="language-lean lean-code"><span class="tok-comment">-- backend did not return Lean code</span></code></pre>
         </details>
         <details>
           <summary>Verification logs</summary>
@@ -749,26 +759,9 @@ splits into the value at `u` plus the <span class="tok-tactic">exact</span> nonn
 
 
 stderr:
-Formalization drifted too far from the target node. Avoid introducing arbitrary `Type*` parameters when the node describes a concrete local claim. Avoid translating the node into an arbitrary normed/inner-product space unless the node itself calls for that abstraction.</code></pre>
+Recovered locally from existing worker file; no backend rerun performed.</code></pre>
         </details>
         
-    </article>
-    
-
-    <article class="node-card node-n2" id="node-n2" data-node-id="n2">
-      <h3>First variation of \(J\) along lines</h3>
-      <p class="meta">Node id: n2 | Status: candidate_formal</p>
-      <p class="meta">Display label: First variation</p>
-      <p class="meta">Formalization priority: 2. Rationale: Second key formal island: the one-dimensional variation argument is the cleanest route from minimizer to weak formulation and is easy to formalize locally.</p>
-      <p><strong>Informal statement:</strong></p>
-      <div class="math-text">If \(u\in H_0^1(\Omega)\) is a minimizer of \(J\), then for every \(\varphi\in H_0^1(\Omega)\) the function \(g(t)=J(u+t\varphi)\) has \(g&#x27;(0)=0\), and
-\[
-g&#x27;(0)=\int_\Omega \nabla u\cdot \nabla \varphi\,dx-\int_\Omega f\varphi\,dx.
-\]
-Therefore \(u\) satisfies the weak formulation.</div>
-      <p><strong>Informal proof:</strong></p>
-      <div class="math-text">Fix \(\varphi\in H_0^1(\Omega)\) and consider the one-variable restriction \(g(t)=J(u+t\varphi)\). Since \(u\) minimizes \(J\), \(t=0\) is a minimum of \(g\), so \(g&#x27;(0)=0\). Expanding \(|\nabla(u+t\varphi)|^2\) gives a quadratic polynomial in \(t\), whose derivative at \(0\) is exactly \(\int_\Omega \nabla u\cdot\nabla\varphi\,dx-\int_\Omega f\varphi\,dx\). Setting this equal to zero yields the weak equation.</div>
-      
     </article>
     
       </div>

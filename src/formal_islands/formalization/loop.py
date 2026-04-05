@@ -7,7 +7,10 @@ from pathlib import Path
 from typing import Callable
 
 from formal_islands.backends import BackendError, CodexCLIBackend, StructuredBackend
-from formal_islands.formalization.agentic import request_agentic_formalization
+from formal_islands.formalization.agentic import (
+    recover_agentic_artifact_from_scratch_file,
+    request_agentic_formalization,
+)
 from formal_islands.formalization.lean import LeanVerifier
 from formal_islands.formalization.pipeline import (
     FaithfulnessClassification,
@@ -201,6 +204,31 @@ def _formalize_candidate_node_agentic(
                 previous_lean_code=previous_lean_code,
             )
         except BackendError as exc:
+            salvaged_artifact = _recover_agentic_backend_failure(
+                graph=current_graph,
+                node_id=node_id,
+                verifier=verifier,
+                scratch_path=scratch_path,
+                attempt_number=attempt_number,
+                error=exc,
+                attempt_history=attempt_history,
+                backend=backend,
+            )
+            if salvaged_artifact is not None:
+                updated_graph = _integrate_successful_formalization(
+                    graph=current_graph,
+                    backend=backend,
+                    node_id=node_id,
+                    artifact=salvaged_artifact,
+                    verification_status=salvaged_artifact.verification.status,
+                )
+                _emit_update(updated_graph, node_id, salvaged_artifact, on_update)
+                return FormalizationOutcome(
+                    graph=updated_graph,
+                    node_id=node_id,
+                    artifact=salvaged_artifact,
+                )
+
             verification = VerificationResult(
                 status="failed",
                 command="backend_request",
@@ -323,6 +351,10 @@ def _build_agentic_faithfulness_feedback(*, previous_result: VerificationResult)
             (
                 "Do not introduce arbitrary `Type*`, arbitrary measures, arbitrary Hilbert or inner-product spaces, "
                 "or unrelated families of functions unless the node itself explicitly requires that abstraction."
+            ),
+            (
+                "Keep the revised Lean file syntactically conservative: prefer ASCII identifiers in declarations, "
+                "use names like `lambda1` instead of Unicode binder names like `λ₁`, and avoid fancy notation when plain Lean syntax works."
             ),
             (
                 "If the full node is too hard, replace it with a smaller but still concrete local sublemma in the "
@@ -475,6 +507,52 @@ def _fresh_support_node_id(graph: ProofGraph, parent_node_id: str) -> str:
         candidate = f"{base}_{index}"
         index += 1
     return candidate
+
+
+def _recover_agentic_backend_failure(
+    *,
+    graph: ProofGraph,
+    node_id: str,
+    verifier: LeanVerifier,
+    scratch_path: Path,
+    attempt_number: int,
+    error: BackendError,
+    attempt_history: list[VerificationResult],
+    backend: StructuredBackend | None,
+) -> FormalArtifact | None:
+    try:
+        artifact = recover_agentic_artifact_from_scratch_file(
+            graph=graph,
+            node_id=node_id,
+            scratch_file_path=scratch_path,
+        )
+    except FormalizationFaithfulnessError:
+        return None
+
+    if artifact is None:
+        return None
+
+    backend_failure = VerificationResult(
+        status="failed",
+        command="backend_request",
+        exit_code=None,
+        stdout="",
+        stderr=(
+            "Recovered from an agentic backend failure using the scratch file left on disk.\n"
+            f"{error}"
+        ),
+        attempt_count=attempt_number,
+        artifact_path=str(scratch_path) if scratch_path.exists() else None,
+    )
+    attempt_history.append(backend_failure)
+    verification = verifier.verify_existing_file(file_path=scratch_path, attempt_number=attempt_number)
+    attempt_history.append(verification)
+    return artifact.model_copy(
+        update={
+            "verification": verification,
+            "attempt_history": attempt_history.copy(),
+        }
+    )
 
 
 def _emit_update(

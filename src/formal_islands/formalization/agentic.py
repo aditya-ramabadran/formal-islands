@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from formal_islands.backends import BackendOutputError, CodexCLIBackend, StructuredBackendRequest
@@ -22,6 +23,8 @@ AGENTIC_FORMALIZATION_SYSTEM_PROMPT = (
     "and stop when the scratch file is in its best current state. "
     "Return only JSON matching the supplied schema."
 )
+
+AGENTIC_WORKER_PLACEHOLDER = "-- agentic formalization worker scratch file\n"
 
 
 def build_agentic_formalization_request(
@@ -104,6 +107,16 @@ def build_agentic_formalization_request(
                 "Prefer narrow, specific imports that match the identifiers actually used in the theorem. "
                 "Do not default to `import Mathlib` for a small local theorem when a few focused imports "
                 "would do, and do not guess speculative deep module paths."
+            ),
+            (
+                "Keep the Lean output syntactically conservative. Prefer ASCII identifiers in theorem names, "
+                "binder names, and hypotheses unless a non-ASCII symbol is clearly unavoidable. Avoid Unicode "
+                "variable names like `λ₁` in declarations; prefer plain names such as `lambda1`. Do not invent "
+                "fancy notation when ordinary Lean identifiers and explicit expressions work."
+            ),
+            (
+                "Prefer simple theorem signatures and straightforward binder lists over elaborate notation-heavy "
+                "declarations. When in doubt, choose the most boring Lean surface syntax that still states the right theorem."
             ),
             (
                 "Bias strongly toward faithfulness to the target node. Reuse the node's concrete variables and "
@@ -211,3 +224,50 @@ def request_agentic_formalization(
         artifact=artifact,
     )
     return artifact
+
+
+def recover_agentic_artifact_from_scratch_file(
+    *,
+    graph: ProofGraph,
+    node_id: str,
+    scratch_file_path: Path,
+) -> FormalArtifact | None:
+    resolved_path = scratch_file_path.resolve()
+    if not resolved_path.exists():
+        return None
+
+    lean_code = resolved_path.read_text(encoding="utf-8")
+    if lean_code == AGENTIC_WORKER_PLACEHOLDER:
+        return None
+
+    theorem_name, theorem_statement = _extract_primary_lean_theorem(lean_code)
+    if theorem_name is None or theorem_statement is None:
+        return None
+
+    artifact = FormalArtifact(
+        lean_theorem_name=theorem_name,
+        lean_statement=theorem_statement,
+        lean_code=lean_code,
+        verification=VerificationResult(),
+        attempt_history=[],
+    )
+    return enforce_formalization_faithfulness(
+        node=next(candidate for candidate in graph.nodes if candidate.id == node_id),
+        artifact=artifact,
+    )
+
+
+def _extract_primary_lean_theorem(lean_code: str) -> tuple[str | None, str | None]:
+    pattern = re.compile(
+        r"(?ms)^\s*(theorem|lemma|example)\s+([A-Za-z0-9_'.]+)(.*?)(:=\s*by|:=|where\b)"
+    )
+    match = pattern.search(lean_code)
+    if match is None:
+        return None, None
+
+    keyword = match.group(1)
+    theorem_name = match.group(2)
+    signature_tail = match.group(3).rstrip()
+    statement = f"{keyword} {theorem_name}{signature_tail}".strip()
+    statement = re.sub(r"\s+\n", "\n", statement)
+    return theorem_name, statement

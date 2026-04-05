@@ -1,0 +1,195 @@
+{
+  "graph": {
+    "theorem_title": "Weak formulation of the Poisson problem via Lax\u2013Milgram",
+    "theorem_statement": "Weak formulation of the Poisson problem via Lax\u2013Milgram.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain with sufficiently regular boundary, and let \\(f \\in L^2(\\Omega)\\). Then there exists a unique \\(u \\in H_0^1(\\Omega)\\) such that\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla v\\,dx\n=\n\\int_\\Omega f v\\,dx\n\\qquad \\text{for all } v \\in H_0^1(\\Omega).\n\\]\nMoreover,\n\\[\n\\|u\\|_{H_0^1(\\Omega)} \\le C \\|f\\|_{L^2(\\Omega)}.\n\\]",
+    "root_node_id": "n0",
+    "nodes": [
+      {
+        "id": "n0",
+        "title": "Weak formulation of the Poisson problem via Lax\u2013Milgram",
+        "informal_statement": "With \\(U:=H_0^1(\\Omega)\\), define \\(a(u,v):=\\int_\\Omega \\nabla u\\cdot\\nabla v\\,dx\\) and \\(\\ell(v):=\\int_\\Omega f v\\,dx\\). Then there exists a unique \\(u\\in U\\) such that \\(a(u,v)=\\ell(v)\\) for all \\(v\\in U\\), i.e.\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla v\\,dx = \\int_\\Omega f v\\,dx\n\\qquad \\forall v\\in H_0^1(\\Omega),\n\\]\nand \\(\\|u\\|_{H_0^1(\\Omega)} \\le C\\|f\\|_{L^2(\\Omega)}\\).",
+        "informal_proof_text": "Check the hypotheses of Lax\u2013Milgram on \\(U=H_0^1(\\Omega)\\): the form \\(a\\) is bilinear, bounded, and coercive, and the functional \\(\\ell\\) is continuous. Then apply the Lax\u2013Milgram theorem to obtain existence and uniqueness of \\(u\\in U\\) with \\(a(u,v)=\\ell(v)\\) for all \\(v\\in U\\). Unwinding the definitions gives the weak formulation. The standard a priori estimate from Lax\u2013Milgram yields \\(\\|u\\|_{H_0^1(\\Omega)} \\le C\\|f\\|_{L^2(\\Omega)}\\).",
+        "status": "informal",
+        "display_label": "Poisson weak solution via Lax\u2013Milgram",
+        "formalization_priority": null,
+        "formalization_rationale": null,
+        "formal_artifact": null
+      },
+      {
+        "id": "n1",
+        "title": "Boundedness of the Dirichlet bilinear form",
+        "informal_statement": "For all \\(u,v\\in H_0^1(\\Omega)\\),\n\\[\n|a(u,v)|=\\left|\\int_\\Omega \\nabla u\\cdot\\nabla v\\,dx\\right|\n\\le \\|u\\|_{H_0^1(\\Omega)}\\,\\|v\\|_{H_0^1(\\Omega)}.\n\\]\nHence \\(a\\) is bounded on \\(H_0^1(\\Omega)\\times H_0^1(\\Omega)\\).",
+        "informal_proof_text": "Apply Cauchy\u2013Schwarz to the integral of \\(\\nabla u\\cdot\\nabla v\\):\n\\[\n\\left|\\int_\\Omega \\nabla u\\cdot\\nabla v\\,dx\\right|\n\\le \\left(\\int_\\Omega |\\nabla u|^2\\,dx\\right)^{1/2}\n\\left(\\int_\\Omega |\\nabla v|^2\\,dx\\right)^{1/2}.\n\\]\nOn \\(H_0^1(\\Omega)\\), this is exactly the \\(H_0^1\\)-norm bound used here.",
+        "status": "informal",
+        "display_label": "boundedness of \\(a\\)",
+        "formalization_priority": null,
+        "formalization_rationale": null,
+        "formal_artifact": null
+      },
+      {
+        "id": "n2",
+        "title": "Coercivity of the Dirichlet bilinear form",
+        "informal_statement": "For all \\(u\\in H_0^1(\\Omega)\\),\n\\[\na(u,u)=\\int_\\Omega |\\nabla u|^2\\,dx=\\|u\\|_{H_0^1(\\Omega)}^2.\n\\]\nTherefore \\(a\\) is coercive on \\(H_0^1(\\Omega)\\).",
+        "informal_proof_text": "By definition of \\(a\\),\n\\[\na(u,u)=\\int_\\Omega |\\nabla u|^2\\,dx.\n\\]\nUsing the standard norm on \\(H_0^1(\\Omega)\\), given by the \\(L^2\\)-norm of the gradient, this equals \\(\\|u\\|_{H_0^1(\\Omega)}^2\\). Hence the coercivity constant is \\(1\\).",
+        "status": "candidate_formal",
+        "display_label": "coercivity of \\(a\\)",
+        "formalization_priority": 2,
+        "formalization_rationale": "High-yield formal node because the coercivity constant is explicit and feeds directly into the final a priori bound.",
+        "formal_artifact": null
+      },
+      {
+        "id": "n3",
+        "title": "Continuity of the load functional",
+        "informal_statement": "For all \\(v\\in H_0^1(\\Omega)\\),\n\\[\n|\\ell(v)|=\\left|\\int_\\Omega f v\\,dx\\right|\n\\le C_P\\|f\\|_{L^2(\\Omega)}\\,\\|v\\|_{H_0^1(\\Omega)}.\n\\]\nHence \\(\\ell\\) is continuous on \\(H_0^1(\\Omega)\\).",
+        "informal_proof_text": "First apply Cauchy\u2013Schwarz:\n\\[\n\\left|\\int_\\Omega f v\\,dx\\right|\\le \\|f\\|_{L^2(\\Omega)}\\|v\\|_{L^2(\\Omega)}.\n\\]\nThen use the Poincar\u00e9 inequality on \\(H_0^1(\\Omega)\\),\n\\[\n\\|v\\|_{L^2(\\Omega)}\\le C_P\\|\\nabla v\\|_{L^2(\\Omega)},\n\\]\nto obtain the claimed bound in terms of \\(\\|v\\|_{H_0^1(\\Omega)}\\).",
+        "status": "candidate_formal",
+        "display_label": "continuity of \\(\\ell\\)",
+        "formalization_priority": 1,
+        "formalization_rationale": "Most valuable local formal island: it packages the concrete estimate for \\(\\ell\\), combining Cauchy\u2013Schwarz with Poincar\u00e9, and removes a real analytic obligation in the Lax\u2013Milgram setup.",
+        "formal_artifact": null
+      },
+      {
+        "id": "n4",
+        "title": "Lax\u2013Milgram application and a priori estimate",
+        "informal_statement": "Since \\(a\\) is bilinear, bounded, and coercive on \\(H_0^1(\\Omega)\\), and \\(\\ell\\) is continuous, the Lax\u2013Milgram theorem gives a unique \\(u\\in H_0^1(\\Omega)\\) such that \\(a(u,v)=\\ell(v)\\) for all \\(v\\in H_0^1(\\Omega)\\). Moreover,\n\\[\n\\|u\\|_{H_0^1(\\Omega)}\\le C\\|f\\|_{L^2(\\Omega)}.\n\\]",
+        "informal_proof_text": "Invoke Lax\u2013Milgram with the previously verified properties. Existence and uniqueness follow immediately. The norm estimate is the standard estimate from the theorem, with constant determined by the continuity bound for \\(\\ell\\) and the coercivity constant of \\(a\\). This yields the claimed weak solution and stability bound.",
+        "status": "candidate_formal",
+        "display_label": "Lax\u2013Milgram step",
+        "formalization_priority": 3,
+        "formalization_rationale": "Reasonable formal target if the library already contains Lax\u2013Milgram in a near-ready form; otherwise better treated as an application wrapper around the local analytic checks.",
+        "formal_artifact": null
+      },
+      {
+        "id": "n1__formal_core",
+        "title": "Certified local core for Boundedness of the Dirichlet bilinear form",
+        "informal_statement": "Lean verifies a narrower concrete local core supporting this parent step. See the attached Lean statement and code for the exact certified sublemma.",
+        "informal_proof_text": "This node records a verified supporting sublemma extracted from the formalization of parent node 'n1'. It certifies part of the parent's local proof burden without claiming to cover the full informal node.",
+        "status": "formal_verified",
+        "display_label": "Certified core",
+        "formalization_priority": null,
+        "formalization_rationale": null,
+        "formal_artifact": {
+          "lean_theorem_name": "dirichlet_form_bounded",
+          "lean_statement": "theorem dirichlet_form_bounded\n    {d : \u2115}\n    (\u03a9 : Set (EuclideanSpace \u211d (Fin d)))\n    (grad_u grad_v :\n      MeasureTheory.Lp (EuclideanSpace \u211d (Fin d)) 2 (volume.restrict \u03a9)) :\n    |\u222b x, \u27eagrad_u x, grad_v x\u27eb \u2202(volume.restrict \u03a9)| \u2264 \u2016grad_u\u2016 * \u2016grad_v\u2016",
+          "lean_code": "import Mathlib.MeasureTheory.Function.L2Space\nimport Mathlib.Analysis.InnerProductSpace.PiL2\nimport Mathlib.MeasureTheory.Measure.Haar.InnerProductSpace\n\nopen MeasureTheory\n\nlocal notation \"\u27ea\" x \", \" y \"\u27eb\" => inner \u211d x y\n\ntheorem dirichlet_form_bounded\n    {d : \u2115}\n    (\u03a9 : Set (EuclideanSpace \u211d (Fin d)))\n    (grad_u grad_v :\n      MeasureTheory.Lp (EuclideanSpace \u211d (Fin d)) 2 (volume.restrict \u03a9)) :\n    |\u222b x, \u27eagrad_u x, grad_v x\u27eb \u2202(volume.restrict \u03a9)| \u2264 \u2016grad_u\u2016 * \u2016grad_v\u2016 := by\n  simpa [MeasureTheory.L2.inner_def] using abs_real_inner_le_norm grad_u grad_v\n",
+          "faithfulness_classification": "concrete_sublemma",
+          "faithfulness_notes": "Accepted as a narrower concrete local core in the same ambient setting; it should support the parent node rather than count as full-node certification.",
+          "verification": {
+            "status": "verified",
+            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_worker.lean",
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "elapsed_seconds": 19.72925025015138,
+            "attempt_count": 1,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_worker.lean"
+          },
+          "attempt_history": [
+            {
+              "status": "failed",
+              "command": "backend_request",
+              "exit_code": null,
+              "stdout": "",
+              "stderr": "Recovered from an agentic backend failure using the scratch file left on disk.\nRecovered locally from existing worker file; no backend rerun performed.",
+              "elapsed_seconds": 0.0,
+              "attempt_count": 1,
+              "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_worker.lean"
+            },
+            {
+              "status": "verified",
+              "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_worker.lean",
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": "",
+              "elapsed_seconds": 19.72925025015138,
+              "attempt_count": 1,
+              "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_worker.lean"
+            }
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source_id": "n1",
+        "target_id": "n4",
+        "label": "supplies",
+        "explanation": "Provides boundedness of the bilinear form required by Lax\u2013Milgram."
+      },
+      {
+        "source_id": "n2",
+        "target_id": "n4",
+        "label": "supplies",
+        "explanation": "Provides coercivity of the bilinear form required by Lax\u2013Milgram."
+      },
+      {
+        "source_id": "n3",
+        "target_id": "n4",
+        "label": "supplies",
+        "explanation": "Provides continuity of the right-hand-side functional required by Lax\u2013Milgram."
+      },
+      {
+        "source_id": "n4",
+        "target_id": "n0",
+        "label": "yields",
+        "explanation": "Applying Lax\u2013Milgram and expanding the definitions gives the weak formulation and estimate."
+      },
+      {
+        "source_id": "n1__formal_core",
+        "target_id": "n1",
+        "label": "formal_sublemma_for",
+        "explanation": "This verified Lean theorem certifies a narrower concrete local core used inside the parent informal step."
+      }
+    ]
+  },
+  "review_obligations": [
+    {
+      "id": "informal-proof-n0",
+      "kind": "informal_proof_check",
+      "text": "Check that node 'n0' (Weak formulation of the Poisson problem via Lax\u2013Milgram) has an informal proof that establishes its informal statement, assuming its child dependencies.",
+      "node_ids": [
+        "n0"
+      ]
+    },
+    {
+      "id": "informal-proof-n1",
+      "kind": "informal_proof_check",
+      "text": "Check that node 'n1' (Boundedness of the Dirichlet bilinear form) has an informal proof that establishes its informal statement, assuming its child dependencies.",
+      "node_ids": [
+        "n1"
+      ]
+    },
+    {
+      "id": "informal-proof-n2",
+      "kind": "informal_proof_check",
+      "text": "Check that node 'n2' (Coercivity of the Dirichlet bilinear form) has an informal proof that establishes its informal statement, assuming its child dependencies.",
+      "node_ids": [
+        "n2"
+      ]
+    },
+    {
+      "id": "informal-proof-n3",
+      "kind": "informal_proof_check",
+      "text": "Check that node 'n3' (Continuity of the load functional) has an informal proof that establishes its informal statement, assuming its child dependencies.",
+      "node_ids": [
+        "n3"
+      ]
+    },
+    {
+      "id": "informal-proof-n4",
+      "kind": "informal_proof_check",
+      "text": "Check that node 'n4' (Lax\u2013Milgram application and a priori estimate) has an informal proof that establishes its informal statement, assuming its child dependencies.",
+      "node_ids": [
+        "n4"
+      ]
+    },
+    {
+      "id": "semantic-match-n1__formal_core",
+      "kind": "formal_semantic_match_check",
+      "text": "Check that node 'n1__formal_core' (Certified local core for Boundedness of the Dirichlet bilinear form) matches the verified Lean statement 'theorem dirichlet_form_bounded\n    {d : \u2115}\n    (\u03a9 : Set (EuclideanSpace \u211d (Fin d)))\n    (grad_u grad_v :\n      MeasureTheory.Lp (EuclideanSpace \u211d (Fin d)) 2 (volume.restrict \u03a9)) :\n    |\u222b x, \u27eagrad_u x, grad_v x\u27eb \u2202(volume.restrict \u03a9)| \u2264 \u2016grad_u\u2016 * \u2016grad_v\u2016'.",
+      "node_ids": [
+        "n1__formal_core"
+      ]
+    }
+  ]
+}

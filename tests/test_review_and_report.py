@@ -57,6 +57,12 @@ def test_render_html_report_includes_core_sections() -> None:
     assert 'preserveAspectRatio="xMidYMin meet"' in html
     assert "overflow-y: visible;" in html
     assert "overflow-wrap: anywhere;" in html
+    assert "color-scheme: light dark;" in html
+    assert "@media (prefers-color-scheme: dark)" in html
+    assert "--graph-shell-top:" in html
+    assert "--checklist-panel:" in html
+    assert ".lean-code {" in html
+    assert "#f2e8dc" in html
 
 
 def test_render_html_report_preserves_latex_text_blocks() -> None:

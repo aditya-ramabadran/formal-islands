@@ -191,13 +191,41 @@ class CodexCLIBackend:
                     f"Codex CLI failed with exit code {completed.returncode}: {completed.stderr.strip()}"
                 )
 
-            if not output_path.exists():
-                raise BackendOutputError("Codex CLI did not write the structured output file")
-
             try:
-                payload = json.loads(output_path.read_text(encoding="utf-8"))
-            except json.JSONDecodeError as exc:
-                raise BackendOutputError("Codex CLI output file did not contain valid JSON") from exc
+                if not output_path.exists():
+                    raise BackendOutputError("Codex CLI did not write the structured output file")
+
+                try:
+                    payload = json.loads(output_path.read_text(encoding="utf-8"))
+                except json.JSONDecodeError as exc:
+                    raise BackendOutputError("Codex CLI output file did not contain valid JSON") from exc
+            except BackendOutputError as exc:
+                self._write_log(
+                    log_path,
+                    {
+                        "status": "failed",
+                        "task_name": request.task_name,
+                        "backend_name": "codex_cli",
+                        "command": command,
+                        "cwd": str(request.cwd) if request.cwd else None,
+                        "system_prompt": request.system_prompt,
+                        "prompt": request.prompt,
+                        "rendered_prompt": rendered_prompt,
+                        "json_schema": self._normalize_schema_for_codex(request.json_schema),
+                        "model": self.model,
+                        "sandbox": sandbox,
+                        "full_auto": full_auto,
+                        "use_ephemeral_session": self.use_ephemeral_session,
+                        "timeout_seconds": timeout_seconds,
+                        "started_at_epoch_seconds": started_at,
+                        "elapsed_seconds": time.time() - started_at,
+                        "exit_code": completed.returncode,
+                        "raw_stdout": completed.stdout,
+                        "raw_stderr": completed.stderr,
+                        "error": str(exc),
+                    },
+                )
+                raise
 
         if not isinstance(payload, dict):
             raise BackendOutputError("Codex CLI structured output must be a JSON object")

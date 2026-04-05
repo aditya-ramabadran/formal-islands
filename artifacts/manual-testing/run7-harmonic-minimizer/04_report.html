@@ -19,7 +19,7 @@
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   <style>
     :root {
-      color-scheme: light;
+      color-scheme: light dark;
       --bg: #f7f4ec;
       --panel: #fffdf8;
       --ink: #1f1a17;
@@ -41,6 +41,41 @@
       --status-verified-fill: #e6f5eb;
       --status-failed-stroke: #b45746;
       --status-failed-fill: #f9e6e1;
+      --graph-shell-top: rgba(255, 251, 242, 0.96);
+      --graph-shell-bottom: rgba(245, 238, 227, 0.96);
+      --checklist-panel: rgba(255, 250, 241, 0.95);
+      --target-panel: #fff8ee;
+      --code-surface: #f4efe6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161311;
+        --panel: #211b17;
+        --ink: #f3ede5;
+        --muted: #c0b2a3;
+        --border: #4a3d32;
+        --accent: #f0b47b;
+        --accent-soft: #3a2b20;
+        --highlight: #ffb25c;
+        --highlight-soft: #3f2d19;
+        --preview-soft: #312419;
+        --checked: #65c08a;
+        --checked-soft: #213126;
+        --edge: #8f8172;
+        --status-informal-stroke: #d69760;
+        --status-informal-fill: rgba(46, 34, 26, 0.96);
+        --status-candidate-stroke: #f0a64e;
+        --status-candidate-fill: #3f2d18;
+        --status-verified-stroke: #65c08a;
+        --status-verified-fill: #213126;
+        --status-failed-stroke: #dd8a79;
+        --status-failed-fill: #3b2320;
+        --graph-shell-top: rgba(44, 34, 27, 0.98);
+        --graph-shell-bottom: rgba(32, 25, 21, 0.98);
+        --checklist-panel: rgba(36, 29, 24, 0.98);
+        --target-panel: #31261f;
+        --code-surface: #2a231e;
+      }
     }
     * {
       box-sizing: border-box;
@@ -53,6 +88,11 @@
       font-family: Georgia, "Iowan Old Style", serif;
       background: radial-gradient(circle at top, #fff8e7, var(--bg));
       color: var(--ink);
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(circle at top, #2a211b, var(--bg));
+      }
     }
     main.report-root {
       max-width: 1040px;
@@ -106,7 +146,7 @@
       margin-top: 0.85rem;
       border: 1px solid var(--border);
       border-radius: 16px;
-      background: linear-gradient(180deg, rgba(255, 251, 242, 0.96), rgba(245, 238, 227, 0.96));
+      background: linear-gradient(180deg, var(--graph-shell-top), var(--graph-shell-bottom));
       padding: 0.5rem 0.75rem;
       overflow-x: auto;
       overflow-y: visible;
@@ -205,7 +245,7 @@
     .checklist-item {
       border: 1px solid var(--border);
       border-radius: 12px;
-      background: rgba(255, 250, 241, 0.95);
+      background: var(--checklist-panel);
       transition: border-color 140ms ease, background 140ms ease;
     }
     .checklist-label {
@@ -257,13 +297,13 @@
     .node-card:target {
       border-color: var(--highlight);
       box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
-      background: #fff8ee;
+      background: var(--target-panel);
     }
     pre {
       overflow-x: auto;
       max-width: 100%;
       padding: 0.75rem;
-      background: #f4efe6;
+      background: var(--code-surface);
       border-radius: 8px;
       border: 1px solid var(--border);
       margin: 0.6rem 0;
@@ -272,7 +312,7 @@
       font-family: "SFMono-Regular", Menlo, monospace;
     }
     code.inline-code {
-      background: #f4efe6;
+      background: var(--code-surface);
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 0.1rem 0.35rem;
@@ -285,7 +325,7 @@
     .statement-code pre,
     .checklist-code pre {
       margin-top: 0.35rem;
-      background: #f4efe6;
+      background: var(--code-surface);
     }
     .lean-code {
       color: #2a241f;
@@ -311,6 +351,29 @@
     .lean-code .tok-string {
       color: #2d7f4d;
     }
+    @media (prefers-color-scheme: dark) {
+      .lean-code {
+        color: #f2e8dc;
+      }
+      .lean-code .tok-keyword {
+        color: #f08f63;
+      }
+      .lean-code .tok-tactic {
+        color: #f4b35d;
+      }
+      .lean-code .tok-type {
+        color: #73c7ff;
+      }
+      .lean-code .tok-number {
+        color: #be8cff;
+      }
+      .lean-code .tok-comment {
+        color: #97b18b;
+      }
+      .lean-code .tok-string {
+        color: #67d59a;
+      }
+    }
     
             .report-root:has(a.node-n_root:hover) .node-n_root.node-card,
             .report-root:has(#node-n_root:target) a.node-n_root .graph-node-box {
@@ -323,7 +386,7 @@
             .report-root:has(#node-n_root:target).report-root .node-n_root.node-card {
               border-color: var(--highlight);
               box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
-              background: #fff8ee;
+              background: var(--target-panel);
             }
             
 
@@ -338,7 +401,7 @@
             .report-root:has(#node-n_energy_split:target).report-root .node-n_energy_split.node-card {
               border-color: var(--highlight);
               box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
-              background: #fff8ee;
+              background: var(--target-panel);
             }
             
 
@@ -353,7 +416,7 @@
             .report-root:has(#node-n_energy_split__formal_core:target).report-root .node-n_energy_split__formal_core.node-card {
               border-color: var(--highlight);
               box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
-              background: #fff8ee;
+              background: var(--target-panel);
             }
             
 

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from formal_islands.formalization.agentic import AGENTIC_WORKER_PLACEHOLDER
 from formal_islands.models import VerificationResult
 
 
@@ -69,7 +70,7 @@ class LeanWorkspace:
         self.generated_dir.mkdir(parents=True, exist_ok=True)
         safe_node_id = node_id.replace("/", "_")
         scratch_path = self.generated_dir / f"{safe_node_id}_worker.lean"
-        scratch_path.write_text("-- agentic formalization worker scratch file\n", encoding="utf-8")
+        scratch_path.write_text(AGENTIC_WORKER_PLACEHOLDER, encoding="utf-8")
         return scratch_path
 
 

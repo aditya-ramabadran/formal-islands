@@ -79,6 +79,9 @@ def test_build_agentic_formalization_request_includes_concrete_setting_guidance(
     assert "Ambient theorem statement:" in request.prompt
     assert "preserve the ambient mathematical setting" in request.prompt.lower()
     assert "arbitrary measure" in request.prompt.lower()
+    assert "prefer ascii identifiers" in request.prompt.lower()
+    assert "lambda1" in request.prompt
+    assert "most boring lean surface syntax" in request.prompt.lower()
 
 
 def test_lean_verifier_captures_command_result(tmp_path: Path) -> None:
@@ -557,6 +560,8 @@ def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failur
     assert "faithfulness feedback from the previous agentic attempt" in backend.requests[1].prompt.lower()
     assert "current scratch file to revise" in backend.requests[1].prompt.lower()
     assert "theorem too_abstract" in backend.requests[1].prompt
+    assert "prefer ascii identifiers" in backend.requests[1].prompt.lower()
+    assert "lambda1" in backend.requests[1].prompt
     assert worker_file.read_text(encoding="utf-8").startswith("import Mathlib.Data.Real.Basic")
     assert len(updates) == 2
 
@@ -630,6 +635,54 @@ def test_formalize_candidate_node_agentic_uses_at_most_one_faithfulness_retry(
     assert updated_node.status == "formal_failed"
     assert updated_node.formal_artifact is not None
     assert len(updated_node.formal_artifact.attempt_history) == 2
+
+
+def test_formalize_candidate_node_agentic_recovers_from_backend_failure_with_worker_file(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+    worker_file = workspace.generated_dir / "n2_worker.lean"
+    worker_file.parent.mkdir(parents=True, exist_ok=True)
+
+    class FakeAgenticBackend:
+        timeout_seconds = 420.0
+
+        def run_agentic_structured(self, request, *, timeout_seconds=None):
+            worker_file.write_text(
+                "import Mathlib.Data.Real.Basic\n\n"
+                "theorem sum_nonneg (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b := by\n"
+                "  nlinarith\n",
+                encoding="utf-8",
+            )
+            raise BackendInvocationError("structured output missing after worker run")
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    outcome = formalize_candidate_node(
+        backend=FakeAgenticBackend(),
+        verifier=verifier,
+        graph=build_graph(),
+        node_id="n2",
+        mode="agentic",
+    )
+
+    updated_node = next(node for node in outcome.graph.nodes if node.id == "n2")
+    assert updated_node.status == "formal_verified"
+    assert updated_node.formal_artifact is not None
+    assert updated_node.formal_artifact.lean_theorem_name == "sum_nonneg"
+    assert updated_node.formal_artifact.verification.status == "verified"
+    assert len(updated_node.formal_artifact.attempt_history) == 2
+    assert "Recovered from an agentic backend failure" in updated_node.formal_artifact.attempt_history[0].stderr
 
 
 def test_formalize_candidate_node_marks_failure_after_bound(tmp_path: Path) -> None:

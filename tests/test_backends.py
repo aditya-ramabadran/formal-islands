@@ -206,6 +206,30 @@ def test_codex_backend_rejects_missing_output_file(tmp_path: Path) -> None:
             )
 
 
+def test_codex_backend_logs_missing_output_file_as_failed(tmp_path: Path) -> None:
+    log_dir = tmp_path / "logs"
+    backend = CodexCLIBackend(log_dir=log_dir)
+    auth_home = tmp_path / "codex-home"
+    auth_home.mkdir()
+    (auth_home / "auth.json").write_text("{}", encoding="utf-8")
+
+    completed = subprocess.CompletedProcess(args=[], returncode=0, stdout="stdout", stderr="")
+
+    with patch("shutil.which", return_value="/usr/bin/codex"), patch.dict(
+        "os.environ", {"CODEX_HOME": str(auth_home)}, clear=False
+    ), patch("subprocess.run", return_value=completed):
+        with pytest.raises(BackendOutputError):
+            backend.run_structured(
+                StructuredBackendRequest(prompt="x", json_schema={"type": "object"}, task_name="missing_output")
+            )
+
+    logs = sorted(log_dir.glob("missing_output_*.json"))
+    assert logs
+    payload = json.loads(logs[0].read_text(encoding="utf-8"))
+    assert payload["status"] == "failed"
+    assert "did not write the structured output file" in payload["error"]
+
+
 def test_codex_backend_raises_clean_error_on_timeout(tmp_path: Path) -> None:
     backend = CodexCLIBackend(timeout_seconds=12.0)
     auth_home = tmp_path / "codex-home"
