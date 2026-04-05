@@ -6,7 +6,11 @@ import json
 import re
 from pathlib import Path
 
-from formal_islands.backends import BackendOutputError, CodexCLIBackend, StructuredBackendRequest
+from formal_islands.backends import (
+    AgenticStructuredBackend,
+    BackendOutputError,
+    StructuredBackendRequest,
+)
 from formal_islands.formalization.pipeline import (
     FormalizationFaithfulnessError,
     enforce_formalization_faithfulness,
@@ -124,6 +128,14 @@ def build_agentic_formalization_request(
                 "lemmas or APIs to search for."
             ),
             (
+                "Structure the Lean file around one designated main theorem that represents the certified result for this node. "
+                "Additional lemmas are allowed, but they should be clearly subordinate helper lemmas used to prove the main theorem."
+            ),
+            (
+                "The `lean_theorem_name` and `lean_statement` you return must correspond to that single main theorem, "
+                "not to a helper lemma. If you include helper lemmas, make sure the main theorem remains the primary claim in the file."
+            ),
+            (
                 "Default to the most literal whole-node theorem shape that directly mirrors the target node's stated "
                 "mathematical claim. Treat that literal whole-node target as the starting point, not as an optional stretch goal."
             ),
@@ -229,7 +241,7 @@ def build_agentic_formalization_request(
 
 def request_agentic_formalization(
     *,
-    backend: CodexCLIBackend,
+    backend: AgenticStructuredBackend,
     graph: ProofGraph,
     node_id: str,
     workspace_root: Path,
@@ -274,9 +286,18 @@ def request_agentic_formalization(
         )
 
     lean_code = final_path.read_text(encoding="utf-8")
+    extracted_name, extracted_statement = _extract_named_lean_theorem(
+        lean_code,
+        formalization.lean_theorem_name,
+    )
+    if extracted_name is None or extracted_statement is None:
+        raise BackendOutputError(
+            "Agentic formalization returned a main theorem name that does not appear in the final Lean file: "
+            f"{formalization.lean_theorem_name}"
+        )
     artifact = FormalArtifact(
-        lean_theorem_name=formalization.lean_theorem_name,
-        lean_statement=formalization.lean_statement,
+        lean_theorem_name=extracted_name,
+        lean_statement=extracted_statement,
         lean_code=lean_code,
         verification=VerificationResult(),
         attempt_history=[],
@@ -293,6 +314,7 @@ def recover_agentic_artifact_from_scratch_file(
     graph: ProofGraph,
     node_id: str,
     scratch_file_path: Path,
+    expected_theorem_name: str | None = None,
 ) -> FormalArtifact | None:
     resolved_path = scratch_file_path.resolve()
     if not resolved_path.exists():
@@ -302,7 +324,10 @@ def recover_agentic_artifact_from_scratch_file(
     if lean_code == AGENTIC_WORKER_PLACEHOLDER:
         return None
 
-    theorem_name, theorem_statement = _extract_primary_lean_theorem(lean_code)
+    theorem_name, theorem_statement = _extract_primary_lean_theorem(
+        lean_code,
+        preferred_name=expected_theorem_name,
+    )
     if theorem_name is None or theorem_statement is None:
         return None
 
@@ -319,17 +344,58 @@ def recover_agentic_artifact_from_scratch_file(
     )
 
 
-def _extract_primary_lean_theorem(lean_code: str) -> tuple[str | None, str | None]:
+def _extract_primary_lean_theorem(
+    lean_code: str,
+    *,
+    preferred_name: str | None = None,
+) -> tuple[str | None, str | None]:
+    return _select_primary_lean_theorem(lean_code, preferred_name=preferred_name)
+
+
+def _extract_named_lean_theorem(
+    lean_code: str,
+    theorem_name: str,
+) -> tuple[str | None, str | None]:
+    candidate_names = {theorem_name, theorem_name.split(".")[-1]}
+    for declaration in _extract_lean_declarations(lean_code):
+        if declaration[1] in candidate_names:
+            return declaration[1], declaration[2]
+    return None, None
+
+
+def _select_primary_lean_theorem(
+    lean_code: str,
+    *,
+    preferred_name: str | None = None,
+) -> tuple[str | None, str | None]:
+    declarations = _extract_lean_declarations(lean_code)
+    if not declarations:
+        return None, None
+    if preferred_name is not None:
+        named = _extract_named_lean_theorem(lean_code, preferred_name)
+        if named != (None, None):
+            return named
+
+    def score(declaration: tuple[str, str, str, int]) -> tuple[int, int, int]:
+        _, _name, statement, ordinal = declaration
+        relation_count = len(re.findall(r"\\le|\\ge|≤|≥|<=|>=|=|<|>", statement))
+        binder_count = statement.count("(") + statement.count("{")
+        return (relation_count + binder_count, len(statement), ordinal)
+
+    best = max(declarations, key=score)
+    return best[1], best[2]
+
+
+def _extract_lean_declarations(lean_code: str) -> list[tuple[str, str, str, int]]:
     pattern = re.compile(
         r"(?ms)^\s*(theorem|lemma|example)\s+([A-Za-z0-9_'.]+)(.*?)(:=\s*by|:=|where\b)"
     )
-    match = pattern.search(lean_code)
-    if match is None:
-        return None, None
-
-    keyword = match.group(1)
-    theorem_name = match.group(2)
-    signature_tail = match.group(3).rstrip()
-    statement = f"{keyword} {theorem_name}{signature_tail}".strip()
-    statement = re.sub(r"\s+\n", "\n", statement)
-    return theorem_name, statement
+    declarations: list[tuple[str, str, str, int]] = []
+    for ordinal, match in enumerate(pattern.finditer(lean_code)):
+        keyword = match.group(1)
+        theorem_name = match.group(2)
+        signature_tail = match.group(3).rstrip()
+        statement = f"{keyword} {theorem_name}{signature_tail}".strip()
+        statement = re.sub(r"\s+\n", "\n", statement)
+        declarations.append((keyword, theorem_name, statement, ordinal))
+    return declarations

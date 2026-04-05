@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 from typing import Callable
 
-from formal_islands.backends import BackendError, CodexCLIBackend, StructuredBackend
+from formal_islands.backends import AgenticStructuredBackend, BackendError, StructuredBackend
 from formal_islands.formalization.agentic import (
     recover_agentic_artifact_from_scratch_file,
     request_agentic_formalization,
@@ -239,7 +239,7 @@ def _formalize_candidate_node_structured(
 
 def _formalize_candidate_node_agentic(
     *,
-    backend: CodexCLIBackend,
+    backend: AgenticStructuredBackend,
     verifier: LeanVerifier,
     graph: ProofGraph,
     node_id: str,
@@ -367,7 +367,7 @@ def _formalize_candidate_node_agentic(
 def _should_use_agentic_formalization(*, backend: StructuredBackend, mode: str) -> bool:
     if mode == "structured":
         return False
-    return isinstance(backend, CodexCLIBackend) or hasattr(backend, "run_agentic_structured")
+    return hasattr(backend, "run_agentic_structured")
 
 
 def _is_repairable_failure(verification: VerificationResult) -> bool:
@@ -587,7 +587,7 @@ def _attempt_structured_coverage_expansion(
 
 def _attempt_agentic_coverage_expansion(
     *,
-    backend: CodexCLIBackend,
+    backend: AgenticStructuredBackend,
     verifier: LeanVerifier,
     graph: ProofGraph,
     node_id: str,

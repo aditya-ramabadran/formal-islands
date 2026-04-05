@@ -164,7 +164,13 @@ A normal benchmark run writes:
 - `04_report.html`
   Human-readable HTML report.
 - `_backend_logs/*.json`
-  Logged Codex backend requests/responses, timings, and raw CLI output.
+  Logged backend requests/responses, timings, and raw CLI output.
+
+Supported backends:
+- `codex`
+  Uses the local `codex` CLI for structured planning and one-shot agentic formalization.
+- `claude`
+  Uses the local Claude Code CLI for structured planning and one-shot agentic formalization.
 
 Agentic formalization also writes into:
 

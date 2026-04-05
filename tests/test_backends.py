@@ -58,11 +58,122 @@ def test_claude_backend_parses_structured_output() -> None:
     command = run_mock.call_args.args[0]
     env = run_mock.call_args.kwargs["env"]
 
-    assert command[:3] == ["claude", "-p", "--output-format"]
+    assert Path(command[0]).name == "claude"
+    assert command[1:3] == ["-p", "--output-format"]
     assert "--json-schema" in command
+    assert "--tools" in command
     assert env["CLAUDE_CODE_MAX_OUTPUT_TOKENS"] == "1234"
     assert env["CLAUDE_CODE_EFFORT_LEVEL"] == "medium"
     assert response.payload == {"nodes": []}
+
+
+def test_claude_backend_writes_debug_log_when_log_dir_is_configured(tmp_path: Path) -> None:
+    log_dir = tmp_path / "logs"
+    backend = ClaudeCodeBackend(model="sonnet", log_dir=log_dir, timeout_seconds=120.0)
+    request = StructuredBackendRequest(
+        prompt="Return an empty candidate list.",
+        system_prompt="Return JSON only.",
+        json_schema={"type": "object", "properties": {"candidates": {"type": "array"}}},
+        cwd=tmp_path,
+        task_name="select_candidates",
+    )
+
+    completed = subprocess.CompletedProcess(
+        args=[],
+        returncode=0,
+        stdout=json.dumps({"structured_output": {"candidates": []}}),
+        stderr="",
+    )
+
+    with patch("shutil.which", return_value="/usr/bin/claude"), patch(
+        "subprocess.run", return_value=completed
+    ):
+        backend.run_structured(request)
+
+    logs = sorted(log_dir.glob("select_candidates_*.json"))
+    assert logs
+    payload = json.loads(logs[0].read_text(encoding="utf-8"))
+    assert payload["status"] == "completed"
+    assert payload["payload"] == {"candidates": []}
+    assert payload["agentic"] is False
+    assert isinstance(payload["elapsed_seconds"], float)
+
+
+def test_claude_backend_run_agentic_structured_uses_tool_mode(tmp_path: Path) -> None:
+    backend = ClaudeCodeBackend(model="sonnet")
+    request = StructuredBackendRequest(
+        prompt="Edit the scratch file and return JSON.",
+        system_prompt="Return JSON only.",
+        json_schema={
+            "type": "object",
+            "properties": {
+                "lean_theorem_name": {"type": "string"},
+                "lean_statement": {"type": "string"},
+                "final_file_path": {"type": "string"},
+                "plan_file_path": {"type": "string"},
+            },
+        },
+        cwd=tmp_path,
+        task_name="formalize_node_agentic",
+    )
+
+    completed = subprocess.CompletedProcess(
+        args=[],
+        returncode=0,
+        stdout=json.dumps(
+            {
+                "structured_output": {
+                    "lean_theorem_name": "t",
+                    "lean_statement": "True",
+                    "final_file_path": "/tmp/t.lean",
+                    "plan_file_path": "/tmp/t_plan.md",
+                }
+            }
+        ),
+        stderr="",
+    )
+
+    with patch("shutil.which", return_value="/usr/bin/claude"), patch(
+        "subprocess.run", return_value=completed
+    ) as run_mock:
+        backend.run_agentic_structured(request, timeout_seconds=420.0)
+
+    command = run_mock.call_args.args[0]
+    assert "--permission-mode" in command
+    assert "bypassPermissions" in command
+    assert "--dangerously-skip-permissions" in command
+    assert "--tools" in command
+    assert "default" in command
+    assert "--add-dir" in command
+
+
+def test_claude_backend_uses_common_fallback_executable_locations(tmp_path: Path) -> None:
+    fake_home = tmp_path / "home"
+    local_bin = fake_home / ".local" / "bin"
+    local_bin.mkdir(parents=True)
+    executable = local_bin / "claude"
+    executable.write_text("#!/bin/sh\n", encoding="utf-8")
+    executable.chmod(0o755)
+
+    backend = ClaudeCodeBackend()
+    request = StructuredBackendRequest(prompt="x", json_schema={"type": "object"})
+    completed = subprocess.CompletedProcess(
+        args=[],
+        returncode=0,
+        stdout=json.dumps({"structured_output": {"ok": True}}),
+        stderr="",
+    )
+
+    with patch("shutil.which", return_value=None), patch.dict(
+        "os.environ", {"HOME": str(fake_home)}, clear=False
+    ), patch("pathlib.Path.home", return_value=fake_home), patch(
+        "subprocess.run", return_value=completed
+    ) as run_mock:
+        response = backend.run_structured(request)
+
+    command = run_mock.call_args.args[0]
+    assert command[0] == str(executable)
+    assert response.payload == {"ok": True}
 
 
 def test_claude_backend_rejects_invalid_json_output() -> None:

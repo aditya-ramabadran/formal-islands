@@ -9,6 +9,7 @@ from formal_islands.backends import BackendInvocationError, MockBackend
 from formal_islands.formalization.agentic import (
     agentic_worker_plan_path,
     build_agentic_formalization_request,
+    recover_agentic_artifact_from_scratch_file,
 )
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.formalization.loop import formalize_candidate_node
@@ -96,6 +97,57 @@ def test_build_agentic_formalization_request_includes_concrete_setting_guidance(
     assert "default to the most literal whole-node theorem shape" in request.prompt.lower()
     assert "only fall back to a narrower concrete sublemma" in request.prompt.lower()
     assert "do not jump immediately to a more abstract or indirect theorem" in request.prompt.lower()
+    assert "one designated main theorem" in request.prompt.lower()
+    assert "helper lemmas" in request.prompt.lower()
+    assert "must correspond to that single main theorem" in request.prompt.lower()
+
+
+def test_recover_agentic_artifact_prefers_expected_main_theorem(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+    scratch_path = workspace.generated_dir / "n3_worker.lean"
+    scratch_path.write_text(
+        "import Mathlib.Data.Real.Basic\n\n"
+        "theorem helper_small : 1 = 1 := by\n"
+        "  decide\n\n"
+        "theorem main_target (a b c : ℝ) (h : c = a + b) : c = a + b := by\n"
+        "  simpa [h]\n",
+        encoding="utf-8",
+    )
+
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="If c = a + b then c = a + b.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Main theorem",
+                informal_statement="Main theorem.",
+                informal_proof_text="Use n3.",
+            ),
+            ProofNode(
+                id="n3",
+                title="Transfer equality across a rewrite",
+                informal_statement="If c = a + b, then c = a + b.",
+                informal_proof_text="Rewrite using the given equality.",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Concrete local step.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n3")],
+    )
+
+    artifact = recover_agentic_artifact_from_scratch_file(
+        graph=graph,
+        node_id="n3",
+        scratch_file_path=scratch_path,
+        expected_theorem_name="main_target",
+    )
+
+    assert artifact is not None
+    assert artifact.lean_theorem_name == "main_target"
+    assert "theorem main_target" in artifact.lean_statement
 
 
 def test_lean_verifier_captures_command_result(tmp_path: Path) -> None:

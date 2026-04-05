@@ -1,7 +1,11 @@
 {
   "node_id": "n3",
   "status": "verified",
+  "lean_theorem_name": "n3_second_derivative_rhs_nonneg",
+  "lean_statement": "theorem n3_second_derivative_rhs_nonneg (u : \u211d) (hu0 : 0 < u) (hu2 : u < 2) :\n    0 <= 2 * (1 - Real.sqrt (u * (2 - u))) / ((u * (2 - u)) * Real.sqrt (u * (2 - u)))",
+  "faithfulness_classification": "concrete_sublemma",
   "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n3_worker.lean",
   "attempt_count": 1,
-  "stderr": ""
+  "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n3_worker.lean",
+  "exit_code": 0
 }

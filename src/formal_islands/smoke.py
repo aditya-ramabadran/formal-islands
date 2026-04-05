@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from formal_islands.backends import BackendError, CodexCLIBackend
+from formal_islands.backends import BackendError, ClaudeCodeBackend, CodexCLIBackend, StructuredBackend
 from formal_islands.examples import TOY_RAW_PROOF, TOY_THEOREM_STATEMENT
 from formal_islands.extraction import (
     extract_proof_graph,
@@ -94,7 +94,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--formalization-mode",
         choices=["agentic", "structured", "auto"],
         default="agentic",
-        help="Formalization execution mode. Default: agentic Codex worker, with structured fallback available.",
+        help="Formalization execution mode. Default: one-shot agentic worker when supported by the selected backend.",
     )
     formalize_parser.set_defaults(func=cmd_formalize_one)
 
@@ -117,7 +117,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--formalization-mode",
         choices=["agentic", "structured", "auto"],
         default="agentic",
-        help="Formalization execution mode. Default: agentic Codex worker, with structured fallback available.",
+        help="Formalization execution mode. Default: one-shot agentic worker when supported by the selected backend.",
     )
     formalize_all_parser.set_defaults(func=cmd_formalize_all_candidates)
 
@@ -180,7 +180,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--formalization-mode",
         choices=["agentic", "structured", "auto"],
         default="agentic",
-        help="Formalization execution mode. Default: agentic Codex worker, with structured fallback available.",
+        help="Formalization execution mode. Default: one-shot agentic worker when supported by the selected backend.",
     )
     benchmark_parser.set_defaults(func=cmd_run_benchmark)
 
@@ -190,14 +190,14 @@ def build_parser() -> argparse.ArgumentParser:
 def add_backend_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--backend",
-        choices=["codex"],
+        choices=["codex", "claude"],
         default="codex",
         help="Structured backend to use.",
     )
     parser.add_argument(
         "--model",
         default=None,
-        help="Optional Codex model override passed through to `codex exec`.",
+        help="Optional model override passed through to the selected backend CLI.",
     )
 
 
@@ -463,12 +463,14 @@ def build_backend(
     model: str | None,
     log_dir: Path | None = None,
     timeout_seconds: float = DEFAULT_BACKEND_TIMEOUT_SECONDS,
-) -> CodexCLIBackend:
+) -> StructuredBackend:
     """Create a backend instance for the smoke CLI."""
 
-    if name != "codex":
-        raise ValueError(f"unsupported backend: {name}")
-    return CodexCLIBackend(model=model, log_dir=log_dir, timeout_seconds=timeout_seconds)
+    if name == "codex":
+        return CodexCLIBackend(model=model, log_dir=log_dir, timeout_seconds=timeout_seconds)
+    if name == "claude":
+        return ClaudeCodeBackend(model=model, log_dir=log_dir, timeout_seconds=timeout_seconds)
+    raise ValueError(f"unsupported backend: {name}")
 
 
 def _write_formalization_summary(path: Path, outcome) -> None:

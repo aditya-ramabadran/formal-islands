@@ -52,3 +52,17 @@ class StructuredBackend(Protocol):
 
     def run_structured(self, request: StructuredBackendRequest) -> StructuredBackendResponse:
         """Execute a one-shot prompt and return validated JSON-compatible data."""
+
+
+class AgenticStructuredBackend(StructuredBackend, Protocol):
+    """Backend that also supports a one-shot tool-using worker mode."""
+
+    timeout_seconds: float | None
+
+    def run_agentic_structured(
+        self,
+        request: StructuredBackendRequest,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> StructuredBackendResponse:
+        """Execute a one-shot agentic run with file/tool access and return structured output."""

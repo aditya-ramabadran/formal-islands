@@ -1,6 +1,7 @@
 """Backend adapters for local model CLIs."""
 
 from formal_islands.backends.base import (
+    AgenticStructuredBackend,
     BackendError,
     BackendInvocationError,
     BackendOutputError,
@@ -21,6 +22,7 @@ __all__ = [
     "ClaudeCodeBackend",
     "CodexCLIBackend",
     "MockBackend",
+    "AgenticStructuredBackend",
     "StructuredBackend",
     "StructuredBackendRequest",
     "StructuredBackendResponse",

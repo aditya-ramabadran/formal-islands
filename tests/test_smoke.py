@@ -26,7 +26,7 @@ from formal_islands.smoke import (
 from formal_islands.report import export_report_bundle, render_html_report
 from formal_islands.extraction import extract_proof_graph, select_formalization_candidates
 from formal_islands.formalization import formalize_candidate_node
-from formal_islands.backends import CodexCLIBackend
+from formal_islands.backends import ClaudeCodeBackend, CodexCLIBackend
 
 
 def build_workspace(root: Path) -> LeanWorkspace:
@@ -315,6 +315,17 @@ def test_build_backend_configures_backend_logs(tmp_path: Path) -> None:
 
     assert isinstance(backend, CodexCLIBackend)
     assert backend.model == "gpt-5.4"
+    assert backend.log_dir == tmp_path / "_backend_logs"
+    assert backend.timeout_seconds == 180.0
+
+
+def test_build_backend_supports_claude(tmp_path: Path) -> None:
+    from formal_islands.smoke import build_backend
+
+    backend = build_backend("claude", "sonnet", tmp_path / "_backend_logs")
+
+    assert isinstance(backend, ClaudeCodeBackend)
+    assert backend.model == "sonnet"
     assert backend.log_dir == tmp_path / "_backend_logs"
     assert backend.timeout_seconds == 180.0
 
