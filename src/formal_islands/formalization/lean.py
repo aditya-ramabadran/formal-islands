@@ -12,6 +12,7 @@ from typing import Protocol
 
 from formal_islands.formalization.agentic import AGENTIC_WORKER_PLACEHOLDER
 from formal_islands.models import VerificationResult
+from formal_islands.progress import progress
 
 
 class CommandRunner(Protocol):
@@ -109,6 +110,7 @@ class LeanVerifier:
     def verify_code(self, *, lean_code: str, node_id: str, attempt_number: int) -> VerificationResult:
         """Write Lean code into the workspace and verify it locally."""
 
+        progress(f"running local Lean verification for node {node_id} (attempt {attempt_number})")
         workspace_root = self.workspace.root.resolve()
         scratch_path = self.workspace.write_scratch_file(
             node_id=node_id,
@@ -130,7 +132,7 @@ class LeanVerifier:
             elapsed_seconds = time.monotonic() - start
         except subprocess.TimeoutExpired as exc:
             elapsed_seconds = time.monotonic() - start
-            return VerificationResult(
+            result = VerificationResult(
                 status="failed",
                 command=" ".join(command),
                 exit_code=None,
@@ -143,8 +145,13 @@ class LeanVerifier:
                 attempt_count=attempt_number,
                 artifact_path=str(scratch_path),
             )
+            progress(
+                f"finished local Lean verification for node {node_id} (attempt {attempt_number}) "
+                f"with status {result.status} after timeout"
+            )
+            return result
 
-        return VerificationResult(
+        result = VerificationResult(
             status="verified" if completed.returncode == 0 else "failed",
             command=" ".join(command),
             exit_code=completed.returncode,
@@ -154,12 +161,20 @@ class LeanVerifier:
             attempt_count=attempt_number,
             artifact_path=str(scratch_path),
         )
+        progress(
+            f"finished local Lean verification for node {node_id} (attempt {attempt_number}) "
+            f"with status {result.status}"
+        )
+        return result
 
     def verify_existing_file(self, *, file_path: Path, attempt_number: int) -> VerificationResult:
         """Verify an existing Lean scratch file without rewriting it."""
 
         workspace_root = self.workspace.root.resolve()
         resolved_path = file_path.resolve()
+        progress(
+            f"running local Lean verification for {resolved_path} (attempt {attempt_number})"
+        )
         command = [self._lake_executable(), "env", "lean", str(resolved_path)]
 
         start = time.monotonic()
@@ -175,7 +190,7 @@ class LeanVerifier:
             elapsed_seconds = time.monotonic() - start
         except subprocess.TimeoutExpired as exc:
             elapsed_seconds = time.monotonic() - start
-            return VerificationResult(
+            result = VerificationResult(
                 status="failed",
                 command=" ".join(command),
                 exit_code=None,
@@ -188,8 +203,13 @@ class LeanVerifier:
                 attempt_count=attempt_number,
                 artifact_path=str(resolved_path),
             )
+            progress(
+                f"finished local Lean verification for {resolved_path} (attempt {attempt_number}) "
+                f"with status {result.status} after timeout"
+            )
+            return result
 
-        return VerificationResult(
+        result = VerificationResult(
             status="verified" if completed.returncode == 0 else "failed",
             command=" ".join(command),
             exit_code=completed.returncode,
@@ -199,3 +219,8 @@ class LeanVerifier:
             attempt_count=attempt_number,
             artifact_path=str(resolved_path),
         )
+        progress(
+            f"finished local Lean verification for {resolved_path} (attempt {attempt_number}) "
+            f"with status {result.status}"
+        )
+        return result

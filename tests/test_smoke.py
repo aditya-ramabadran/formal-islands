@@ -16,9 +16,12 @@ from formal_islands.backends import (
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.formalization import FormalizationOutcome, formalize_candidate_nodes
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
+from formal_islands.progress import progress, use_progress_log
 from formal_islands.review import derive_review_obligations
+from formal_islands.progress import append_graph_summary_to_progress_log
 from formal_islands.smoke import (
     _backend_failure_outcome,
+    _cleanup_archive_artifacts,
     cmd_plan,
     cmd_run_benchmark,
     cmd_formalize_all_candidates,
@@ -125,6 +128,88 @@ def test_select_candidate_node_id_uses_lowest_priority_number_then_id() -> None:
     )
 
     assert select_candidate_node_id(graph) == "n0"
+
+
+def test_progress_log_appends_without_replacing_existing_content(tmp_path: Path) -> None:
+    progress_log = tmp_path / "_progress.log"
+    progress_log.write_text("preexisting line\n", encoding="utf-8")
+
+    with use_progress_log(progress_log):
+        progress("first message")
+    with use_progress_log(progress_log):
+        progress("second message")
+
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "preexisting line" in log_text
+    assert "first message" in log_text
+    assert "second message" in log_text
+
+
+def test_progress_log_normalizes_prefixed_messages(tmp_path: Path) -> None:
+    progress_log = tmp_path / "_progress.log"
+
+    with use_progress_log(progress_log):
+        progress("[formal-islands] already-prefixed message")
+
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert log_text.count("[formal-islands]") == 1
+    assert "already-prefixed message" in log_text
+
+
+def test_graph_summary_logging_records_nodes_and_edges(tmp_path: Path) -> None:
+    progress_log = tmp_path / "_progress.log"
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="A implies B.",
+        root_node_id="n1",
+        nodes=[
+            ProofNode(
+                id="n1",
+                title="Root",
+                informal_statement="A implies B.",
+                informal_proof_text="Use n2.",
+            ),
+            ProofNode(
+                id="n2",
+                title="Lemma",
+                informal_statement="A.",
+                informal_proof_text="Given.",
+                status="candidate_formal",
+                formalization_priority=2,
+                formalization_rationale="Useful local fact.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n1", target_id="n2", label="uses")],
+    )
+
+    with use_progress_log(progress_log):
+        append_graph_summary_to_progress_log(graph, label="02_candidate_graph.json")
+
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "02_candidate_graph.json: graph summary" in log_text
+    assert "n1 -> n2 [uses]" in log_text
+    assert "[candidate_formal] n2" in log_text
+    assert "stmt: A." in log_text
+
+
+def test_cleanup_archive_artifacts_deletes_tarballs_and_logs(tmp_path: Path) -> None:
+    output_dir = tmp_path / "artifacts"
+    backend_logs = output_dir / "_backend_logs"
+    backend_logs.mkdir(parents=True)
+    archive_one = backend_logs / "one.tar.gz"
+    archive_two = output_dir / "two.tar.gz"
+    archive_one.write_text("payload", encoding="utf-8")
+    archive_two.write_text("payload", encoding="utf-8")
+    progress_log = output_dir / "_progress.log"
+
+    with use_progress_log(progress_log):
+        removed = _cleanup_archive_artifacts(output_dir)
+
+    assert archive_one.exists() is False
+    assert archive_two.exists() is False
+    assert len(removed) == 2
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "cleaned up 2 archive artifact(s)" in log_text
 
 
 def test_smoke_stage_orchestration_writes_expected_outputs(tmp_path: Path) -> None:

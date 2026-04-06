@@ -17,7 +17,7 @@ from formal_islands.formalization.pipeline import (
     format_local_proof_context,
 )
 from formal_islands.models import FormalArtifact, ProofGraph
-from formal_islands.progress import progress
+from formal_islands.progress import append_to_progress_log, progress
 
 
 def request_aristotle_formalization(
@@ -86,10 +86,27 @@ def request_aristotle_formalization(
             project_dir=snapshot_root,
             task_name=f"formalize_node_aristotle_{_sanitize_file_stem(node_id)}",
         )
+        progress(
+            f"Aristotle project {run.project_id} for node {node_id} completed with status {run.status}; "
+            "recovering result artifact"
+        )
 
         extracted_root = Path(tempfile.mkdtemp(prefix="formal-islands-aristotle-result-"))
         try:
+            progress(
+                f"Aristotle project {run.project_id} for node {node_id}: extracting result tarball "
+                f"to {extracted_root}"
+            )
             _extract_tarball(run.result_tar_path, extracted_root)
+            progress(
+                f"Aristotle project {run.project_id} for node {node_id}: extraction complete; "
+                "appending summary files"
+            )
+            _append_aristotle_summary_files(extracted_root)
+            progress(
+                f"Aristotle project {run.project_id} for node {node_id}: searching extracted tree "
+                "for a Lean file containing the target theorem"
+            )
             result_lean_path = _find_result_lean_file(
                 extracted_root=extracted_root,
                 preferred_relative_path=relative_scratch_path,
@@ -101,8 +118,16 @@ def request_aristotle_formalization(
                 )
 
             scratch_path.parent.mkdir(parents=True, exist_ok=True)
+            progress(
+                f"Aristotle project {run.project_id} for node {node_id}: copying result Lean file "
+                f"from {result_lean_path} to {scratch_path}"
+            )
             shutil.copy2(result_lean_path, scratch_path)
 
+            progress(
+                f"Aristotle project {run.project_id} for node {node_id}: recovering formal artifact "
+                "from copied Lean file"
+            )
             artifact = recover_agentic_artifact_from_scratch_file(
                 graph=graph,
                 node_id=node_id,
@@ -113,7 +138,11 @@ def request_aristotle_formalization(
                 raise BackendOutputError(
                     "Aristotle returned a Lean file, but no theorem could be recovered from it."
                 )
-            progress(f"Aristotle completed node {node_id}")
+            progress(
+                f"Aristotle project {run.project_id} for node {node_id}: recovered theorem "
+                f"{artifact.lean_theorem_name}; finalizing"
+            )
+            progress(f"Aristotle completed node {node_id} with status {run.status}")
             return artifact
         finally:
             shutil.rmtree(extracted_root, ignore_errors=True)
@@ -173,7 +202,7 @@ def build_aristotle_formalization_prompt(
             "derives a fact, treat it as something to prove, not something to assume."
         ),
         (
-            "Do not modify unrelated files. Keep the file self-contained and include any imports you need. "
+            "Do not modify unrelated files. Keep the file self-contained and include necessary imports, but prefer specific imports to broad ones like `import Mathlib`."
             "Do not make a major shrink in the mathematical setting, dimension, ambient structure, or variable "
             "scope just to make the theorem easier."
         ),
@@ -272,7 +301,7 @@ def _render_aristotle_scratch_header(
             "- Do not make a major shrink in the mathematical setting, dimension, ambient structure, or variable scope.",
             "- Prefer the most concrete faithful theorem you can manage.",
             "- Avoid sorrys and avoid unrelated abstraction.",
-            "- Use any imports you need, but prefer specific imports to broad ones like import Mathlib.",
+            "- Use any imports you need, but prefer specific imports to broad ones like `import Mathlib`.",
             "- If a smaller theorem is the best reachable core, it must still be genuinely nontrivial and carry meaningful inferential load.",
             "- If you cannot produce a genuinely nontrivial fallback, fail rather than returning a trivial shrink.",
             "-/",
@@ -364,3 +393,18 @@ def _find_result_lean_file(
     if lean_files:
         return lean_files[0]
     return None
+
+
+def _append_aristotle_summary_files(extracted_root: Path) -> None:
+    for summary_path in sorted(extracted_root.rglob("ARISTOTLE_SUMMARY_*.md")):
+        try:
+            summary_text = summary_path.read_text(encoding="utf-8").rstrip()
+        except OSError:
+            continue
+        append_to_progress_log("-------")
+        append_to_progress_log(f"Aristotle summary file: {summary_path.name}")
+        if summary_text:
+            append_to_progress_log(summary_text)
+        else:
+            append_to_progress_log("(summary file empty)")
+        append_to_progress_log("-------")

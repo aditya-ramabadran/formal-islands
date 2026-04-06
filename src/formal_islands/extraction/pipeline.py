@@ -267,8 +267,7 @@ def extract_proof_graph(
         ],
     )
     graph = simplify_proof_graph(graph)
-    progress("refining candidate nodes")
-    return refine_candidate_nodes(graph, backend=backend)
+    return graph
 
 
 def plan_proof_graph(
@@ -434,44 +433,52 @@ def _apply_candidate_selection_result(
     updated_graph = graph.model_copy(update={"nodes": updated_nodes})
     updated_graph = _promote_high_yield_technical_candidate(updated_graph)
     updated_graph = _calibrate_candidate_set(updated_graph)
-    return refine_candidate_nodes(updated_graph, backend=backend)
+    return updated_graph
 
 
 def build_local_refinement_request(
     *,
     graph: ProofGraph,
-    parent_id: str,
-    candidate_id: str,
+    source_node_id: str,
     span_hints: list[dict[str, str | int]] | None = None,
 ) -> StructuredBackendRequest:
     """Ask a backend to propose one or more narrower local claims inside a broad node."""
 
-    parent = next(node for node in graph.nodes if node.id == parent_id)
-    candidate = next(node for node in graph.nodes if node.id == candidate_id)
+    source = next(node for node in graph.nodes if node.id == source_node_id)
+    incoming = _incoming_edges(graph)
+    parent_edges = incoming.get(source_node_id, [])
+    parent = next((node for node in graph.nodes if node.id == parent_edges[0].source_id), None) if len(parent_edges) == 1 else None
     prompt_parts = [
         f"Theorem title: {graph.theorem_title}",
-        "Parent informal node:",
+        "Source node being refined:",
         json.dumps(
             {
-                "id": parent.id,
-                "title": parent.title,
-                "informal_statement": parent.informal_statement,
-                "informal_proof_text": parent.informal_proof_text,
+                "id": source.id,
+                "title": source.title,
+                "informal_statement": source.informal_statement,
+                "informal_proof_text": source.informal_proof_text,
             },
             indent=2,
         ),
-        "Broad candidate node to refine:",
-        json.dumps(
-            {
-                "id": candidate.id,
-                "title": candidate.title,
-                "informal_statement": candidate.informal_statement,
-                "informal_proof_text": candidate.informal_proof_text,
-            },
-            indent=2,
+        (
+            "Broader parent context:"
+            + (
+                "\n"
+                + json.dumps(
+                    {
+                        "id": parent.id,
+                        "title": parent.title,
+                        "informal_statement": parent.informal_statement,
+                        "informal_proof_text": parent.informal_proof_text,
+                    },
+                    indent=2,
+                )
+                if parent is not None
+                else "\n[]"
+            )
         ),
-        "Coverage sketch for the broad candidate:",
-        json.dumps(asdict(build_node_coverage_sketch(candidate)), indent=2),
+        "Coverage sketch for the source node:",
+        json.dumps(asdict(build_node_coverage_sketch(source)), indent=2),
     ]
     if span_hints:
         prompt_parts.extend(
@@ -499,10 +506,10 @@ def build_local_refinement_request(
     prompt_parts.extend(
         [
             (
-                "Propose 1 to 3 narrower concrete local subclaims that sit inside the broad candidate and still "
-                "carry real inferential load for the parent node. Prefer a complete mathematical claim over a "
-                "clipped fragment. Keep the same concrete setting and make each proposal substantially smaller than "
-                "the broad candidate, but not trivial."
+                "Propose 1 to 3 narrower concrete local subclaims that sit inside the source node and still "
+                "carry real inferential load for the source node's parent proof path. Prefer a complete mathematical "
+                "claim over a clipped fragment. Keep the same concrete setting and make each proposal substantially "
+                "smaller than the source node, but not trivial."
             ),
             (
                 "Each proposal should include a concise title, an optional display label, a concrete informal statement, "
@@ -608,6 +615,8 @@ def _score_refined_local_claim_proposal(
         return 0
     if not _has_relation_marker(statement):
         return 0
+    if _looks_like_trivial_refined_claim(statement=statement, proof_text=proof_text):
+        return 0
     if _normalize_text(statement) in {
         _normalize_text(parent.informal_statement),
         _normalize_text(candidate.informal_statement),
@@ -652,7 +661,7 @@ def _proposal_to_refinement(
         "display_label": display_label,
         "statement": proposal.informal_statement.strip(),
         "proof_text": _normalize_refined_local_claim_text(proposal.informal_proof_text),
-        "priority": 1,
+        "priority": 3,
         "rationale": proposal.rationale.strip(),
     }
 
@@ -668,23 +677,22 @@ def _request_refined_local_claim(
     *,
     backend: StructuredBackend,
     graph: ProofGraph,
-    candidate_id: str,
+    source_node_id: str,
 ) -> dict[str, str | int] | None:
     node_by_id = {node.id: node for node in graph.nodes}
     incoming = _incoming_edges(graph)
-    candidate = node_by_id[candidate_id]
-    parent_edges = incoming.get(candidate_id, [])
+    candidate = node_by_id[source_node_id]
+    parent_edges = incoming.get(source_node_id, [])
     if len(parent_edges) != 1:
         return None
     parent_id = parent_edges[0].source_id
 
-    span_hints = _rank_local_consequence_spans(graph=graph, candidate_id=candidate_id)[:3]
+    span_hints = _rank_local_consequence_spans(graph=graph, candidate_id=source_node_id)[:3]
     try:
         response = backend.run_structured(
             build_local_refinement_request(
                 graph=graph,
-                parent_id=parent_id,
-                candidate_id=candidate_id,
+                source_node_id=source_node_id,
                 span_hints=span_hints,
             )
         )
@@ -718,65 +726,64 @@ def _request_refined_local_claim(
     return _proposal_to_refinement(
         proposal=best_proposal,
         parent_id=parent_id,
-        candidate_id=candidate_id,
+        candidate_id=source_node_id,
     )
 
 
 def refine_candidate_nodes(
     graph: ProofGraph,
     backend: StructuredBackend | None = None,
+    *,
+    source_node_id: str | None = None,
 ) -> ProofGraph:
-    """Conservatively carve out at most one smaller downstream formal island."""
+    """Conservatively carve out a single smaller downstream formal island."""
 
-    if len(graph.nodes) >= 6:
+    if source_node_id is None:
         return graph
 
-    broad_candidates = [
-        node
-        for node in graph.nodes
-        if node.status == "candidate_formal"
-        and (
-            (_looks_like_broad_candidate(node) and not _is_high_yield_local_claim(node.informal_statement))
-            or _looks_like_mixed_generic_application_candidate(node)
-        )
-    ]
+    node_by_id = {node.id: node for node in graph.nodes}
+    source = node_by_id.get(source_node_id)
+    if source is None:
+        return graph
+    if source.status not in {"candidate_formal", "formal_failed"}:
+        return graph
+    if len(graph.nodes) >= 6 and source.status != "formal_failed":
+        return graph
+    if source.status == "candidate_formal":
+        if not _looks_like_broad_candidate(source) and not _looks_like_mixed_generic_application_candidate(source):
+            return graph
+        if _is_high_yield_local_claim(source.informal_statement):
+            return graph
 
-    for candidate in broad_candidates:
-        print(
-            f"[formal-islands] considering local refinement for candidate {candidate.id} ({candidate.title})",
-            flush=True,
-        )
-        refinement = None
-        if backend is not None:
-            progress("asking backend for refined local claim proposal")
-            refinement = _request_refined_local_claim(
-                backend=backend,
-                graph=graph,
-                candidate_id=candidate.id,
-            )
-        if refinement is None:
-            progress("using deterministic span-based refinement fallback")
-            refinement = _extract_local_consequence_refinement(
-                graph=graph,
-                candidate_id=candidate.id,
-            )
-        if refinement is None:
-            progress("no refinement found for candidate")
-            continue
-        progress(f"created refined local claim {refinement['title']}")
-        return _apply_candidate_refinement(
+    progress(f"considering local refinement for source {source.id} ({source.title})")
+    refinement = None
+    if backend is not None:
+        progress("asking backend for refined local claim proposal")
+        refinement = _request_refined_local_claim(
+            backend=backend,
             graph=graph,
-            parent_id=refinement["parent_id"],
-            candidate_id=candidate.id,
-            title=refinement["title"],
-            display_label=refinement["display_label"],
-            statement=refinement["statement"],
-            proof_text=refinement["proof_text"],
-            priority=refinement["priority"],
-            rationale=refinement["rationale"],
+            source_node_id=source.id,
         )
-
-    return graph
+    if refinement is None:
+        progress("using deterministic span-based refinement fallback")
+        refinement = _extract_local_consequence_refinement(
+            graph=graph,
+            candidate_id=source.id,
+        )
+    if refinement is None:
+        progress("no refinement found for source node")
+        return graph
+    progress(f"created refined local claim {refinement['title']}")
+    return _apply_candidate_refinement(
+        graph=graph,
+        source_node_id=source.id,
+        title=refinement["title"],
+        display_label=refinement["display_label"],
+        statement=refinement["statement"],
+        proof_text=refinement["proof_text"],
+        priority=refinement["priority"],
+        rationale=refinement["rationale"],
+    )
 
 
 def _promote_high_yield_technical_candidate(graph: ProofGraph) -> ProofGraph:
@@ -916,17 +923,71 @@ def _extract_local_consequence_refinement(
     if best_span is None or best_score < 5:
         return None
 
+    statement = _statement_for_refined_span(best_span["body"])
+    proof_text = _context_window(str(best_span["source_text"]), best_span["start"], best_span["end"])
+    if _looks_like_trivial_refined_claim(statement=statement, proof_text=proof_text):
+        return None
+
     return {
-        "parent_id": parent_id,
+        "source_node_id": candidate_id,
         "title": _refined_title_for_span(best_span["body"]),
         "display_label": _refined_label_for_span(best_span["body"]),
-        "statement": _statement_for_refined_span(best_span["body"]),
-        "proof_text": _context_window(str(best_span["source_text"]), best_span["start"], best_span["end"]),
-        "priority": 1,
+        "statement": statement,
+        "proof_text": proof_text,
+        "priority": 3,
         "rationale": (
             "Smaller concrete local consequence extracted because it is more directly formalizable than the broader surrounding node."
         ),
     }
+
+
+def _looks_like_trivial_refined_claim(*, statement: str, proof_text: str) -> bool:
+    normalized_statement = _normalize_text(statement)
+    normalized_proof = _normalize_text(proof_text).lower()
+    proof_tokens = normalized_proof.split()
+    if _is_point_evaluation(statement):
+        return True
+    if len(proof_tokens) <= 16 and len(normalized_statement.split()) <= 18:
+        if any(
+            phrase in normalized_proof
+            for phrase in (
+                "by definition",
+                "directly from",
+                "immediately",
+                "substitute",
+                "substituting",
+                "plug in",
+                "plugging in",
+                "evaluate at",
+                "set ",
+                "by rewriting",
+                "using the hypothesis",
+                "using the assumption",
+            )
+        ):
+            return True
+    if any(
+        phrase in normalized_proof
+        for phrase in (
+            "one-line",
+            "trivial",
+            "bookkeeping",
+            "initial energy",
+            "initial data implies",
+        )
+    ):
+        return True
+    if len(proof_tokens) <= 22 and any(
+        phrase in normalized_statement
+        for phrase in (
+            "e(0)=0",
+            "e(0) = 0",
+            "f(0)=0",
+            "f(0) = 0",
+        )
+    ):
+        return True
+    return False
 
 
 ASSUMPTION_KEYWORDS = (
@@ -966,8 +1027,7 @@ def simplify_proof_graph(
 def _apply_candidate_refinement(
     *,
     graph: ProofGraph,
-    parent_id: str,
-    candidate_id: str | None,
+    source_node_id: str,
     title: str,
     display_label: str,
     statement: str,
@@ -977,7 +1037,7 @@ def _apply_candidate_refinement(
 ) -> ProofGraph:
     refined_id = _fresh_node_id(
         graph,
-        f"{candidate_id or parent_id}_refined_local_claim",
+        f"{source_node_id}_refined_local_claim",
     )
     refined_node = ProofNode(
         id=refined_id,
@@ -990,60 +1050,26 @@ def _apply_candidate_refinement(
         formalization_rationale=rationale,
     )
 
-    updated_nodes = []
-    for node in graph.nodes:
-        if candidate_id is not None and node.id == candidate_id:
-            updated_nodes.append(
-                node.model_copy(
-                    update={
-                        "status": "informal",
-                        "formalization_priority": None,
-                        "formalization_rationale": None,
-                    }
-                )
-            )
-        else:
-            updated_nodes.append(node)
-    updated_nodes.append(refined_node)
-
-    updated_edges: list[ProofEdge] = []
-    replaced_parent_edge = False
-    for edge in graph.edges:
-        if candidate_id is not None and edge.source_id == parent_id and edge.target_id == candidate_id:
-            replaced_parent_edge = True
-            updated_edges.append(
-                ProofEdge(
-                    source_id=parent_id,
-                    target_id=refined_id,
-                    label="refined_from",
-                    explanation=(
-                        "This refined local claim was carved out from the broader sibling node as provenance, "
-                        "not as a proof dependency."
-                    ),
-                )
-            )
-            continue
-        updated_edges.append(edge)
-
-    if not replaced_parent_edge:
-        updated_edges.append(
-            ProofEdge(
-                source_id=parent_id,
-                target_id=refined_id,
-                label="refined_from",
-                explanation="Refined local consequence extracted from the broader sibling node as provenance.",
-            )
+    updated_nodes = list(graph.nodes) + [refined_node]
+    updated_edges = list(graph.edges)
+    updated_edges.append(
+        ProofEdge(
+            source_id=source_node_id,
+            target_id=refined_id,
+            label="refined_from",
+            explanation=(
+                "This refined local claim was carved out from the source node as provenance, not as a proof dependency."
+            ),
         )
-
-    if candidate_id is not None:
-        updated_edges.append(
-            ProofEdge(
-                source_id=refined_id,
-                target_id=candidate_id,
-                label="uses",
-                explanation="This refined local claim depends on the broader supporting node it was carved out from.",
-            )
+    )
+    updated_edges.append(
+        ProofEdge(
+            source_id=refined_id,
+            target_id=source_node_id,
+            label="uses",
+            explanation="This refined local claim is intended to support a later retry of the source node.",
         )
+    )
 
     return graph.model_copy(update={"nodes": updated_nodes, "edges": _dedupe_edges(updated_edges)})
 

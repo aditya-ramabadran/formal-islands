@@ -179,7 +179,7 @@ A normal benchmark run writes:
 - `04_report.html`
   Human-readable HTML report.
 - `_progress.log`
-  Shared run progress log in the output directory.
+  Shared run progress log in the output directory. It is append-only, so rerunning later stages like report generation will add to the existing file instead of replacing it. When the graph is generated or materially updated, the log also gets a compact node/edge preview. Planning-backend semantic assessments and Aristotle summary markdown files are appended there too.
 - `_backend_logs/*.json`
   Logged backend requests/responses, timings, and raw CLI output.
 
@@ -259,6 +259,11 @@ The agentic prompt also explicitly reminds the worker where Mathlib lives in thi
 
 The worker is told to rely on the local `formal-islands-search` helper only if it truly needs extra retrieval, and to commit to a theorem shape sooner rather than wandering through broad library scouting.
 
+The refined-local-claim path is now fallback-driven rather than eager:
+- the loop first tries the best whole node
+- only after a meaningful failure does it consider a smaller subclaim from that same source node
+- trivial substitution-only claims and bare point evaluations are filtered out
+
 Aristotle submissions use a pruned Lean snapshot rather than the entire workspace tree:
 - the committed Lean project skeleton
 - the active scratch file
@@ -276,6 +281,7 @@ The Aristotle prompt itself is plain text, not a bundle of generated Lean source
   - context-only sibling ingredients in the same proof neighborhood
 
 Verified supporting lemmas are given as text summaries with their Lean theorem name and Lean statement when available. They are treated as established facts for proof planning, but their generated Lean code is not auto-imported into the Aristotle snapshot.
+If Aristotle returns an `ARISTOTLE_SUMMARY_*.md` file, its contents are appended to `_progress.log` so the run log keeps the backend's own plain-text summary without echoing it to the terminal.
 
 When `formalize-all-candidates` uses Aristotle, jobs are submitted in parallel batches so multiple candidate nodes can be worked on at once. Newly promoted parents are then picked up by the next batch.
 
@@ -299,7 +305,7 @@ When a verified result is only a concrete supporting sublemma, the pipeline make
 
 Two more details matter in the current run loop:
 - if a recovered agentic artifact verifies as a concrete sublemma, it still gets the same bounded expansion attempt
-- when a refined local claim is certified, any broader parent reached through a `uses` edge can be promoted into the candidate set in a later dynamic pass, so a successful narrow core can feed a follow-up formalization target
+- when a refined local claim is certified, the source node reached through a `uses` edge can be promoted into the candidate set in a later dynamic pass, so a successful narrow core can feed a follow-up formalization target
 - when the graph is run in auto mode, `run-benchmark` now keeps discovering newly promoted candidates instead of stopping after the first success
 - when the result is only a concrete supporting sublemma, the planning backend can still be used to write the short informal statement/proof summary for that certified local core
 

@@ -49,6 +49,67 @@ DIMENSION_DOWNGRADE_LEAN_MARKERS = (
     "FiniteDimensional",
     "Matrix",
 )
+FAITHFULNESS_GUARD_FAILURE_MARKERS = (
+    "faithfulness guard",
+    "over abstract",
+    "too abstract",
+    "arbitrary type",
+    "formalization drifted too far",
+    "different mathematical setting",
+)
+SETTING_FAILURE_MARKERS = (
+    "finite-dimensional",
+    "euclideanspace",
+    "measure-space theorem",
+    "measure space theorem",
+    "inner-product space",
+    "hilbert",
+    "banach",
+    "function space",
+    "ambient universe",
+    "wrong mathematical setting",
+    "different mathematical setting",
+    "dimension profile",
+)
+THEOREM_SHAPE_FAILURE_MARKERS = (
+    "downstream consequence",
+    "side consequence",
+    "assumed the key identity",
+    "instead of proving",
+    "wrong logical claim",
+    "abstract proxy",
+    "generic theorem",
+    "too abstract",
+    "over abstract",
+    "arbitrary type",
+)
+LEAN_PACKAGING_FAILURE_MARKERS = (
+    "unknown identifier",
+    "unknown constant",
+    "unknown namespace",
+    "expected token",
+    "failed to synthesize instance",
+    "invalid field",
+    "unknown type",
+    "syntax error",
+)
+PROOF_STRATEGY_FAILURE_MARKERS = (
+    "unsolved goals",
+    "rewrite",
+    "simp",
+    "linarith",
+    "nlinarith",
+    "ring",
+    "omega",
+)
+SMALLER_SUBLEMMA_FAILURE_MARKERS = (
+    "smaller",
+    "sublemma",
+    "local core",
+    "narrower",
+    "coverage",
+    "fallback",
+)
 
 
 class FormalizationFaithfulnessError(ValueError):
@@ -765,8 +826,15 @@ def build_repair_assessment_request(
                 "failure. If the theorem is in the wrong mathematical setting, use setting_fix. If it proves the wrong "
                 "logical claim, use theorem_shape_fix. If Lean engineering is the main issue, use lean_packaging_fix. "
                 "If the theorem shape is correct but the proof approach is brittle, use proof_strategy_fix. "
-                "If the target should be smaller, use try_smaller_sublemma. If a broader concrete core should be tried, "
-                "use try_larger_core."
+                "If the target should be smaller, use try_smaller_sublemma only for a real smaller honest local core, "
+                "not a bookkeeping identity. If a broader concrete core should be tried, use try_larger_core only in a "
+                "later bonus pass when the current theorem is already a faithful core."
+            ),
+            (
+                "When a faithfulness guard rejection mentions a different mathematical universe, a finite-dimensional "
+                "analogue, or an arbitrary type/measurable-space proxy, prefer setting_fix over theorem_shape_fix. "
+                "When the theorem already has the right setting and only the proof script is failing, prefer "
+                "proof_strategy_fix or lean_packaging_fix rather than theorem_shape_fix."
             ),
             "Return JSON with keys repair_category and repair_note.",
         ]
@@ -822,11 +890,19 @@ def classify_heuristic_repair_assessment(
 ) -> RepairAssessment:
     """Classify a retry without consulting a planning backend."""
 
-    text = "\n".join(
-        part for part in [previous_result.stderr, previous_result.stdout, extra_guidance or ""] if part
-    ).lower()
+    failure_text = "\n".join(part for part in [previous_result.stderr, previous_result.stdout] if part).lower()
+    guidance_text = (extra_guidance or "").lower()
+    text = failure_text
+    if previous_result.command == "faithfulness_guard" or any(
+        marker in failure_text for marker in FAITHFULNESS_GUARD_FAILURE_MARKERS
+    ):
+        text = "\n".join(part for part in [failure_text, guidance_text] if part)
+    is_faithfulness_guard_failure = (
+        previous_result.command == "faithfulness_guard"
+        or any(marker in text for marker in FAITHFULNESS_GUARD_FAILURE_MARKERS)
+    )
 
-    if any(marker in text for marker in ("measure-space theorem", "finite-dimensional", "euclideanspace")):
+    if is_faithfulness_guard_failure and any(marker in text for marker in SETTING_FAILURE_MARKERS):
         return RepairAssessment(
             category=RepairCategory.SETTING_FIX,
             note=(
@@ -835,18 +911,7 @@ def classify_heuristic_repair_assessment(
             ),
         )
 
-    if any(
-        marker in text
-        for marker in (
-            "unknown identifier",
-            "unknown constant",
-            "unknown namespace",
-            "expected token",
-            "failed to synthesize instance",
-            "invalid field",
-            "unknown type",
-        )
-    ):
+    if any(marker in text for marker in LEAN_PACKAGING_FAILURE_MARKERS):
         return RepairAssessment(
             category=RepairCategory.LEAN_PACKAGING_FIX,
             note=(
@@ -856,12 +921,20 @@ def classify_heuristic_repair_assessment(
         )
 
     if "type mismatch" in text:
-        if any(marker in text for marker in ("measure", "euclideanspace", "finite-dimensional", "function space")):
+        if any(marker in text for marker in SETTING_FAILURE_MARKERS):
             return RepairAssessment(
                 category=RepairCategory.SETTING_FIX,
                 note=(
                     "The type mismatch suggests the theorem moved into the wrong mathematical setting. "
                     "Keep the same space, operators, and ambient structure."
+                ),
+            )
+        if any(marker in text for marker in THEOREM_SHAPE_FAILURE_MARKERS):
+            return RepairAssessment(
+                category=RepairCategory.THEOREM_SHAPE_FIX,
+                note=(
+                    "The mismatch suggests the theorem statement no longer matches the intended logical claim. "
+                    "Preserve the original claim more literally."
                 ),
             )
         return RepairAssessment(
@@ -872,7 +945,32 @@ def classify_heuristic_repair_assessment(
             ),
         )
 
-    if any(marker in text for marker in ("unsolved goals", "rewrite", "simp", "nlinarith", "linarith", "ring")):
+    if is_faithfulness_guard_failure:
+        if any(marker in text for marker in SMALLER_SUBLEMMA_FAILURE_MARKERS):
+            return RepairAssessment(
+                category=RepairCategory.TRY_SMALLER_SUBLEMMA,
+                note=(
+                    "The faithfulness check suggests the current target is still too broad. "
+                    "Carve out a smaller honest local core in the same setting."
+                ),
+            )
+        if any(marker in text for marker in THEOREM_SHAPE_FAILURE_MARKERS):
+            return RepairAssessment(
+                category=RepairCategory.THEOREM_SHAPE_FIX,
+                note=(
+                    "The attempt drifted away from the intended theorem shape. Re-center on the node's concrete "
+                    "statement and proof role."
+                ),
+            )
+        return RepairAssessment(
+            category=RepairCategory.THEOREM_SHAPE_FIX,
+            note=(
+                "The faithfulness guard rejected the theorem shape. Re-center on the node's concrete statement "
+                "and proof role, and keep the same mathematical universe."
+            ),
+        )
+
+    if any(marker in text for marker in PROOF_STRATEGY_FAILURE_MARKERS):
         return RepairAssessment(
             category=RepairCategory.PROOF_STRATEGY_FIX,
             note=(
@@ -881,7 +979,16 @@ def classify_heuristic_repair_assessment(
             ),
         )
 
-    if any(marker in text for marker in ("faithfulness guard", "over abstract", "too abstract", "arbitrary type")):
+    if any(marker in text for marker in SMALLER_SUBLEMMA_FAILURE_MARKERS):
+        return RepairAssessment(
+            category=RepairCategory.TRY_SMALLER_SUBLEMMA,
+            note=(
+                "The current theorem seems larger than the workable local core. Extract a smaller honest sublemma "
+                "in the same mathematical setting."
+            ),
+        )
+
+    if any(marker in text for marker in THEOREM_SHAPE_FAILURE_MARKERS):
         return RepairAssessment(
             category=RepairCategory.THEOREM_SHAPE_FIX,
             note=(

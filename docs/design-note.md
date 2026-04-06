@@ -190,7 +190,8 @@ The planning stage:
 
 - reads theorem statement + raw proof text
 - emits one planned graph plus candidate ranking in one backend call
-- applies deterministic cleanup / refinement / calibration afterward
+- applies deterministic cleanup / calibration afterward
+- leaves refinement to the later failure-driven formalization fallback path when a source node truly needs a smaller honest subclaim
 
 Important outputs:
 
@@ -267,6 +268,7 @@ It contains:
 
 Verified supporting lemmas are included as text context with their theorem names and Lean statements when available.
 They may be relied on as established facts for proof planning, but they are not auto-imported as generated Lean source files in the Aristotle snapshot.
+If Aristotle returns an `ARISTOTLE_SUMMARY_*.md` file, its contents are appended to `_progress.log` as part of the run record, but they are not printed to the terminal.
 
 User-facing formalization is now agentic-only in the CLI. The older structured repair-loop path is retained only as an internal compatibility fallback for legacy callers and tests, not as a supported mode for normal use.
 
@@ -344,6 +346,10 @@ Outputs:
 - `04_report_bundle.json`
 - `04_report.html`
 - `_progress.log`
+
+The shared progress log is append-only. Re-running a later stage, such as report generation, adds new lines to the existing `_progress.log` rather than truncating it.
+When a graph artifact is generated or materially updated, the run log also records a compact node/edge preview so the output directory keeps a readable trace of the graph as it evolves.
+Planning-backend semantic assessments and Aristotle summary markdown files are appended there too, so the run log contains the main semantic judgments without spamming the terminal.
 
 The report now supports:
 
@@ -688,23 +694,24 @@ Important nuance:
 
 ### 9.8 Hybrid refined local claims
 
-The old refined-local-claim extraction was purely deterministic and span-based.
-That was good at finding the right neighborhood, but too brittle at choosing the actual subclaim.
+The old refined-local-claim extraction used to run eagerly during planning.
+That was too speculative: it could surface tiny bookkeeping facts before the main node had even been tried.
 
-The current direction is hybrid:
+The current direction is fallback-only:
 
-- use deterministic heuristics to decide that a candidate node is too broad
-- seed a backend refinement request with the broad node, its parent, a small coverage sketch, and a few high-scoring span hints
-- ask the backend for 1 to 3 narrower concrete local claims
+- try the best whole node first
+- only if that node fails in a meaningful way should the loop consider one smaller honest subclaim
+- the refinement request is anchored to the source node being refined, not to a neighboring sibling that merely shares vocabulary
+- the backend may propose 1 to 3 narrower concrete local claims
 - rank the proposals deterministically and keep the best valid one
 - fall back to the original span/window extractor if no proposal is usable
 
-This keeps refinement anchored in the original proof while reducing the chance that a clipped fragment becomes the final refined node.
+This keeps refinement tied to a real failure mode and reduces the chance that a clipped fragment becomes a first-class candidate.
 
-Two refinements make that hybrid path more robust:
+Two refinements make that path more robust:
 
-- if the backend certifies a narrow local claim, the deterministic loop can later promote a broader parent reached by a `uses` edge, so a successful core can seed a second pass upward
-- the proposal ranker penalizes point-evaluation fragments such as `F_q(q) = 0` when they look like isolated snapshots rather than reusable theorems, which helps broader calculus claims outrank tiny bookkeeping facts
+- if the backend certifies a narrow local claim, the deterministic loop can later promote the broader source node reached by a `uses` edge, so a successful core can seed a second pass upward
+- the proposal ranker and deterministic span fallback penalize point-evaluation fragments and substitution-only facts when they look like isolated snapshots rather than reusable theorems
 
 ## 10. How the Current Faithfulness Classifier Works
 
@@ -762,7 +769,7 @@ Current important prompt intentions:
 - preserve key symbols / quantities
 - avoid over-abstraction
 - start from the most literal whole-node theorem shape
-- only fall back to a concrete sublemma if needed
+- only fall back to a concrete sublemma after the main node has genuinely failed
 - document fallback in the plan file
 - the local `formal-islands-search` helper is available if it truly needs extra retrieval
 - if more search is truly needed, do at most 2 additional targeted searches with `formal-islands-search`
@@ -770,6 +777,8 @@ Current important prompt intentions:
 - explicitly use the workspace's real Mathlib location under `.lake/packages/mathlib/Mathlib`
 - use one designated main theorem plus helper lemmas if needed
 - include a lightweight coverage sketch so the worker can see the node's internal proof components
+- if the current source node is too broad after a failed attempt, carve out a smaller subclaim from that source node rather than from a neighboring sibling
+- do not produce trivial substitution lemmas or bare point evaluations as refined claims
 
 This “one main theorem plus helpers” requirement was added after Run 11 exposed confusion where the file contained two theorems:
 
@@ -784,7 +793,7 @@ Current behavior now is:
 - the file may contain helper lemmas
 - artifact extraction/recovery tries to align to the intended main theorem, not just the first declaration in the file
 - after a verified concrete sublemma, the loop makes one bounded coverage-expansion attempt from the verified file rather than treating the first successful core as terminal
-- if a certified refined local claim points to a broader parent through a `uses` edge, the parent may be promoted into the candidate set on a later dynamic pass
+- if a certified refined local claim points back to the source node through a `uses` edge, that source node may be promoted into the candidate set on a later dynamic pass
 - timestamped worker and plan filenames avoid collisions when the same node is revisited
 
 ## 12. Manual Benchmark Suite
@@ -1241,3 +1250,365 @@ The best short mental model for the current repository is:
 - the graph/report then surface that boundary honestly
 
 That is what Formal Islands currently is.
+
+## 20. Current Operational Semantics in Detail
+
+This section is the most important one if you want to understand what the system actually does today when a run succeeds, partially succeeds, or fails for Lean-engineering reasons.
+
+The main files to read alongside this section are:
+
+- [smoke.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/smoke.py)
+- [formalization/loop.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/formalization/loop.py)
+- [formalization/pipeline.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/formalization/pipeline.py)
+- [formalization/lean.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/formalization/lean.py)
+- [formalization/aristotle.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/formalization/aristotle.py)
+- [backends/aristotle.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/backends/aristotle.py)
+- [progress.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/progress.py)
+
+### 20.1 Command-level orchestration
+
+The CLI entry points in [smoke.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/smoke.py) are not symmetric.
+
+- `cmd_plan(...)`
+  - builds the initial theorem graph and candidate ranking
+  - writes `01_extracted_graph.json` and `02_candidate_graph.json`
+  - does not catch planning-backend failures
+  - so if Claude/Codex/Gemini run out of usage or otherwise fail during planning, the command normally aborts
+- `cmd_formalize_one(...)`
+  - formalizes exactly one chosen candidate
+  - catches backend failures and writes failure artifacts instead of silently dying
+  - still writes `03_formalized_graph.json` and `03_formalization_summary.json`
+- `cmd_formalize_all_candidates(...)`
+  - walks candidate nodes in priority order
+  - for Aristotle, submits jobs in parallel batches and then merges the results back into the shared graph
+  - is the main “try multiple nodes” formalization path
+- `cmd_run_benchmark(...)`
+  - runs planning, formalization, and reporting end-to-end
+  - if planning fails, the run usually fails immediately
+  - if a single node fails in formalization, the run may still produce a graph and report with failure artifacts
+
+The overall orchestration is intentionally explicit:
+
+- planning creates graph artifacts
+- formalization mutates candidate nodes into verified or failed nodes
+- report generation reads the graph artifact and review obligations
+
+### 20.2 What happens when the planning backend fails
+
+The planning backend is used for:
+
+- theorem-level graph planning
+- candidate ranking
+- local proof-neighborhood context
+- combined semantic review of verified formal artifacts
+- retry diagnosis
+- coverage-expansion gating
+
+There are two very different failure regimes:
+
+1. **Planning stage failure**
+   - `cmd_plan(...)` does not swallow backend errors
+   - `cmd_run_benchmark(...)` also does not swallow backend errors around the planning stage
+   - so a Claude token/usage failure, CLI timeout, or backend invocation error during planning is usually fatal for the run
+2. **Formalization-stage advisory failure**
+   - helper calls inside the formalization loop catch `BackendError`
+   - if the planning backend fails during those calls, the code falls back to heuristics or skips the advisory action
+   - the run often continues, just with less semantic guidance
+
+The key advisory functions live in [formalization/loop.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/formalization/loop.py):
+
+- `_apply_combined_verification_assessment(...)`
+  - asks the planning backend to compare a verified Lean theorem against the target node
+  - if the call fails, the code returns the existing artifact and `None`
+- `_request_planning_repair_assessment(...)`
+  - asks for a semantic repair diagnosis after a failure
+  - if the call fails, the code falls back to a heuristic repair diagnosis
+- `_maybe_upgrade_concrete_sublemma_to_full_node(...)`
+  - checks whether a verified concrete sublemma already matches the target
+  - if the check fails, coverage expansion is skipped and the run continues
+
+So a planning-backend quota failure is often fatal when it happens before formalization starts, but often merely degrades quality once the formalization loop is already running.
+
+### 20.3 What happens during formalization
+
+The formalization loop is implemented in:
+
+- `_formalize_candidate_node_structured(...)`
+- `_formalize_candidate_node_agentic(...)`
+- `_formalize_candidate_node_aristotle(...)`
+
+The common structure is:
+
+1. build a target-specific prompt
+2. ask the backend for a Lean artifact
+3. verify the artifact locally
+4. classify the result semantically
+5. decide whether to retry, expand coverage, or stop
+
+This is intentionally not a fully autonomous search procedure. The system has a bounded retry budget and a bounded expansion budget.
+
+The current default formalization mode exposed to users is `agentic`.
+The old structured repair-loop mode is no longer user-facing, although some compatibility code remains internally.
+
+### 20.4 Retry behavior after a failed attempt
+
+The current system does **not** react to all failures in the same way.
+
+The retry diagnosis is computed from:
+
+- the compiler stderr/stdout
+- the planning backend, if available
+- the previous verification result
+- the existing faithfulness notes, if they are relevant
+
+The classifier lives in:
+
+- `classify_heuristic_repair_assessment(...)` in [formalization/pipeline.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/formalization/pipeline.py)
+- `_classify_retry_failure(...)` in [formalization/loop.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/formalization/loop.py)
+
+The important repair categories are:
+
+- `setting_fix`
+  - the theorem drifted into the wrong mathematical universe
+  - examples: finite-dimensional proxy instead of the function-space claim, measure-space proxy instead of a concrete variational step
+  - response: lock the ambient setting and do not retry by broadening or changing universes
+- `theorem_shape_fix`
+  - the theorem proved a different claim than the node asked for
+  - examples: downstream consequence, assumed hypothesis instead of a proof obligation, abstract proxy theorem
+  - response: lock the theorem shape to the node
+- `lean_packaging_fix`
+  - the theorem is probably fine mathematically, but Lean packaging is broken
+  - examples: unknown identifier, unknown namespace, missing typeclass, syntax/token error
+  - response: keep the theorem fixed and repair imports / names / syntax
+- `proof_strategy_fix`
+  - the theorem shape is okay, but the proof approach is brittle
+  - examples: rewrite loops, `simp` failures, `linarith` failures, malformed tactic structure
+  - response: keep the theorem fixed and change proof strategy
+- `try_smaller_sublemma`
+  - the full theorem is too hard, but a smaller honest local core may be worth trying
+  - response: allow a fallback refinement only if the smaller claim is still meaningful
+- `try_larger_core`
+  - used for the bonus-retry path
+  - response: expand a verified concrete core upward toward the parent theorem without changing the mathematical universe
+
+The current behavior after a failed attempt is:
+
+1. summarize the compiler feedback into a short human-readable line
+2. classify the failure
+3. build retry feedback that says whether the theorem should stay locked, the setting should stay locked, or only packaging/proof strategy should change
+4. retry the same theorem if there is budget left
+5. only after the retry budget is exhausted does the system consider a fallback refinement, and only for specific failure categories
+
+That means a good target that fails for Lean-engineering reasons is not automatically replaced by a smaller theorem. The system first tries to fix the same theorem.
+
+### 20.5 What happens when a good target fails on Lean-engineering reasons
+
+This is the subtle case you specifically asked about.
+
+Suppose the planning backend and faithfulness guard both think the theorem is basically right, but Lean compilation or file handling fails.
+
+The current behavior is:
+
+- the system retries the same theorem up to the attempt limit
+- it adds a short compiler summary to `_progress.log`
+- it asks for a retry diagnosis
+- it rebuilds the retry prompt based on that diagnosis
+- if the diagnosis says the theorem is still a good faithful core, the theorem shape stays locked
+- if the failure is `lean_packaging_fix`, the fix focuses on imports, names, namespaces, and syntax
+- if the failure is `proof_strategy_fix`, the fix focuses on the proof script
+- if the failure is `setting_fix` or `theorem_shape_fix`, the retry prompt is much stricter about preserving the same theorem universe and logical shape
+
+What the current system does **not** do is equally important:
+
+- it does not eagerly convert a Lean packaging error into a smaller fallback theorem
+- it does not resurrect the old eager “refine everything” behavior
+- it does not treat a good target as permission to drift into an easier but less faithful theorem
+
+If the theorem is still unverified at the end of the retry budget, the system usually stops. Only some failure categories can trigger a fallback refinement.
+
+### 20.6 Formalization outcomes and semantic review
+
+After a Lean file verifies, the system classifies the result as one of:
+
+- `full_node`
+- `concrete_sublemma`
+- `over_abstract`
+
+The current post-verification semantic review is more informative than that raw three-way classification.
+
+The planning backend can additionally judge a verified theorem as:
+
+- `full_match`
+- `faithful_core`
+- `downstream_consequence`
+- `dimensional_analogue`
+- `helper_shard`
+
+This semantic review is recorded in `faithfulness_notes` as a compact string like:
+
+- `[full_match] ...`
+- `[faithful_core] ...`
+- `[downstream_consequence] ...`
+
+That review is then used to decide:
+
+- whether coverage expansion should happen
+- whether a later retry is worth attempting
+- whether the verified theorem should be upgraded to `full_node`
+
+Important subtlety:
+
+- `full_match` means the verified theorem is judged to be the full target
+- `faithful_core` means the theorem is already close enough in theorem shape that expansion is not worthwhile, but it may still be a narrower core
+- `certifies_main_burden` is a separate flag that asks whether the theorem covers the hardest inferential step of the node
+
+Those are deliberately not identical.
+
+### 20.7 Coverage expansion and bonus retries
+
+Coverage expansion is separate from ordinary retrying.
+
+It lives in:
+
+- `_attempt_structured_coverage_expansion(...)`
+- `_attempt_agentic_coverage_expansion(...)`
+- `_attempt_aristotle_coverage_expansion(...)`
+
+Current behavior:
+
+- only verified concrete sublemmas are eligible
+- if the planning backend says the theorem is a `full_match`, the artifact is upgraded to `full_node`
+- if the planning backend says the theorem is a `faithful_core`, coverage expansion is skipped
+- if the planning backend says `expansion_warranted` is false, coverage expansion is skipped
+- otherwise one bounded expansion attempt may run
+
+The bonus retry path is even narrower:
+
+- it only fires when the verified result is still a concrete sublemma
+- the planning backend must say the result is worth retrying later
+- the result must still be on the main proof path
+- the node must be a high-priority candidate
+
+This is the system’s current answer to “should we keep pushing this theorem upward?”
+
+### 20.8 Refinement fallback
+
+Refined local claims are now fallback-only.
+
+That means:
+
+- the system first tries the best whole node
+- only after a meaningful failure does it consider a smaller local claim
+- the source node being refined is explicit
+- trivial substitution facts, point evaluations, and bookkeeping fragments are heavily penalized
+- a refined claim is only created if it still carries meaningful inferential load
+
+The implementation sits in:
+
+- [extraction/pipeline.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/extraction/pipeline.py)
+- `_maybe_refine_failed_node(...)`
+
+That is a deliberate change from the older eager refinement behavior. The current design prefers honesty and proof relevance over opportunistic graph growth.
+
+### 20.9 Aristotle-specific behavior
+
+Aristotle is formalization-only.
+
+It does not participate in planning. It does:
+
+- project submission through the Python SDK
+- project status polling
+- result download
+- Lean file recovery from the returned archive
+- local Lean verification
+
+The relevant files are:
+
+- [backends/aristotle.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/backends/aristotle.py)
+- [formalization/aristotle.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/formalization/aristotle.py)
+
+Important details:
+
+- `ARISTOTLE_API_KEY` must be set
+- the backend has no default timeout unless the caller explicitly sets one
+- the returned project snapshot is pruned to the relevant Lean workspace pieces
+- Aristotle summaries, if produced, are appended to `_progress.log`
+- Aristotle completion logs now include the project status, such as `COMPLETE` or `COMPLETE_WITH_ERRORS`
+
+When Aristotle fails to produce a usable result:
+
+- the code attempts to recover the Lean file from the returned archive
+- if recovery works, it may still verify the result locally
+- if recovery fails, the run ends with a formalization failure artifact
+
+### 20.10 Logging and artifacts
+
+The run directory now contains several different kinds of records:
+
+- `01_extracted_graph.json`
+- `02_candidate_graph.json`
+- `03_formalized_graph.json`
+- `03_formalization_summary.json`
+- `04_report_bundle.json`
+- `04_report.html`
+- `_progress.log`
+- `_backend_logs/*.json`
+
+The most useful runtime trace is `_progress.log`.
+
+It is append-only and now records:
+
+- stage starts and completions
+- graph previews when the graph is generated or materially updated
+- node attempts
+- compiler summaries
+- retry diagnoses
+- local Lean verification starts and completions
+- coverage-expansion attempts
+- Aristotle project completion status
+- combined semantic review results
+- Aristotle summary markdown blocks
+
+This is why the current progress logs are much more useful than they were early in the project. They let you reconstruct:
+
+- what node was attempted
+- what kind of failure happened
+- whether the system retried the same theorem
+- whether a smaller fallback core was considered
+- whether a verified core was promoted or expanded
+
+### 20.11 A compact “what should I expect?” guide
+
+If a run is healthy:
+
+- planning produces a small graph
+- candidate ranking looks reasonable
+- the formalizer stays in the same mathematical setting
+- Lean verification succeeds
+- the planning backend often labels the result as `full_match` or `faithful_core`
+
+If a good target fails for packaging reasons:
+
+- the system retries the same theorem
+- the retry prompt focuses on Lean packaging / syntax / imports
+- it usually does **not** invent a new theorem
+
+If a good target fails for proof-strategy reasons:
+
+- the system retries the same theorem
+- it may change proof strategy
+- if a smaller honest core is explicitly justified, it may refine afterward
+
+If the formalizer drifts into the wrong mathematical universe:
+
+- the faithfulness guard or planning review should catch it
+- the retry prompt should lock the theorem shape or setting
+- the system should not “salvage” by switching to a different universe
+
+If a verified theorem is narrower but honest:
+
+- the graph records it as a supporting core
+- the report says it is a narrower core, not the whole node
+- the system may make one bounded expansion attempt if the planning review says that is worthwhile
+
+That is the behavior the code currently implements.

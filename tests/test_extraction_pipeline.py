@@ -12,7 +12,7 @@ from formal_islands.extraction.pipeline import (
     simplify_proof_graph,
     select_formalization_candidates,
 )
-from formal_islands.models import ProofEdge, ProofGraph, ProofNode
+from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode, VerificationResult
 
 
 def build_graph() -> ProofGraph:
@@ -35,6 +35,16 @@ def build_graph() -> ProofGraph:
             ),
         ],
         edges=[ProofEdge(source_id="n1", target_id="n2")],
+    )
+
+
+def make_failed_artifact() -> FormalArtifact:
+    return FormalArtifact(
+        lean_theorem_name="dummy",
+        lean_statement="dummy",
+        lean_code="dummy",
+        verification=VerificationResult(status="failed", command="test"),
+        attempt_history=[],
     )
 
 
@@ -562,9 +572,10 @@ def test_refine_candidate_nodes_adds_generic_local_consequence() -> None:
                     "Q(t)\\le C\\sqrt{R(t)}\\,S(t).\n"
                     "\\]"
                 ),
-                status="candidate_formal",
+                status="formal_failed",
                 formalization_priority=1,
                 formalization_rationale="Broad estimate node.",
+                formal_artifact=make_failed_artifact(),
             ),
         ],
         edges=[
@@ -573,19 +584,23 @@ def test_refine_candidate_nodes_adds_generic_local_consequence() -> None:
         ],
     )
 
-    refined = refine_candidate_nodes(graph)
+    refined = refine_candidate_nodes(graph, source_node_id="n2")
 
     assert len(refined.nodes) == 4
     assert len([node for node in refined.nodes if node.status == "candidate_formal"]) == 1
-    refined_node = next(node for node in refined.nodes if node.status == "candidate_formal")
+    refined_node = next(
+        node
+        for node in refined.nodes
+        if node.id not in {"n0", "n1", "n2"} and node.status == "candidate_formal"
+    )
     assert "Q(t)\\le C\\sqrt{R(t)}\\,S(t)." in refined_node.informal_statement
     assert refined_node.title == "Local estimate"
     assert refined_node.display_label == "Refined estimate"
-    assert any(edge.source_id == "n0" and edge.target_id == refined_node.id for edge in refined.edges)
-    assert any(edge.label == "refined_from" and edge.source_id == "n0" and edge.target_id == refined_node.id for edge in refined.edges)
+    assert any(edge.source_id == "n2" and edge.target_id == refined_node.id for edge in refined.edges)
+    assert any(edge.label == "refined_from" and edge.source_id == "n2" and edge.target_id == refined_node.id for edge in refined.edges)
     assert any(edge.source_id == refined_node.id and edge.target_id == "n2" for edge in refined.edges)
     original_candidate = next(node for node in refined.nodes if node.id == "n2")
-    assert original_candidate.status == "informal"
+    assert original_candidate.status == "formal_failed"
 
 
 def test_refine_candidate_nodes_prefers_backend_proposal_when_available() -> None:
@@ -617,9 +632,10 @@ def test_refine_candidate_nodes_prefers_backend_proposal_when_available() -> Non
                     "The broader estimate is available, and the real downstream claim is the concrete bound "
                     "\\(Q(t)\\le C\\sqrt{R(t)}\\,S(t)\\)."
                 ),
-                status="candidate_formal",
+                status="formal_failed",
                 formalization_priority=1,
                 formalization_rationale="Broad estimate node.",
+                formal_artifact=make_failed_artifact(),
             ),
         ],
         edges=[ProofEdge(source_id="n0", target_id="n2")],
@@ -649,7 +665,7 @@ def test_refine_candidate_nodes_prefers_backend_proposal_when_available() -> Non
         ]
     )
 
-    refined = refine_candidate_nodes(graph, backend=backend)
+    refined = refine_candidate_nodes(graph, backend=backend, source_node_id="n2")
 
     refined_node = next(node for node in refined.nodes if node.status == "candidate_formal")
     assert refined_node.title == "Concrete downstream estimate"
@@ -690,7 +706,7 @@ def test_refine_candidate_nodes_leaves_already_concrete_candidate_alone() -> Non
         edges=[ProofEdge(source_id="n0", target_id="n2")],
     )
 
-    assert refine_candidate_nodes(graph) == graph
+    assert refine_candidate_nodes(graph, source_node_id="n1") == graph
 
 
 def test_refine_candidate_nodes_can_extract_inline_math_consequence() -> None:
@@ -715,17 +731,22 @@ def test_refine_candidate_nodes_can_extract_inline_math_consequence() -> None:
                     "For sufficiently regular inputs, \\(A\\le C B\\)."
                 ),
                 informal_proof_text="Broad supporting estimate with a concrete inline application: \\(Q(t)\\le C\\sqrt{R(t)}\\,S(t)\\).",
-                status="candidate_formal",
+                status="formal_failed",
                 formalization_priority=1,
                 formalization_rationale="Broad estimate node.",
+                formal_artifact=make_failed_artifact(),
             ),
         ],
         edges=[ProofEdge(source_id="n0", target_id="n2")],
     )
 
-    refined = refine_candidate_nodes(graph)
+    refined = refine_candidate_nodes(graph, source_node_id="n2")
 
-    refined_node = next(node for node in refined.nodes if node.status == "candidate_formal")
+    refined_node = next(
+        node
+        for node in refined.nodes
+        if node.id not in {"n0", "n2"} and node.status == "candidate_formal"
+    )
     assert "Q(t)\\le C\\sqrt{R(t)}\\,S(t)" in refined_node.informal_statement
 
 
@@ -766,7 +787,7 @@ def test_refine_candidate_nodes_preserves_reduced_glassey_local_island() -> None
         edges=[ProofEdge(source_id="n0", target_id="n1")],
     )
 
-    assert refine_candidate_nodes(graph) == graph
+    assert refine_candidate_nodes(graph, source_node_id="n1") == graph
 
 
 def test_refine_candidate_nodes_preserves_full_glassey_local_island_without_special_case() -> None:
@@ -814,7 +835,7 @@ def test_refine_candidate_nodes_preserves_full_glassey_local_island_without_spec
         edges=[ProofEdge(source_id="n0", target_id="n1"), ProofEdge(source_id="n0", target_id="n2")],
     )
 
-    refined = refine_candidate_nodes(graph)
+    refined = refine_candidate_nodes(graph, source_node_id="n2")
 
     candidates = [node for node in refined.nodes if node.status == "candidate_formal"]
     assert len(candidates) == 1
@@ -850,15 +871,16 @@ def test_refine_candidate_nodes_prefers_specialized_application_over_generic_sou
                     "\\]"
                 ),
                 informal_proof_text="A generic source estimate together with the concrete application used downstream.",
-                status="candidate_formal",
+                status="formal_failed",
                 formalization_priority=1,
                 formalization_rationale="Backend picked the broad estimate.",
+                formal_artifact=make_failed_artifact(),
             ),
         ],
         edges=[ProofEdge(source_id="n0", target_id="n1")],
     )
 
-    refined = refine_candidate_nodes(graph)
+    refined = refine_candidate_nodes(graph, source_node_id="n1")
 
     candidate = next(node for node in refined.nodes if node.status == "candidate_formal")
     assert "M^2\\le C\\sqrt{V(t)}\\,G(t)" in candidate.informal_statement
@@ -894,15 +916,16 @@ def test_refine_candidate_nodes_rejects_trivial_nonnegativity_when_stronger_esti
                     "By definition one also has \\(V(t)\\ge 0\\), but the real downstream estimate is "
                     "\\(M^2\\le C\\sqrt{V(t)}\\,G(t)\\)."
                 ),
-                status="candidate_formal",
+                status="formal_failed",
                 formalization_priority=1,
                 formalization_rationale="Broad local argument.",
+                formal_artifact=make_failed_artifact(),
             ),
         ],
         edges=[ProofEdge(source_id="n0", target_id="n1")],
     )
 
-    refined = refine_candidate_nodes(graph)
+    refined = refine_candidate_nodes(graph, source_node_id="n1")
 
     refined_node = next(node for node in refined.nodes if node.status == "candidate_formal")
     assert "M^2\\le C\\sqrt{V(t)}\\,G(t)" in refined_node.informal_statement

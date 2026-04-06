@@ -16,6 +16,7 @@ from typing import Any
 from aristotlelib import AristotleAPIError, Project, ProjectStatus
 
 from formal_islands.backends.base import BackendInvocationError, BackendUnavailableError
+from formal_islands.progress import progress
 
 
 TERMINAL_STATUSES = {
@@ -94,6 +95,10 @@ class AristotleBackend:
                 "started_at_epoch_seconds": started_at,
             },
         )
+        progress(
+            f"Aristotle backend: submitting project {task_name} from {project_dir} "
+            f"(timeout={self.timeout_seconds}, poll={self.polling_interval_seconds})"
+        )
 
         if os.getenv("ARISTOTLE_API_KEY") in {None, ""}:
             self._write_log(
@@ -123,6 +128,10 @@ class AristotleBackend:
             raise BackendInvocationError(f"Aristotle project submission failed: {exc}") from exc
 
         status_history = [project.status.name]
+        progress(
+            f"Aristotle backend: project {project.project_id} created with status {project.status.name}; "
+            "waiting for terminal status"
+        )
         response_payload: dict[str, Any] = {
             "project_id": project.project_id,
             "status": project.status.name,
@@ -135,6 +144,7 @@ class AristotleBackend:
                 project=project,
                 status_history=status_history,
                 started_at=started_at,
+                task_name=task_name,
             )
         except BackendInvocationError as exc:
             self._write_log(
@@ -157,6 +167,10 @@ class AristotleBackend:
             raise
 
         terminal_status = project.status
+        progress(
+            f"Aristotle backend: project {project.project_id} reached terminal status {terminal_status.name}; "
+            "downloading solution"
+        )
         response_payload["status"] = terminal_status.name
         response_payload["status_history"] = status_history.copy()
 
@@ -189,6 +203,10 @@ class AristotleBackend:
 
         result_destination = self._result_destination(task_name, project.project_id)
         try:
+            progress(
+                f"Aristotle backend: downloading solution for project {project.project_id} "
+                f"to {result_destination}"
+            )
             solution_path = await project.get_solution(destination=result_destination)
         except Exception as exc:  # pragma: no cover - defensive
             self._write_log(
@@ -212,6 +230,9 @@ class AristotleBackend:
             raise BackendInvocationError(f"Failed to download Aristotle solution: {exc}") from exc
 
         elapsed_seconds = time.time() - started_at
+        progress(
+            f"Aristotle backend: downloaded solution for project {project.project_id} to {solution_path}"
+        )
         self._write_log(
             log_path,
             {
@@ -250,8 +271,14 @@ class AristotleBackend:
         project: Project,
         status_history: list[str],
         started_at: float,
+        task_name: str,
     ) -> None:
         poll_failures = 0
+        last_status = project.status.name
+        progress(
+            f"Aristotle backend: polling project {project.project_id} for terminal status "
+            f"for task {task_name}"
+        )
         while True:
             if self.timeout_seconds is not None and (time.time() - started_at) >= self.timeout_seconds:
                 if self.cancel_on_timeout:
@@ -283,6 +310,12 @@ class AristotleBackend:
                 continue
 
             poll_failures = 0
+            if project.status.name != last_status:
+                progress(
+                    f"Aristotle backend: project {project.project_id} status changed "
+                    f"{last_status} -> {project.status.name}"
+                )
+                last_status = project.status.name
             status_history.append(project.status.name)
             if project.status in TERMINAL_STATUSES:
                 return

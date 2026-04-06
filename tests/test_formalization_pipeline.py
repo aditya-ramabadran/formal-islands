@@ -264,6 +264,41 @@ def test_classify_heuristic_repair_assessment_prefers_setting_fix_for_dimension_
     assert assessment.category.value == "setting_fix"
 
 
+def test_classify_heuristic_repair_assessment_prefers_packaging_fix_for_unknown_identifier() -> None:
+    verification = FormalArtifact(
+        lean_theorem_name="sum_nonneg",
+        lean_statement="theorem sum_nonneg (a b : ℝ) : 0 ≤ a + b",
+        lean_code="theorem sum_nonneg (a b : ℝ) : 0 ≤ a + b := by\n  exact le_refl _",
+    ).verification.model_copy(
+        update={
+            "stderr": "unknown identifier 'le_refl'",
+            "stdout": "",
+        }
+    )
+
+    assessment = classify_heuristic_repair_assessment(previous_result=verification)
+
+    assert assessment.category.value == "lean_packaging_fix"
+
+
+def test_classify_heuristic_repair_assessment_prefers_theorem_shape_fix_for_faithfulness_guard_drift() -> None:
+    verification = FormalArtifact(
+        lean_theorem_name="sum_nonneg",
+        lean_statement="theorem sum_nonneg (a b : ℝ) : 0 ≤ a + b",
+        lean_code="theorem sum_nonneg (a b : ℝ) : 0 ≤ a + b := by\n  nlinarith",
+    ).verification.model_copy(
+        update={
+            "command": "faithfulness_guard",
+            "stderr": "Formalization drifted too far from the target node. Avoid replacing it with a more abstract theorem.",
+            "stdout": "",
+        }
+    )
+
+    assessment = classify_heuristic_repair_assessment(previous_result=verification)
+
+    assert assessment.category.value == "theorem_shape_fix"
+
+
 def test_request_repair_assessment_returns_category() -> None:
     backend = MockBackend(
         queued_payloads=[

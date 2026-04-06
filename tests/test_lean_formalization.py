@@ -13,9 +13,15 @@ from formal_islands.formalization.agentic import (
     recover_agentic_artifact_from_scratch_file,
 )
 from formal_islands.formalization.aristotle import build_aristotle_formalization_prompt
+from formal_islands.formalization.aristotle import _append_aristotle_summary_files
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
-from formal_islands.formalization.loop import _attempt_agentic_coverage_expansion, formalize_candidate_node
+from formal_islands.formalization.loop import (
+    _attempt_agentic_coverage_expansion,
+    _summarize_compiler_feedback,
+    formalize_candidate_node,
+)
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode, VerificationResult
+from formal_islands.progress import use_progress_log
 
 
 def extract_agentic_paths(prompt: str) -> tuple[Path, Path]:
@@ -154,6 +160,72 @@ def test_build_aristotle_formalization_prompt_marks_ambient_theorem_as_context_o
     assert "do not make a major shrink" in prompt.lower()
     assert "genuinely nontrivial" in prompt.lower()
     assert "fail rather than returning a trivial or over-shrunk theorem" in prompt.lower()
+
+
+def test_append_aristotle_summary_files_writes_to_active_progress_log(tmp_path: Path) -> None:
+    extracted_root = tmp_path / "aristotle-extracted"
+    extracted_root.mkdir()
+    summary_path = extracted_root / "ARISTOTLE_SUMMARY_example.md"
+    summary_path.write_text("# Summary\nUseful details.\n", encoding="utf-8")
+    progress_log = tmp_path / "_progress.log"
+
+    with use_progress_log(progress_log):
+        _append_aristotle_summary_files(extracted_root)
+
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "-------" in log_text
+    assert "Aristotle summary file: ARISTOTLE_SUMMARY_example.md" in log_text
+    assert "# Summary" in log_text
+    assert "Useful details." in log_text
+    assert log_text.count("-------") >= 2
+
+
+def test_lean_verifier_logs_local_verification_to_progress_file(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+    progress_log = tmp_path / "_progress.log"
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="ok", stderr="")
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    with use_progress_log(progress_log):
+        result = verifier.verify_code(
+            lean_code="theorem t : True := by trivial",
+            node_id="n2",
+            attempt_number=1,
+        )
+
+    assert result.status == "verified"
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "running local Lean verification for node n2 (attempt 1)" in log_text
+
+
+def test_compiler_feedback_summary_prefers_error_like_lines() -> None:
+    verification = VerificationResult(
+        status="failed",
+        command="lake env lean",
+        exit_code=1,
+        stdout="",
+        stderr=(
+            "error: type mismatch\n"
+            "expected\n"
+            "  Nat\n"
+            "found\n"
+            "  Int\n"
+        ),
+    )
+
+    summary = _summarize_compiler_feedback(verification)
+
+    assert summary.startswith("error: type mismatch")
 
 
 def test_recover_agentic_artifact_prefers_expected_main_theorem(tmp_path: Path) -> None:
@@ -642,27 +714,106 @@ def test_agentic_coverage_expansion_is_skipped_when_planning_backend_says_theore
     planning_backend = MockBackend(
         queued_payloads=[
             {
-                "already_matches_target": True,
+                "result_kind": "full_match",
+                "certifies_main_burden": True,
+                "coverage_score": 10,
+                "expansion_warranted": False,
+                "worth_retrying_later": False,
                 "reason": "The verified theorem already states the target inequality on [0, 2].",
             }
         ]
     )
     verifier = LeanVerifier(workspace=workspace, command_runner=lambda *args, **kwargs: None)
 
-    upgraded = _attempt_agentic_coverage_expansion(
-        backend=NeverCalledAgenticBackend(),
-        planning_backend=planning_backend,
-        verifier=verifier,
-        graph=graph,
-        node_id="n2",
-        artifact=artifact,
-        scratch_path=scratch_path,
-        attempt_history=[],
-    )
+    progress_log = tmp_path / "_progress.log"
+    with use_progress_log(progress_log):
+        upgraded = _attempt_agentic_coverage_expansion(
+            backend=NeverCalledAgenticBackend(),
+            planning_backend=planning_backend,
+            verifier=verifier,
+            graph=graph,
+            node_id="n2",
+            artifact=artifact,
+            scratch_path=scratch_path,
+            attempt_history=[],
+        )
 
     assert upgraded is not None
     assert upgraded.faithfulness_classification == "full_node"
     assert planning_backend.requests
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "formalization assessment result_kind=full_match" in log_text
+    assert "The verified theorem already states the target inequality on [0, 2]." in log_text
+
+
+def test_agentic_coverage_expansion_is_skipped_when_planning_backend_says_faithful_core(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+    scratch_path = workspace.prepare_worker_file("n2")
+    scratch_path.write_text(
+        "theorem sum_nonneg (a b : ℝ) : 0 ≤ a + b := by\n  nlinarith\n",
+        encoding="utf-8",
+    )
+
+    graph = build_graph()
+    artifact = FormalArtifact(
+        lean_theorem_name="sum_nonneg",
+        lean_statement="theorem sum_nonneg (a b : ℝ) : 0 ≤ a + b",
+        lean_code=scratch_path.read_text(encoding="utf-8"),
+        verification=VerificationResult(
+            status="verified",
+            command="lake env lean",
+            exit_code=0,
+            stdout="",
+            stderr="",
+            attempt_count=1,
+            artifact_path=str(scratch_path),
+        ),
+        faithfulness_classification="concrete_sublemma",
+    )
+
+    class NeverCalledAgenticBackend:
+        timeout_seconds = 420.0
+
+        def run_agentic_structured(self, request, *, timeout_seconds=None):
+            raise AssertionError("coverage expansion should have been skipped")
+
+    planning_backend = MockBackend(
+        queued_payloads=[
+            {
+                "result_kind": "faithful_core",
+                "certifies_main_burden": False,
+                "coverage_score": 8,
+                "expansion_warranted": True,
+                "worth_retrying_later": False,
+                "reason": "The theorem already has the right setting and proof path, so the shape should stay fixed.",
+            }
+        ]
+    )
+    verifier = LeanVerifier(workspace=workspace, command_runner=lambda *args, **kwargs: None)
+
+    progress_log = tmp_path / "_progress.log"
+    with use_progress_log(progress_log):
+        upgraded = _attempt_agentic_coverage_expansion(
+            backend=NeverCalledAgenticBackend(),
+            planning_backend=planning_backend,
+            verifier=verifier,
+            graph=graph,
+            node_id="n2",
+            artifact=artifact,
+            scratch_path=scratch_path,
+            attempt_history=[],
+        )
+
+    assert upgraded is not None
+    assert upgraded.faithfulness_classification == "concrete_sublemma"
+    assert upgraded.faithfulness_notes is not None
+    assert "faithful_core" in upgraded.faithfulness_notes
+    assert planning_backend.requests
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "formalization assessment result_kind=faithful_core" in log_text
+    assert "skipping coverage expansion" in log_text
 
 
 def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failure(
@@ -1144,6 +1295,7 @@ def test_formalize_candidate_node_repairs_faithfulness_drift_once(tmp_path: Path
     assert len(updated_node.formal_artifact.attempt_history) == 2
     assert "faithfulness guard" in backend.requests[1].prompt.lower()
     assert "theorem too_abstract" in backend.requests[1].prompt
+    assert "lock the theorem shape" in backend.requests[1].prompt.lower()
 
 
 def test_formalize_candidate_node_uses_at_most_three_repair_retries(tmp_path: Path) -> None:
