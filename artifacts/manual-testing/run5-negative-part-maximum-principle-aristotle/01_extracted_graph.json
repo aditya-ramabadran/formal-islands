@@ -1,0 +1,37 @@
+{
+  "theorem_title": "Weak maximum principle via the negative part",
+  "theorem_statement": "Weak maximum principle via the negative part.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded smooth domain, and let \\(u\\) be a sufficiently regular function such that\n\\[\n-\\Delta u \\ge 0 \\quad \\text{in } \\Omega,\n\\]\nand\n\\[\nu \\ge 0 \\quad \\text{on } \\partial \\Omega.\n\\]\nThen\n\\[\nu \\ge 0 \\quad \\text{in } \\Omega.\n\\]",
+  "root_node_id": "root",
+  "nodes": [
+    {
+      "id": "root",
+      "title": "Weak maximum principle via the negative part",
+      "informal_statement": "Let $\\Omega \\subset \\mathbb{R}^d$ be a bounded smooth domain and $u$ sufficiently regular with $-\\Delta u \\ge 0$ in $\\Omega$ and $u \\ge 0$ on $\\partial\\Omega$. Then $u \\ge 0$ in $\\Omega$.",
+      "informal_proof_text": "Define the negative part $u_-(x) = \\max\\{-u(x), 0\\}$. Then $u_- \\ge 0$ everywhere, and since $u \\ge 0$ on $\\partial\\Omega$, we have $u_- = 0$ on $\\partial\\Omega$.\n\nMultiply $-\\Delta u \\ge 0$ by $u_-$ and integrate over $\\Omega$:\n$$\\int_\\Omega (-\\Delta u)\\,u_-\\,dx \\ge 0.$$\nIntegrating by parts and using $u_- = 0$ on $\\partial\\Omega$ (so the boundary term vanishes):\n$$\\int_\\Omega \\nabla u \\cdot \\nabla u_-\\,dx \\ge 0.$$\nBy the gradient identity for the negative part (see lemma), this equals $-\\int_\\Omega |\\nabla u_-|^2\\,dx$, so\n$$-\\int_\\Omega |\\nabla u_-|^2\\,dx \\ge 0 \\implies \\int_\\Omega |\\nabla u_-|^2\\,dx \\le 0.$$\nSince the integrand is nonneg, $|\\nabla u_-|^2 = 0$ a.e., so $u_-$ is constant in $\\Omega$. As $u_- = 0$ on $\\partial\\Omega$, that constant is zero: $u_- \\equiv 0$ in $\\Omega$, i.e., $u \\ge 0$ in $\\Omega$.",
+      "status": "informal",
+      "display_label": "Weak Max Principle (root)",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "grad_identity",
+      "title": "Gradient identity for the negative part",
+      "informal_statement": "For a sufficiently regular function $u$ on $\\Omega$,\n$$\\int_\\Omega \\nabla u \\cdot \\nabla u_-\\,dx = -\\int_\\Omega |\\nabla u_-|^2\\,dx,$$\nwhere $u_- = \\max\\{-u, 0\\}$.",
+      "informal_proof_text": "On the set $\\{u \\ge 0\\}$, we have $u_- = 0$, so $\\nabla u_- = 0$ there, and the integrand $\\nabla u \\cdot \\nabla u_-$ vanishes.\n\nOn the set $\\{u < 0\\}$, we have $u_-(x) = -u(x)$, so $\\nabla u_-(x) = -\\nabla u(x)$. Hence\n$$\\nabla u \\cdot \\nabla u_- = \\nabla u \\cdot (-\\nabla u) = -|\\nabla u|^2 = -|\\nabla u_-|^2.$$\nIntegrating over both regions,\n$$\\int_\\Omega \\nabla u \\cdot \\nabla u_-\\,dx = \\int_{\\{u<0\\}} \\nabla u \\cdot \\nabla u_-\\,dx = -\\int_{\\{u<0\\}} |\\nabla u_-|^2\\,dx = -\\int_\\Omega |\\nabla u_-|^2\\,dx.$$",
+      "status": "informal",
+      "display_label": "$\\nabla u \\cdot \\nabla u_- = -|\\nabla u_-|^2$ (identity)",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "grad_identity",
+      "target_id": "root",
+      "label": "used in",
+      "explanation": "The gradient identity converts the non-negative IBP expression into $-\\int_\\Omega |\\nabla u_-|^2\\,dx$, enabling the conclusion $u_- \\equiv 0$."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+2026-04-06T06:24:32-07:00 [formal-islands] running benchmark end-to-end
+2026-04-06T06:24:32-07:00 [formal-islands] benchmark planning stage starting
+2026-04-06T06:24:32-07:00 [formal-islands] plan stage starting
+2026-04-06T06:24:32-07:00 [formal-islands] planning theorem graph
+2026-04-06T06:26:11-07:00 [formal-islands] asking backend for refined local claim proposal
+2026-04-06T06:26:48-07:00 [formal-islands] created refined local claim Convex function on (0,1) with a zero critical point is nonnegative
+2026-04-06T06:26:48-07:00 [formal-islands] planning complete: 4 nodes, 2 candidates
+2026-04-06T06:26:48-07:00 [formal-islands] benchmark formalization stage starting
+2026-04-06T06:26:48-07:00 [formal-islands] formalization stage starting
+2026-04-06T06:26:48-07:00 [formal-islands] Aristotle batch submitting 2 candidate node(s): bernoulli_ineq_refined_local_claim, fq_convex
+2026-04-06T06:26:48-07:00 [formal-islands] starting formalization for node bernoulli_ineq_refined_local_claim
+2026-04-06T06:26:48-07:00 [formal-islands] starting formalization for node fq_convex
+2026-04-06T06:26:48-07:00 [formal-islands] node fq_convex: structured attempt 1/2
+2026-04-06T06:26:48-07:00 [formal-islands] node bernoulli_ineq_refined_local_claim: structured attempt 1/2
+2026-04-06T06:26:48-07:00 [formal-islands] Aristotle submitting node bernoulli_ineq_refined_local_claim
+2026-04-06T06:26:48-07:00 [formal-islands] Aristotle submitting node fq_convex
+2026-04-06T06:41:01-07:00 [formal-islands] Aristotle completed node bernoulli_ineq_refined_local_claim
+2026-04-06T06:42:49-07:00 [formal-islands] node bernoulli_ineq_refined_local_claim: planning backend judged the verified theorem already matches the target; skipping coverage expansion
+2026-04-06T06:59:47-07:00 [formal-islands] Aristotle completed node fq_convex
+2026-04-06T07:01:19-07:00 [formal-islands] node fq_convex: structured attempt 2/2
+2026-04-06T07:01:19-07:00 [formal-islands] Aristotle submitting node fq_convex
+2026-04-06T07:16:03-07:00 [formal-islands] Aristotle completed node fq_convex
+2026-04-06T07:16:21-07:00 [formal-islands] node bernoulli_ineq_refined_local_claim: completed with full_node
+2026-04-06T07:16:21-07:00 [formal-islands] node fq_convex: completed with concrete_sublemma
+2026-04-06T07:16:21-07:00 [formal-islands] Aristotle batch submitting 1 candidate node(s): bernoulli_ineq
+2026-04-06T07:16:21-07:00 [formal-islands] starting formalization for node bernoulli_ineq
+2026-04-06T07:16:21-07:00 [formal-islands] node bernoulli_ineq: structured attempt 1/2
+2026-04-06T07:16:21-07:00 [formal-islands] Aristotle submitting node bernoulli_ineq
+2026-04-06T07:37:10-07:00 [formal-islands] Aristotle completed node bernoulli_ineq
+2026-04-06T07:39:36-07:00 [formal-islands] node bernoulli_ineq: structured attempt 2/2
+2026-04-06T07:39:36-07:00 [formal-islands] Aristotle submitting node bernoulli_ineq
+2026-04-06T08:14:38-07:00 [formal-islands] Aristotle completed node bernoulli_ineq

@@ -1,0 +1,54 @@
+{
+  "theorem_title": "Weak maximum principle via the negative part",
+  "theorem_statement": "Weak maximum principle via the negative part.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded smooth domain, and let \\(u\\) be a sufficiently regular function such that\n\\[\n-\\Delta u \\ge 0 \\quad \\text{in } \\Omega,\n\\]\nand\n\\[\nu \\ge 0 \\quad \\text{on } \\partial \\Omega.\n\\]\nThen\n\\[\nu \\ge 0 \\quad \\text{in } \\Omega.\n\\]",
+  "root_node_id": "root",
+  "nodes": [
+    {
+      "id": "root",
+      "title": "Weak maximum principle via the negative part",
+      "informal_statement": "Let $\\Omega \\subset \\mathbb{R}^d$ be a bounded smooth domain and $u$ sufficiently regular with $-\\Delta u \\ge 0$ in $\\Omega$ and $u \\ge 0$ on $\\partial\\Omega$. Then $u \\ge 0$ in $\\Omega$.",
+      "informal_proof_text": "Define the negative part $u_-(x) = \\max\\{-u(x), 0\\}$. Then $u_- \\ge 0$ everywhere, and since $u \\ge 0$ on $\\partial\\Omega$, we have $u_- = 0$ on $\\partial\\Omega$.\n\nMultiply $-\\Delta u \\ge 0$ by $u_-$ and integrate over $\\Omega$:\n$$\\int_\\Omega (-\\Delta u)\\,u_-\\,dx \\ge 0.$$\nIntegrating by parts and using $u_- = 0$ on $\\partial\\Omega$ (so the boundary term vanishes):\n$$\\int_\\Omega \\nabla u \\cdot \\nabla u_-\\,dx \\ge 0.$$\nBy the gradient identity for the negative part (see lemma), this equals $-\\int_\\Omega |\\nabla u_-|^2\\,dx$, so\n$$-\\int_\\Omega |\\nabla u_-|^2\\,dx \\ge 0 \\implies \\int_\\Omega |\\nabla u_-|^2\\,dx \\le 0.$$\nSince the integrand is nonneg, $|\\nabla u_-|^2 = 0$ a.e., so $u_-$ is constant in $\\Omega$. As $u_- = 0$ on $\\partial\\Omega$, that constant is zero: $u_- \\equiv 0$ in $\\Omega$, i.e., $u \\ge 0$ in $\\Omega$.",
+      "status": "informal",
+      "display_label": "Weak Max Principle (root)",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "grad_identity",
+      "title": "Gradient identity for the negative part",
+      "informal_statement": "For a sufficiently regular function $u$ on $\\Omega$,\n$$\\int_\\Omega \\nabla u \\cdot \\nabla u_-\\,dx = -\\int_\\Omega |\\nabla u_-|^2\\,dx,$$\nwhere $u_- = \\max\\{-u, 0\\}$.",
+      "informal_proof_text": "On the set $\\{u \\ge 0\\}$, we have $u_- = 0$, so $\\nabla u_- = 0$ there, and the integrand $\\nabla u \\cdot \\nabla u_-$ vanishes.\n\nOn the set $\\{u < 0\\}$, we have $u_-(x) = -u(x)$, so $\\nabla u_-(x) = -\\nabla u(x)$. Hence\n$$\\nabla u \\cdot \\nabla u_- = \\nabla u \\cdot (-\\nabla u) = -|\\nabla u|^2 = -|\\nabla u_-|^2.$$\nIntegrating over both regions,\n$$\\int_\\Omega \\nabla u \\cdot \\nabla u_-\\,dx = \\int_{\\{u<0\\}} \\nabla u \\cdot \\nabla u_-\\,dx = -\\int_{\\{u<0\\}} |\\nabla u_-|^2\\,dx = -\\int_\\Omega |\\nabla u_-|^2\\,dx.$$",
+      "status": "candidate_formal",
+      "display_label": "$\\nabla u \\cdot \\nabla u_- = -|\\nabla u_-|^2$ (identity)",
+      "formalization_priority": 1,
+      "formalization_rationale": "This is the most technically concrete and formalizable step in the proof. It requires careful case analysis on the sign of $u$, pointwise reasoning about $\\nabla u_-$, and splitting the domain integral \u2014 all of which require non-trivial Lean/Mathlib infrastructure (measurable set decomposition, chain rule for Lipschitz compositions). Formalizing it correctly reduces the main burden of the proof.",
+      "formal_artifact": null
+    },
+    {
+      "id": "root_refined_local_claim",
+      "title": "Zero-gradient $H^1_0$ function is identically zero",
+      "informal_statement": "Let $\\Omega \\subset \\mathbb{R}^d$ be a bounded connected smooth domain. If $v$ is sufficiently regular, $v = 0$ on $\\partial\\Omega$, and $\\int_\\Omega |\\nabla v|^2\\,dx = 0$, then $v \\equiv 0$ in $\\Omega$.",
+      "informal_proof_text": "Since $|\\nabla v|^2 \\ge 0$ everywhere and its integral over $\\Omega$ is zero, we have $|\\nabla v|^2 = 0$ a.e. in $\\Omega$, i.e., $\\nabla v = 0$ a.e. Since $\\Omega$ is connected and $v$ is sufficiently regular, $\\nabla v = 0$ a.e. implies $v$ is constant on $\\Omega$. The boundary condition $v = 0$ on $\\partial\\Omega$ (which has positive measure) then forces that constant to be zero. Hence $v \\equiv 0$ in $\\Omega$.",
+      "status": "candidate_formal",
+      "display_label": "Zero gradient implies zero in H^1_0",
+      "formalization_priority": 1,
+      "formalization_rationale": "This is the concluding step of the weak maximum principle proof, applied with $v = u_-$: once the gradient estimate $\\int |\\nabla u_-|^2 \\le 0$ is established, this claim delivers the conclusion $u_- \\equiv 0$. It is a clean, self-contained local claim (connectedness + boundary condition + zero-gradient) that is strictly smaller than the full theorem and does not overlap with either the gradient identity or the IBP step.",
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "grad_identity",
+      "target_id": "root_refined_local_claim",
+      "label": "refined_from",
+      "explanation": "This refined local claim was carved out from the broader sibling node as provenance, not as a proof dependency."
+    },
+    {
+      "source_id": "root_refined_local_claim",
+      "target_id": "root",
+      "label": "uses",
+      "explanation": "This refined local claim depends on the broader supporting node it was carved out from."
+    }
+  ]
+}

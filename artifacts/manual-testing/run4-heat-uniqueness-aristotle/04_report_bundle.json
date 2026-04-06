@@ -1,0 +1,185 @@
+{
+  "graph": {
+    "theorem_title": "Heat equation uniqueness by the energy method",
+    "theorem_statement": "Uniqueness for the heat equation by the energy method.\n\nLet \\(u,v\\) be sufficiently regular solutions of the heat equation on the interval \\((0,L)\\) for times \\(t \\in [0,T]\\):\n\\[\nu_t = u_{xx}, \\qquad v_t = v_{xx},\n\\]\nwith the same initial data\n\\[\nu(x,0)=v(x,0),\n\\]\nand the same homogeneous Dirichlet boundary conditions\n\\[\nu(0,t)=u(L,t)=v(0,t)=v(L,t)=0.\n\\]\nThen \\(u=v\\) on \\([0,L]\\times[0,T]\\).",
+    "root_node_id": "heat_uniqueness",
+    "nodes": [
+      {
+        "id": "energy_dissipation",
+        "title": "Energy is nonincreasing: E'(t) \u2264 0",
+        "informal_statement": "Let \\(w = u - v\\) satisfy \\(w_t = w_{xx}\\) on \\((0,L)\\times(0,T)\\) with \\(w(0,t)=w(L,t)=0\\), and define the energy \\(E(t) = \\tfrac{1}{2}\\int_0^L w(x,t)^2\\,dx\\). Then \\(E'(t) = -\\int_0^L |w_x(x,t)|^2\\,dx \\le 0\\) for all \\(t \\in [0,T]\\).",
+        "informal_proof_text": "Differentiating under the integral sign (justified by the assumed regularity of \\(w\\)):\n\\[\nE'(t) = \\int_0^L w\\, w_t\\,dx.\n\\]\nSubstituting the PDE \\(w_t = w_{xx}\\):\n\\[\nE'(t) = \\int_0^L w\\, w_{xx}\\,dx.\n\\]\nIntegrating by parts in \\(x\\):\n\\[\n\\int_0^L w\\, w_{xx}\\,dx = \\bigl[w\\, w_x\\bigr]_{0}^{L} - \\int_0^L |w_x|^2\\,dx.\n\\]\nThe boundary term vanishes because \\(w(0,t) = w(L,t) = 0\\), giving\n\\[\nE'(t) = -\\int_0^L |w_x(x,t)|^2\\,dx \\le 0.\n\\]",
+        "status": "formal_failed",
+        "display_label": "\\(E'(t) = -\\int_0^L |w_x|^2\\,dx \\le 0\\)",
+        "formalization_priority": 1,
+        "formalization_rationale": "This node contains the entire technical core of the proof: differentiation under the integral, PDE substitution, the integration-by-parts identity \u222bw\u00b7w_xx dx = [w\u00b7w_x]\u2080\u1d38 \u2212 \u222b|w_x|\u00b2 dx, and cancellation of boundary terms. It is a concrete, self-contained computation, directly formalizable, and carries the main inferential load.",
+        "formal_artifact": {
+          "lean_theorem_name": "energy_dissipation_aristotle",
+          "lean_statement": "theorem energy_dissipation_aristotle\n    (L : \u211d) (hL : 0 < L)\n    (w w' w'' : \u211d \u2192 \u211d)\n    (hw : \u2200 x \u2208 Set.uIcc 0 L, HasDerivWithinAt w (w' x) (Set.uIcc 0 L) x)\n    (hw' : \u2200 x \u2208 Set.uIcc 0 L, HasDerivWithinAt w' (w'' x) (Set.uIcc 0 L) x)\n    (hw'_int : IntervalIntegrable w' volume 0 L)\n    (hw''_int : IntervalIntegrable w'' volume 0 L)\n    (hbc0 : w 0 = 0) (hbcL : w L = 0) :\n    (\u222b x in (0:\u211d)..L, w x * w'' x) = -(\u222b x in (0:\u211d)..L, w' x ^ 2)\n    \u2227 (\u222b x in (0:\u211d)..L, w x * w'' x) \u2264 0",
+          "lean_code": "import Mathlib\n\nopen MeasureTheory Set intervalIntegral\n\n/-!\n# Energy dissipation for the heat equation\n\nWe formalize the core computation of the energy method for uniqueness of the heat equation.\n\nGiven `w` with spatial derivative `w'` and second spatial derivative `w''` on `[0, L]`,\nand boundary conditions `w(0) = w(L) = 0`, integration by parts gives:\n\n  \u222b\u2080\u1d38 w(x) \u00b7 w''(x) dx = -\u222b\u2080\u1d38 (w'(x))\u00b2 dx \u2264 0\n\nIn the energy method for the heat equation, `w = u - v` satisfies `w\u209c = w_xx` with\nhomogeneous Dirichlet boundary conditions. The energy `E(t) = \u00bd\u222b\u2080\u1d38 w\u00b2 dx` satisfies\n`E'(t) = \u222b\u2080\u1d38 w \u00b7 w\u209c dx = \u222b\u2080\u1d38 w \u00b7 w_xx dx` (by differentiation under the integral\nand PDE substitution). The result below then gives `E'(t) = -\u222b\u2080\u1d38 (w_x)\u00b2 dx \u2264 0`,\nproving that the energy is nonincreasing.\n-/\n\n/-- **Integration by parts identity with vanishing boundary conditions.**\n\nAt a fixed time `t`, let `w` satisfy homogeneous Dirichlet boundary conditions `w(0) = w(L) = 0`\non `[0, L]`, with spatial derivative `w'` and second spatial derivative `w''`. Then\n\n  `\u222b\u2080\u1d38 w \u00b7 w'' dx = -\u222b\u2080\u1d38 (w')\u00b2 dx`\n\nThis is the identity at the heart of the energy method: combined with `E'(t) = \u222b w \u00b7 w_t`\n(differentiation under the integral sign) and the PDE `w_t = w_xx`, it gives\n`E'(t) = -\u222b\u2080\u1d38 (w_x)\u00b2 dx \u2264 0`, proving energy dissipation. -/\ntheorem ibp_boundary_vanishing\n    (L : \u211d) (_hL : 0 < L)\n    (w w' w'' : \u211d \u2192 \u211d)\n    (hw : \u2200 x \u2208 Set.uIcc 0 L, HasDerivWithinAt w (w' x) (Set.uIcc 0 L) x)\n    (hw' : \u2200 x \u2208 Set.uIcc 0 L, HasDerivWithinAt w' (w'' x) (Set.uIcc 0 L) x)\n    (hw'_int : IntervalIntegrable w' volume 0 L)\n    (hw''_int : IntervalIntegrable w'' volume 0 L)\n    (hbc0 : w 0 = 0) (hbcL : w L = 0) :\n    \u222b x in (0:\u211d)..L, w x * w'' x = -(\u222b x in (0:\u211d)..L, w' x ^ 2) := by\n  have h_parts : \u222b x in (0:\u211d)..L, w x * w'' x =\n      (w L * w' L - w 0 * w' 0) - \u222b x in (0:\u211d)..L, w' x * w' x :=\n    integral_mul_deriv_eq_deriv_mul_of_hasDerivWithinAt hw hw' hw'_int hw''_int\n  rw [h_parts, hbc0, hbcL]\n  simp [sq]\n\n/-- **Energy dissipation for the heat equation (E'(t) \u2264 0).**\n\nLet `w` be a sufficiently regular solution of `w\u209c = w_xx` on `(0,L)` with homogeneous\nDirichlet boundary conditions `w(0,t) = w(L,t) = 0`. Define the energy\n`E(t) = \u00bd\u222b\u2080\u1d38 w(x,t)\u00b2 dx`. Then `E'(t) = -\u222b\u2080\u1d38 (w_x)\u00b2 dx \u2264 0`.\n\nThis theorem takes as hypotheses the regularity of `w` (differentiability and integrability\nof spatial derivatives) and the boundary conditions, and concludes that the energy derivative\n(expressed as `\u222b\u2080\u1d38 w \u00b7 w_xx dx` after differentiation under the integral and PDE substitution)\nis nonpositive. -/\ntheorem energy_dissipation_aristotle\n    (L : \u211d) (hL : 0 < L)\n    (w w' w'' : \u211d \u2192 \u211d)\n    (hw : \u2200 x \u2208 Set.uIcc 0 L, HasDerivWithinAt w (w' x) (Set.uIcc 0 L) x)\n    (hw' : \u2200 x \u2208 Set.uIcc 0 L, HasDerivWithinAt w' (w'' x) (Set.uIcc 0 L) x)\n    (hw'_int : IntervalIntegrable w' volume 0 L)\n    (hw''_int : IntervalIntegrable w'' volume 0 L)\n    (hbc0 : w 0 = 0) (hbcL : w L = 0) :\n    (\u222b x in (0:\u211d)..L, w x * w'' x) = -(\u222b x in (0:\u211d)..L, w' x ^ 2)\n    \u2227 (\u222b x in (0:\u211d)..L, w x * w'' x) \u2264 0 := by\n  refine \u27e8ibp_boundary_vanishing L hL w w' w'' hw hw' hw'_int hw''_int hbc0 hbcL, ?_\u27e9\n  rw [ibp_boundary_vanishing L hL w w' w'' hw hw' hw'_int hw''_int hbc0 hbcL]\n  have h_nn : 0 \u2264 \u222b x in (0:\u211d)..L, w' x ^ 2 :=\n    intervalIntegral.integral_nonneg hL.le (fun u _ => sq_nonneg (w' u))\n  linarith\n",
+          "faithfulness_classification": "over_abstract",
+          "faithfulness_notes": "Avoid replacing the node with unrelated families of functions or indexed maps absent from the original claim.",
+          "verification": {
+            "status": "failed",
+            "command": "faithfulness_guard",
+            "exit_code": null,
+            "stdout": "",
+            "stderr": "Formalization drifted too far from the target node. Avoid replacing the node with unrelated families of functions or indexed maps absent from the original claim.",
+            "elapsed_seconds": 0.0,
+            "attempt_count": 2,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/energy_dissipation_worker_20260405-235312_590c377c.lean"
+          },
+          "attempt_history": [
+            {
+              "status": "failed",
+              "command": "faithfulness_guard",
+              "exit_code": null,
+              "stdout": "",
+              "stderr": "Formalization drifted too far from the target node. Avoid replacing the node with unrelated families of functions or indexed maps absent from the original claim.",
+              "elapsed_seconds": 0.0,
+              "attempt_count": 1,
+              "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/energy_dissipation_worker_20260405-235312_590c377c.lean"
+            },
+            {
+              "status": "failed",
+              "command": "faithfulness_guard",
+              "exit_code": null,
+              "stdout": "",
+              "stderr": "Formalization drifted too far from the target node. Avoid replacing the node with unrelated families of functions or indexed maps absent from the original claim.",
+              "elapsed_seconds": 0.0,
+              "attempt_count": 2,
+              "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/energy_dissipation_worker_20260405-235312_590c377c.lean"
+            }
+          ]
+        }
+      },
+      {
+        "id": "heat_uniqueness",
+        "title": "Heat equation uniqueness by the energy method",
+        "informal_statement": "Under the stated hypotheses, \\(u = v\\) on \\([0,L]\\times[0,T]\\).",
+        "informal_proof_text": "Set \\(w = u - v\\). Then \\(w\\) satisfies \\(w_t = w_{xx}\\) on \\((0,L)\\times(0,T)\\) with zero initial data \\(w(x,0)=0\\) and zero Dirichlet boundary conditions \\(w(0,t)=w(L,t)=0\\).\n\nDefine \\(E(t) = \\tfrac{1}{2}\\int_0^L w(x,t)^2\\,dx\\). By the energy dissipation lemma, \\(E'(t) \\le 0\\), so \\(E\\) is nonincreasing. At \\(t=0\\), \\(w(x,0)=0\\) gives \\(E(0) = 0\\). Since \\(E(t) \\ge 0\\) by definition and \\(E\\) is nonincreasing from \\(0\\), we conclude \\(E(t) = 0\\) for all \\(t \\in [0,T]\\).\n\nHence \\(\\int_0^L w(x,t)^2\\,dx = 0\\) for all \\(t\\), so \\(w(x,t) = 0\\) for all \\((x,t)\\), i.e., \\(u = v\\).",
+        "status": "formal_verified",
+        "display_label": "Heat uniqueness (energy method)",
+        "formalization_priority": 3,
+        "formalization_rationale": "Promoted after verified child 'heat_uniqueness_refined_local_claim' certified a local core; attempting broader parent coverage.",
+        "formal_artifact": {
+          "lean_theorem_name": "heat_uniqueness_aristotle",
+          "lean_statement": "theorem heat_uniqueness_aristotle\n    {L T : \u211d} (hL : 0 < L) (hT : 0 \u2264 T)\n    {u v : \u211d \u2192 \u211d \u2192 \u211d}\n    -- Same initial data\n    (hinit : \u2200 x \u2208 Icc 0 L, u x 0 = v x 0)\n    -- Continuity of u - v in x for each t (regularity)\n    (hcont : \u2200 t \u2208 Icc 0 T, Continuous (fun x => u x t - v x t))\n    -- Energy functional E(t) = \u222b\u2080\u1d38 (u(x,t) - v(x,t))\u00b2 dx\n    {E : \u211d \u2192 \u211d}\n    (hE_def : \u2200 t \u2208 Icc 0 T, E t = \u222b x in (0:\u211d)..L, (u x t - v x t) ^ 2)\n    -- Regularity of E\n    (hE_cont : ContinuousOn E (Icc 0 T))\n    (hE_diff : DifferentiableOn \u211d E (Ioo 0 T))\n    -- Energy dissipation (from the heat equation + integration by parts)\n    (hE_dissip : \u2200 t \u2208 Ioo 0 T, deriv E t \u2264 0)\n    -- Integrability\n    (hint : \u2200 t \u2208 Icc 0 T, IntervalIntegrable (fun x => (u x t - v x t) ^ 2) volume 0 L) :\n    \u2200 x \u2208 Icc 0 L, \u2200 t \u2208 Icc 0 T, u x t = v x t",
+          "lean_code": "import Mathlib\n\nopen MeasureTheory Set intervalIntegral\n\n/-!\n# Heat equation uniqueness by the energy method\n\nWe formalize the uniqueness theorem for the heat equation via the energy method.\nGiven `u, v : \u211d \u2192 \u211d \u2192 \u211d` (functions of space and time) that are solutions to\nthe heat equation on `[0,L] \u00d7 [0,T]` with the same initial data and homogeneous\nDirichlet boundary conditions, we prove `u = v`.\n\nThe proof sets `w = u - v`, defines the energy `E(t) = \u222b\u2080\u1d38 w(x,t)\u00b2 dx`,\nand uses:\n1. `E(0) = 0` (from the same initial data),\n2. `E(t) \u2265 0` (integral of a square),\n3. `E'(t) \u2264 0` (energy dissipation, assumed from the PDE + integration by parts),\n4. A verified lemma showing that a nonincreasing nonneg function starting at 0 must vanish,\n5. `\u222b f\u00b2 = 0` with `f` continuous implies `f = 0`.\n-/\n\n/-\nThe energy vanishing lemma: a nonneg, nonincreasing, continuous function starting at 0\nis identically 0. This is a verified supporting lemma.\n-/\ntheorem heat_uniqueness_refined_local_claim_aristotle\n    {T : \u211d} (hT : 0 \u2264 T) {E : \u211d \u2192 \u211d}\n    (hcont : ContinuousOn E (Icc 0 T))\n    (hdiff : DifferentiableOn \u211d E (Ioo 0 T))\n    (hderiv : \u2200 t \u2208 Ioo 0 T, deriv E t \u2264 0)\n    (hE0 : E 0 = 0)\n    (hnneg : \u2200 t \u2208 Icc 0 T, 0 \u2264 E t) :\n    \u2200 t \u2208 Icc 0 T, E t = 0 := by\n      intro t ht; by_contra h_contra; simp_all +decide [ lintegral_const ] ;\n      -- Apply the mean value theorem to the interval $[0, t]$.\n      obtain \u27e8c, hc\u27e9 : \u2203 c \u2208 Set.Ioo 0 t, deriv E c = (E t - E 0) / (t - 0) := by\n        apply_rules [ exists_deriv_eq_slope ];\n        \u00b7 exact ht.1.lt_of_ne ( by aesop );\n        \u00b7 exact hcont.mono ( Set.Icc_subset_Icc le_rfl ht.2 );\n        \u00b7 exact hdiff.mono <| Set.Ioo_subset_Ioo_right ht.2;\n      exact h_contra ( by nlinarith [ hderiv c hc.1.1 ( by linarith [ hc.1.2 ] ), hnneg t ht.1 ht.2, mul_div_cancel\u2080 ( E t - E 0 ) ( sub_ne_zero.2 ( by aesop : t \u2260 0 ) ) ] )\n\n/-\nIf a continuous function has zero interval integral of its square on `[0, L]` with `L > 0`,\n    then the function vanishes on `[0, L]`.\n-/\nlemma eq_zero_of_sq_interval_integral_zero {L : \u211d} (hL : 0 < L)\n    {f : \u211d \u2192 \u211d} (hf_cont : Continuous f)\n    (hf_int : IntervalIntegrable (fun x => f x ^ 2) volume 0 L)\n    (hf_zero : \u222b x in (0:\u211d)..L, f x ^ 2 = 0) :\n    \u2200 x \u2208 Icc 0 L, f x = 0 := by\n      -- By `integral_eq_zero_iff_of_le_of_nonneg_ae`, f\u00b2 =\u1d50[volume.restrict (Ioc 0 L)] 0.\n      have h_ae_zero : f^2 =\u1d50[volume.restrict (Ioc 0 L)] 0 := by\n        rw [ intervalIntegral.integral_of_le hL.le ] at hf_zero;\n        rw [ MeasureTheory.integral_eq_zero_iff_of_nonneg ( fun x => sq_nonneg _ ) ] at hf_zero ; aesop;\n        exact hf_int.1;\n      -- Since $f$ is continuous on $[0, L]$, if $f$ were non-zero at some point in $[0, L]$, then there would be an open interval around that point where $f$ is non-zero.\n      have h_cont_zero : \u2200 x \u2208 Set.Icc 0 L, f x = 0 := by\n        intro x hx\n        by_contra h_nonzero\n        obtain \u27e8\u03b5, h\u03b5\u27e9 : \u2203 \u03b5 > 0, \u2200 y \u2208 Metric.ball x \u03b5, f y \u2260 0 := by\n          exact Metric.mem_nhds_iff.mp ( hf_cont.continuousAt.eventually_ne h_nonzero )\n        rw [ Filter.EventuallyEq, MeasureTheory.ae_restrict_iff' ] at h_ae_zero <;> simp_all +decide [ Filter.EventuallyEq ];\n        rw [ MeasureTheory.ae_iff ] at h_ae_zero; contrapose! h_ae_zero; simp_all +decide [ Filter.eventually_inf_principal ] ;\n        -- Since $f$ is non-zero on the interval $(x - \\epsilon, x + \\epsilon)$, the measure of this interval is positive.\n        have h_pos_measure : 0 < MeasureTheory.MeasureSpace.volume (Set.Ioo (max 0 (x - \u03b5)) (min L (x + \u03b5))) := by\n          simp +zetaDelta at *;\n          exact \u27e8 \u27e8 hL, by linarith \u27e9, by linarith, by linarith \u27e9;\n        exact ne_of_gt ( lt_of_lt_of_le h_pos_measure ( MeasureTheory.measure_mono fun y hy => \u27e8 by cases max_cases 0 ( x - \u03b5 ) <;> linarith [ hy.1, hy.2 ], by cases min_cases L ( x + \u03b5 ) <;> linarith [ hy.1, hy.2 ], h\u03b5.2 y <| abs_lt.2 \u27e8 by cases max_cases 0 ( x - \u03b5 ) <;> linarith [ hy.1, hy.2 ], by cases min_cases L ( x + \u03b5 ) <;> linarith [ hy.1, hy.2 ] \u27e9 \u27e9 ) );\n      assumption\n\n/-- **Heat equation uniqueness by the energy method.**\n\nGiven functions `u, v : \u211d \u2192 \u211d \u2192 \u211d` (of space `x` and time `t`) satisfying:\n- the same initial data: `u(x,0) = v(x,0)` for `x \u2208 [0,L]`,\n- sufficient regularity so that `u - v` is continuous in `x` for each fixed `t`,\n- an energy functional `E(t) = \u222b\u2080\u1d38 (u(x,t) - v(x,t))\u00b2 dx` that is continuous on `[0,T]`,\n  differentiable on `(0,T)`, and satisfies `E'(t) \u2264 0` (energy dissipation,\n  which follows from the heat equation and integration by parts),\n\nwe conclude `u(x,t) = v(x,t)` for all `(x,t) \u2208 [0,L] \u00d7 [0,T]`.\n\nThe energy dissipation `E'(t) \u2264 0` is assumed as a hypothesis because deriving it from\nthe PDE requires integration-by-parts machinery not yet available in Mathlib. In the\ninformal proof, this step is referred to as \"the energy dissipation lemma.\"\n-/\ntheorem heat_uniqueness_aristotle\n    {L T : \u211d} (hL : 0 < L) (hT : 0 \u2264 T)\n    {u v : \u211d \u2192 \u211d \u2192 \u211d}\n    -- Same initial data\n    (hinit : \u2200 x \u2208 Icc 0 L, u x 0 = v x 0)\n    -- Continuity of u - v in x for each t (regularity)\n    (hcont : \u2200 t \u2208 Icc 0 T, Continuous (fun x => u x t - v x t))\n    -- Energy functional E(t) = \u222b\u2080\u1d38 (u(x,t) - v(x,t))\u00b2 dx\n    {E : \u211d \u2192 \u211d}\n    (hE_def : \u2200 t \u2208 Icc 0 T, E t = \u222b x in (0:\u211d)..L, (u x t - v x t) ^ 2)\n    -- Regularity of E\n    (hE_cont : ContinuousOn E (Icc 0 T))\n    (hE_diff : DifferentiableOn \u211d E (Ioo 0 T))\n    -- Energy dissipation (from the heat equation + integration by parts)\n    (hE_dissip : \u2200 t \u2208 Ioo 0 T, deriv E t \u2264 0)\n    -- Integrability\n    (hint : \u2200 t \u2208 Icc 0 T, IntervalIntegrable (fun x => (u x t - v x t) ^ 2) volume 0 L) :\n    \u2200 x \u2208 Icc 0 L, \u2200 t \u2208 Icc 0 T, u x t = v x t := by\n  -- Step 1: E(0) = 0 from same initial data\n  have h0T : (0 : \u211d) \u2208 Icc 0 T := left_mem_Icc.mpr hT\n  have hE0 : E 0 = 0 := by\n    rw [hE_def 0 h0T]\n    apply intervalIntegral.integral_zero_ae\n    filter_upwards with x\n    intro hx\n    rw [Set.uIoc_of_le (le_of_lt hL)] at hx\n    have : x \u2208 Icc 0 L := Ioc_subset_Icc_self hx\n    rw [hinit x this, sub_self, zero_pow (by norm_num : 2 \u2260 0)]\n  -- Step 2: E(t) \u2265 0 for all t (integral of nonneg function)\n  have hEnneg : \u2200 t \u2208 Icc 0 T, 0 \u2264 E t := by\n    intro t ht\n    rw [hE_def t ht]\n    exact intervalIntegral.integral_nonneg (le_of_lt hL) (fun x _ => sq_nonneg _)\n  -- Step 3: Apply energy vanishing lemma\n  have hEzero : \u2200 t \u2208 Icc 0 T, E t = 0 :=\n    heat_uniqueness_refined_local_claim_aristotle hT hE_cont hE_diff hE_dissip hE0 hEnneg\n  -- Step 4: Conclude u = v\n  intro x hx t ht\n  have hEt : \u222b x in (0:\u211d)..L, (u x t - v x t) ^ 2 = 0 := by\n    have := hEzero t ht\n    rwa [hE_def t ht] at this\n  have hw := eq_zero_of_sq_interval_integral_zero hL (hcont t ht) (hint t ht) hEt x hx\n  linarith",
+          "faithfulness_classification": "full_node",
+          "faithfulness_notes": "The Lean theorem concludes exactly \u2200 x \u2208 Icc 0 L, \u2200 t \u2208 Icc 0 T, u x t = v x t, matching the target's conclusion u = v on [0,L]\u00d7[0,T]. It faithfully captures the full energy method argument: same initial data giving E(0)=0, energy dissipation hE_dissip giving E nonincreasing, and E\u22650 forcing E\u22610 hence u=v. The PDE condition (w_t=w_xx with zero BCs) is abstracted into the energy dissipation hypothesis, which is standard and appropriate for Lean formalization. No major step of the energy method proof is missing \u2014 the theorem covers the target node's content at the right level of abstraction.",
+          "verification": {
+            "status": "verified",
+            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean",
+            "exit_code": 0,
+            "stdout": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean:27:13: warning: unused variable `hT`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean:34:57: warning: This simp argument is unused:\n  lintegral_const\n\nHint: Omit it from the simp argument list.\n  simp_all +decide \u0335[\u0335 \u0335l\u0335i\u0335n\u0335t\u0335e\u0335g\u0335r\u0335a\u0335l\u0335_\u0335c\u0335o\u0335n\u0335s\u0335t\u0335 \u0335]\u0335\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\n/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean:63:103: warning: This simp argument is unused:\n  Filter.EventuallyEq\n\nHint: Omit it from the simp argument list.\n  simp_all +decide \u0335[\u0335 \u0335F\u0335i\u0335l\u0335t\u0335e\u0335r\u0335.\u0335E\u0335v\u0335e\u0335n\u0335t\u0335u\u0335a\u0335l\u0335l\u0335y\u0335E\u0335q\u0335 \u0335]\u0335\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\n/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean:64:92: warning: This simp argument is unused:\n  Filter.eventually_inf_principal\n\nHint: Omit it from the simp argument list.\n  simp_all +decide \u0335[\u0335 \u0335F\u0335i\u0335l\u0335t\u0335e\u0335r\u0335.\u0335e\u0335v\u0335e\u0335n\u0335t\u0335u\u0335a\u0335l\u0335l\u0335y\u0335_\u0335i\u0335n\u0335f\u0335_\u0335p\u0335r\u0335i\u0335n\u0335c\u0335i\u0335p\u0335a\u0335l\u0335 \u0335]\u0335\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\n",
+            "stderr": "",
+            "elapsed_seconds": 79.74287974997424,
+            "attempt_count": 1,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean"
+          },
+          "attempt_history": [
+            {
+              "status": "verified",
+              "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean",
+              "exit_code": 0,
+              "stdout": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean:27:13: warning: unused variable `hT`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean:34:57: warning: This simp argument is unused:\n  lintegral_const\n\nHint: Omit it from the simp argument list.\n  simp_all +decide \u0335[\u0335 \u0335l\u0335i\u0335n\u0335t\u0335e\u0335g\u0335r\u0335a\u0335l\u0335_\u0335c\u0335o\u0335n\u0335s\u0335t\u0335 \u0335]\u0335\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\n/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean:63:103: warning: This simp argument is unused:\n  Filter.EventuallyEq\n\nHint: Omit it from the simp argument list.\n  simp_all +decide \u0335[\u0335 \u0335F\u0335i\u0335l\u0335t\u0335e\u0335r\u0335.\u0335E\u0335v\u0335e\u0335n\u0335t\u0335u\u0335a\u0335l\u0335l\u0335y\u0335E\u0335q\u0335 \u0335]\u0335\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\n/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean:64:92: warning: This simp argument is unused:\n  Filter.eventually_inf_principal\n\nHint: Omit it from the simp argument list.\n  simp_all +decide \u0335[\u0335 \u0335F\u0335i\u0335l\u0335t\u0335e\u0335r\u0335.\u0335e\u0335v\u0335e\u0335n\u0335t\u0335u\u0335a\u0335l\u0335l\u0335y\u0335_\u0335i\u0335n\u0335f\u0335_\u0335p\u0335r\u0335i\u0335n\u0335c\u0335i\u0335p\u0335a\u0335l\u0335 \u0335]\u0335\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\n",
+              "stderr": "",
+              "elapsed_seconds": 79.74287974997424,
+              "attempt_count": 1,
+              "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean"
+            }
+          ]
+        }
+      },
+      {
+        "id": "heat_uniqueness_refined_local_claim",
+        "title": "Nonincreasing nonneg energy vanishing from zero: E(t) = 0 for all t",
+        "informal_statement": "Let \\(E:[0,T]\\to\\mathbb{R}\\) satisfy \\(E(0)=0\\), \\(E'(t)\\le 0\\) for all \\(t\\in[0,T]\\), and \\(E(t)\\ge 0\\) for all \\(t\\in[0,T]\\). Then \\(E(t)=0\\) for all \\(t\\in[0,T]\\).",
+        "informal_proof_text": "Because \\(E'(t)\\le 0\\) on \\([0,T]\\), the function \\(E\\) is nonincreasing, so \\(E(t)\\le E(0)=0\\) for all \\(t\\in[0,T]\\). Combined with \\(E(t)\\ge 0\\), we obtain \\(E(t)=0\\) for all \\(t\\in[0,T]\\).",
+        "status": "formal_verified",
+        "display_label": "E \u2261 0 by monotone squeeze",
+        "formalization_priority": 1,
+        "formalization_rationale": "This is the key analytic hinge of the uniqueness argument: it converts the energy-dissipation inequality (supplied by the parent node) and the zero-initial-data condition into the conclusion E \u2261 0. It is strictly narrower than the full uniqueness theorem (it makes no reference to the PDE, w, or u/v), is self-contained as a real-analysis lemma, and carries the primary inferential load that bridges the energy estimate to w = 0.",
+        "formal_artifact": {
+          "lean_theorem_name": "heat_uniqueness_refined_local_claim_aristotle",
+          "lean_statement": "theorem heat_uniqueness_refined_local_claim_aristotle\n    {T : \u211d} (hT : 0 \u2264 T) {E : \u211d \u2192 \u211d}\n    (hcont : ContinuousOn E (Icc 0 T))\n    (hdiff : DifferentiableOn \u211d E (Ioo 0 T))\n    (hderiv : \u2200 t \u2208 Ioo 0 T, deriv E t \u2264 0)\n    (hE0 : E 0 = 0)\n    (hnneg : \u2200 t \u2208 Icc 0 T, 0 \u2264 E t) :\n    \u2200 t \u2208 Icc 0 T, E t = 0",
+          "lean_code": "import Mathlib\n\n/-!\n# Nonincreasing nonneg energy vanishing from zero\n\nLet `E : [0,T] \u2192 \u211d` satisfy `E(0) = 0`, `E'(t) \u2264 0` for all `t \u2208 [0,T]`, and `E(t) \u2265 0`\nfor all `t \u2208 [0,T]`. Then `E(t) = 0` for all `t \u2208 [0,T]`.\n\nThis is the key analytic lemma in the energy-method proof of uniqueness for the heat equation:\nit converts the energy-dissipation inequality and the zero-initial-data condition into E \u2261 0.\n-/\n\nopen Set in\n/-- **Nonincreasing nonneg energy vanishing from zero.**\nLet `E : \u211d \u2192 \u211d` be continuous on `[0, T]`, differentiable on `(0, T)`, with `deriv E t \u2264 0`\nfor all `t \u2208 (0, T)`, `E 0 = 0`, and `E t \u2265 0` for all `t \u2208 [0, T]`. Then `E t = 0` for all\n`t \u2208 [0, T]`. -/\ntheorem heat_uniqueness_refined_local_claim_aristotle\n    {T : \u211d} (hT : 0 \u2264 T) {E : \u211d \u2192 \u211d}\n    (hcont : ContinuousOn E (Icc 0 T))\n    (hdiff : DifferentiableOn \u211d E (Ioo 0 T))\n    (hderiv : \u2200 t \u2208 Ioo 0 T, deriv E t \u2264 0)\n    (hE0 : E 0 = 0)\n    (hnneg : \u2200 t \u2208 Icc 0 T, 0 \u2264 E t) :\n    \u2200 t \u2208 Icc 0 T, E t = 0 := by\n  -- Because E'(t) \u2264 0 on (0,T), the function E is nonincreasing (antitone) on (0,T) by `antitoneOn_of_deriv_nonpos`.\n  have h_antitone : AntitoneOn E (Set.Icc 0 T) := by\n    apply_rules [ antitoneOn_of_deriv_nonpos ];\n    \u00b7 exact convex_Icc _ _;\n    \u00b7 aesop;\n    \u00b7 aesop;\n  exact fun t ht => le_antisymm ( le_trans ( h_antitone ( show 0 \u2208 Set.Icc 0 T by norm_num; linarith ) ht ( by linarith [ ht.1 ] ) ) hE0.le ) ( hnneg t ht )",
+          "faithfulness_classification": "full_node",
+          "faithfulness_notes": "The Lean theorem matches the target node essentially exactly. It formalizes the same real-analysis lemma: given E continuous on [0,T], differentiable on (0,T) with E'(t)\u22640 on the open interval, E(0)=0, and E(t)\u22650 on [0,T], conclude E(t)=0 for all t\u2208[0,T]. The use of the open interval (0,T) for the derivative condition rather than the closed interval is the standard rigorous formulation (matching the hypotheses needed for the mean-value/monotonicity argument), not a narrowing of the result. All key hypotheses (zero initial data, nonincreasing via derivative bound, nonnegativity) and the full conclusion are present. No major step is missing.",
+          "verification": {
+            "status": "verified",
+            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_refined_local_claim_worker_20260405-235312_2c6e6a23.lean",
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "elapsed_seconds": 85.426987959072,
+            "attempt_count": 1,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_refined_local_claim_worker_20260405-235312_2c6e6a23.lean"
+          },
+          "attempt_history": [
+            {
+              "status": "verified",
+              "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_refined_local_claim_worker_20260405-235312_2c6e6a23.lean",
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": "",
+              "elapsed_seconds": 85.426987959072,
+              "attempt_count": 1,
+              "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_refined_local_claim_worker_20260405-235312_2c6e6a23.lean"
+            }
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source_id": "energy_dissipation",
+        "target_id": "heat_uniqueness_refined_local_claim",
+        "label": "refined_from",
+        "explanation": "This refined local claim was carved out from the broader sibling node as provenance, not as a proof dependency."
+      },
+      {
+        "source_id": "heat_uniqueness_refined_local_claim",
+        "target_id": "heat_uniqueness",
+        "label": "uses",
+        "explanation": "This refined local claim depends on the broader supporting node it was carved out from."
+      }
+    ]
+  },
+  "review_obligations": [
+    {
+      "id": "informal-proof-energy_dissipation",
+      "kind": "informal_proof_check",
+      "text": "Check that node 'energy_dissipation' (Energy is nonincreasing: E'(t) \u2264 0) has an informal proof that establishes its informal statement, assuming its child dependencies.",
+      "node_ids": [
+        "energy_dissipation"
+      ]
+    },
+    {
+      "id": "semantic-match-heat_uniqueness",
+      "kind": "formal_semantic_match_check",
+      "text": "Check that node 'heat_uniqueness' (Heat equation uniqueness by the energy method) matches the verified Lean statement 'theorem heat_uniqueness_aristotle\n    {L T : \u211d} (hL : 0 < L) (hT : 0 \u2264 T)\n    {u v : \u211d \u2192 \u211d \u2192 \u211d}\n    -- Same initial data\n    (hinit : \u2200 x \u2208 Icc 0 L, u x 0 = v x 0)\n    -- Continuity of u - v in x for each t (regularity)\n    (hcont : \u2200 t \u2208 Icc 0 T, Continuous (fun x => u x t - v x t))\n    -- Energy functional E(t) = \u222b\u2080\u1d38 (u(x,t) - v(x,t))\u00b2 dx\n    {E : \u211d \u2192 \u211d}\n    (hE_def : \u2200 t \u2208 Icc 0 T, E t = \u222b x in (0:\u211d)..L, (u x t - v x t) ^ 2)\n    -- Regularity of E\n    (hE_cont : ContinuousOn E (Icc 0 T))\n    (hE_diff : DifferentiableOn \u211d E (Ioo 0 T))\n    -- Energy dissipation (from the heat equation + integration by parts)\n    (hE_dissip : \u2200 t \u2208 Ioo 0 T, deriv E t \u2264 0)\n    -- Integrability\n    (hint : \u2200 t \u2208 Icc 0 T, IntervalIntegrable (fun x => (u x t - v x t) ^ 2) volume 0 L) :\n    \u2200 x \u2208 Icc 0 L, \u2200 t \u2208 Icc 0 T, u x t = v x t'.",
+      "node_ids": [
+        "heat_uniqueness"
+      ]
+    },
+    {
+      "id": "semantic-match-heat_uniqueness_refined_local_claim",
+      "kind": "formal_semantic_match_check",
+      "text": "Check that node 'heat_uniqueness_refined_local_claim' (Nonincreasing nonneg energy vanishing from zero: E(t) = 0 for all t) matches the verified Lean statement 'theorem heat_uniqueness_refined_local_claim_aristotle\n    {T : \u211d} (hT : 0 \u2264 T) {E : \u211d \u2192 \u211d}\n    (hcont : ContinuousOn E (Icc 0 T))\n    (hdiff : DifferentiableOn \u211d E (Ioo 0 T))\n    (hderiv : \u2200 t \u2208 Ioo 0 T, deriv E t \u2264 0)\n    (hE0 : E 0 = 0)\n    (hnneg : \u2200 t \u2208 Icc 0 T, 0 \u2264 E t) :\n    \u2200 t \u2208 Icc 0 T, E t = 0'.",
+      "node_ids": [
+        "heat_uniqueness_refined_local_claim"
+      ]
+    },
+    {
+      "id": "boundary-energy_dissipation-heat_uniqueness_refined_local_claim",
+      "kind": "boundary_interface_check",
+      "text": "Check that formal child 'heat_uniqueness_refined_local_claim' proves exactly what informal parent 'energy_dissipation' uses across their dependency boundary.",
+      "node_ids": [
+        "energy_dissipation",
+        "heat_uniqueness_refined_local_claim"
+      ]
+    }
+  ]
+}

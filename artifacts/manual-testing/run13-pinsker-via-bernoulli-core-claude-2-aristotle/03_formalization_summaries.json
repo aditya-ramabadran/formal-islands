@@ -1,0 +1,20 @@
+[
+  {
+    "node_id": "bernoulli_ineq",
+    "status": "verified",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/bernoulli_ineq_worker_20260405-220409_91c26eb8.lean",
+    "attempt_count": 2,
+    "stderr": "",
+    "faithfulness_classification": "concrete_sublemma",
+    "lean_theorem_name": "bernoulli_ineq_aristotle"
+  },
+  {
+    "node_id": "dpi",
+    "status": "failed",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/dpi_worker_20260405-220409_8f35b71a.lean",
+    "attempt_count": 2,
+    "stderr": "Formalization drifted too far from the target node. Avoid introducing arbitrary `Type*` parameters when the node describes a concrete local claim.",
+    "faithfulness_classification": "over_abstract",
+    "lean_theorem_name": "dpi_aristotle"
+  }
+]

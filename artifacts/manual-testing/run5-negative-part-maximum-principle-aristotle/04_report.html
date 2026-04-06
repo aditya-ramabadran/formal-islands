@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Weak maximum principle via the negative part - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: rgba(255, 250, 241, 0.98);
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
+      --graph-shell-top: rgba(255, 251, 242, 0.96);
+      --graph-shell-bottom: rgba(245, 238, 227, 0.96);
+      --checklist-panel: rgba(255, 250, 241, 0.95);
+      --target-panel: #fff8ee;
+      --code-surface: #f4efe6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161311;
+        --panel: #211b17;
+        --ink: #f3ede5;
+        --muted: #c0b2a3;
+        --border: #4a3d32;
+        --accent: #f0b47b;
+        --accent-soft: #3a2b20;
+        --highlight: #ffb25c;
+        --highlight-soft: #3f2d19;
+        --preview-soft: #312419;
+        --checked: #65c08a;
+        --checked-soft: #213126;
+        --edge: #8f8172;
+        --status-informal-stroke: #d69760;
+        --status-informal-fill: rgba(46, 34, 26, 0.96);
+        --status-candidate-stroke: #f0a64e;
+        --status-candidate-fill: #3f2d18;
+        --status-verified-stroke: #65c08a;
+        --status-verified-fill: #213126;
+        --status-failed-stroke: #dd8a79;
+        --status-failed-fill: #3b2320;
+        --graph-shell-top: rgba(44, 34, 27, 0.98);
+        --graph-shell-bottom: rgba(32, 25, 21, 0.98);
+        --checklist-panel: rgba(36, 29, 24, 0.98);
+        --target-panel: #31261f;
+        --code-surface: #2a231e;
+      }
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(circle at top, #2a211b, var(--bg));
+      }
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .math-text mjx-container {
+      max-width: 100%;
+    }
+    .math-text mjx-container[display="true"] {
+      margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .math-text mjx-container[jax="CHTML"][display="true"] {
+      padding: 0 !important;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--graph-shell-top), var(--graph-shell-bottom));
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+    .graph-frame {
+      width: min(100%, 460px);
+      margin: 0 auto;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 240px;
+      overflow: visible;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 2.8;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-edge.edge-provenance {
+      stroke-dasharray: 7 5;
+      opacity: 0.66;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-box {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-title {
+      fill: var(--ink);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 9.5px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--checklist-panel);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {
+      min-width: 0;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: var(--target-panel);
+    }
+    pre {
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 0.75rem;
+      background: var(--code-surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin: 0.6rem 0;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    code.inline-code {
+      background: var(--code-surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.95em;
+      white-space: break-spaces;
+    }
+    .statement-code {
+      margin-top: 0.35rem;
+    }
+    .statement-code pre,
+    .checklist-code pre {
+      margin-top: 0.35rem;
+      background: var(--code-surface);
+    }
+    .lean-code {
+      color: #2a241f;
+    }
+    .lean-code .tok-keyword {
+      color: #8b2f18;
+      font-weight: 700;
+    }
+    .lean-code .tok-tactic {
+      color: #9d5d17;
+      font-weight: 600;
+    }
+    .lean-code .tok-type {
+      color: #245f7a;
+    }
+    .lean-code .tok-number {
+      color: #7442a8;
+    }
+    .lean-code .tok-comment {
+      color: #6e7a60;
+      font-style: italic;
+    }
+    .lean-code .tok-string {
+      color: #2d7f4d;
+    }
+    @media (prefers-color-scheme: dark) {
+      .lean-code {
+        color: #f2e8dc;
+      }
+      .lean-code .tok-keyword {
+        color: #f08f63;
+      }
+      .lean-code .tok-tactic {
+        color: #f4b35d;
+      }
+      .lean-code .tok-type {
+        color: #73c7ff;
+      }
+      .lean-code .tok-number {
+        color: #be8cff;
+      }
+      .lean-code .tok-comment {
+        color: #97b18b;
+      }
+      .lean-code .tok-string {
+        color: #67d59a;
+      }
+    }
+    
+            .report-root:has(a.node-root:hover) .node-root.node-card,
+            .report-root:has(#node-root:target) a.node-root .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-root:hover) .node-root.node-card,
+            .report-root:has(#node-root:target).report-root .node-root.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-grad_identity:hover) .node-grad_identity.node-card,
+            .report-root:has(#node-grad_identity:target) a.node-grad_identity .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-grad_identity:hover) .node-grad_identity.node-card,
+            .report-root:has(#node-grad_identity:target).report-root .node-grad_identity.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-root_refined_local_claim:hover) .node-root_refined_local_claim.node-card,
+            .report-root:has(#node-root_refined_local_claim:target) a.node-root_refined_local_claim .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-root_refined_local_claim:hover) .node-root_refined_local_claim.node-card,
+            .report-root:has(#node-root_refined_local_claim:target).report-root .node-root_refined_local_claim.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-root__formal_core:hover) .node-root__formal_core.node-card,
+            .report-root:has(#node-root__formal_core:target) a.node-root__formal_core .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-root__formal_core:hover) .node-root__formal_core.node-card,
+            .report-root:has(#node-root__formal_core:target).report-root .node-root__formal_core.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-root:hover) a.node-root .graph-node-box,
+.report-root:has(.obligation-informal-proof-root:hover) .node-root.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-root:checked) a.node-root .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-root:checked) .node-root.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-root:checked) .edge-root__formal_core-root,
+.report-root:has(#obligation-check-informal-proof-root:checked) .edge-root_refined_local_claim-root {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-root:hover) .obligation-informal-proof-root {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-root:checked) .obligation-informal-proof-root {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-grad_identity:hover) a.node-grad_identity .graph-node-box,
+.report-root:has(.obligation-informal-proof-grad_identity:hover) .node-grad_identity.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-grad_identity:checked) a.node-grad_identity .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-grad_identity:checked) .node-grad_identity.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-grad_identity:hover) .obligation-informal-proof-grad_identity {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-grad_identity:checked) .obligation-informal-proof-grad_identity {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-root_refined_local_claim:hover) a.node-root_refined_local_claim .graph-node-box,
+.report-root:has(.obligation-semantic-match-root_refined_local_claim:hover) .node-root_refined_local_claim.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-root_refined_local_claim:checked) a.node-root_refined_local_claim .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-root_refined_local_claim:checked) .node-root_refined_local_claim.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-root_refined_local_claim:checked) .edge-root_refined_local_claim-root {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-root_refined_local_claim:hover) .obligation-semantic-match-root_refined_local_claim {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-root_refined_local_claim:checked) .obligation-semantic-match-root_refined_local_claim {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-root__formal_core:hover) a.node-root__formal_core .graph-node-box,
+.report-root:has(.obligation-semantic-match-root__formal_core:hover) .node-root__formal_core.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-root__formal_core:checked) a.node-root__formal_core .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-root__formal_core:checked) .node-root__formal_core.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-root__formal_core:checked) .edge-root__formal_core-root {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-root__formal_core:hover) .obligation-semantic-match-root__formal_core {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-root__formal_core:checked) .obligation-semantic-match-root__formal_core {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-boundary-grad_identity-root_refined_local_claim:hover) a.node-grad_identity .graph-node-box,
+.report-root:has(.obligation-boundary-grad_identity-root_refined_local_claim:hover) a.node-root_refined_local_claim .graph-node-box,
+.report-root:has(.obligation-boundary-grad_identity-root_refined_local_claim:hover) .node-grad_identity.node-card,
+.report-root:has(.obligation-boundary-grad_identity-root_refined_local_claim:hover) .node-root_refined_local_claim.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-grad_identity-root_refined_local_claim:checked) a.node-grad_identity .graph-node-box,
+.report-root:has(#obligation-check-boundary-grad_identity-root_refined_local_claim:checked) a.node-root_refined_local_claim .graph-node-box,
+.report-root:has(#obligation-check-boundary-grad_identity-root_refined_local_claim:checked) .node-grad_identity.node-card,
+.report-root:has(#obligation-check-boundary-grad_identity-root_refined_local_claim:checked) .node-root_refined_local_claim.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-grad_identity-root_refined_local_claim:checked) .edge-root_refined_local_claim-root {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-boundary-grad_identity-root_refined_local_claim:hover) .obligation-boundary-grad_identity-root_refined_local_claim {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-boundary-grad_identity-root_refined_local_claim:checked) .obligation-boundary-grad_identity-root_refined_local_claim {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-boundary-root__formal_core-root:hover) a.node-root__formal_core .graph-node-box,
+.report-root:has(.obligation-boundary-root__formal_core-root:hover) a.node-root .graph-node-box,
+.report-root:has(.obligation-boundary-root__formal_core-root:hover) .node-root__formal_core.node-card,
+.report-root:has(.obligation-boundary-root__formal_core-root:hover) .node-root.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-root__formal_core-root:checked) a.node-root__formal_core .graph-node-box,
+.report-root:has(#obligation-check-boundary-root__formal_core-root:checked) a.node-root .graph-node-box,
+.report-root:has(#obligation-check-boundary-root__formal_core-root:checked) .node-root__formal_core.node-card,
+.report-root:has(#obligation-check-boundary-root__formal_core-root:checked) .node-root.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-root__formal_core-root:checked) .edge-root__formal_core-root,
+.report-root:has(#obligation-check-boundary-root__formal_core-root:checked) .edge-root_refined_local_claim-root {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-boundary-root__formal_core-root:hover) .obligation-boundary-root__formal_core-root {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-boundary-root__formal_core-root:checked) .obligation-boundary-root__formal_core-root {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-root">
+    <section>
+      <h1>Weak maximum principle via the negative part</h1>
+      <div class="math-text">Weak maximum principle via the negative part.
+
+Let \(\Omega \subset \mathbb{R}^d\) be a bounded smooth domain, and let \(u\) be a sufficiently regular function such that
+\[
+-\Delta u \ge 0 \quad \text{in } \Omega,
+\]
+and
+\[
+u \ge 0 \quad \text{on } \partial \Omega.
+\]
+Then
+\[
+u \ge 0 \quad \text{in } \Omega.
+\]</div>
+      <p class="meta">Root node: root</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 4</span>
+        <span class="pill">Edges: 3</span>
+        <span class="pill">Informal: 1</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 2</span>
+        <span class="pill">Failed: 1</span>
+      </p>
+      <div class="graph-shell">
+        
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 460" width="420" height="460" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><line class="graph-edge edge-grad_identity-root_refined_local_claim edge-provenance" x1="210.0" y1="201.0" x2="210.0" y2="259.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-root_refined_local_claim-root" x1="210.0" y1="319.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-root__formal_core-root" x1="210.0" y1="437.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line></g>
+        <g>
+    <a class="graph-node-link node-root status-informal" href="#node-root">
+      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="42">Weak Max</tspan>
+<tspan x="210.0" y="54">Principle (root)</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">root</text>
+    </a>
+    
+
+    <a class="graph-node-link node-grad_identity status-formal-failed" href="#node-grad_identity">
+      <rect class="graph-node-box status-formal-failed" x="144.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="160">$\nabla u \cdot</tspan>
+<tspan x="210.0" y="172">\nabla u_- = -|…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="186">grad_identity</text>
+    </a>
+    
+
+    <a class="graph-node-link node-root_refined_local_claim status-formal-verified" href="#node-root_refined_local_claim">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="278">Zero gradient</tspan>
+<tspan x="210.0" y="290">implies zero in…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="304">root_refined_local_claim</text>
+    </a>
+    
+
+    <a class="graph-node-link node-root__formal_core status-formal-verified" href="#node-root__formal_core">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="374" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="386" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="401">Certified core</tspan></text>
+      <text class="graph-node-id" x="210.0" y="422">root__formal_core</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+      </div>
+      <p class="graph-caption">
+        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+      </p>
+      <p class="graph-caption">
+        Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
+      </p>
+      <p class="graph-caption">
+        Dashed gray edges show provenance or refinement links between nearby nodes. They are not proof dependencies unless the edge is part of the main dependency layout.
+      </p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-informal-proof-root" data-obligation-id="informal-proof-root">
+      <label class="checklist-label" for="obligation-check-informal-proof-root">
+        <input id="obligation-check-informal-proof-root" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;root&#x27; (Weak maximum principle via the negative part) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-root">root</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-grad_identity" data-obligation-id="informal-proof-grad_identity">
+      <label class="checklist-label" for="obligation-check-informal-proof-grad_identity">
+        <input id="obligation-check-informal-proof-grad_identity" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;grad_identity&#x27; (Gradient identity for the negative part) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-grad_identity">grad_identity</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-root_refined_local_claim" data-obligation-id="semantic-match-root_refined_local_claim">
+      <label class="checklist-label" for="obligation-check-semantic-match-root_refined_local_claim">
+        <input id="obligation-check-semantic-match-root_refined_local_claim" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;root_refined_local_claim&#x27; (Zero-gradient $H^1_0$ function is identically zero) matches the verified Lean statement &#x27;theorem root_refined_local_claim_aristotle
+    (Ω : Set (EuclideanSpace ℝ (Fin d)))
+    (hΩ_open : IsOpen Ω)
+    (hΩ_conn : IsConnected Ω)
+    (v : EuclideanSpace ℝ (Fin d) → ℝ)
+    (hv_diff : ContDiffOn ℝ 1 v Ω)
+    (hv_cont : ContinuousOn v (closure Ω))
+    (hv_bdry : ∀ x ∈ frontier Ω, v x = 0)
+    (hv_bdry_ne : (frontier Ω).Nonempty)
+    (hv_intg : Integrable (fun x =&gt; ‖fderiv ℝ v x‖ ^ 2) (volume.restrict Ω))
+    (hv_grad : ∫ x in Ω, ‖fderiv ℝ v x‖ ^ 2 = 0) :
+    ∀ x ∈ Ω, v x = 0&#x27;.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> root_refined_local_claim_aristotle
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (hΩ_open : IsOpen Ω)
+    (hΩ_conn : IsConnected Ω)
+    (v : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (hv_diff : ContDiffOn <span class="tok-type">ℝ</span> <span class="tok-number">1</span> v Ω)
+    (hv_cont : ContinuousOn v (closure Ω))
+    (hv_bdry : ∀ x ∈ frontier Ω, v x = <span class="tok-number">0</span>)
+    (hv_bdry_ne : (frontier Ω).Nonempty)
+    (hv_intg : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖fderiv <span class="tok-type">ℝ</span> v x‖ ^ <span class="tok-number">2</span>) (volume.restrict Ω))
+    (hv_grad : ∫ x <span class="tok-keyword">in</span> Ω, ‖fderiv <span class="tok-type">ℝ</span> v x‖ ^ <span class="tok-number">2</span> = <span class="tok-number">0</span>) :
+    ∀ x ∈ Ω, v x = <span class="tok-number">0</span></code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-root_refined_local_claim">root_refined_local_claim</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-root__formal_core" data-obligation-id="semantic-match-root__formal_core">
+      <label class="checklist-label" for="obligation-check-semantic-match-root__formal_core">
+        <input id="obligation-check-semantic-match-root__formal_core" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;root__formal_core&#x27; (Certified local core for Weak maximum principle via the negative part) honestly represents a narrower verified Lean supporting sublemma with statement &#x27;theorem root_aristotle
+    (Ω : Set (EuclideanSpace ℝ (Fin d)))
+    (hΩ_open : IsOpen Ω)
+    (hΩ_conn : IsConnected Ω)
+    (u : EuclideanSpace ℝ (Fin d) → ℝ)
+    (hv_diff : ContDiffOn ℝ 1 (fnNegPart u) Ω)
+    (hv_cont : ContinuousOn (fnNegPart u) (closure Ω))
+    (hu_bdry : ∀ x ∈ frontier Ω, u x ≥ 0)
+    (hbdry_ne : (frontier Ω).Nonempty)
+    (hv_intg : Integrable (fun x =&gt; ‖fderiv ℝ (fnNegPart u) x‖ ^ 2) (volume.restrict Ω))
+    (hv_grad : ∫ x in Ω, ‖fderiv ℝ (fnNegPart u) x‖ ^ 2 = 0) :
+    ∀ x ∈ Ω, u x ≥ 0&#x27;, rather than overclaiming full coverage of its parent informal step.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> root_aristotle
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (hΩ_open : IsOpen Ω)
+    (hΩ_conn : IsConnected Ω)
+    (u : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (hv_diff : ContDiffOn <span class="tok-type">ℝ</span> <span class="tok-number">1</span> (fnNegPart u) Ω)
+    (hv_cont : ContinuousOn (fnNegPart u) (closure Ω))
+    (hu_bdry : ∀ x ∈ frontier Ω, u x ≥ <span class="tok-number">0</span>)
+    (hbdry_ne : (frontier Ω).Nonempty)
+    (hv_intg : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖fderiv <span class="tok-type">ℝ</span> (fnNegPart u) x‖ ^ <span class="tok-number">2</span>) (volume.restrict Ω))
+    (hv_grad : ∫ x <span class="tok-keyword">in</span> Ω, ‖fderiv <span class="tok-type">ℝ</span> (fnNegPart u) x‖ ^ <span class="tok-number">2</span> = <span class="tok-number">0</span>) :
+    ∀ x ∈ Ω, u x ≥ <span class="tok-number">0</span></code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-root__formal_core">root__formal_core</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-boundary-grad_identity-root_refined_local_claim" data-obligation-id="boundary-grad_identity-root_refined_local_claim">
+      <label class="checklist-label" for="obligation-check-boundary-grad_identity-root_refined_local_claim">
+        <input id="obligation-check-boundary-grad_identity-root_refined_local_claim" type="checkbox" />
+        <span>
+          <span class="checklist-kind">boundary_interface_check</span><br />
+          Check that formal child &#x27;root_refined_local_claim&#x27; proves exactly what informal parent &#x27;grad_identity&#x27; uses across their dependency boundary.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-grad_identity">grad_identity</a>, <a class="node-jump" href="#node-root_refined_local_claim">root_refined_local_claim</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-boundary-root__formal_core-root" data-obligation-id="boundary-root__formal_core-root">
+      <label class="checklist-label" for="obligation-check-boundary-root__formal_core-root">
+        <input id="obligation-check-boundary-root__formal_core-root" type="checkbox" />
+        <span>
+          <span class="checklist-kind">boundary_interface_check</span><br />
+          Check that verified supporting sublemma &#x27;root__formal_core&#x27; certifies the specific concrete local core that informal parent &#x27;root&#x27; relies on, without overclaiming full coverage of the parent node.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-root__formal_core">root__formal_core</a>, <a class="node-jump" href="#node-root">root</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="nodes-grid">
+        
+    <article class="node-card node-root" id="node-root" data-node-id="root">
+      <h3>Weak maximum principle via the negative part</h3>
+      <p class="meta">Node id: root | Status: informal</p>
+      <p class="meta">Display label: Weak Max Principle (root)</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let $\Omega \subset \mathbb{R}^d$ be a bounded smooth domain and $u$ sufficiently regular with $-\Delta u \ge 0$ in $\Omega$ and $u \ge 0$ on $\partial\Omega$. Then $u \ge 0$ in $\Omega$.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Define the negative part $u_-(x) = \max\{-u(x), 0\}$. Then $u_- \ge 0$ everywhere, and since $u \ge 0$ on $\partial\Omega$, we have $u_- = 0$ on $\partial\Omega$.
+
+Multiply $-\Delta u \ge 0$ by $u_-$ and integrate over $\Omega$:
+$$\int_\Omega (-\Delta u)\,u_-\,dx \ge 0.$$
+Integrating by parts and using $u_- = 0$ on $\partial\Omega$ (so the boundary term vanishes):
+$$\int_\Omega \nabla u \cdot \nabla u_-\,dx \ge 0.$$
+By the gradient identity for the negative part (see lemma), this equals $-\int_\Omega |\nabla u_-|^2\,dx$, so
+$$-\int_\Omega |\nabla u_-|^2\,dx \ge 0 \implies \int_\Omega |\nabla u_-|^2\,dx \le 0.$$
+Since the integrand is nonneg, $|\nabla u_-|^2 = 0$ a.e., so $u_-$ is constant in $\Omega$. As $u_- = 0$ on $\partial\Omega$, that constant is zero: $u_- \equiv 0$ in $\Omega$, i.e., $u \ge 0$ in $\Omega$.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-grad_identity" id="node-grad_identity" data-node-id="grad_identity">
+      <h3>Gradient identity for the negative part</h3>
+      <p class="meta">Node id: grad_identity | Status: formal_failed</p>
+      <p class="meta">Display label: $\nabla u \cdot \nabla u_- = -|\nabla u_-|^2$ (identity)</p>
+      <p class="meta">Formalization priority: 1. Rationale: This is the most technically concrete and formalizable step in the proof. It requires careful case analysis on the sign of $u$, pointwise reasoning about $\nabla u_-$, and splitting the domain integral — all of which require non-trivial Lean/Mathlib infrastructure (measurable set decomposition, chain rule for Lipschitz compositions). Formalizing it correctly reduces the main burden of the proof.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For a sufficiently regular function $u$ on $\Omega$,
+$$\int_\Omega \nabla u \cdot \nabla u_-\,dx = -\int_\Omega |\nabla u_-|^2\,dx,$$
+where $u_- = \max\{-u, 0\}$.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">On the set $\{u \ge 0\}$, we have $u_- = 0$, so $\nabla u_- = 0$ there, and the integrand $\nabla u \cdot \nabla u_-$ vanishes.
+
+On the set $\{u &lt; 0\}$, we have $u_-(x) = -u(x)$, so $\nabla u_-(x) = -\nabla u(x)$. Hence
+$$\nabla u \cdot \nabla u_- = \nabla u \cdot (-\nabla u) = -|\nabla u|^2 = -|\nabla u_-|^2.$$
+Integrating over both regions,
+$$\int_\Omega \nabla u \cdot \nabla u_-\,dx = \int_{\{u&lt;0\}} \nabla u \cdot \nabla u_-\,dx = -\int_{\{u&lt;0\}} |\nabla u_-|^2\,dx = -\int_\Omega |\nabla u_-|^2\,dx.$$</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> grad_identity_aristotle</p>
+        <p><strong>Coverage:</strong> concrete_sublemma</p><p class="meta">Accepted as a narrower concrete local core in the same ambient setting; it should support the parent node rather than count as full-node certification.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> grad_identity_aristotle
+    (u : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (grad_u grad_u_minus : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → EuclideanSpace <span class="tok-type">ℝ</span> (Fin d))
+    (h_ae : ∀ᵐ x ∂(volume : Measure (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d))),
+      (<span class="tok-number">0</span> ≤ u x → grad_u_minus x = <span class="tok-number">0</span>) ∧
+      (u x &lt; <span class="tok-number">0</span> → grad_u_minus x = -grad_u x)) :
+    ∫ x, @inner <span class="tok-type">ℝ</span> _ _ (grad_u x) (grad_u_minus x) ∂volume =
+    - ∫ x, ‖grad_u_minus x‖ ^ <span class="tok-number">2</span> ∂volume</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> failed</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/grad_identity_worker_20260406-015152_fb56b38c.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+<span class="tok-keyword">open</span> MeasureTheory
+
+<span class="tok-keyword">variable</span> {d : <span class="tok-type">ℕ</span>}
+
+/<span class="tok-comment">-- The negative part of a real-valued function: `u₋(x) = max(-u(x), 0)`. -/</span>
+noncomputable <span class="tok-keyword">def</span> negPart (u : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>) :
+    EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span> :=
+  <span class="tok-keyword">fun</span> x =&gt; max (-u x) <span class="tok-number">0</span>
+
+/<span class="tok-comment">-- **Gradient identity for the negative part** (pointwise version).</span>
+
+For a function `u : <span class="tok-type">ℝ</span>^d → <span class="tok-type">ℝ</span>` and a point `x`, <span class="tok-keyword">if</span>
+- `u(x) ≥ <span class="tok-number">0</span>` implies `∇u₋(x) = <span class="tok-number">0</span>`, and
+- `u(x) &lt; <span class="tok-number">0</span>` implies `∇u₋(x) = -∇u(x)`,
+
+<span class="tok-keyword">then</span> `⟪∇u(x), ∇u₋(x)⟫ = -‖∇u₋(x)‖²`. -/
+<span class="tok-keyword">lemma</span> grad_neg_part_pointwise
+    (u : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (grad_u grad_u_minus : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → EuclideanSpace <span class="tok-type">ℝ</span> (Fin d))
+    (x : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d))
+    (h_nonneg : <span class="tok-number">0</span> ≤ u x → grad_u_minus x = <span class="tok-number">0</span>)
+    (h_neg : u x &lt; <span class="tok-number">0</span> → grad_u_minus x = -grad_u x) :
+    @inner <span class="tok-type">ℝ</span> _ _ (grad_u x) (grad_u_minus x) =
+    -(‖grad_u_minus x‖ ^ <span class="tok-number">2</span>) := <span class="tok-tactic">by</span>
+  rcases le_or_lt <span class="tok-number">0</span> (u x) <span class="tok-keyword">with</span> h | h
+  · <span class="tok-tactic">rw</span> [h_nonneg h]; <span class="tok-tactic">simp</span>
+  · <span class="tok-tactic">rw</span> [h_neg h]; <span class="tok-tactic">simp</span> [inner_neg_right, real_inner_self_eq_norm_sq, norm_neg]
+
+/<span class="tok-comment">-- **Gradient identity for the negative part.**</span>
+
+For a sufficiently regular function `u` on a domain <span class="tok-keyword">in</span> `<span class="tok-type">ℝ</span>^d`, the negative part
+`u₋ = max(-u, <span class="tok-number">0</span>)` satisfies
+
+  `∫_Ω ⟪∇u, ∇u₋⟫ dx = -∫_Ω ‖∇u₋‖² dx`.
+
+The proof proceeds <span class="tok-tactic">by</span> pointwise case analysis on the sign of `u`:
+- Where `u(x) ≥ <span class="tok-number">0</span>`: `u₋ = <span class="tok-number">0</span>`, so `∇u₋ = <span class="tok-number">0</span>`, and the integrand vanishes on both sides.
+- Where `u(x) &lt; <span class="tok-number">0</span>`: `u₋ = -u`, so `∇u₋ = -∇u`, giving
+  `⟪∇u, ∇u₋⟫ = ⟪∇u, -∇u⟫ = -|∇u|² = -|∇u₋|²`.
+
+The chain-rule consequences (`∇u₋ = <span class="tok-number">0</span>` <span class="tok-keyword">where</span> `u ≥ <span class="tok-number">0</span>` and `∇u₋ = -∇u` <span class="tok-keyword">where</span> `u &lt; <span class="tok-number">0</span>`)
+are taken as hypotheses, holding a.e. <span class="tok-keyword">with</span> respect to Lebesgue measure. -/
+<span class="tok-keyword">theorem</span> grad_identity_aristotle
+    (u : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (grad_u grad_u_minus : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → EuclideanSpace <span class="tok-type">ℝ</span> (Fin d))
+    (h_ae : ∀ᵐ x ∂(volume : Measure (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d))),
+      (<span class="tok-number">0</span> ≤ u x → grad_u_minus x = <span class="tok-number">0</span>) ∧
+      (u x &lt; <span class="tok-number">0</span> → grad_u_minus x = -grad_u x)) :
+    ∫ x, @inner <span class="tok-type">ℝ</span> _ _ (grad_u x) (grad_u_minus x) ∂volume =
+    - ∫ x, ‖grad_u_minus x‖ ^ <span class="tok-number">2</span> ∂volume := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">rw</span> [← integral_neg]
+  <span class="tok-tactic">apply</span> integral_congr_ae
+  filter_upwards [h_ae] <span class="tok-keyword">with</span> x ⟨h_nonneg, h_neg⟩
+  <span class="tok-tactic">exact</span> grad_neg_part_pointwise u grad_u grad_u_minus x h_nonneg h_neg</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/grad_identity_worker_20260406-015152_fb56b38c.lean:27:9: error(lean.unknownIdentifier): Unknown identifier `le_or_lt`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/grad_identity_worker_20260406-015152_fb56b38c.lean:27:31: error: Tactic `rcases` failed: `x✝ : ?m.34` is not an inductive datatype
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+
+    <article class="node-card node-root_refined_local_claim" id="node-root_refined_local_claim" data-node-id="root_refined_local_claim">
+      <h3>Zero-gradient $H^1_0$ function is identically zero</h3>
+      <p class="meta">Node id: root_refined_local_claim | Status: formal_verified</p>
+      <p class="meta">Display label: Zero gradient implies zero in H^1_0</p>
+      <p class="meta">Formalization priority: 1. Rationale: This is the concluding step of the weak maximum principle proof, applied with $v = u_-$: once the gradient estimate $\int |\nabla u_-|^2 \le 0$ is established, this claim delivers the conclusion $u_- \equiv 0$. It is a clean, self-contained local claim (connectedness + boundary condition + zero-gradient) that is strictly smaller than the full theorem and does not overlap with either the gradient identity or the IBP step.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let $\Omega \subset \mathbb{R}^d$ be a bounded connected smooth domain. If $v$ is sufficiently regular, $v = 0$ on $\partial\Omega$, and $\int_\Omega |\nabla v|^2\,dx = 0$, then $v \equiv 0$ in $\Omega$.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Since $|\nabla v|^2 \ge 0$ everywhere and its integral over $\Omega$ is zero, we have $|\nabla v|^2 = 0$ a.e. in $\Omega$, i.e., $\nabla v = 0$ a.e. Since $\Omega$ is connected and $v$ is sufficiently regular, $\nabla v = 0$ a.e. implies $v$ is constant on $\Omega$. The boundary condition $v = 0$ on $\partial\Omega$ (which has positive measure) then forces that constant to be zero. Hence $v \equiv 0$ in $\Omega$.</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> root_refined_local_claim_aristotle</p>
+        <p><strong>Coverage:</strong> full_node</p><p class="meta">The Lean theorem faithfully captures all the key components of the target node: (1) Ω is open and connected (matching the &quot;bounded connected smooth domain&quot; hypothesis, minus the bounded/smooth aspects which are not needed for the conclusion), (2) v is C¹ on Ω and continuous on the closure (matching &quot;sufficiently regular&quot;), (3) v = 0 on the frontier/boundary (matching the H¹₀ boundary condition), (4) the frontier is nonempty (needed to force the constant to be zero), (5) the integral of ‖fderiv v x‖² over Ω equals 0 (matching ∫|∇v|² = 0), and (6) the conclusion is ∀ x ∈ Ω, v x = 0 (matching v ≡ 0). The proof strategy aligns with the informal proof: zero integral of a non-negative function forces the gradient to vanish a.e., connectedness + zero gradient implies constant, and the nonempty boundary condition forces that constant to be zero. No major step is missing or misrepresented.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> root_refined_local_claim_aristotle
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (hΩ_open : IsOpen Ω)
+    (hΩ_conn : IsConnected Ω)
+    (v : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (hv_diff : ContDiffOn <span class="tok-type">ℝ</span> <span class="tok-number">1</span> v Ω)
+    (hv_cont : ContinuousOn v (closure Ω))
+    (hv_bdry : ∀ x ∈ frontier Ω, v x = <span class="tok-number">0</span>)
+    (hv_bdry_ne : (frontier Ω).Nonempty)
+    (hv_intg : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖fderiv <span class="tok-type">ℝ</span> v x‖ ^ <span class="tok-number">2</span>) (volume.restrict Ω))
+    (hv_grad : ∫ x <span class="tok-keyword">in</span> Ω, ‖fderiv <span class="tok-type">ℝ</span> v x‖ ^ <span class="tok-number">2</span> = <span class="tok-number">0</span>) :
+    ∀ x ∈ Ω, v x = <span class="tok-number">0</span></code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/root_refined_local_claim_worker_20260406-015152_595abf32.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+<span class="tok-keyword">open</span> MeasureTheory Set Topology
+
+noncomputable <span class="tok-keyword">section</span>
+
+<span class="tok-keyword">variable</span> {d : <span class="tok-type">ℕ</span>}
+
+/-
+If a C¹ function on a connected <span class="tok-keyword">open</span> set has zero integral of ‖∇v‖²,
+<span class="tok-keyword">then</span> fderiv <span class="tok-type">ℝ</span> v x = <span class="tok-number">0</span> for all x ∈ Ω.
+-/
+<span class="tok-keyword">theorem</span> fderiv_eq_zero_of_integral_sq_norm_eq_zero
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (hΩ_open : IsOpen Ω)
+    (v : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (hv_diff : ContDiffOn <span class="tok-type">ℝ</span> <span class="tok-number">1</span> v Ω)
+    (hv_intg : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖fderiv <span class="tok-type">ℝ</span> v x‖ ^ <span class="tok-number">2</span>) (volume.restrict Ω))
+    (hv_grad : ∫ x <span class="tok-keyword">in</span> Ω, ‖fderiv <span class="tok-type">ℝ</span> v x‖ ^ <span class="tok-number">2</span> = <span class="tok-number">0</span>) :
+    ∀ x ∈ Ω, fderiv <span class="tok-type">ℝ</span> v x = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Since ‖fderiv ℝ v x‖^2 ≥ 0 everywhere, and its integral over Ω is 0, by `integral_eq_zero_iff_of_nonneg_ae` we get ‖fderiv ℝ v x‖^2 = 0 a.e. on Ω.</span>
+  <span class="tok-tactic">have</span> h_zero_ae : ∀ᵐ x ∂MeasureTheory.volume.restrict Ω, (‖fderiv <span class="tok-type">ℝ</span> v x‖ : <span class="tok-type">ℝ</span>) ^ <span class="tok-number">2</span> = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+    rwa [ MeasureTheory.integral_eq_zero_iff_of_nonneg ( <span class="tok-keyword">fun</span> x =&gt; sq_nonneg _ ) hv_intg ] at hv_grad;
+  <span class="tok-tactic">rw</span> [ MeasureTheory.ae_restrict_iff&#x27; ] at h_zero_ae;
+  · contrapose! h_zero_ae;
+    <span class="tok-comment">-- Since $fderiv ℝ v x \neq 0$, there exists an open neighborhood $U$ around $x$ where $fderiv ℝ v y \neq 0$ for all $y \in U$.</span>
+    <span class="tok-tactic">obtain</span> ⟨x₀, hx₀Ω, hx₀_ne⟩ : ∃ x₀ ∈ Ω, fderiv <span class="tok-type">ℝ</span> v x₀ ≠ <span class="tok-number">0</span> := h_zero_ae
+    <span class="tok-tactic">obtain</span> ⟨ε, hε⟩ : ∃ ε &gt; <span class="tok-number">0</span>, ∀ y ∈ Metric.ball x₀ ε, fderiv <span class="tok-type">ℝ</span> v y ≠ <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">have</span> := hv_diff.continuousOn_fderiv_of_isOpen hΩ_open le_rfl;
+      <span class="tok-tactic">exact</span> Metric.mem_nhds_iff.mp ( this.continuousAt ( hΩ_open.mem_nhds hx₀Ω ) |&gt; <span class="tok-keyword">fun</span> h =&gt; h.eventually_ne hx₀_ne );
+    <span class="tok-comment">-- Since $Ω$ is open, the intersection $Ω ∩ Metric.ball x₀ ε$ is also open and non-empty.</span>
+    <span class="tok-tactic">have</span> h_inter_open : IsOpen (Ω ∩ Metric.ball x₀ ε) ∧ (Ω ∩ Metric.ball x₀ ε).Nonempty := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">exact</span> ⟨ hΩ_open.inter Metric.isOpen_ball, ⟨ x₀, hx₀Ω, Metric.mem_ball_self hε.<span class="tok-number">1</span> ⟩ ⟩;
+    <span class="tok-tactic">exact</span> ne_of_gt ( lt_of_lt_of_le ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> ( h_inter_open.<span class="tok-number">1</span>.measure_pos ( MeasureTheory.MeasureSpace.volume ) h_inter_open.<span class="tok-number">2</span> ) ) ( MeasureTheory.measure_mono <span class="tok-keyword">fun</span> x hx =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">aesop</span> ) );
+  · <span class="tok-tactic">exact</span> hΩ_open.measurableSet
+
+/-
+A C¹ function on a connected <span class="tok-keyword">open</span> set <span class="tok-keyword">with</span> fderiv = <span class="tok-number">0</span> is constant.
+-/
+<span class="tok-keyword">theorem</span> exists_const_of_fderiv_eq_zero
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (hΩ_open : IsOpen Ω)
+    (hΩ_conn : IsConnected Ω)
+    (v : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (hv_diff : DifferentiableOn <span class="tok-type">ℝ</span> v Ω)
+    (hfderiv_zero : ∀ x ∈ Ω, fderiv <span class="tok-type">ℝ</span> v x = <span class="tok-number">0</span>) :
+    ∃ c : <span class="tok-type">ℝ</span>, ∀ x ∈ Ω, v x = c := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> := hΩ_conn.isPreconnected;
+  <span class="tok-comment">-- By definition of $fderiv$, we know that if $fderiv ℝ v x = 0$, then $v$ is locally constant at $x$.</span>
+  <span class="tok-tactic">have</span> h_locally_const : ∀ x ∈ Ω, ∃ ε &gt; <span class="tok-number">0</span>, ∀ y ∈ Metric.ball x ε, y ∈ Ω → v y = v x := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">intro</span> x hx;
+    <span class="tok-tactic">have</span> := Metric.isOpen_iff.mp hΩ_open x hx;
+    <span class="tok-tactic">obtain</span> ⟨ ε, ε_pos, hε ⟩ := this; use ε, ε_pos; <span class="tok-tactic">intro</span> y hy hy&#x27; ; <span class="tok-tactic">exact</span> (<span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h_const : ∀ t ∈ Set.Icc (<span class="tok-number">0</span> : <span class="tok-type">ℝ</span>) <span class="tok-number">1</span>, deriv (<span class="tok-keyword">fun</span> t =&gt; v (x + t • (y - x))) t = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intro</span> t ht; <span class="tok-tactic">rw</span> [ deriv ] ;
+      erw [ fderiv_comp ] &lt;;&gt; <span class="tok-tactic">norm_num</span> [ hfderiv_zero, hv_diff.differentiableAt ( hΩ_open.mem_nhds &lt;| hε &lt;| Metric.mem_ball.mpr &lt;| <span class="tok-tactic">show</span> Dist.dist ( x + t • ( y - x ) ) x &lt; ε from <span class="tok-tactic">by</span> <span class="tok-tactic">simpa</span> [ norm_smul, abs_of_nonneg ht.<span class="tok-number">1</span> ] using lt_of_le_of_lt ( mul_le_of_le_one_left ( norm_nonneg _ ) ht.<span class="tok-number">2</span> ) &lt;| Metric.mem_ball.mp hy ) ];
+      <span class="tok-tactic">rw</span> [ hfderiv_zero _ ( hε &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ Metric.mem_ball ] ; <span class="tok-tactic">exact</span> <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ dist_eq_norm ] ; <span class="tok-tactic">exact</span> <span class="tok-tactic">by</span> <span class="tok-tactic">simpa</span> [ norm_smul, abs_of_nonneg ht.<span class="tok-number">1</span> ] using lt_of_le_of_lt ( mul_le_of_le_one_left ( norm_nonneg _ ) ht.<span class="tok-number">2</span> ) &lt;| Metric.mem_ball.mp hy ) ] ; <span class="tok-tactic">norm_num</span>;
+    <span class="tok-tactic">have</span> h_const : ∀ a b : <span class="tok-type">ℝ</span>, <span class="tok-number">0</span> ≤ a → a ≤ b → b ≤ <span class="tok-number">1</span> → ∫ t <span class="tok-keyword">in</span> a..b, deriv (<span class="tok-keyword">fun</span> t =&gt; v (x + t • (y - x))) t = v (x + b • (y - x)) - v (x + a • (y - x)) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intros</span> a b _ _ _; <span class="tok-tactic">rw</span> [ intervalIntegral.integral_deriv_eq_sub&#x27; ] &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+      · <span class="tok-tactic">intro</span> t ht; <span class="tok-tactic">exact</span> DifferentiableAt.comp t ( hv_diff.differentiableAt ( hΩ_open.mem_nhds &lt;| hε &lt;| <span class="tok-tactic">by</span>
+          simp_all +decide [ dist_eq_norm ];
+          <span class="tok-tactic">exact</span> lt_of_le_of_lt ( <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ norm_smul, Real.norm_of_nonneg ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ] ; <span class="tok-tactic">exact</span> mul_le_of_le_one_left ( norm_nonneg _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ) hy ) ) ( DifferentiableAt.add ( differentiableAt_const _ ) &lt;| differentiableAt_id.smul_const _ ) ;
+      · <span class="tok-tactic">exact</span> ContinuousOn.congr ( continuousOn_const ) <span class="tok-keyword">fun</span> t ht =&gt; h_const t &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">constructor</span> &lt;;&gt; <span class="tok-tactic">cases</span> Set.mem_uIcc.mp ht &lt;;&gt; <span class="tok-tactic">linarith</span>;
+    <span class="tok-tactic">have</span> := h_const <span class="tok-number">0</span> <span class="tok-number">1</span>; <span class="tok-tactic">norm_num</span> at this;
+    <span class="tok-tactic">rw</span> [ intervalIntegral.integral_congr <span class="tok-keyword">fun</span> t ht =&gt; ‹∀ t ∈ Icc ( <span class="tok-number">0</span> : <span class="tok-type">ℝ</span> ) <span class="tok-number">1</span>, deriv ( <span class="tok-keyword">fun</span> t =&gt; v ( x + t • ( y - x ) ) ) t = <span class="tok-number">0</span>› t &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">simpa</span> using ht ] at this; <span class="tok-tactic">norm_num</span> at this; <span class="tok-tactic">linarith</span>;);
+  <span class="tok-comment">-- Since $v$ is locally constant on $\Omega$, the set $\{ x \in \Omega \mid v(x) = v(x_0) \}$ is open for any $x_0 \in \Omega$.</span>
+  <span class="tok-tactic">have</span> h_open : ∀ x₀ ∈ Ω, IsOpen {x ∈ Ω | v x = v x₀} := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">intro</span> x₀ hx₀; <span class="tok-tactic">rw</span> [ isOpen_iff_mem_nhds ] ; <span class="tok-tactic">intro</span> x hx; rcases h_locally_const x hx.<span class="tok-number">1</span> <span class="tok-keyword">with</span> ⟨ ε, ε_pos, hε ⟩ ; filter_upwards [ Metric.ball_mem_nhds x ε_pos, IsOpen.mem_nhds hΩ_open hx.<span class="tok-number">1</span> ] <span class="tok-keyword">with</span> y hy₁ hy₂; <span class="tok-tactic">aesop</span>;
+  <span class="tok-comment">-- Since $v$ is locally constant on $\Omega$, the set $\{ x \in \Omega \mid v(x) \neq v(x_0) \}$ is also open for any $x_0 \in \Omega$.</span>
+  <span class="tok-tactic">have</span> h_open_compl : ∀ x₀ ∈ Ω, IsOpen {x ∈ Ω | v x ≠ v x₀} := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">intro</span> x₀ hx₀;
+    <span class="tok-tactic">exact</span> isOpen_iff_mem_nhds.mpr <span class="tok-keyword">fun</span> x hx =&gt; <span class="tok-tactic">by</span> rcases h_locally_const x hx.<span class="tok-number">1</span> <span class="tok-keyword">with</span> ⟨ ε, ε_pos, hε ⟩ ; filter_upwards [ IsOpen.mem_nhds ( hΩ_open ) hx.<span class="tok-number">1</span>, Metric.ball_mem_nhds x ε_pos ] <span class="tok-keyword">with</span> y hy hy&#x27; using ⟨ hy, <span class="tok-tactic">by</span> specialize hε y hy&#x27; hy; <span class="tok-tactic">aesop</span> ⟩ ;
+  contrapose! this;
+  simp_all +decide [ IsPreconnected ];
+  <span class="tok-tactic">obtain</span> ⟨ x₀, hx₀₁, hx₀₂ ⟩ := this ( v ( Classical.choose ( hΩ_conn.nonempty ) ) ) ; use { x | x ∈ Ω ∧ v x = v ( Classical.choose ( hΩ_conn.nonempty ) ) }, h_open _ ( Classical.choose_spec ( hΩ_conn.nonempty ) ), { x | x ∈ Ω ∧ ¬v x = v ( Classical.choose ( hΩ_conn.nonempty ) ) }, h_open_compl _ ( Classical.choose_spec ( hΩ_conn.nonempty ) ) ; simp_all +decide [ Set.Nonempty ] ;
+  <span class="tok-tactic">exact</span> ⟨ <span class="tok-keyword">fun</span> x hx =&gt; <span class="tok-tactic">by</span> by_cases h : v x = v ( Classical.choose ( hΩ_conn.nonempty ) ) &lt;;&gt; <span class="tok-tactic">aesop</span>, Classical.choose ( hΩ_conn.nonempty ), Classical.choose_spec ( hΩ_conn.nonempty ), rfl ⟩
+
+/-
+**Zero-gradient H¹₀ function is identically zero.**
+
+Let Ω ⊂ <span class="tok-type">ℝ</span>^d be a bounded connected <span class="tok-keyword">open</span> set. If v is C¹ on Ω and continuous on
+the closure, v = <span class="tok-number">0</span> on ∂Ω, the squared norm of the gradient is integrable on Ω,
+and ∫_Ω ‖∇v‖² = <span class="tok-number">0</span>, <span class="tok-keyword">then</span> v ≡ <span class="tok-number">0</span> on Ω.
+-/
+<span class="tok-keyword">theorem</span> root_refined_local_claim_aristotle
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (hΩ_open : IsOpen Ω)
+    (hΩ_conn : IsConnected Ω)
+    (v : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (hv_diff : ContDiffOn <span class="tok-type">ℝ</span> <span class="tok-number">1</span> v Ω)
+    (hv_cont : ContinuousOn v (closure Ω))
+    (hv_bdry : ∀ x ∈ frontier Ω, v x = <span class="tok-number">0</span>)
+    (hv_bdry_ne : (frontier Ω).Nonempty)
+    (hv_intg : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖fderiv <span class="tok-type">ℝ</span> v x‖ ^ <span class="tok-number">2</span>) (volume.restrict Ω))
+    (hv_grad : ∫ x <span class="tok-keyword">in</span> Ω, ‖fderiv <span class="tok-type">ℝ</span> v x‖ ^ <span class="tok-number">2</span> = <span class="tok-number">0</span>) :
+    ∀ x ∈ Ω, v x = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Step 1: fderiv = 0 on Ω</span>
+  <span class="tok-tactic">have</span> hfz := fderiv_eq_zero_of_integral_sq_norm_eq_zero Ω hΩ_open v hv_diff hv_intg hv_grad
+  <span class="tok-comment">-- Step 2: v is constant on Ω</span>
+  <span class="tok-tactic">have</span> hv_diffOn : DifferentiableOn <span class="tok-type">ℝ</span> v Ω := hv_diff.differentiableOn (<span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span>)
+  <span class="tok-tactic">obtain</span> ⟨c, hc⟩ := exists_const_of_fderiv_eq_zero Ω hΩ_open hΩ_conn v hv_diffOn hfz
+  <span class="tok-comment">-- Step 3: c = 0 from boundary condition</span>
+  <span class="tok-comment">-- Since v is continuous on closure Ω and v = c on Ω, and v = 0 on frontier Ω,</span>
+  <span class="tok-comment">-- we need frontier Ω ∩ closure Ω to be nonempty and use continuity.</span>
+  <span class="tok-comment">-- Since $v$ is continuous on the closure of $\Omega$ and $v = 0$ on the frontier, we can use the fact that the frontier is part of the closure.</span>
+  <span class="tok-tactic">have</span> h_cont_closure : ∀ x ∈ frontier Ω, v x = c := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">intro</span> x hx; <span class="tok-tactic">rw</span> [ frontier_eq_closure_inter_closure ] at hx; simp_all +decide [ mem_closure_iff_seq_limit ] ;
+    rcases hx <span class="tok-keyword">with</span> ⟨ ⟨ y, hy, hy&#x27; ⟩, hx ⟩ ; <span class="tok-tactic">have</span> := hv_cont.continuousWithinAt ( <span class="tok-tactic">show</span> x ∈ closure Ω from mem_closure_of_tendsto hy&#x27; &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">aesop</span> ) ; simp_all +decide [ ContinuousWithinAt ] ;
+    <span class="tok-tactic">exact</span> tendsto_nhds_unique ( this.comp &lt;| Filter.tendsto_inf.mpr ⟨ hy&#x27;, Filter.tendsto_principal.mpr &lt;| Filter.Eventually.of_forall <span class="tok-keyword">fun</span> n =&gt; subset_closure &lt;| hy n ⟩ ) &lt;| tendsto_const_nhds.congr&#x27; &lt;| <span class="tok-tactic">by</span> filter_upwards [ Filter.eventually_gt_atTop <span class="tok-number">0</span> ] <span class="tok-keyword">with</span> n hn; <span class="tok-tactic">aesop</span>;
+  <span class="tok-tactic">cases</span>&#x27; hv_bdry_ne <span class="tok-keyword">with</span> x hx ; <span class="tok-tactic">aesop</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+
+    <article class="node-card node-root__formal_core" id="node-root__formal_core" data-node-id="root__formal_core">
+      <h3>Certified local core for Weak maximum principle via the negative part</h3>
+      <p class="meta">Node id: root__formal_core | Status: formal_verified</p>
+      <p class="meta">Display label: Certified core</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \(\Omega \subset \mathbb{R}^d\) be a nonempty open connected set, and let \(u_- = \max\{-u, 0\}\) be the negative part of \(u\). Suppose \(u_-\) is \(C^1\) on \(\Omega\) and continuous on \(\overline{\Omega}\), that \(u \geq 0\) on the frontier \(\partial\Omega\) (so \(u_- = 0\) there), and that \(\int_\Omega \lVert \nabla u_- \rVert^2 \, dx = 0\). Then \(u \geq 0\) on all of \(\Omega\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">This node records a verified supporting sublemma extracted from the formalization of parent node &#x27;root&#x27;. Since \(\int_\Omega \lVert \nabla u_- \rVert^2 \, dx = 0\) and the integrand is nonneg­ative, we have \(\lVert \nabla u_-(x) \rVert^2 = 0\) for almost every \(x \in \Omega\), i.e., \(\nabla u_- = 0\) a.e. on \(\Omega\). Because \(u_-\) is \(C^1\) on the connected open set \(\Omega\), a zero derivative a.e. implies \(u_-\) is constant on \(\Omega\). The boundary condition \(u \geq 0\) on \(\partial\Omega\) means \(u_- = 0\) on \(\partial\Omega\), and since \(u_-\) is continuous up to the boundary and \(\partial\Omega\) is nonempty, that constant value must be \(0\). Hence \(u_- \equiv 0\) on \(\Omega\), which means \(u \geq 0\) everywhere on \(\Omega\).</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> root_aristotle</p>
+        <p><strong>Coverage:</strong> concrete_sublemma</p><p class="meta">Accepted as a narrower concrete local core in the same ambient setting; it should support the parent node rather than count as full-node certification.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> root_aristotle
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (hΩ_open : IsOpen Ω)
+    (hΩ_conn : IsConnected Ω)
+    (u : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (hv_diff : ContDiffOn <span class="tok-type">ℝ</span> <span class="tok-number">1</span> (fnNegPart u) Ω)
+    (hv_cont : ContinuousOn (fnNegPart u) (closure Ω))
+    (hu_bdry : ∀ x ∈ frontier Ω, u x ≥ <span class="tok-number">0</span>)
+    (hbdry_ne : (frontier Ω).Nonempty)
+    (hv_intg : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖fderiv <span class="tok-type">ℝ</span> (fnNegPart u) x‖ ^ <span class="tok-number">2</span>) (volume.restrict Ω))
+    (hv_grad : ∫ x <span class="tok-keyword">in</span> Ω, ‖fderiv <span class="tok-type">ℝ</span> (fnNegPart u) x‖ ^ <span class="tok-number">2</span> = <span class="tok-number">0</span>) :
+    ∀ x ∈ Ω, u x ≥ <span class="tok-number">0</span></code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/root_worker_20260406-025804_52a4d2dd.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+<span class="tok-keyword">open</span> MeasureTheory Set Topology Filter
+
+noncomputable <span class="tok-keyword">section</span>
+
+<span class="tok-keyword">variable</span> {d : <span class="tok-type">ℕ</span>}
+
+/<span class="tok-comment">-- The negative part of a real-valued function: u⁻(x) = max(-u(x), 0) -/</span>
+<span class="tok-keyword">def</span> fnNegPart (u : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>) : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span> :=
+  <span class="tok-keyword">fun</span> x =&gt; max (-u x) <span class="tok-number">0</span>
+
+<span class="tok-keyword">lemma</span> fnNegPart_eq_zero_iff_nonneg (u : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>) (x : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)) :
+    fnNegPart u x = <span class="tok-number">0</span> ↔ u x ≥ <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">simp</span> only [fnNegPart, max_eq_right_iff, neg_nonpos]
+
+<span class="tok-keyword">lemma</span> nonneg_of_fnNegPart_eq_zero {u : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>} {x : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)}
+    (h : fnNegPart u x = <span class="tok-number">0</span>) : u x ≥ <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+  rwa [fnNegPart_eq_zero_iff_nonneg] at h
+
+/-
+Step <span class="tok-number">1</span>: Integral of ‖fderiv <span class="tok-type">ℝ</span> v‖² = <span class="tok-number">0</span> implies fderiv = <span class="tok-number">0</span> a.e. on Ω
+-/
+<span class="tok-keyword">lemma</span> fderiv_sq_ae_zero_of_integral_zero
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (v : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (hv_intg : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖fderiv <span class="tok-type">ℝ</span> v x‖ ^ <span class="tok-number">2</span>) (volume.restrict Ω))
+    (hv_grad : ∫ x <span class="tok-keyword">in</span> Ω, ‖fderiv <span class="tok-type">ℝ</span> v x‖ ^ <span class="tok-number">2</span> = <span class="tok-number">0</span>) :
+    ∀ᵐ x ∂(volume.restrict Ω), fderiv <span class="tok-type">ℝ</span> v x = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">rw</span> [ MeasureTheory.integral_eq_zero_iff_of_nonneg ] at hv_grad;
+  · filter_upwards [ hv_grad ] <span class="tok-keyword">with</span> x hx using norm_eq_zero.mp ( sq_eq_zero_iff.mp hx );
+  · <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> x =&gt; sq_nonneg _;
+  · <span class="tok-tactic">exact</span> hv_intg
+
+/-
+Step <span class="tok-number">2</span>: Continuous function a.e. zero on <span class="tok-keyword">open</span> set is zero everywhere on it
+-/
+<span class="tok-keyword">lemma</span> eq_zero_on_open_of_ae_zero_continuous
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (hΩ_open : IsOpen Ω)
+    (f : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) →L[<span class="tok-type">ℝ</span>] <span class="tok-type">ℝ</span>))
+    (hf_cont : ContinuousOn f Ω)
+    (hf_ae : ∀ᵐ x ∂(volume.restrict Ω), f x = <span class="tok-number">0</span>) :
+    ∀ x ∈ Ω, f x = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">intro</span> x hx;
+  by_contra h_nonzero;
+  <span class="tok-comment">-- Since $f$ is continuous on $\Omega$ and $f(x) \neq 0$, there exists an open neighborhood $U \subseteq \Omega$ around $x$ where $f \neq 0$.</span>
+  <span class="tok-tactic">obtain</span> ⟨U, hU_open, hU_subset, hU_nonzero⟩ : ∃ U : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)), IsOpen U ∧ x ∈ U ∧ U ⊆ Ω ∧ ∀ y ∈ U, f y ≠ <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> := hf_cont.continuousAt ( hΩ_open.mem_nhds hx );
+    <span class="tok-tactic">obtain</span> ⟨ U, hU₁, hU₂ ⟩ := mem_nhds_iff.mp ( this.eventually_ne h_nonzero );
+    <span class="tok-tactic">exact</span> ⟨ U ∩ Ω, hU₂.<span class="tok-number">1</span>.inter hΩ_open, ⟨ hU₂.<span class="tok-number">2</span>, hx ⟩, Set.inter_subset_right, <span class="tok-keyword">fun</span> y hy =&gt; hU₁ hy.<span class="tok-number">1</span> ⟩;
+  <span class="tok-tactic">rw</span> [ MeasureTheory.ae_iff ] at hf_ae;
+  <span class="tok-tactic">rw</span> [ MeasureTheory.Measure.restrict_apply&#x27; ] at hf_ae;
+  · <span class="tok-tactic">exact</span> absurd hf_ae ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> ne_of_gt ( lt_of_lt_of_le ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> ( hU_open.measure_pos ( MeasureTheory.MeasureSpace.volume ) ⟨ x, hU_subset ⟩ ) ) ( MeasureTheory.measure_mono ( <span class="tok-tactic">show</span> { a | ¬f a = <span class="tok-number">0</span> } ∩ Ω ⊇ U from <span class="tok-keyword">fun</span> y hy =&gt; ⟨ hU_nonzero.<span class="tok-number">2</span> y hy, hU_nonzero.<span class="tok-number">1</span> hy ⟩ ) ) ) );
+  · <span class="tok-tactic">exact</span> hΩ_open.measurableSet
+
+/-
+Step <span class="tok-number">3</span>: C¹ function <span class="tok-keyword">with</span> zero fderiv on connected <span class="tok-keyword">open</span> set <span class="tok-keyword">with</span> zero boundary is zero
+-/
+<span class="tok-keyword">lemma</span> eq_zero_of_fderiv_zero_bdry_zero
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (hΩ_open : IsOpen Ω)
+    (hΩ_conn : IsConnected Ω)
+    (v : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (hv_diff : ContDiffOn <span class="tok-type">ℝ</span> <span class="tok-number">1</span> v Ω)
+    (hv_cont : ContinuousOn v (closure Ω))
+    (hv_bdry : ∀ x ∈ frontier Ω, v x = <span class="tok-number">0</span>)
+    (hv_bdry_ne : (frontier Ω).Nonempty)
+    (hv_fderiv_zero : ∀ x ∈ Ω, fderiv <span class="tok-type">ℝ</span> v x = <span class="tok-number">0</span>) :
+    ∀ x ∈ Ω, v x = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- For any x, y ∈ Ω in the same connected component, we can show v(x) = v(y).</span>
+  <span class="tok-tactic">have</span> h_connected : ∀ x y : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d), x ∈ Ω → y ∈ Ω → v x = v y := <span class="tok-tactic">by</span>
+    <span class="tok-comment">-- Since $fderiv ℝ v = 0$ on $\Omega$, the function $v$ is locally constant on $\Omega$.</span>
+    <span class="tok-tactic">have</span> h_locally_const : ∀ x ∈ Ω, ∃ U : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)), IsOpen U ∧ x ∈ U ∧ U ⊆ Ω ∧ ∀ y ∈ U, v y = v x := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intro</span> x hx
+      <span class="tok-tactic">obtain</span> ⟨ε, hε_pos, hε⟩ : ∃ ε &gt; <span class="tok-number">0</span>, Metric.ball x ε ⊆ Ω := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">exact</span> Metric.isOpen_iff.mp hΩ_open x hx;
+      use Metric.ball x ε;
+      <span class="tok-tactic">have</span> h_const : ∀ y ∈ Metric.ball x ε, v y = v x := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">intro</span> y hy
+        <span class="tok-tactic">have</span> h_diff : ∀ t ∈ Set.Icc (<span class="tok-number">0</span> : <span class="tok-type">ℝ</span>) <span class="tok-number">1</span>, HasDerivAt (<span class="tok-keyword">fun</span> t =&gt; v (x + t • (y - x))) (<span class="tok-number">0</span> : <span class="tok-type">ℝ</span>) t := <span class="tok-tactic">by</span>
+          <span class="tok-tactic">intro</span> t ht
+          <span class="tok-tactic">have</span> h_diff : HasDerivAt (<span class="tok-keyword">fun</span> t =&gt; v (x + t • (y - x))) (fderiv <span class="tok-type">ℝ</span> v (x + t • (y - x)) (y - x)) t := <span class="tok-tactic">by</span>
+            <span class="tok-tactic">have</span> h_diff : DifferentiableAt <span class="tok-type">ℝ</span> v (x + t • (y - x)) := <span class="tok-tactic">by</span>
+              <span class="tok-tactic">have</span> h_diff : DifferentiableOn <span class="tok-type">ℝ</span> v Ω := <span class="tok-tactic">by</span>
+                fun_prop;
+              <span class="tok-tactic">refine</span>&#x27; h_diff.differentiableAt ( hΩ_open.mem_nhds _ );
+              <span class="tok-tactic">refine</span>&#x27; hε _;
+              simp_all +decide [ dist_eq_norm ];
+              <span class="tok-tactic">exact</span> lt_of_le_of_lt ( <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ norm_smul, Real.norm_of_nonneg ht.<span class="tok-number">1</span> ] ; <span class="tok-tactic">exact</span> mul_le_of_le_one_left ( norm_nonneg _ ) ht.<span class="tok-number">2</span> ) hy;
+            convert HasFDerivAt.hasDerivAt ( h_diff.hasFDerivAt.comp t ( HasFDerivAt.add ( hasFDerivAt_const _ _ ) ( HasFDerivAt.smul ( hasFDerivAt_id t ) ( hasFDerivAt_const _ _ ) ) ) ) using <span class="tok-number">1</span> ; <span class="tok-tactic">norm_num</span>;
+          convert h_diff using <span class="tok-number">1</span>;
+          <span class="tok-tactic">rw</span> [ hv_fderiv_zero _ ( hε &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> mem_ball_iff_norm.mpr &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">simpa</span> [ norm_smul, abs_of_nonneg ht.<span class="tok-number">1</span> ] using <span class="tok-tactic">by</span> nlinarith [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span>, norm_nonneg ( y - x ), mem_ball_iff_norm.mp hy ] ) ] ; <span class="tok-tactic">norm_num</span>
+        <span class="tok-tactic">have</span> h_const : ∀ a b : <span class="tok-type">ℝ</span>, <span class="tok-number">0</span> ≤ a → a ≤ b → b ≤ <span class="tok-number">1</span> → ∫ t <span class="tok-keyword">in</span> a..b, deriv (<span class="tok-keyword">fun</span> t =&gt; v (x + t • (y - x))) t = v (x + b • (y - x)) - v (x + a • (y - x)) := <span class="tok-tactic">by</span>
+          <span class="tok-tactic">intros</span> a b _ _ _; <span class="tok-tactic">rw</span> [ intervalIntegral.integral_deriv_eq_sub&#x27; ] &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+          · <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> t ht =&gt; HasDerivAt.differentiableAt ( h_diff t ⟨ <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> Set.mem_uIcc.mp ht &lt;;&gt; <span class="tok-tactic">linarith</span>, <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> Set.mem_uIcc.mp ht &lt;;&gt; <span class="tok-tactic">linarith</span> ⟩ );
+          · <span class="tok-tactic">exact</span> ContinuousOn.congr ( <span class="tok-tactic">show</span> ContinuousOn ( <span class="tok-keyword">fun</span> _ =&gt; <span class="tok-number">0</span> ) _ from continuousOn_const ) <span class="tok-keyword">fun</span> t ht =&gt; HasDerivAt.deriv ( h_diff t &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">constructor</span> &lt;;&gt; <span class="tok-tactic">cases</span> Set.mem_uIcc.mp ht &lt;;&gt; <span class="tok-tactic">linarith</span> );
+        <span class="tok-tactic">have</span> := h_const <span class="tok-number">0</span> <span class="tok-number">1</span>; <span class="tok-tactic">rw</span> [ intervalIntegral.integral_congr <span class="tok-keyword">fun</span> t ht =&gt; HasDerivAt.deriv ( h_diff t &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">simpa</span> using ht ) ] at this; <span class="tok-tactic">norm_num</span> at this; <span class="tok-tactic">linarith</span>;
+      <span class="tok-tactic">exact</span> ⟨ Metric.isOpen_ball, Metric.mem_ball_self hε_pos, hε, h_const ⟩;
+    <span class="tok-comment">-- By the properties of locally constant functions on connected sets, $v$ must be constant on $\Omega$.</span>
+    <span class="tok-tactic">have</span> h_const_on_connected : ∀ S : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)), IsOpen S → IsConnected S → (∀ x ∈ S, ∃ U : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)), IsOpen U ∧ x ∈ U ∧ U ⊆ S ∧ ∀ y ∈ U, v y = v x) → ∀ x y : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d), x ∈ S → y ∈ S → v x = v y := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intros</span> S hS_open hS_conn hS_locally_const x y hx hy
+      <span class="tok-tactic">have</span> h_const_on_S : IsPreconnected S → (∀ x ∈ S, ∃ U : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)), IsOpen U ∧ x ∈ U ∧ U ⊆ S ∧ ∀ y ∈ U, v y = v x) → ∀ x y : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d), x ∈ S → y ∈ S → v x = v y := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">intros</span> hS_preconnected hS_locally_const x y hx hy
+        <span class="tok-tactic">have</span> h_const_on_S : ∀ c : <span class="tok-type">ℝ</span>, IsOpen {z ∈ S | v z = c} ∧ IsOpen {z ∈ S | v z ≠ c} := <span class="tok-tactic">by</span>
+          <span class="tok-tactic">intro</span> c
+          <span class="tok-tactic">constructor</span>;
+          · <span class="tok-tactic">rw</span> [ isOpen_iff_mem_nhds ];
+            <span class="tok-tactic">intro</span> x hx; rcases hS_locally_const x hx.<span class="tok-number">1</span> <span class="tok-keyword">with</span> ⟨ U, hU_open, hxU, hUS, hU ⟩ ; filter_upwards [ hU_open.mem_nhds hxU ] <span class="tok-keyword">with</span> y hy; <span class="tok-tactic">aesop</span>;
+          · <span class="tok-tactic">rw</span> [ isOpen_iff_mem_nhds ];
+            <span class="tok-tactic">intro</span> x hx; rcases hS_locally_const x hx.<span class="tok-number">1</span> <span class="tok-keyword">with</span> ⟨ U, hU_open, hxU, hUS, hU ⟩ ; filter_upwards [ hU_open.mem_nhds hxU ] <span class="tok-keyword">with</span> y hy; <span class="tok-tactic">aesop</span>;
+        generalize_proofs at *; (
+        contrapose! hS_preconnected;
+        simp_all +decide [ IsPreconnected ];
+        use { z ∈ S | v z = v x }, h_const_on_S ( v x ) |&gt;.<span class="tok-number">1</span>, { z ∈ S | ¬v z = v x }, h_const_on_S ( v x ) |&gt;.<span class="tok-number">2</span>; simp_all +decide [ Set.Nonempty ] ;
+        <span class="tok-tactic">exact</span> ⟨ <span class="tok-keyword">fun</span> z hz =&gt; <span class="tok-tactic">by</span> by_cases h : v z = v x &lt;;&gt; <span class="tok-tactic">aesop</span>, ⟨ x, hx, rfl ⟩, ⟨ y, hy, <span class="tok-tactic">by</span> tauto ⟩ ⟩);
+      <span class="tok-tactic">exact</span> h_const_on_S hS_conn.isPreconnected hS_locally_const x y hx hy;
+    <span class="tok-tactic">exact</span> h_const_on_connected Ω hΩ_open hΩ_conn h_locally_const;
+  <span class="tok-comment">-- By continuity on closure, v(x) = v(y) for all x, y ∈ closure Ω.</span>
+  <span class="tok-tactic">have</span> h_closure : ∀ x ∈ closure Ω, v x = v (Classical.choose (hΩ_conn.nonempty)) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">intro</span> x hx;
+    <span class="tok-comment">-- Since $x \in \overline{\Omega}$, there exists a sequence $\{x_n\}$ in $\Omega$ such that $x_n \to x$.</span>
+    <span class="tok-tactic">obtain</span> ⟨xn, hxn⟩ : ∃ xn : <span class="tok-type">ℕ</span> → EuclideanSpace <span class="tok-type">ℝ</span> (Fin d), (∀ n, xn n ∈ Ω) ∧ Filter.Tendsto xn Filter.atTop (nhds x) := <span class="tok-tactic">by</span>
+      rwa [ mem_closure_iff_seq_limit ] at hx;
+    <span class="tok-tactic">have</span> h_lim : Filter.Tendsto (<span class="tok-keyword">fun</span> n =&gt; v (xn n)) Filter.atTop (nhds (v x)) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">have</span> h_cont : ContinuousOn v (closure Ω) := hv_cont
+      <span class="tok-tactic">exact</span> h_cont.continuousWithinAt hx |&gt; <span class="tok-keyword">fun</span> h =&gt; h.tendsto.comp &lt;| Filter.tendsto_inf.mpr ⟨ hxn.<span class="tok-number">2</span>, Filter.tendsto_principal.mpr &lt;| Filter.Eventually.of_forall <span class="tok-keyword">fun</span> n =&gt; subset_closure &lt;| hxn.<span class="tok-number">1</span> n ⟩;
+    <span class="tok-tactic">exact</span> tendsto_nhds_unique h_lim ( tendsto_const_nhds.congr <span class="tok-keyword">fun</span> n =&gt; h_connected _ _ ( hxn.<span class="tok-number">1</span> n ) ( Classical.choose_spec hΩ_conn.nonempty ) ▸ rfl );
+  <span class="tok-tactic">obtain</span> ⟨ x, hx ⟩ := hv_bdry_ne;
+  <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> y hy =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hv_bdry x hx, h_closure x ( frontier_subset_closure hx ), h_closure y ( subset_closure hy ) ] ;
+
+/<span class="tok-comment">-- Zero-gradient H¹₀ function is identically zero. -/</span>
+<span class="tok-keyword">theorem</span> root_refined_local_claim_aristotle
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (hΩ_open : IsOpen Ω)
+    (hΩ_conn : IsConnected Ω)
+    (v : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (hv_diff : ContDiffOn <span class="tok-type">ℝ</span> <span class="tok-number">1</span> v Ω)
+    (hv_cont : ContinuousOn v (closure Ω))
+    (hv_bdry : ∀ x ∈ frontier Ω, v x = <span class="tok-number">0</span>)
+    (hv_bdry_ne : (frontier Ω).Nonempty)
+    (hv_intg : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖fderiv <span class="tok-type">ℝ</span> v x‖ ^ <span class="tok-number">2</span>) (volume.restrict Ω))
+    (hv_grad : ∫ x <span class="tok-keyword">in</span> Ω, ‖fderiv <span class="tok-type">ℝ</span> v x‖ ^ <span class="tok-number">2</span> = <span class="tok-number">0</span>) :
+    ∀ x ∈ Ω, v x = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Step 1: fderiv ℝ v = 0 a.e. on Ω</span>
+  <span class="tok-tactic">have</span> h_ae := fderiv_sq_ae_zero_of_integral_zero Ω v hv_intg hv_grad
+  <span class="tok-comment">-- Step 2: fderiv ℝ v = 0 everywhere on Ω (continuity of fderiv on open set + a.e. zero)</span>
+  <span class="tok-tactic">have</span> h_cont_fderiv : ContinuousOn (fderiv <span class="tok-type">ℝ</span> v) Ω := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h := hv_diff.continuousOn_fderivWithin (hΩ_open.uniqueDiffOn) le_rfl
+    <span class="tok-tactic">exact</span> h.congr <span class="tok-keyword">fun</span> x hx =&gt; (fderivWithin_of_isOpen hΩ_open hx).symm
+  <span class="tok-tactic">have</span> h_fderiv_zero : ∀ x ∈ Ω, fderiv <span class="tok-type">ℝ</span> v x = <span class="tok-number">0</span> :=
+    eq_zero_on_open_of_ae_zero_continuous Ω hΩ_open (fderiv <span class="tok-type">ℝ</span> v) h_cont_fderiv h_ae
+  <span class="tok-comment">-- Step 3: v = 0 on Ω</span>
+  <span class="tok-tactic">exact</span> eq_zero_of_fderiv_zero_bdry_zero Ω hΩ_open hΩ_conn v hv_diff hv_cont hv_bdry hv_bdry_ne h_fderiv_zero
+
+/<span class="tok-comment">-- **Weak maximum principle via the negative part.**</span>
+
+Let Ω ⊆ <span class="tok-type">ℝ</span>ᵈ be a connected <span class="tok-keyword">open</span> set and u a function whose negative part
+u⁻ = max(−u, <span class="tok-number">0</span>) is C¹ on Ω and continuous on its closure.
+If u ≥ <span class="tok-number">0</span> on the boundary ∂Ω (frontier Ω), and the gradient energy of the
+negative part vanishes — i.e., ∫_Ω ‖∇u⁻‖² = <span class="tok-number">0</span> — <span class="tok-keyword">then</span> u ≥ <span class="tok-number">0</span> throughout Ω.
+
+The gradient energy hypothesis is the analytical consequence of −Δu ≥ <span class="tok-number">0</span>
+combined <span class="tok-keyword">with</span> integration <span class="tok-tactic">by</span> parts and the gradient identity
+∫ ∇u · ∇u⁻ = −∫ |∇u⁻|². These PDE steps require Sobolev-space infrastructure
+not yet available <span class="tok-keyword">in</span> Mathlib, so they are encoded as a hypothesis here.
+The present <span class="tok-keyword">theorem</span> captures the logical core of the weak maximum principle:
+from the vanishing gradient energy, one deduces u⁻ ≡ <span class="tok-number">0</span> and hence u ≥ <span class="tok-number">0</span>. -/
+<span class="tok-keyword">theorem</span> root_aristotle
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (hΩ_open : IsOpen Ω)
+    (hΩ_conn : IsConnected Ω)
+    (u : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → <span class="tok-type">ℝ</span>)
+    (hv_diff : ContDiffOn <span class="tok-type">ℝ</span> <span class="tok-number">1</span> (fnNegPart u) Ω)
+    (hv_cont : ContinuousOn (fnNegPart u) (closure Ω))
+    (hu_bdry : ∀ x ∈ frontier Ω, u x ≥ <span class="tok-number">0</span>)
+    (hbdry_ne : (frontier Ω).Nonempty)
+    (hv_intg : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖fderiv <span class="tok-type">ℝ</span> (fnNegPart u) x‖ ^ <span class="tok-number">2</span>) (volume.restrict Ω))
+    (hv_grad : ∫ x <span class="tok-keyword">in</span> Ω, ‖fderiv <span class="tok-type">ℝ</span> (fnNegPart u) x‖ ^ <span class="tok-number">2</span> = <span class="tok-number">0</span>) :
+    ∀ x ∈ Ω, u x ≥ <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> hv_bdry_zero : ∀ x ∈ frontier Ω, fnNegPart u x = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">intro</span> x hx; <span class="tok-tactic">rw</span> [fnNegPart_eq_zero_iff_nonneg]; <span class="tok-tactic">exact</span> hu_bdry x hx
+  <span class="tok-tactic">have</span> hv_zero := root_refined_local_claim_aristotle Ω hΩ_open hΩ_conn (fnNegPart u)
+    hv_diff hv_cont hv_bdry_zero hbdry_ne hv_intg hv_grad
+  <span class="tok-tactic">intro</span> x hx
+  <span class="tok-tactic">exact</span> nonneg_of_fnNegPart_eq_zero (hv_zero x hx)</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+      </div>
+    </section>
+  </main>
+</body>
+</html>

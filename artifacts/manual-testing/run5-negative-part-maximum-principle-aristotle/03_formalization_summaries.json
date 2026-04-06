@@ -1,0 +1,29 @@
+[
+  {
+    "node_id": "grad_identity",
+    "status": "failed",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/grad_identity_worker_20260406-015152_fb56b38c.lean",
+    "attempt_count": 2,
+    "stderr": "",
+    "faithfulness_classification": "concrete_sublemma",
+    "lean_theorem_name": "grad_identity_aristotle"
+  },
+  {
+    "node_id": "root_refined_local_claim",
+    "status": "verified",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/root_refined_local_claim_worker_20260406-015152_595abf32.lean",
+    "attempt_count": 1,
+    "stderr": "",
+    "faithfulness_classification": "full_node",
+    "lean_theorem_name": "root_refined_local_claim_aristotle"
+  },
+  {
+    "node_id": "root",
+    "status": "verified",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/root_worker_20260406-025804_52a4d2dd.lean",
+    "attempt_count": 1,
+    "stderr": "",
+    "faithfulness_classification": "concrete_sublemma",
+    "lean_theorem_name": "root_aristotle"
+  }
+]

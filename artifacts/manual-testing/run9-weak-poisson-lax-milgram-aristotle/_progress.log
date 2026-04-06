@@ -1,0 +1,25 @@
+2026-04-06T04:29:49-07:00 [formal-islands] running benchmark end-to-end
+2026-04-06T04:29:49-07:00 [formal-islands] benchmark planning stage starting
+2026-04-06T04:29:49-07:00 [formal-islands] plan stage starting
+2026-04-06T04:29:49-07:00 [formal-islands] planning theorem graph
+2026-04-06T04:30:49-07:00 [formal-islands] planning complete: 3 nodes, 2 candidates
+2026-04-06T04:30:49-07:00 [formal-islands] benchmark formalization stage starting
+2026-04-06T04:30:49-07:00 [formal-islands] formalization stage starting
+2026-04-06T04:30:49-07:00 [formal-islands] Aristotle batch submitting 2 candidate node(s): node_cont_ell, node_bounded_a
+2026-04-06T04:30:49-07:00 [formal-islands] starting formalization for node node_cont_ell
+2026-04-06T04:30:49-07:00 [formal-islands] starting formalization for node node_bounded_a
+2026-04-06T04:30:49-07:00 [formal-islands] node node_cont_ell: structured attempt 1/2
+2026-04-06T04:30:49-07:00 [formal-islands] node node_bounded_a: structured attempt 1/2
+2026-04-06T04:30:49-07:00 [formal-islands] Aristotle submitting node node_bounded_a
+2026-04-06T04:30:49-07:00 [formal-islands] Aristotle submitting node node_cont_ell
+2026-04-06T04:41:31-07:00 [formal-islands] node node_cont_ell: retrying after compiler feedback
+2026-04-06T04:41:31-07:00 [formal-islands] node node_cont_ell: structured attempt 2/2
+2026-04-06T04:41:31-07:00 [formal-islands] Aristotle submitting node node_cont_ell
+2026-04-06T04:44:01-07:00 [formal-islands] node node_bounded_a: retrying after compiler feedback
+2026-04-06T04:44:01-07:00 [formal-islands] node node_bounded_a: structured attempt 2/2
+2026-04-06T04:44:01-07:00 [formal-islands] Aristotle submitting node node_bounded_a
+2026-04-06T04:56:12-07:00 [formal-islands] Aristotle completed node node_bounded_a
+2026-04-06T04:56:34-07:00 [formal-islands] node node_cont_ell: completed with over_abstract
+2026-04-06T04:56:34-07:00 [formal-islands] node node_bounded_a: completed with concrete_sublemma
+2026-04-06T04:56:34-07:00 [formal-islands] benchmark report stage starting
+2026-04-06T04:56:34-07:00 [formal-islands] report stage starting

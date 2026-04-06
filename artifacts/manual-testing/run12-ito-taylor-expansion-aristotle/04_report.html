@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Itô&#x27;s formula for a twice continuously differentiable function of Brownian motion - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: rgba(255, 250, 241, 0.98);
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
+      --graph-shell-top: rgba(255, 251, 242, 0.96);
+      --graph-shell-bottom: rgba(245, 238, 227, 0.96);
+      --checklist-panel: rgba(255, 250, 241, 0.95);
+      --target-panel: #fff8ee;
+      --code-surface: #f4efe6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161311;
+        --panel: #211b17;
+        --ink: #f3ede5;
+        --muted: #c0b2a3;
+        --border: #4a3d32;
+        --accent: #f0b47b;
+        --accent-soft: #3a2b20;
+        --highlight: #ffb25c;
+        --highlight-soft: #3f2d19;
+        --preview-soft: #312419;
+        --checked: #65c08a;
+        --checked-soft: #213126;
+        --edge: #8f8172;
+        --status-informal-stroke: #d69760;
+        --status-informal-fill: rgba(46, 34, 26, 0.96);
+        --status-candidate-stroke: #f0a64e;
+        --status-candidate-fill: #3f2d18;
+        --status-verified-stroke: #65c08a;
+        --status-verified-fill: #213126;
+        --status-failed-stroke: #dd8a79;
+        --status-failed-fill: #3b2320;
+        --graph-shell-top: rgba(44, 34, 27, 0.98);
+        --graph-shell-bottom: rgba(32, 25, 21, 0.98);
+        --checklist-panel: rgba(36, 29, 24, 0.98);
+        --target-panel: #31261f;
+        --code-surface: #2a231e;
+      }
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(circle at top, #2a211b, var(--bg));
+      }
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .math-text mjx-container {
+      max-width: 100%;
+    }
+    .math-text mjx-container[display="true"] {
+      margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .math-text mjx-container[jax="CHTML"][display="true"] {
+      padding: 0 !important;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--graph-shell-top), var(--graph-shell-bottom));
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+    .graph-frame {
+      width: min(100%, 460px);
+      margin: 0 auto;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 240px;
+      overflow: visible;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 2.8;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-edge.edge-provenance {
+      stroke-dasharray: 7 5;
+      opacity: 0.66;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-box {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-title {
+      fill: var(--ink);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 9.5px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--checklist-panel);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {
+      min-width: 0;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: var(--target-panel);
+    }
+    pre {
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 0.75rem;
+      background: var(--code-surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin: 0.6rem 0;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    code.inline-code {
+      background: var(--code-surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.95em;
+      white-space: break-spaces;
+    }
+    .statement-code {
+      margin-top: 0.35rem;
+    }
+    .statement-code pre,
+    .checklist-code pre {
+      margin-top: 0.35rem;
+      background: var(--code-surface);
+    }
+    .lean-code {
+      color: #2a241f;
+    }
+    .lean-code .tok-keyword {
+      color: #8b2f18;
+      font-weight: 700;
+    }
+    .lean-code .tok-tactic {
+      color: #9d5d17;
+      font-weight: 600;
+    }
+    .lean-code .tok-type {
+      color: #245f7a;
+    }
+    .lean-code .tok-number {
+      color: #7442a8;
+    }
+    .lean-code .tok-comment {
+      color: #6e7a60;
+      font-style: italic;
+    }
+    .lean-code .tok-string {
+      color: #2d7f4d;
+    }
+    @media (prefers-color-scheme: dark) {
+      .lean-code {
+        color: #f2e8dc;
+      }
+      .lean-code .tok-keyword {
+        color: #f08f63;
+      }
+      .lean-code .tok-tactic {
+        color: #f4b35d;
+      }
+      .lean-code .tok-type {
+        color: #73c7ff;
+      }
+      .lean-code .tok-number {
+        color: #be8cff;
+      }
+      .lean-code .tok-comment {
+        color: #97b18b;
+      }
+      .lean-code .tok-string {
+        color: #67d59a;
+      }
+    }
+    
+            .report-root:has(a.node-ito_formula:hover) .node-ito_formula.node-card,
+            .report-root:has(#node-ito_formula:target) a.node-ito_formula .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-ito_formula:hover) .node-ito_formula.node-card,
+            .report-root:has(#node-ito_formula:target).report-root .node-ito_formula.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-taylor_expansion:hover) .node-taylor_expansion.node-card,
+            .report-root:has(#node-taylor_expansion:target) a.node-taylor_expansion .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-taylor_expansion:hover) .node-taylor_expansion.node-card,
+            .report-root:has(#node-taylor_expansion:target).report-root .node-taylor_expansion.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-mn_vanishes:hover) .node-mn_vanishes.node-card,
+            .report-root:has(#node-mn_vanishes:target) a.node-mn_vanishes .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-mn_vanishes:hover) .node-mn_vanishes.node-card,
+            .report-root:has(#node-mn_vanishes:target).report-root .node-mn_vanishes.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-rn_vanishes:hover) .node-rn_vanishes.node-card,
+            .report-root:has(#node-rn_vanishes:target) a.node-rn_vanishes .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-rn_vanishes:hover) .node-rn_vanishes.node-card,
+            .report-root:has(#node-rn_vanishes:target).report-root .node-rn_vanishes.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-mn_vanishes__formal_core:hover) .node-mn_vanishes__formal_core.node-card,
+            .report-root:has(#node-mn_vanishes__formal_core:target) a.node-mn_vanishes__formal_core .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-mn_vanishes__formal_core:hover) .node-mn_vanishes__formal_core.node-card,
+            .report-root:has(#node-mn_vanishes__formal_core:target).report-root .node-mn_vanishes__formal_core.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-ito_formula:hover) a.node-ito_formula .graph-node-box,
+.report-root:has(.obligation-informal-proof-ito_formula:hover) .node-ito_formula.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-ito_formula:checked) a.node-ito_formula .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-ito_formula:checked) .node-ito_formula.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-ito_formula:checked) .edge-mn_vanishes-ito_formula,
+.report-root:has(#obligation-check-informal-proof-ito_formula:checked) .edge-rn_vanishes-ito_formula,
+.report-root:has(#obligation-check-informal-proof-ito_formula:checked) .edge-taylor_expansion-ito_formula {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-ito_formula:hover) .obligation-informal-proof-ito_formula {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-ito_formula:checked) .obligation-informal-proof-ito_formula {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-taylor_expansion:hover) a.node-taylor_expansion .graph-node-box,
+.report-root:has(.obligation-informal-proof-taylor_expansion:hover) .node-taylor_expansion.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-taylor_expansion:checked) a.node-taylor_expansion .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-taylor_expansion:checked) .node-taylor_expansion.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-taylor_expansion:checked) .edge-taylor_expansion-ito_formula,
+.report-root:has(#obligation-check-informal-proof-taylor_expansion:checked) .edge-taylor_expansion-rn_vanishes {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-taylor_expansion:hover) .obligation-informal-proof-taylor_expansion {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-taylor_expansion:checked) .obligation-informal-proof-taylor_expansion {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-mn_vanishes:hover) a.node-mn_vanishes .graph-node-box,
+.report-root:has(.obligation-informal-proof-mn_vanishes:hover) .node-mn_vanishes.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-mn_vanishes:checked) a.node-mn_vanishes .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-mn_vanishes:checked) .node-mn_vanishes.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-mn_vanishes:checked) .edge-mn_vanishes-ito_formula,
+.report-root:has(#obligation-check-informal-proof-mn_vanishes:checked) .edge-mn_vanishes__formal_core-mn_vanishes {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-mn_vanishes:hover) .obligation-informal-proof-mn_vanishes {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-mn_vanishes:checked) .obligation-informal-proof-mn_vanishes {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-rn_vanishes:hover) a.node-rn_vanishes .graph-node-box,
+.report-root:has(.obligation-informal-proof-rn_vanishes:hover) .node-rn_vanishes.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-rn_vanishes:checked) a.node-rn_vanishes .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-rn_vanishes:checked) .node-rn_vanishes.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-rn_vanishes:checked) .edge-rn_vanishes-ito_formula,
+.report-root:has(#obligation-check-informal-proof-rn_vanishes:checked) .edge-taylor_expansion-rn_vanishes {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-rn_vanishes:hover) .obligation-informal-proof-rn_vanishes {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-rn_vanishes:checked) .obligation-informal-proof-rn_vanishes {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-mn_vanishes__formal_core:hover) a.node-mn_vanishes__formal_core .graph-node-box,
+.report-root:has(.obligation-semantic-match-mn_vanishes__formal_core:hover) .node-mn_vanishes__formal_core.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-mn_vanishes__formal_core:checked) a.node-mn_vanishes__formal_core .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-mn_vanishes__formal_core:checked) .node-mn_vanishes__formal_core.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-mn_vanishes__formal_core:checked) .edge-mn_vanishes__formal_core-mn_vanishes {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-mn_vanishes__formal_core:hover) .obligation-semantic-match-mn_vanishes__formal_core {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-mn_vanishes__formal_core:checked) .obligation-semantic-match-mn_vanishes__formal_core {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-boundary-mn_vanishes__formal_core-mn_vanishes:hover) a.node-mn_vanishes__formal_core .graph-node-box,
+.report-root:has(.obligation-boundary-mn_vanishes__formal_core-mn_vanishes:hover) a.node-mn_vanishes .graph-node-box,
+.report-root:has(.obligation-boundary-mn_vanishes__formal_core-mn_vanishes:hover) .node-mn_vanishes__formal_core.node-card,
+.report-root:has(.obligation-boundary-mn_vanishes__formal_core-mn_vanishes:hover) .node-mn_vanishes.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-mn_vanishes__formal_core-mn_vanishes:checked) a.node-mn_vanishes__formal_core .graph-node-box,
+.report-root:has(#obligation-check-boundary-mn_vanishes__formal_core-mn_vanishes:checked) a.node-mn_vanishes .graph-node-box,
+.report-root:has(#obligation-check-boundary-mn_vanishes__formal_core-mn_vanishes:checked) .node-mn_vanishes__formal_core.node-card,
+.report-root:has(#obligation-check-boundary-mn_vanishes__formal_core-mn_vanishes:checked) .node-mn_vanishes.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-mn_vanishes__formal_core-mn_vanishes:checked) .edge-mn_vanishes-ito_formula,
+.report-root:has(#obligation-check-boundary-mn_vanishes__formal_core-mn_vanishes:checked) .edge-mn_vanishes__formal_core-mn_vanishes {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-boundary-mn_vanishes__formal_core-mn_vanishes:hover) .obligation-boundary-mn_vanishes__formal_core-mn_vanishes {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-boundary-mn_vanishes__formal_core-mn_vanishes:checked) .obligation-boundary-mn_vanishes__formal_core-mn_vanishes {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-root">
+    <section>
+      <h1>Itô&#x27;s formula for a twice continuously differentiable function of Brownian motion</h1>
+      <div class="math-text">Itô&#x27;s formula for a twice continuously differentiable function of Brownian motion.
+
+Let \((B_t)_{t\ge 0}\) be a standard one-dimensional Brownian motion, let \(T&gt;0\), and let \(f:\mathbb{R}\to\mathbb{R}\) be a \(C^2\) function. Assume for simplicity that \(f&#x27;\) and \(f&#x27;&#x27;\) are bounded and that \(f&#x27;&#x27;\) is uniformly continuous on \(\mathbb{R}\). Then for every \(t\in[0,T]\),
+\[
+f(B_t)
+=
+f(B_0)
++
+\int_0^t f&#x27;(B_s)\,dB_s
++
+\frac12\int_0^t f&#x27;&#x27;(B_s)\,ds.
+\]</div>
+      <p class="meta">Root node: ito_formula</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 5</span>
+        <span class="pill">Edges: 5</span>
+        <span class="pill">Informal: 3</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 1</span>
+        <span class="pill">Failed: 1</span>
+      </p>
+      <div class="graph-shell">
+        
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 578" width="420" height="578" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><line class="graph-edge edge-taylor_expansion-ito_formula" x1="210.0" y1="201.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-mn_vanishes-ito_formula" x1="210.0" y1="319.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-rn_vanishes-ito_formula" x1="210.0" y1="437.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-taylor_expansion-rn_vanishes" x1="210.0" y1="201.0" x2="210.0" y2="377.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-mn_vanishes__formal_core-mn_vanishes" x1="210.0" y1="555.0" x2="210.0" y2="259.0" marker-end="url(#graph-arrow)"></line></g>
+        <g>
+    <a class="graph-node-link node-ito_formula status-informal" href="#node-ito_formula">
+      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="47">Itô&#x27;s Formula</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">ito_formula</text>
+    </a>
+    
+
+    <a class="graph-node-link node-taylor_expansion status-formal-failed" href="#node-taylor_expansion">
+      <rect class="graph-node-box status-formal-failed" x="144.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="160">Taylor identity</tspan>
+<tspan x="210.0" y="172">&amp; remainder bou…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="186">taylor_expansion</text>
+    </a>
+    
+
+    <a class="graph-node-link node-mn_vanishes status-informal" href="#node-mn_vanishes">
+      <rect class="graph-node-box status-informal" x="144.0" y="256" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="278">$M_n\to 0$ in</tspan>
+<tspan x="210.0" y="290">$L^2$</tspan></text>
+      <text class="graph-node-id" x="210.0" y="304">mn_vanishes</text>
+    </a>
+    
+
+    <a class="graph-node-link node-rn_vanishes status-informal" href="#node-rn_vanishes">
+      <rect class="graph-node-box status-informal" x="144.0" y="374" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="386" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="396">$R_n\to 0$ in</tspan>
+<tspan x="210.0" y="408">probability</tspan></text>
+      <text class="graph-node-id" x="210.0" y="422">rn_vanishes</text>
+    </a>
+    
+
+    <a class="graph-node-link node-mn_vanishes__formal_core status-formal-verified" href="#node-mn_vanishes__formal_core">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="492" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="504" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="519">Certified core</tspan></text>
+      <text class="graph-node-id" x="210.0" y="540">mn_vanishes__formal_core</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+      </div>
+      <p class="graph-caption">
+        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+      </p>
+      <p class="graph-caption">
+        Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
+      </p>
+      <p class="graph-caption">
+        Dashed gray edges show provenance or refinement links between nearby nodes. They are not proof dependencies unless the edge is part of the main dependency layout.
+      </p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-informal-proof-ito_formula" data-obligation-id="informal-proof-ito_formula">
+      <label class="checklist-label" for="obligation-check-informal-proof-ito_formula">
+        <input id="obligation-check-informal-proof-ito_formula" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;ito_formula&#x27; (Itô&#x27;s Formula) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-ito_formula">ito_formula</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-taylor_expansion" data-obligation-id="informal-proof-taylor_expansion">
+      <label class="checklist-label" for="obligation-check-informal-proof-taylor_expansion">
+        <input id="obligation-check-informal-proof-taylor_expansion" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;taylor_expansion&#x27; (Taylor Expansion Identity with Remainder Bound) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-taylor_expansion">taylor_expansion</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-mn_vanishes" data-obligation-id="informal-proof-mn_vanishes">
+      <label class="checklist-label" for="obligation-check-informal-proof-mn_vanishes">
+        <input id="obligation-check-informal-proof-mn_vanishes" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;mn_vanishes&#x27; (Quadratic Variation Error Vanishes in $L^2$) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-mn_vanishes">mn_vanishes</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-rn_vanishes" data-obligation-id="informal-proof-rn_vanishes">
+      <label class="checklist-label" for="obligation-check-informal-proof-rn_vanishes">
+        <input id="obligation-check-informal-proof-rn_vanishes" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;rn_vanishes&#x27; (Taylor Remainder $R_n$ Vanishes in Probability) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-rn_vanishes">rn_vanishes</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-mn_vanishes__formal_core" data-obligation-id="semantic-match-mn_vanishes__formal_core">
+      <label class="checklist-label" for="obligation-check-semantic-match-mn_vanishes__formal_core">
+        <input id="obligation-check-semantic-match-mn_vanishes__formal_core" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;mn_vanishes__formal_core&#x27; (Certified local core for Quadratic Variation Error Vanishes in $L^2$) honestly represents a narrower verified Lean supporting sublemma with statement &#x27;theorem mn_vanishes_aristotle {n : ℕ} {Δt : Fin n → ℝ} {C T δ : ℝ}
+    (hΔt : ∀ k, 0 ≤ Δt k)
+    (hT : ∑ k, Δt k = T)
+    (hmesh : ∀ k, Δt k ≤ δ)
+    (hC : 0 ≤ C) :
+    2 * C ^ 2 * ∑ k : Fin n, (Δt k) ^ 2 ≤ 2 * C ^ 2 * δ * T&#x27;, rather than overclaiming full coverage of its parent informal step.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> mn_vanishes_aristotle {n : <span class="tok-type">ℕ</span>} {Δt : Fin n → <span class="tok-type">ℝ</span>} {C T δ : <span class="tok-type">ℝ</span>}
+    (hΔt : ∀ k, <span class="tok-number">0</span> ≤ Δt k)
+    (hT : ∑ k, Δt k = T)
+    (hmesh : ∀ k, Δt k ≤ δ)
+    (hC : <span class="tok-number">0</span> ≤ C) :
+    <span class="tok-number">2</span> * C ^ <span class="tok-number">2</span> * ∑ k : Fin n, (Δt k) ^ <span class="tok-number">2</span> ≤ <span class="tok-number">2</span> * C ^ <span class="tok-number">2</span> * δ * T</code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-mn_vanishes__formal_core">mn_vanishes__formal_core</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-boundary-mn_vanishes__formal_core-mn_vanishes" data-obligation-id="boundary-mn_vanishes__formal_core-mn_vanishes">
+      <label class="checklist-label" for="obligation-check-boundary-mn_vanishes__formal_core-mn_vanishes">
+        <input id="obligation-check-boundary-mn_vanishes__formal_core-mn_vanishes" type="checkbox" />
+        <span>
+          <span class="checklist-kind">boundary_interface_check</span><br />
+          Check that verified supporting sublemma &#x27;mn_vanishes__formal_core&#x27; certifies the specific concrete local core that informal parent &#x27;mn_vanishes&#x27; relies on, without overclaiming full coverage of the parent node.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-mn_vanishes__formal_core">mn_vanishes__formal_core</a>, <a class="node-jump" href="#node-mn_vanishes">mn_vanishes</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="nodes-grid">
+        
+    <article class="node-card node-ito_formula" id="node-ito_formula" data-node-id="ito_formula">
+      <h3>Itô&#x27;s Formula</h3>
+      <p class="meta">Node id: ito_formula | Status: informal</p>
+      
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For $(B_t)_{t\ge 0}$ a standard Brownian motion and $f\in C^2(\mathbb{R})$ with $f&#x27;,f&#x27;&#x27;$ bounded and $f&#x27;&#x27;$ uniformly continuous, for every $t\in[0,T]$:
+\[
+f(B_t) = f(B_0) + \int_0^t f&#x27;(B_s)\,dB_s + \frac{1}{2}\int_0^t f&#x27;&#x27;(B_s)\,ds.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Fix $t\in[0,T]$ and a partition $0=t_0&lt;t_1&lt;\cdots&lt;t_n=t$ with $\Delta B_k := B_{t_{k+1}}-B_{t_k}$ and $\Delta t_k := t_{k+1}-t_k$. By the telescoping identity and Taylor&#x27;s theorem (see node taylor_expansion),
+\[
+f(B_t)-f(B_0) = \sum_{k=0}^{n-1} f&#x27;(B_{t_k})\,\Delta B_k + \frac{1}{2}\sum_{k=0}^{n-1} f&#x27;&#x27;(B_{t_k})(\Delta B_k)^2 + R_n.
+\]
+The three terms are handled separately:
+
+(1) **First term** converges to $\int_0^t f&#x27;(B_s)\,dB_s$ in $L^2$ by the definition and $L^2$-isometry of the Itô integral for adapted left-endpoint processes.
+
+(2) **Second term**: Write $\frac{1}{2}\sum_k f&#x27;&#x27;(B_{t_k})(\Delta B_k)^2 = \frac{1}{2}\sum_k f&#x27;&#x27;(B_{t_k})\,\Delta t_k + \frac{1}{2}M_n$, where $M_n := \sum_k f&#x27;&#x27;(B_{t_k})((\Delta B_k)^2-\Delta t_k)$. The Riemann sum $\sum_k f&#x27;&#x27;(B_{t_k})\,\Delta t_k$ converges a.s. to $\int_0^t f&#x27;&#x27;(B_s)\,ds$ since $s\mapsto f&#x27;&#x27;(B_s)$ is a.s. continuous. By node mn_vanishes, $M_n\to 0$ in $L^2$. Hence the second term converges in probability to $\frac{1}{2}\int_0^t f&#x27;&#x27;(B_s)\,ds$.
+
+(3) **Third term** $R_n\to 0$ in probability by node rn_vanishes.
+
+Taking the mesh to zero, all three limits combine to give Itô&#x27;s formula.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-taylor_expansion" id="node-taylor_expansion" data-node-id="taylor_expansion">
+      <h3>Taylor Expansion Identity with Remainder Bound</h3>
+      <p class="meta">Node id: taylor_expansion | Status: formal_failed</p>
+      <p class="meta">Display label: Taylor identity &amp; remainder bound</p>
+      <p class="meta">Formalization priority: 1. Rationale: Entirely deterministic, self-contained, and the pivotal step of the whole proof. The telescoping sum plus pointwise Taylor identity plus explicit remainder bound is a clean finite algebraic statement with no measure theory, making it the highest-yield formal island: formalizing it in Lean would validate the heart of the argument at low stochastic overhead.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For each increment, Taylor&#x27;s theorem gives
+\[
+f(B_{t_{k+1}}) = f(B_{t_k}) + f&#x27;(B_{t_k})\,\Delta B_k + \tfrac{1}{2}f&#x27;&#x27;(B_{t_k})(\Delta B_k)^2 + \tfrac{1}{2}(f&#x27;&#x27;(\xi_k)-f&#x27;&#x27;(B_{t_k}))(\Delta B_k)^2
+\]
+for some $\xi_k$ between $B_{t_k}$ and $B_{t_{k+1}}$. Summing via the telescoping identity yields
+\[
+f(B_t)-f(B_0) = \sum_{k=0}^{n-1}f&#x27;(B_{t_k})\,\Delta B_k + \frac{1}{2}\sum_{k=0}^{n-1}f&#x27;&#x27;(B_{t_k})(\Delta B_k)^2 + R_n,
+\]
+where the remainder satisfies
+\[
+|R_n| \le \frac{1}{2}\,\omega\!\left(\max_k |\Delta B_k|\right)\sum_{k=0}^{n-1}(\Delta B_k)^2,
+\]
+and $\omega$ is any modulus of continuity for $f&#x27;&#x27;$.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">This is purely deterministic. Apply the second-order Taylor formula with Lagrange remainder to $f$ at each point $B_{t_k}$: there exists $\xi_k$ with $|\xi_k - B_{t_k}| \le |\Delta B_k|$ such that
+\[
+f(B_{t_{k+1}}) - f(B_{t_k}) = f&#x27;(B_{t_k})\,\Delta B_k + \tfrac{1}{2}f&#x27;&#x27;(B_{t_k})(\Delta B_k)^2 + \tfrac{1}{2}(f&#x27;&#x27;(\xi_k)-f&#x27;&#x27;(B_{t_k}))(\Delta B_k)^2.
+\]
+Sum over $k=0,\ldots,n-1$ and use the telescoping identity $\sum_k (f(B_{t_{k+1}})-f(B_{t_k})) = f(B_t)-f(B_0)$. Define
+\[
+R_n := \frac{1}{2}\sum_{k=0}^{n-1}(f&#x27;&#x27;(\xi_k)-f&#x27;&#x27;(B_{t_k}))(\Delta B_k)^2.
+\]
+Since $|\xi_k - B_{t_k}|\le |\Delta B_k|$, we have $|f&#x27;&#x27;(\xi_k)-f&#x27;&#x27;(B_{t_k})|\le \omega(|\Delta B_k|)\le \omega(\max_j|\Delta B_j|)$ for any modulus $\omega$ of $f&#x27;&#x27;$. Hence
+\[
+|R_n| \le \frac{1}{2}\,\omega\!\left(\max_k |\Delta B_k|\right)\sum_{k=0}^{n-1}(\Delta B_k)^2. \qquad\square
+\]</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> taylor_expansion_aristotle</p>
+        <p><strong>Coverage:</strong> concrete_sublemma</p><p class="meta">Accepted as a narrower concrete local core in the same ambient setting; it should support the parent node rather than count as full-node certification.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> taylor_expansion_aristotle
+    (n : <span class="tok-type">ℕ</span>) (f : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>) (x : <span class="tok-type">ℕ</span> → <span class="tok-type">ℝ</span>) (hf : ContDiff <span class="tok-type">ℝ</span> <span class="tok-number">2</span> f)
+    (ω : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>) (hω_nonneg : ∀ t, <span class="tok-number">0</span> ≤ ω t) (hω_mono : Monotone ω)
+    (hω_mod : ∀ u v, |deriv (deriv f) u - deriv (deriv f) v| ≤ ω (|u - v|))
+    (δ : <span class="tok-type">ℝ</span>) (hδ : ∀ k, k &lt; n → |x (k + <span class="tok-number">1</span>) - x k| ≤ δ) :
+    ∃ R : <span class="tok-type">ℝ</span>,
+      f (x n) - f (x <span class="tok-number">0</span>) =
+        (∑ k ∈ Finset.range n, deriv f (x k) * (x (k + <span class="tok-number">1</span>) - x k))
+        + <span class="tok-number">1</span> / <span class="tok-number">2</span> * (∑ k ∈ Finset.range n, deriv (deriv f) (x k) * (x (k + <span class="tok-number">1</span>) - x k) ^ <span class="tok-number">2</span>)
+        + R
+      ∧ |R| ≤ <span class="tok-number">1</span> / <span class="tok-number">2</span> * ω δ * ∑ k ∈ Finset.range n, (x (k + <span class="tok-number">1</span>) - x k) ^ <span class="tok-number">2</span></code></pre>
+        </div>
+        <p><strong>Verification status:</strong> failed</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/taylor_expansion_worker_20260406-062552_3919c243.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code">/-
+  Taylor Expansion Identity <span class="tok-keyword">with</span> Remainder Bound
+
+  For a C² function f and a finite sequence of real numbers x₀, x₁, ..., xₙ,
+  the telescoping sum of Taylor expansions yields:
+
+    f(xₙ) - f(x₀) = Σ_{k&lt;n} f&#x27;(xₖ)(xₖ₊₁ - xₖ) + (<span class="tok-number">1</span>/<span class="tok-number">2</span>) Σ_{k&lt;n} f&#x27;&#x27;(xₖ)(xₖ₊₁ - xₖ)² + R
+
+  <span class="tok-keyword">where</span> the remainder R satisfies |R| ≤ (<span class="tok-number">1</span>/<span class="tok-number">2</span>) · ω(δ) · Σ_{k&lt;n} (xₖ₊₁ - xₖ)²
+  for any modulus of continuity ω of f&#x27;&#x27; and any δ ≥ max_k |xₖ₊₁ - xₖ|.
+
+  This is the key deterministic step <span class="tok-keyword">in</span> the proof of Itô&#x27;s formula.
+-/
+<span class="tok-keyword">import</span> Mathlib.Analysis.Calculus.Taylor
+<span class="tok-keyword">import</span> Mathlib.Analysis.Calculus.Deriv.Basic
+<span class="tok-keyword">import</span> Mathlib.Analysis.Calculus.MeanValue
+
+<span class="tok-keyword">open</span> Finset BigOperators Set
+
+noncomputable <span class="tok-keyword">section</span>
+
+/-
+Second-order Taylor remainder bound for a single step.
+For a C² function f and points a, b, the second-order Taylor remainder
+  f(b) - f(a) - f&#x27;(a)(b-a) - (<span class="tok-number">1</span>/<span class="tok-number">2</span>)f&#x27;&#x27;(a)(b-a)²
+is bounded <span class="tok-tactic">by</span> (<span class="tok-number">1</span>/<span class="tok-number">2</span>) · ω(|b-a|) · (b-a)², <span class="tok-keyword">where</span> ω is a modulus of continuity for f&#x27;&#x27;.
+-/
+<span class="tok-keyword">lemma</span> taylor_second_order_remainder_bound
+    (f : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>) (a b : <span class="tok-type">ℝ</span>) (hf : ContDiff <span class="tok-type">ℝ</span> <span class="tok-number">2</span> f)
+    (ω : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>) (hω_nonneg : ∀ t, <span class="tok-number">0</span> ≤ ω t) (hω_mono : Monotone ω)
+    (hω_mod : ∀ u v, |deriv (deriv f) u - deriv (deriv f) v| ≤ ω (|u - v|)) :
+    |f b - f a - deriv f a * (b - a) - <span class="tok-number">1</span> / <span class="tok-number">2</span> * deriv (deriv f) a * (b - a) ^ <span class="tok-number">2</span>|
+      ≤ <span class="tok-number">1</span> / <span class="tok-number">2</span> * ω (|b - a|) * (b - a) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  by_cases hab : a &lt; b &lt;;&gt; simp_all +decide [ abs_le ];
+  · <span class="tok-comment">-- Use taylor_mean_remainder_lagrange_iteratedDeriv from Mathlib for the case a &lt; b: it gives ξ ∈ (a,b) with f(b) - taylorWithinEval f 1 (Icc a b) a b = iteratedDeriv 2 f ξ * (b-a)² / 2!.</span>
+    <span class="tok-tactic">obtain</span> ⟨ξ, hξ⟩ : ∃ ξ ∈ Set.Ioo a b, f b - f a - deriv f a * (b - a) = (<span class="tok-number">1</span> / <span class="tok-number">2</span>) * deriv (deriv f) ξ * (b - a) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">have</span> := taylor_mean_remainder_lagrange_iteratedDeriv hab ( <span class="tok-tactic">show</span> ContDiffOn <span class="tok-type">ℝ</span> <span class="tok-number">2</span> f ( Set.Icc a b ) from hf.contDiffOn ) ; <span class="tok-tactic">norm_num</span> at *;
+      <span class="tok-tactic">obtain</span> ⟨ ξ, hξ₁, hξ₂ ⟩ := this; use ξ; <span class="tok-tactic">rw</span> [ derivWithin ] at hξ₂; simp_all +decide [ mul_comm, iteratedDeriv_succ ] ; <span class="tok-tactic">ring</span>;
+      <span class="tok-tactic">rw</span> [ fderivWithin_eq_fderiv ] at hξ₂;
+      · <span class="tok-tactic">norm_num</span> [ fderiv_apply_one_eq_deriv ] at hξ₂; <span class="tok-tactic">linarith</span>;
+      · <span class="tok-tactic">exact</span> uniqueDiffOn_Icc ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) a ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span>; <span class="tok-tactic">linarith</span> );
+      · <span class="tok-tactic">exact</span> hf.contDiffAt.differentiableAt ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> );
+    <span class="tok-tactic">have</span> := hω_mod ξ a; <span class="tok-tactic">norm_num</span> at * ; <span class="tok-tactic">constructor</span> &lt;;&gt; nlinarith [ hω_nonneg |b - a|, hω_mono ( <span class="tok-tactic">show</span> |ξ - a| ≤ |b - a| <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> abs_cases ( ξ - a ) &lt;;&gt; <span class="tok-tactic">cases</span> abs_cases ( b - a ) &lt;;&gt; <span class="tok-tactic">linarith</span> [ hξ.<span class="tok-number">1.1</span>, hξ.<span class="tok-number">1.2</span> ] ) ] ;
+  · <span class="tok-tactic">cases</span> eq_or_lt_of_le hab &lt;;&gt; simp_all +decide [ abs_of_nonpos, abs_of_nonneg ];
+    <span class="tok-comment">-- Apply the taylor_mean_remainder_lagrange_iteratedDeriv lemma to the interval [b, a].</span>
+    <span class="tok-tactic">obtain</span> ⟨ξ, hξ⟩ : ∃ ξ ∈ Set.Ioo b a, deriv (deriv f) ξ = (<span class="tok-number">2</span> * (f b - f a - deriv f a * (b - a))) / (b - a) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">have</span> h_taylor : ∃ ξ ∈ Set.Ioo b a, deriv (<span class="tok-keyword">fun</span> x =&gt; f x - f a - deriv f a * (x - a) - (f b - f a - deriv f a * (b - a)) / (b - a) ^ <span class="tok-number">2</span> * (x - a) ^ <span class="tok-number">2</span>) ξ = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+        apply_rules [ exists_deriv_eq_zero ];
+        · <span class="tok-tactic">exact</span> ContinuousOn.sub ( ContinuousOn.sub ( ContinuousOn.sub ( hf.continuous.continuousOn ) ( continuousOn_const ) ) ( continuousOn_const.mul ( continuousOn_id.sub continuousOn_const ) ) ) ( continuousOn_const.mul ( continuousOn_id.sub continuousOn_const |&gt; ContinuousOn.pow &lt;| <span class="tok-number">2</span> ) );
+        · <span class="tok-tactic">rw</span> [ div_mul_cancel₀ ] &lt;;&gt; nlinarith;
+      <span class="tok-tactic">norm_num</span> [ hf.contDiffAt.differentiableAt ] at *;
+      <span class="tok-tactic">obtain</span> ⟨ ξ, hξ₁, hξ₂ ⟩ := h_taylor;
+      <span class="tok-tactic">have</span> h_mean_value : ∃ c ∈ Set.Ioo ξ a, deriv (deriv f) c = (deriv f a - deriv f ξ) / (a - ξ) := <span class="tok-tactic">by</span>
+        apply_rules [ exists_deriv_eq_slope ];
+        · <span class="tok-tactic">linarith</span>;
+        · <span class="tok-tactic">exact</span> hf.continuous_deriv ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) |&gt; Continuous.continuousOn;
+        · fun_prop;
+      grind;
+    <span class="tok-tactic">have</span> := hω_mod a ξ; simp_all +decide [ abs_of_neg, abs_of_nonneg, le_of_lt ];
+    <span class="tok-tactic">constructor</span> &lt;;&gt; nlinarith [ hω_mono ( <span class="tok-tactic">show</span> a - ξ ≤ a - b <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ), mul_div_cancel₀ ( <span class="tok-number">2</span> * ( f b - f a - deriv f a * ( b - a ) ) ) ( <span class="tok-tactic">by</span> nlinarith : ( b - a ) ^ <span class="tok-number">2</span> ≠ <span class="tok-number">0</span> ) ]
+
+/-
+The telescoping Taylor expansion identity <span class="tok-keyword">with</span> remainder bound.
+
+For a C² function f and a sequence of points x₀, ..., xₙ, we <span class="tok-tactic">have</span>:
+  f(xₙ) - f(x₀) = Σ f&#x27;(xₖ)·Δxₖ + (<span class="tok-number">1</span>/<span class="tok-number">2</span>)·Σ f&#x27;&#x27;(xₖ)·(Δxₖ)² + R
+<span class="tok-keyword">where</span> the remainder R satisfies |R| ≤ (<span class="tok-number">1</span>/<span class="tok-number">2</span>)·ω(δ)·Σ(Δxₖ)² for any δ bounding max|Δxₖ|.
+-/
+<span class="tok-keyword">theorem</span> taylor_expansion_aristotle
+    (n : <span class="tok-type">ℕ</span>) (f : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>) (x : <span class="tok-type">ℕ</span> → <span class="tok-type">ℝ</span>) (hf : ContDiff <span class="tok-type">ℝ</span> <span class="tok-number">2</span> f)
+    (ω : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>) (hω_nonneg : ∀ t, <span class="tok-number">0</span> ≤ ω t) (hω_mono : Monotone ω)
+    (hω_mod : ∀ u v, |deriv (deriv f) u - deriv (deriv f) v| ≤ ω (|u - v|))
+    (δ : <span class="tok-type">ℝ</span>) (hδ : ∀ k, k &lt; n → |x (k + <span class="tok-number">1</span>) - x k| ≤ δ) :
+    ∃ R : <span class="tok-type">ℝ</span>,
+      f (x n) - f (x <span class="tok-number">0</span>) =
+        (∑ k ∈ Finset.range n, deriv f (x k) * (x (k + <span class="tok-number">1</span>) - x k))
+        + <span class="tok-number">1</span> / <span class="tok-number">2</span> * (∑ k ∈ Finset.range n, deriv (deriv f) (x k) * (x (k + <span class="tok-number">1</span>) - x k) ^ <span class="tok-number">2</span>)
+        + R
+      ∧ |R| ≤ <span class="tok-number">1</span> / <span class="tok-number">2</span> * ω δ * ∑ k ∈ Finset.range n, (x (k + <span class="tok-number">1</span>) - x k) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">refine</span>&#x27; ⟨ _, eq_add_of_sub_eq&#x27; rfl, _ ⟩;
+  <span class="tok-comment">-- Apply the single-step bound to each term in the sum.</span>
+  <span class="tok-tactic">have</span> h_remainder_bound : ∀ k &lt; n, |(f (x (k + <span class="tok-number">1</span>)) - f (x k) - deriv f (x k) * (x (k + <span class="tok-number">1</span>) - x k) - <span class="tok-number">1</span> / <span class="tok-number">2</span> * deriv (deriv f) (x k) * (x (k + <span class="tok-number">1</span>) - x k) ^ <span class="tok-number">2</span>)| ≤ <span class="tok-number">1</span> / <span class="tok-number">2</span> * ω (|x (k + <span class="tok-number">1</span>) - x k|) * (x (k + <span class="tok-number">1</span>) - x k) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> k a =&gt; taylor_second_order_remainder_bound f (x k) (x (k + <span class="tok-number">1</span>)) hf ω hω_nonneg hω_mono hω_mod;
+  <span class="tok-comment">-- By the triangle inequality, we can bound the absolute value of the sum.</span>
+  <span class="tok-tactic">have</span> h_triangle : |∑ k ∈ Finset.range n, (f (x (k + <span class="tok-number">1</span>)) - f (x k) - deriv f (x k) * (x (k + <span class="tok-number">1</span>) - x k) - <span class="tok-number">1</span> / <span class="tok-number">2</span> * deriv (deriv f) (x k) * (x (k + <span class="tok-number">1</span>) - x k) ^ <span class="tok-number">2</span>)| ≤ ∑ k ∈ Finset.range n, (<span class="tok-number">1</span> / <span class="tok-number">2</span> * ω δ) * (x (k + <span class="tok-number">1</span>) - x k) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> le_trans ( Finset.abs_sum_le_sum_abs _ _ ) ( Finset.sum_le_sum <span class="tok-keyword">fun</span> i hi =&gt; le_trans ( h_remainder_bound i ( Finset.mem_range.mp hi ) ) ( <span class="tok-tactic">by</span> gcongr ; <span class="tok-tactic">aesop</span> ) );
+  convert h_triangle using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span> [ Finset.mul_sum _ _ _, mul_assoc ];
+  <span class="tok-tactic">rw</span> [ ← Finset.sum_sub_distrib ] ; <span class="tok-tactic">rw</span> [ Finset.sum_range_sub ( <span class="tok-keyword">fun</span> i =&gt; f ( x i ) ) ] ; <span class="tok-tactic">ring</span>;
+
+<span class="tok-keyword">end</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/taylor_expansion_worker_20260406-062552_3919c243.lean:37:59: error: Application type mismatch: The argument
+  hab
+has type
+  a &lt; b
+but is expected to have type
+  ?m.289 ≠ ?m.288
+in the application
+  taylor_mean_remainder_lagrange_iteratedDeriv hab
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/taylor_expansion_worker_20260406-062552_3919c243.lean:37:65: error: Type mismatch
+  this
+has type
+  ContDiffOn ℝ 2 f (Set.Icc a b)
+but is expected to have type
+  ContDiffOn ℝ (↑?m.290 + 1) ?m.287 (Set.uIcc ?m.289 ?m.288)
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/taylor_expansion_worker_20260406-062552_3919c243.lean:36:119: error: unsolved goals
+f : ℝ → ℝ
+a b : ℝ
+hf : ContDiff ℝ 2 f
+ω : ℝ → ℝ
+hω_nonneg : ∀ (t : ℝ), 0 ≤ ω t
+hω_mono : Monotone ω
+hω_mod :
+  ∀ (u v : ℝ), deriv (deriv f) v ≤ deriv (deriv f) u + ω |u - v| ∧ deriv (deriv f) u ≤ ω |u - v| + deriv (deriv f) v
+hab : a &lt; b
+⊢ ∃ ξ ∈ Set.Ioo a b, f b - f a - deriv f a * (b - a) = 1 / 2 * deriv (deriv f) ξ * (b - a) ^ 2
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/taylor_expansion_worker_20260406-062552_3919c243.lean:58:6: error: `grind` failed
+case grind.2.1
+f : ℝ → ℝ
+a b : ℝ
+hf : ContDiff ℝ 2 f
+ω : ℝ → ℝ
+hω_nonneg : ∀ (t : ℝ), 0 ≤ ω t
+hω_mono : Monotone ω
+hω_mod :
+  ∀ (u v : ℝ), deriv (deriv f) v ≤ deriv (deriv f) u + ω |u - v| ∧ deriv (deriv f) u ≤ ω |u - v| + deriv (deriv f) v
+hab : b ≤ a
+h : b &lt; a
+ξ : ℝ
+hξ₁ : b &lt; ξ ∧ ξ &lt; a
+hξ₂ :
+  deriv (fun x =&gt; f x - f a - deriv f a * (x - a) - (f b - f a - deriv f a * (b - a)) / (b - a) ^ 2 * (x - a) ^ 2) ξ = 0
+h_mean_value : ∃ c ∈ Set.Ioo ξ a, deriv (deriv f) c = (deriv f a - deriv f ξ) / (a - ξ)
+h_1 : ∀ (a_1 : ℝ), b &lt; a_1 → a_1 &lt; a → ¬deriv (deriv f) a_1 = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+w : ℝ
+left : w ∈ Set.Ioo ξ a
+right : deriv (deriv f) w = (deriv f a - deriv f ξ) * (a - ξ)⁻¹
+h_3 : ¬a - ξ = 0
+h_4 : (b - a) ^ 2 = 0
+⊢ False
+[grind] Goal diagnostics
+  [facts] Asserted facts
+    [prop] ContDiff ℝ 2 f
+    [prop] ∀ (t : ℝ), 0 ≤ ω t
+    [prop] Monotone ω
+    [prop] (∀ (u v : ℝ), deriv (deriv f) v ≤ deriv (deriv f) u + ω |u - v|) ∧
+          ∀ (u v : ℝ), deriv (deriv f) u ≤ ω |u - v| + deriv (deriv f) v
+    [prop] b ≤ a
+    [prop] b &lt; a
+    [prop] b &lt; ξ ∧ ξ &lt; a
+    [prop] deriv
+            (fun x =&gt;
+              f x - f a - deriv f a * (x - a) - (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹ * (x - a) ^ 2)
+            ξ =
+          0
+    [prop] ∃ c ∈ Set.Ioo ξ a, deriv (deriv f) c = (deriv f a - deriv f ξ) * (a - ξ)⁻¹
+    [prop] ∀ (a_1 : ℝ),
+          b &lt; a_1 → a_1 &lt; a → ¬deriv (deriv f) a_1 = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] b &lt; ξ → ξ &lt; a → ¬deriv (deriv f) ξ = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] if (b - a) ^ 2 = 0 then ((b - a) ^ 2)⁻¹ = 0 else (b - a) ^ 2 * ((b - a) ^ 2)⁻¹ = 1
+    [prop] b &lt; a → a &lt; a → ¬deriv (deriv f) a = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] b &lt; b → b &lt; a → ¬deriv (deriv f) b = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] w ∈ Set.Ioo ξ a
+    [prop] deriv (deriv f) w = (deriv f a - deriv f ξ) * (a - ξ)⁻¹
+    [prop] if a - ξ = 0 then (a - ξ)⁻¹ = 0 else (a - ξ) * (a - ξ)⁻¹ = 1
+    [prop] b &lt; w → w &lt; a → ¬deriv (deriv f) w = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] (w ∈ Set.Ioo ξ a) = (ξ &lt; w ∧ w &lt; a)
+    [prop] ¬a - ξ = 0
+    [prop] (b - a) ^ 2 = 0
+  [eqc] True propositions
+    [prop] (1 + 1).AtLeastTwo
+    [prop] b &lt; ξ ∧ ξ &lt; a
+    [prop] (∀ (u v : ℝ), deriv (deriv f) v ≤ deriv (deriv f) u + ω |u - v|) ∧
+          ∀ (u v : ℝ), deriv (deriv f) u ≤ ω |u - v| + deriv (deriv f) v
+    [prop] ∃ c ∈ Set.Ioo ξ a, deriv (deriv f) c = (deriv f a - deriv f ξ) * (a - ξ)⁻¹
+    [prop] ((b - a) ^ 2)⁻¹ = 0
+    [prop] (a - ξ) * (a - ξ)⁻¹ = 1
+    [prop] (b - a) ^ 2 = 0
+    [prop] b ≤ a
+    [prop] b &lt; a
+    [prop] b &lt; ξ
+    [prop] ξ &lt; a
+    [prop] w ∈ Set.Ioo ξ a
+    [prop] Monotone ω
+    [prop] if (b - a) ^ 2 = 0 then ((b - a) ^ 2)⁻¹ = 0 else (b - a) ^ 2 * ((b - a) ^ 2)⁻¹ = 1
+    [prop] if a - ξ = 0 then (a - ξ)⁻¹ = 0 else (a - ξ) * (a - ξ)⁻¹ = 1
+    [prop] ContDiff ℝ 2 f
+    [prop] ∀ (t : ℝ), 0 ≤ ω t
+    [prop] ∀ (u v : ℝ), deriv (deriv f) v ≤ deriv (deriv f) u + ω |u - v|
+    [prop] ∀ (u v : ℝ), deriv (deriv f) u ≤ ω |u - v| + deriv (deriv f) v
+    [prop] ∀ (a_1 : ℝ),
+          b &lt; a_1 → a_1 &lt; a → ¬deriv (deriv f) a_1 = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] ¬deriv (deriv f) ξ = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] ¬deriv (deriv f) w = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] ξ &lt; w ∧ w &lt; a
+    [prop] (w ∈ Set.Ioo ξ a) = (ξ &lt; w ∧ w &lt; a)
+    [prop] b &lt; w
+    [prop] ξ &lt; w
+    [prop] w &lt; a
+    [prop] a &lt; a → ¬deriv (deriv f) a = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] b &lt; a → a &lt; a → ¬deriv (deriv f) a = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] b &lt; b → b &lt; a → ¬deriv (deriv f) b = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] b &lt; ξ → ξ &lt; a → ¬deriv (deriv f) ξ = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] b &lt; w → w &lt; a → ¬deriv (deriv f) w = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] ξ &lt; a → ¬deriv (deriv f) ξ = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] w &lt; a → ¬deriv (deriv f) w = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+  [eqc] False propositions
+    [prop] a - ξ = 0
+    [prop] deriv (deriv f) ξ = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] deriv (deriv f) w = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹
+    [prop] a &lt; a
+    [prop] b &lt; b
+  [eqc] Equivalence classes
+    [eqc] {0,
+        deriv
+          (fun x =&gt; f x - f a - deriv f a * (x - a) - (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹ * (x - a) ^ 2)
+          ξ,
+        ((b - a) ^ 2)⁻¹,
+        2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹,
+        (b - a) ^ 2}
+    [eqc] {1,
+        (a - ξ) * (a - ξ)⁻¹,
+        ((deriv f a - deriv f ξ) * (a - ξ)⁻¹ - 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹) *
+          ((deriv f a - deriv f ξ) * (a - ξ)⁻¹ - 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹)⁻¹}
+    [eqc] {1 + 1, 2}
+    [eqc] {(deriv f a - deriv f ξ) * (a - ξ)⁻¹,
+        deriv (deriv f) w,
+        (deriv f a - deriv f ξ) * (a - ξ)⁻¹ - 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹}
+    [eqc] {¬deriv (deriv f) b = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹,
+        b &lt; a → ¬deriv (deriv f) b = 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹}
+  [cases] Case analyses
+    [cases] [1/1]: ∃ c ∈ Set.Ioo ξ a, deriv (deriv f) c = (deriv f a - deriv f ξ) * (a - ξ)⁻¹
+      [cases] source: Initial goal
+    [cases] [2/2]: if a - ξ = 0 then (a - ξ)⁻¹ = 0 else (a - ξ) * (a - ξ)⁻¹ = 1
+      [cases] source: E-matching `h_1`
+    [cases] [1/2]: if (b - a) ^ 2 = 0 then ((b - a) ^ 2)⁻¹ = 0 else (b - a) ^ 2 * ((b - a) ^ 2)⁻¹ = 1
+      [cases] source: E-matching `h_1`
+  [ematch] E-matching patterns
+    [thm] hω_nonneg: [@LE.le `[ℝ] `[Real.instLE] `[0] (ω #0)]
+    [thm] hω_nonneg: [ω #0]
+    [thm] local_0: [@LE.le `[ℝ] `[instDistribLatticeOfLinearOrder.toSemilatticeInf.toLE] (@deriv `[ℝ] `[DenselyNormedField.toNontriviallyNormedField] `[ℝ] `[Real.instAddCommGroup] `[RCLike.toInnerProductSpaceReal.toModule] `[PseudoMetricSpace.toUniformSpace.toTopologicalSpace] `[deriv
+            f] #1) (@HAdd.hAdd `[ℝ] `[ℝ] `[ℝ] `[instHAdd] (ω (@abs `[ℝ] `[Real.lattice] `[Real.instAddGroup] (@HSub.hSub `[ℝ] `[ℝ] `[ℝ] `[instHSub] #1 #0))) (@deriv `[ℝ] `[DenselyNormedField.toNontriviallyNormedField] `[ℝ] `[Real.instAddCommGroup] `[RCLike.toInnerProductSpaceReal.toModule] `[PseudoMetricSpace.toUniformSpace.toTopologicalSpace] `[deriv
+             f] #0))]
+    [thm] local_0: [ω (@abs `[ℝ] `[Real.lattice] `[Real.instAddGroup] (@HSub.hSub `[ℝ] `[ℝ] `[ℝ] `[instHSub] #1 #0))]
+    [thm] local_0: [@abs `[ℝ] `[Real.lattice] `[Real.instAddGroup] (@HSub.hSub `[ℝ] `[ℝ] `[ℝ] `[instHSub] #1 #0)]
+    [thm] local_1: [@LE.le `[ℝ] `[instDistribLatticeOfLinearOrder.toSemilatticeInf.toLE] (@deriv `[ℝ] `[DenselyNormedField.toNontriviallyNormedField] `[ℝ] `[Real.instAddCommGroup] `[RCLike.toInnerProductSpaceReal.toModule] `[PseudoMetricSpace.toUniformSpace.toTopologicalSpace] `[deriv
+            f] #0) (@HAdd.hAdd `[ℝ] `[ℝ] `[ℝ] `[instHAdd] (@deriv `[ℝ] `[DenselyNormedField.toNontriviallyNormedField] `[ℝ] `[Real.instAddCommGroup] `[RCLike.toInnerProductSpaceReal.toModule] `[PseudoMetricSpace.toUniformSpace.toTopologicalSpace] `[deriv
+             f] #1) (ω (@abs `[ℝ] `[Real.lattice] `[Real.instAddGroup] (@HSub.hSub `[ℝ] `[ℝ] `[ℝ] `[instHSub] #1 #0))))]
+    [thm] local_1: [ω (@abs `[ℝ] `[Real.lattice] `[Real.instAddGroup] (@HSub.hSub `[ℝ] `[ℝ] `[ℝ] `[instHSub] #1 #0))]
+    [thm] local_1: [@abs `[ℝ] `[Real.lattice] `[Real.instAddGroup] (@HSub.hSub `[ℝ] `[ℝ] `[ℝ] `[instHSub] #1 #0)]
+    [thm] h_1: [@LT.lt `[ℝ] `[Real.instPreorder.toLT] `[b] #2]
+    [thm] h_1: [@LT.lt `[ℝ] `[Real.instPreorder.toLT] #2 `[a]]
+    [thm] h_1: [@deriv `[ℝ] `[DenselyNormedField.toNontriviallyNormedField] `[ℝ] `[Real.instAddCommGroup] `[RCLike.toInnerProductSpaceReal.toModule] `[PseudoMetricSpace.toUniformSpace.toTopologicalSpace] `[deriv
+           f] #2]
+    [thm] Nat.pow_pos: [@HPow.hPow `[ℕ] `[ℕ] `[ℕ] `[instHPow] #2 #1]
+    [thm] Nat.div_pow_of_pos: [@HPow.hPow `[ℕ] `[ℕ] `[ℕ] `[instHPow] #2 #1]
+    [thm] Multiset.mem_add: [@Membership.mem #3 _ _ (@HAdd.hAdd _ _ _ _ #1 #0) #2]
+    [thm] Multiset.notMem_zero: [@Membership.mem #1 _ _ (@OfNat.ofNat _ `[0] _) #0]
+    [thm] Set.mem_Ioo: [@Membership.mem #4 _ _ (@Set.Ioo _ #3 #2 #1) #0]
+  [linarith] Linarith assignment for `ℝ`
+    [assign] a := 1
+    [assign] b := 0
+    [assign] ξ := 1/2
+    [assign] w := 3/4
+    [assign] deriv f ξ := 26
+    [assign] deriv (deriv f) w := 0
+    [assign] deriv
+          (fun x =&gt; f x - f a - deriv f a * (x - a) - (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹ * (x - a) ^ 2)
+          ξ := 0
+    [assign] f a := 20
+    [assign] f b := 19
+    [assign] 「(b - a) ^ 2」 := 0
+    [assign] deriv f a := 22
+    [assign] deriv (deriv f) a := 23
+    [assign] deriv (deriv f) b := 24
+    [assign] deriv (deriv f) ξ := 14
+  [ring] Ring `ℝ`
+    [basis] Basis
+      [_] b ^ 2 + -2 * (b * a) + a ^ 2 = 0
+      [_] a * (a - ξ)⁻¹ + -1 * (ξ * (a - ξ)⁻¹) + -1 = 0
+      [_] deriv f a *
+                    ((deriv f a - deriv f ξ) * (a - ξ)⁻¹ - 2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹)⁻¹ +
+                  -1 *
+                    (deriv f ξ *
+                      ((deriv f a - deriv f ξ) * (a - ξ)⁻¹ -
+                          2 * (f b - f a - deriv f a * (b - a)) * ((b - a) ^ 2)⁻¹)⁻¹) +
+                -1 * a +
+              ξ =
+            0
+      [_] ((b - a) ^ 2)⁻¹ = 0
+[grind] Diagnostics
+  [thm] E-Matching instances
+    [thm] Set.mem_Ioo ↦ 1
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/taylor_expansion_worker_20260406-062552_3919c243.lean:44:67: warning: This simp argument is unused:
+  abs_of_nonneg
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide [̵ ̵a̵b̵s̵_̵o̵f̵_̵n̵o̵n̵p̵o̵s̵,̵ ̵a̵b̵s̵_̵o̵f̵_̵n̵o̵n̵n̵e̵g̵ ̵]̵[̲a̲b̲s̲_̲o̲f̲_̲n̲o̲n̲p̲o̲s̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/taylor_expansion_worker_20260406-062552_3919c243.lean:59:43: warning: This simp argument is unused:
+  abs_of_neg
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide [̵ ̵a̵b̵s̵_̵o̵f̵_̵n̵e̵g̵,̵ ̵a̵b̵s̵_̵o̵f̵_̵n̵o̵n̵n̵e̵g̵,̵ ̵l̵e̵_̵o̵f̵_̵l̵t̵ ̵]̵[̲a̲b̲s̲_̲o̲f̲_̲n̲o̲n̲n̲e̲g̲,̲ ̲l̲e̲_̲o̲f̲_̲l̲t̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+
+    <article class="node-card node-mn_vanishes" id="node-mn_vanishes" data-node-id="mn_vanishes">
+      <h3>Quadratic Variation Error Vanishes in $L^2$</h3>
+      <p class="meta">Node id: mn_vanishes | Status: informal</p>
+      <p class="meta">Display label: $M_n\to 0$ in $L^2$</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let $M_n := \sum_{k=0}^{n-1} f&#x27;&#x27;(B_{t_k})\bigl((\Delta B_k)^2 - \Delta t_k\bigr)$. Then
+\[
+\mathbb{E}[M_n^2] \le 2C^2 \sum_{k=0}^{n-1}(\Delta t_k)^2 \to 0
+\]
+as the mesh of the partition tends to zero, where $C := \|f&#x27;&#x27;\|_\infty$.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Since $f&#x27;&#x27;(B_{t_k})$ is $\mathcal{F}_{t_k}$-measurable and $\Delta B_k$ is independent of $\mathcal{F}_{t_k}$ with $\mathbb{E}[(\Delta B_k)^2-\Delta t_k\mid\mathcal{F}_{t_k}]=0$, all cross-terms in $\mathbb{E}[M_n^2]$ vanish. Thus
+\[
+\mathbb{E}[M_n^2] = \sum_{k=0}^{n-1}\mathbb{E}\!\left[f&#x27;&#x27;(B_{t_k})^2\bigl((\Delta B_k)^2-\Delta t_k\bigr)^2\right].
+\]
+Using $|f&#x27;&#x27;|\le C$ and the fourth-moment identity for a Gaussian increment with variance $\Delta t_k$,
+\[
+\mathbb{E}\bigl[(\Delta B_k)^2-\Delta t_k\bigr]^2 = \operatorname{Var}\bigl[(\Delta B_k)^2\bigr] = 2(\Delta t_k)^2,
+\]
+we get
+\[
+\mathbb{E}[M_n^2] \le C^2 \sum_{k=0}^{n-1} 2(\Delta t_k)^2 \le 2C^2 \,\mathrm{mesh}\cdot t \to 0. \qquad\square
+\]</div>
+      
+    </article>
+    
+
+    <article class="node-card node-rn_vanishes" id="node-rn_vanishes" data-node-id="rn_vanishes">
+      <h3>Taylor Remainder $R_n$ Vanishes in Probability</h3>
+      <p class="meta">Node id: rn_vanishes | Status: informal</p>
+      <p class="meta">Display label: $R_n\to 0$ in probability</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">As the mesh of the partition tends to $0$, the remainder $R_n$ satisfies $R_n\to 0$ in probability.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">From the bound established in node taylor_expansion,
+\[
+|R_n| \le \frac{1}{2}\,\omega\!\left(\max_k |\Delta B_k|\right)\sum_{k=0}^{n-1}(\Delta B_k)^2.
+\]
+Brownian paths are a.s. uniformly continuous on $[0,t]$, so $\max_k|\Delta B_k|\to 0$ a.s. as the mesh $\to 0$, whence $\omega(\max_k|\Delta B_k|)\to 0$ a.s. by the modulus-of-continuity property of $f&#x27;&#x27;$. The quadratic variation of Brownian motion gives $\sum_k(\Delta B_k)^2\to t$ in probability (and a.s. along a subsequence). Since a product of a deterministic sequence tending to $0$ and a probabilistically bounded sequence tends to $0$ in probability, $R_n\to 0$ in probability. $\square$</div>
+      
+    </article>
+    
+
+    <article class="node-card node-mn_vanishes__formal_core" id="node-mn_vanishes__formal_core" data-node-id="mn_vanishes__formal_core">
+      <h3>Certified local core for Quadratic Variation Error Vanishes in $L^2$</h3>
+      <p class="meta">Node id: mn_vanishes__formal_core | Status: formal_verified</p>
+      <p class="meta">Display label: Certified core</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \(\Delta t_0, \ldots, \Delta t_{n-1} \ge 0\) be time increments with \(\sum_{k} \Delta t_k = T\) and \(\Delta t_k \le \delta\) for all \(k\). Then \[2C^2 \sum_{k=0}^{n-1} (\Delta t_k)^2 \le 2C^2\,\delta\, T.\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">This node records a verified supporting sublemma extracted from the formalization of parent node &#x27;mn_vanishes&#x27;. Since each increment satisfies \(\Delta t_k \le \delta\), we can bound one factor in each squared term: \[(\Delta t_k)^2 = \Delta t_k \cdot \Delta t_k \le \delta \cdot \Delta t_k.\] Summing over \(k\) and using \(\sum_k \Delta t_k = T\) gives \[\sum_{k=0}^{n-1} (\Delta t_k)^2 \le \delta \sum_{k=0}^{n-1} \Delta t_k = \delta\, T.\] Multiplying both sides by \(2C^2 \ge 0\) yields the claimed bound.</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> mn_vanishes_aristotle</p>
+        <p><strong>Coverage:</strong> concrete_sublemma</p><p class="meta">Accepted as a narrower concrete local core in the same ambient setting; it should support the parent node rather than count as full-node certification.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> mn_vanishes_aristotle {n : <span class="tok-type">ℕ</span>} {Δt : Fin n → <span class="tok-type">ℝ</span>} {C T δ : <span class="tok-type">ℝ</span>}
+    (hΔt : ∀ k, <span class="tok-number">0</span> ≤ Δt k)
+    (hT : ∑ k, Δt k = T)
+    (hmesh : ∀ k, Δt k ≤ δ)
+    (hC : <span class="tok-number">0</span> ≤ C) :
+    <span class="tok-number">2</span> * C ^ <span class="tok-number">2</span> * ∑ k : Fin n, (Δt k) ^ <span class="tok-number">2</span> ≤ <span class="tok-number">2</span> * C ^ <span class="tok-number">2</span> * δ * T</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/mn_vanishes_worker_20260406-062552_d371361a.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+/-!
+# Quadratic Variation Error Vanishes <span class="tok-keyword">in</span> L²
+
+This file formalizes the key deterministic estimate underlying the proof that the
+quadratic variation error vanishes <span class="tok-keyword">in</span> L² <span class="tok-keyword">in</span> the proof of Itô&#x27;s formula for Brownian
+motion.
+
+## Setting
+
+In the Itô formula proof, one defines
+  `M_n := ∑_{k=<span class="tok-number">0</span>}^{n-<span class="tok-number">1</span>} f&#x27;&#x27;(B_{t_k}) · ((ΔB_k)² - Δt_k)`.
+
+By martingale orthogonality (the cross terms vanish because each increment is
+independent of the past), we <span class="tok-tactic">have</span>
+  `𝔼[M_n²] = ∑_k 𝔼[f&#x27;&#x27;(B_{t_k})² · ((ΔB_k)² - Δt_k)²]`.
+
+Using `|f&#x27;&#x27;| ≤ C` and the Gaussian fourth-moment identity
+  `𝔼[((ΔB_k)² - Δt_k)²] = <span class="tok-number">2</span>(Δt_k)²`,
+we <span class="tok-tactic">obtain</span> the bound
+  `𝔼[M_n²] ≤ <span class="tok-number">2</span>C² ∑_k (Δt_k)²`.
+
+We formalize below the **deterministic** bound
+  `<span class="tok-number">2</span>C² ∑_k (Δt_k)² ≤ <span class="tok-number">2</span>C² · mesh · T`,
+which shows that the right-hand side tends to <span class="tok-number">0</span> as the mesh tends to <span class="tok-number">0</span>.
+
+## Main result
+
+`mn_vanishes_aristotle`: For a partition of `[<span class="tok-number">0</span>, T]` <span class="tok-keyword">with</span> non-negative increments
+`Δt k` summing to `T`, mesh at most `δ`, and `C ≥ <span class="tok-number">0</span>`:
+  `<span class="tok-number">2</span> * C² * ∑ k, (Δt k)² ≤ <span class="tok-number">2</span> * C² * δ * T`.
+-/
+
+<span class="tok-keyword">open</span> Finset BigOperators
+
+/<span class="tok-comment">--</span>
+**Quadratic Variation Error Bound.**
+
+For a partition <span class="tok-keyword">with</span> `n` non-negative increments `Δt k` summing to `T`, <span class="tok-keyword">with</span>
+mesh (maximum increment) at most `δ`, and a bound `C ≥ <span class="tok-number">0</span>`:
+
+  `<span class="tok-number">2</span> * C ^ <span class="tok-number">2</span> * ∑ k, (Δt k) ^ <span class="tok-number">2</span> ≤ <span class="tok-number">2</span> * C ^ <span class="tok-number">2</span> * δ * T`
+
+This formalizes the key estimate showing `𝔼[M_n²] → <span class="tok-number">0</span>` <span class="tok-keyword">where</span>
+`M_n = ∑ f&#x27;&#x27;(B_{t_k}) · ((ΔB_k)² − Δt_k)`, since the bound
+`<span class="tok-number">2</span>C² · δ · T → <span class="tok-number">0</span>` as the partition mesh `δ → <span class="tok-number">0</span>`.
+-/
+<span class="tok-keyword">theorem</span> mn_vanishes_aristotle {n : <span class="tok-type">ℕ</span>} {Δt : Fin n → <span class="tok-type">ℝ</span>} {C T δ : <span class="tok-type">ℝ</span>}
+    (hΔt : ∀ k, <span class="tok-number">0</span> ≤ Δt k)
+    (hT : ∑ k, Δt k = T)
+    (hmesh : ∀ k, Δt k ≤ δ)
+    (hC : <span class="tok-number">0</span> ≤ C) :
+    <span class="tok-number">2</span> * C ^ <span class="tok-number">2</span> * ∑ k : Fin n, (Δt k) ^ <span class="tok-number">2</span> ≤ <span class="tok-number">2</span> * C ^ <span class="tok-number">2</span> * δ * T := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- We need to show `2 * C^2 * ∑ k, (Δt k)^2 ≤ 2 * C^2 * δ * T`. Since `2 * C^2 ≥ 0`, it suffices to show `∑ k, (Δt k)^2 ≤ δ * T`.</span>
+  suffices h_sum_bound : (∑ k, (Δt k) ^ <span class="tok-number">2</span>) ≤ δ * T <span class="tok-tactic">by</span>
+    <span class="tok-tactic">simpa</span> only [ mul_assoc ] using mul_le_mul_of_nonneg_left h_sum_bound ( mul_nonneg zero_le_two ( sq_nonneg C ) );
+  <span class="tok-tactic">rw</span> [ ← hT, Finset.mul_sum _ _ _ ] ; <span class="tok-tactic">exact</span> Finset.sum_le_sum <span class="tok-keyword">fun</span> k _ =&gt; <span class="tok-tactic">by</span> nlinarith only [ hΔt k, hmesh k ] ;</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/mn_vanishes_worker_20260406-062552_d371361a.lean:53:5: warning: unused variable `hC`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,31 @@
+2026-04-06T06:24:32-07:00 [formal-islands] running benchmark end-to-end
+2026-04-06T06:24:32-07:00 [formal-islands] benchmark planning stage starting
+2026-04-06T06:24:32-07:00 [formal-islands] plan stage starting
+2026-04-06T06:24:32-07:00 [formal-islands] planning theorem graph
+2026-04-06T06:25:52-07:00 [formal-islands] asking backend for refined local claim proposal
+2026-04-06T06:25:52-07:00 [formal-islands] using deterministic span-based refinement fallback
+2026-04-06T06:25:52-07:00 [formal-islands] no refinement found for candidate
+2026-04-06T06:25:52-07:00 [formal-islands] planning complete: 4 nodes, 2 candidates
+2026-04-06T06:25:52-07:00 [formal-islands] benchmark formalization stage starting
+2026-04-06T06:25:52-07:00 [formal-islands] formalization stage starting
+2026-04-06T06:25:52-07:00 [formal-islands] Aristotle batch submitting 2 candidate node(s): taylor_expansion, mn_vanishes
+2026-04-06T06:25:52-07:00 [formal-islands] starting formalization for node taylor_expansion
+2026-04-06T06:25:52-07:00 [formal-islands] starting formalization for node mn_vanishes
+2026-04-06T06:25:52-07:00 [formal-islands] node mn_vanishes: structured attempt 1/2
+2026-04-06T06:25:52-07:00 [formal-islands] node taylor_expansion: structured attempt 1/2
+2026-04-06T06:25:52-07:00 [formal-islands] Aristotle submitting node mn_vanishes
+2026-04-06T06:25:52-07:00 [formal-islands] Aristotle submitting node taylor_expansion
+2026-04-06T06:39:04-07:00 [formal-islands] node mn_vanishes: retrying after compiler feedback
+2026-04-06T06:39:04-07:00 [formal-islands] node mn_vanishes: structured attempt 2/2
+2026-04-06T06:39:04-07:00 [formal-islands] Aristotle submitting node mn_vanishes
+2026-04-06T06:46:42-07:00 [formal-islands] Aristotle completed node mn_vanishes
+2026-04-06T06:48:28-07:00 [formal-islands] Aristotle submitting node mn_vanishes
+2026-04-06T07:03:43-07:00 [formal-islands] Aristotle completed node mn_vanishes
+2026-04-06T07:07:27-07:00 [formal-islands] Aristotle completed node taylor_expansion
+2026-04-06T07:07:49-07:00 [formal-islands] node taylor_expansion: structured attempt 2/2
+2026-04-06T07:07:49-07:00 [formal-islands] Aristotle submitting node taylor_expansion
+2026-04-06T07:39:49-07:00 [formal-islands] Aristotle completed node taylor_expansion
+2026-04-06T07:40:16-07:00 [formal-islands] node taylor_expansion: completed with concrete_sublemma
+2026-04-06T07:40:16-07:00 [formal-islands] node mn_vanishes: completed with concrete_sublemma
+2026-04-06T07:40:16-07:00 [formal-islands] benchmark report stage starting
+2026-04-06T07:40:16-07:00 [formal-islands] report stage starting

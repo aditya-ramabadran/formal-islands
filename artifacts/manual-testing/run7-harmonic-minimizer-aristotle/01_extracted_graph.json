@@ -1,0 +1,37 @@
+{
+  "theorem_title": "Harmonic functions minimize Dirichlet energy among competitors with the same boundary values",
+  "theorem_statement": "Harmonic functions minimize the Dirichlet energy among competitors with the same boundary values.\n\nLet \\(\\Omega \\subset \\mathbb{R}^d\\) be a bounded domain with sufficiently regular boundary, and let \\(g\\) be prescribed boundary data. Suppose \\(u\\) is a sufficiently regular function such that:\n- \\(u=g\\) on \\(\\partial\\Omega\\),\n- and \\(u\\) is weakly harmonic, meaning\n\\[\n\\int_\\Omega \\nabla u \\cdot \\nabla \\varphi \\, dx = 0\n\\qquad \\text{for every } \\varphi \\in H_0^1(\\Omega).\n\\]\n\nThen for every sufficiently regular \\(v\\) with the same boundary data \\(v=g\\) on \\(\\partial\\Omega\\), one has\n\\[\n\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx.\n\\]\nMoreover,\n\\[\n\\int_\\Omega |\\nabla v|^2\\,dx\n=\n\\int_\\Omega |\\nabla u|^2\\,dx\n+\n\\int_\\Omega |\\nabla(v-u)|^2\\,dx.\n\\]",
+  "root_node_id": "root",
+  "nodes": [
+    {
+      "id": "energy_pythagorean",
+      "title": "Dirichlet energy Pythagorean identity via weak harmonicity",
+      "informal_statement": "Under the hypotheses of the main theorem, with \\(w := v - u \\in H_0^1(\\Omega)\\), the identity \\(\\int_\\Omega |\\nabla v|^2\\,dx = \\int_\\Omega |\\nabla u|^2\\,dx + \\int_\\Omega |\\nabla w|^2\\,dx\\) holds.",
+      "informal_proof_text": "Write \\(\\nabla v = \\nabla u + \\nabla w\\) and expand pointwise: \\(|\\nabla v|^2 = |\\nabla u + \\nabla w|^2 = |\\nabla u|^2 + 2\\,\\nabla u \\cdot \\nabla w + |\\nabla w|^2\\). Integrating over \\(\\Omega\\): \\(\\int_\\Omega |\\nabla v|^2\\,dx = \\int_\\Omega |\\nabla u|^2\\,dx + 2\\int_\\Omega \\nabla u \\cdot \\nabla w\\,dx + \\int_\\Omega |\\nabla w|^2\\,dx\\). Since \\(w = v - u\\) vanishes on \\(\\partial\\Omega\\), we have \\(w \\in H_0^1(\\Omega)\\). Taking \\(\\varphi = w\\) in the weak harmonicity condition for \\(u\\) gives \\(\\int_\\Omega \\nabla u \\cdot \\nabla w\\,dx = 0\\), so the cross term vanishes and the identity follows.",
+      "status": "informal",
+      "display_label": "Energy Pythagorean identity",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "root",
+      "title": "Harmonic functions minimize Dirichlet energy among competitors with the same boundary values",
+      "informal_statement": "Let \\(u\\) be weakly harmonic in \\(\\Omega\\) with \\(u = g\\) on \\(\\partial\\Omega\\). For every sufficiently regular \\(v\\) with \\(v = g\\) on \\(\\partial\\Omega\\), \\(\\int_\\Omega |\\nabla v|^2\\,dx = \\int_\\Omega |\\nabla u|^2\\,dx + \\int_\\Omega |\\nabla(v-u)|^2\\,dx \\ge \\int_\\Omega |\\nabla u|^2\\,dx\\).",
+      "informal_proof_text": "Set \\(w := v - u\\). Since \\(u\\) and \\(v\\) share the same boundary data, \\(w \\in H_0^1(\\Omega)\\). By the Dirichlet energy Pythagorean identity, \\(\\int_\\Omega |\\nabla v|^2\\,dx = \\int_\\Omega |\\nabla u|^2\\,dx + \\int_\\Omega |\\nabla w|^2\\,dx\\). Since \\(\\int_\\Omega |\\nabla w|^2\\,dx \\ge 0\\), we conclude \\(\\int_\\Omega |\\nabla u|^2\\,dx \\le \\int_\\Omega |\\nabla v|^2\\,dx\\). Substituting \\(w = v - u\\) gives the stated identity and inequality.",
+      "status": "informal",
+      "display_label": "Main theorem: Dirichlet energy minimality",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "energy_pythagorean",
+      "target_id": "root",
+      "label": "supplies energy identity",
+      "explanation": "The Pythagorean identity is the core step; the root theorem follows immediately by nonnegativity of \\(\\int_\\Omega |\\nabla w|^2\\,dx\\)."
+    }
+  ]
+}

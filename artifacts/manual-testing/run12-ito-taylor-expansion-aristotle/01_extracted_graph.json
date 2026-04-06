@@ -1,0 +1,77 @@
+{
+  "theorem_title": "It\u00f4's formula for a twice continuously differentiable function of Brownian motion",
+  "theorem_statement": "It\u00f4's formula for a twice continuously differentiable function of Brownian motion.\n\nLet \\((B_t)_{t\\ge 0}\\) be a standard one-dimensional Brownian motion, let \\(T>0\\), and let \\(f:\\mathbb{R}\\to\\mathbb{R}\\) be a \\(C^2\\) function. Assume for simplicity that \\(f'\\) and \\(f''\\) are bounded and that \\(f''\\) is uniformly continuous on \\(\\mathbb{R}\\). Then for every \\(t\\in[0,T]\\),\n\\[\nf(B_t)\n=\nf(B_0)\n+\n\\int_0^t f'(B_s)\\,dB_s\n+\n\\frac12\\int_0^t f''(B_s)\\,ds.\n\\]\n",
+  "root_node_id": "ito_formula",
+  "nodes": [
+    {
+      "id": "ito_formula",
+      "title": "It\u00f4's Formula",
+      "informal_statement": "For $(B_t)_{t\\ge 0}$ a standard Brownian motion and $f\\in C^2(\\mathbb{R})$ with $f',f''$ bounded and $f''$ uniformly continuous, for every $t\\in[0,T]$:\n\\[\nf(B_t) = f(B_0) + \\int_0^t f'(B_s)\\,dB_s + \\frac{1}{2}\\int_0^t f''(B_s)\\,ds.\n\\]",
+      "informal_proof_text": "Fix $t\\in[0,T]$ and a partition $0=t_0<t_1<\\cdots<t_n=t$ with $\\Delta B_k := B_{t_{k+1}}-B_{t_k}$ and $\\Delta t_k := t_{k+1}-t_k$. By the telescoping identity and Taylor's theorem (see node taylor_expansion),\n\\[\nf(B_t)-f(B_0) = \\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k + \\frac{1}{2}\\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2 + R_n.\n\\]\nThe three terms are handled separately:\n\n(1) **First term** converges to $\\int_0^t f'(B_s)\\,dB_s$ in $L^2$ by the definition and $L^2$-isometry of the It\u00f4 integral for adapted left-endpoint processes.\n\n(2) **Second term**: Write $\\frac{1}{2}\\sum_k f''(B_{t_k})(\\Delta B_k)^2 = \\frac{1}{2}\\sum_k f''(B_{t_k})\\,\\Delta t_k + \\frac{1}{2}M_n$, where $M_n := \\sum_k f''(B_{t_k})((\\Delta B_k)^2-\\Delta t_k)$. The Riemann sum $\\sum_k f''(B_{t_k})\\,\\Delta t_k$ converges a.s. to $\\int_0^t f''(B_s)\\,ds$ since $s\\mapsto f''(B_s)$ is a.s. continuous. By node mn_vanishes, $M_n\\to 0$ in $L^2$. Hence the second term converges in probability to $\\frac{1}{2}\\int_0^t f''(B_s)\\,ds$.\n\n(3) **Third term** $R_n\\to 0$ in probability by node rn_vanishes.\n\nTaking the mesh to zero, all three limits combine to give It\u00f4's formula.",
+      "status": "informal",
+      "display_label": null,
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "taylor_expansion",
+      "title": "Taylor Expansion Identity with Remainder Bound",
+      "informal_statement": "For each increment, Taylor's theorem gives\n\\[\nf(B_{t_{k+1}}) = f(B_{t_k}) + f'(B_{t_k})\\,\\Delta B_k + \\tfrac{1}{2}f''(B_{t_k})(\\Delta B_k)^2 + \\tfrac{1}{2}(f''(\\xi_k)-f''(B_{t_k}))(\\Delta B_k)^2\n\\]\nfor some $\\xi_k$ between $B_{t_k}$ and $B_{t_{k+1}}$. Summing via the telescoping identity yields\n\\[\nf(B_t)-f(B_0) = \\sum_{k=0}^{n-1}f'(B_{t_k})\\,\\Delta B_k + \\frac{1}{2}\\sum_{k=0}^{n-1}f''(B_{t_k})(\\Delta B_k)^2 + R_n,\n\\]\nwhere the remainder satisfies\n\\[\n|R_n| \\le \\frac{1}{2}\\,\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2,\n\\]\nand $\\omega$ is any modulus of continuity for $f''$.",
+      "informal_proof_text": "This is purely deterministic. Apply the second-order Taylor formula with Lagrange remainder to $f$ at each point $B_{t_k}$: there exists $\\xi_k$ with $|\\xi_k - B_{t_k}| \\le |\\Delta B_k|$ such that\n\\[\nf(B_{t_{k+1}}) - f(B_{t_k}) = f'(B_{t_k})\\,\\Delta B_k + \\tfrac{1}{2}f''(B_{t_k})(\\Delta B_k)^2 + \\tfrac{1}{2}(f''(\\xi_k)-f''(B_{t_k}))(\\Delta B_k)^2.\n\\]\nSum over $k=0,\\ldots,n-1$ and use the telescoping identity $\\sum_k (f(B_{t_{k+1}})-f(B_{t_k})) = f(B_t)-f(B_0)$. Define\n\\[\nR_n := \\frac{1}{2}\\sum_{k=0}^{n-1}(f''(\\xi_k)-f''(B_{t_k}))(\\Delta B_k)^2.\n\\]\nSince $|\\xi_k - B_{t_k}|\\le |\\Delta B_k|$, we have $|f''(\\xi_k)-f''(B_{t_k})|\\le \\omega(|\\Delta B_k|)\\le \\omega(\\max_j|\\Delta B_j|)$ for any modulus $\\omega$ of $f''$. Hence\n\\[\n|R_n| \\le \\frac{1}{2}\\,\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2. \\qquad\\square\n\\]",
+      "status": "informal",
+      "display_label": "Taylor identity & remainder bound",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "mn_vanishes",
+      "title": "Quadratic Variation Error Vanishes in $L^2$",
+      "informal_statement": "Let $M_n := \\sum_{k=0}^{n-1} f''(B_{t_k})\\bigl((\\Delta B_k)^2 - \\Delta t_k\\bigr)$. Then\n\\[\n\\mathbb{E}[M_n^2] \\le 2C^2 \\sum_{k=0}^{n-1}(\\Delta t_k)^2 \\to 0\n\\]\nas the mesh of the partition tends to zero, where $C := \\|f''\\|_\\infty$.",
+      "informal_proof_text": "Since $f''(B_{t_k})$ is $\\mathcal{F}_{t_k}$-measurable and $\\Delta B_k$ is independent of $\\mathcal{F}_{t_k}$ with $\\mathbb{E}[(\\Delta B_k)^2-\\Delta t_k\\mid\\mathcal{F}_{t_k}]=0$, all cross-terms in $\\mathbb{E}[M_n^2]$ vanish. Thus\n\\[\n\\mathbb{E}[M_n^2] = \\sum_{k=0}^{n-1}\\mathbb{E}\\!\\left[f''(B_{t_k})^2\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr)^2\\right].\n\\]\nUsing $|f''|\\le C$ and the fourth-moment identity for a Gaussian increment with variance $\\Delta t_k$,\n\\[\n\\mathbb{E}\\bigl[(\\Delta B_k)^2-\\Delta t_k\\bigr]^2 = \\operatorname{Var}\\bigl[(\\Delta B_k)^2\\bigr] = 2(\\Delta t_k)^2,\n\\]\nwe get\n\\[\n\\mathbb{E}[M_n^2] \\le C^2 \\sum_{k=0}^{n-1} 2(\\Delta t_k)^2 \\le 2C^2 \\,\\mathrm{mesh}\\cdot t \\to 0. \\qquad\\square\n\\]",
+      "status": "informal",
+      "display_label": "$M_n\\to 0$ in $L^2$",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "rn_vanishes",
+      "title": "Taylor Remainder $R_n$ Vanishes in Probability",
+      "informal_statement": "As the mesh of the partition tends to $0$, the remainder $R_n$ satisfies $R_n\\to 0$ in probability.",
+      "informal_proof_text": "From the bound established in node taylor_expansion,\n\\[\n|R_n| \\le \\frac{1}{2}\\,\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2.\n\\]\nBrownian paths are a.s. uniformly continuous on $[0,t]$, so $\\max_k|\\Delta B_k|\\to 0$ a.s. as the mesh $\\to 0$, whence $\\omega(\\max_k|\\Delta B_k|)\\to 0$ a.s. by the modulus-of-continuity property of $f''$. The quadratic variation of Brownian motion gives $\\sum_k(\\Delta B_k)^2\\to t$ in probability (and a.s. along a subsequence). Since a product of a deterministic sequence tending to $0$ and a probabilistically bounded sequence tends to $0$ in probability, $R_n\\to 0$ in probability. $\\square$",
+      "status": "informal",
+      "display_label": "$R_n\\to 0$ in probability",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "taylor_expansion",
+      "target_id": "ito_formula",
+      "label": "provides decomposition",
+      "explanation": "The deterministic Taylor identity decomposes $f(B_t)-f(B_0)$ into the three sums whose limits are taken in the root proof."
+    },
+    {
+      "source_id": "mn_vanishes",
+      "target_id": "ito_formula",
+      "label": "second-term error $\\to 0$",
+      "explanation": "$M_n\\to 0$ in $L^2$ is used to show the second sum converges to the ordinary integral $\\frac{1}{2}\\int_0^t f''(B_s)\\,ds$."
+    },
+    {
+      "source_id": "rn_vanishes",
+      "target_id": "ito_formula",
+      "label": "remainder $\\to 0$",
+      "explanation": "$R_n\\to 0$ in probability completes the passage to the limit in the root proof."
+    },
+    {
+      "source_id": "taylor_expansion",
+      "target_id": "rn_vanishes",
+      "label": "supplies remainder bound",
+      "explanation": "The explicit bound $|R_n|\\le\\frac{1}{2}\\omega(\\max_k|\\Delta B_k|)\\sum_k(\\Delta B_k)^2$ proved in taylor_expansion is the starting point for showing $R_n\\to 0$."
+    }
+  ]
+}

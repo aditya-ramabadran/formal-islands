@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Harmonic functions minimize Dirichlet energy among competitors with the same boundary values - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: rgba(255, 250, 241, 0.98);
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
+      --graph-shell-top: rgba(255, 251, 242, 0.96);
+      --graph-shell-bottom: rgba(245, 238, 227, 0.96);
+      --checklist-panel: rgba(255, 250, 241, 0.95);
+      --target-panel: #fff8ee;
+      --code-surface: #f4efe6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161311;
+        --panel: #211b17;
+        --ink: #f3ede5;
+        --muted: #c0b2a3;
+        --border: #4a3d32;
+        --accent: #f0b47b;
+        --accent-soft: #3a2b20;
+        --highlight: #ffb25c;
+        --highlight-soft: #3f2d19;
+        --preview-soft: #312419;
+        --checked: #65c08a;
+        --checked-soft: #213126;
+        --edge: #8f8172;
+        --status-informal-stroke: #d69760;
+        --status-informal-fill: rgba(46, 34, 26, 0.96);
+        --status-candidate-stroke: #f0a64e;
+        --status-candidate-fill: #3f2d18;
+        --status-verified-stroke: #65c08a;
+        --status-verified-fill: #213126;
+        --status-failed-stroke: #dd8a79;
+        --status-failed-fill: #3b2320;
+        --graph-shell-top: rgba(44, 34, 27, 0.98);
+        --graph-shell-bottom: rgba(32, 25, 21, 0.98);
+        --checklist-panel: rgba(36, 29, 24, 0.98);
+        --target-panel: #31261f;
+        --code-surface: #2a231e;
+      }
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(circle at top, #2a211b, var(--bg));
+      }
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .math-text mjx-container {
+      max-width: 100%;
+    }
+    .math-text mjx-container[display="true"] {
+      margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .math-text mjx-container[jax="CHTML"][display="true"] {
+      padding: 0 !important;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--graph-shell-top), var(--graph-shell-bottom));
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+    .graph-frame {
+      width: min(100%, 460px);
+      margin: 0 auto;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 240px;
+      overflow: visible;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 2.8;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-edge.edge-provenance {
+      stroke-dasharray: 7 5;
+      opacity: 0.66;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-box {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-title {
+      fill: var(--ink);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 9.5px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--checklist-panel);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {
+      min-width: 0;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: var(--target-panel);
+    }
+    pre {
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 0.75rem;
+      background: var(--code-surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin: 0.6rem 0;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    code.inline-code {
+      background: var(--code-surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.95em;
+      white-space: break-spaces;
+    }
+    .statement-code {
+      margin-top: 0.35rem;
+    }
+    .statement-code pre,
+    .checklist-code pre {
+      margin-top: 0.35rem;
+      background: var(--code-surface);
+    }
+    .lean-code {
+      color: #2a241f;
+    }
+    .lean-code .tok-keyword {
+      color: #8b2f18;
+      font-weight: 700;
+    }
+    .lean-code .tok-tactic {
+      color: #9d5d17;
+      font-weight: 600;
+    }
+    .lean-code .tok-type {
+      color: #245f7a;
+    }
+    .lean-code .tok-number {
+      color: #7442a8;
+    }
+    .lean-code .tok-comment {
+      color: #6e7a60;
+      font-style: italic;
+    }
+    .lean-code .tok-string {
+      color: #2d7f4d;
+    }
+    @media (prefers-color-scheme: dark) {
+      .lean-code {
+        color: #f2e8dc;
+      }
+      .lean-code .tok-keyword {
+        color: #f08f63;
+      }
+      .lean-code .tok-tactic {
+        color: #f4b35d;
+      }
+      .lean-code .tok-type {
+        color: #73c7ff;
+      }
+      .lean-code .tok-number {
+        color: #be8cff;
+      }
+      .lean-code .tok-comment {
+        color: #97b18b;
+      }
+      .lean-code .tok-string {
+        color: #67d59a;
+      }
+    }
+    
+            .report-root:has(a.node-energy_pythagorean:hover) .node-energy_pythagorean.node-card,
+            .report-root:has(#node-energy_pythagorean:target) a.node-energy_pythagorean .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-energy_pythagorean:hover) .node-energy_pythagorean.node-card,
+            .report-root:has(#node-energy_pythagorean:target).report-root .node-energy_pythagorean.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-root:hover) .node-root.node-card,
+            .report-root:has(#node-root:target) a.node-root .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-root:hover) .node-root.node-card,
+            .report-root:has(#node-root:target).report-root .node-root.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-energy_pythagorean:hover) a.node-energy_pythagorean .graph-node-box,
+.report-root:has(.obligation-informal-proof-energy_pythagorean:hover) .node-energy_pythagorean.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-energy_pythagorean:checked) a.node-energy_pythagorean .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-energy_pythagorean:checked) .node-energy_pythagorean.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-energy_pythagorean:checked) .edge-energy_pythagorean-root {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-energy_pythagorean:hover) .obligation-informal-proof-energy_pythagorean {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-energy_pythagorean:checked) .obligation-informal-proof-energy_pythagorean {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-root:hover) a.node-root .graph-node-box,
+.report-root:has(.obligation-informal-proof-root:hover) .node-root.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-root:checked) a.node-root .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-root:checked) .node-root.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-root:checked) .edge-energy_pythagorean-root {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-root:hover) .obligation-informal-proof-root {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-root:checked) .obligation-informal-proof-root {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-root">
+    <section>
+      <h1>Harmonic functions minimize Dirichlet energy among competitors with the same boundary values</h1>
+      <div class="math-text">Harmonic functions minimize the Dirichlet energy among competitors with the same boundary values.
+
+Let \(\Omega \subset \mathbb{R}^d\) be a bounded domain with sufficiently regular boundary, and let \(g\) be prescribed boundary data. Suppose \(u\) is a sufficiently regular function such that:
+- \(u=g\) on \(\partial\Omega\),
+- and \(u\) is weakly harmonic, meaning
+\[
+\int_\Omega \nabla u \cdot \nabla \varphi \, dx = 0
+\qquad \text{for every } \varphi \in H_0^1(\Omega).
+\]
+Then for every sufficiently regular \(v\) with the same boundary data \(v=g\) on \(\partial\Omega\), one has
+\[
+\int_\Omega |\nabla u|^2\,dx \le \int_\Omega |\nabla v|^2\,dx.
+\]
+Moreover,
+\[
+\int_\Omega |\nabla v|^2\,dx
+=
+\int_\Omega |\nabla u|^2\,dx
++
+\int_\Omega |\nabla(v-u)|^2\,dx.
+\]</div>
+      <p class="meta">Root node: root</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 2</span>
+        <span class="pill">Edges: 1</span>
+        <span class="pill">Informal: 0</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 0</span>
+        <span class="pill">Failed: 2</span>
+      </p>
+      <div class="graph-shell">
+        
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 224" width="420" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><line class="graph-edge edge-energy_pythagorean-root" x1="210.0" y1="201.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line></g>
+        <g>
+    <a class="graph-node-link node-energy_pythagorean status-formal-failed" href="#node-energy_pythagorean">
+      <rect class="graph-node-box status-formal-failed" x="144.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="160">Energy</tspan>
+<tspan x="210.0" y="172">Pythagorean ide…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="186">energy_pythagorean</text>
+    </a>
+    
+
+    <a class="graph-node-link node-root status-formal-failed" href="#node-root">
+      <rect class="graph-node-box status-formal-failed" x="144.0" y="20" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="32" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="42">Main theorem:</tspan>
+<tspan x="210.0" y="54">Dirichlet energ…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+      </div>
+      <p class="graph-caption">
+        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+      </p>
+      <p class="graph-caption">
+        Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
+      </p>
+      <p class="graph-caption">
+        Dashed gray edges show provenance or refinement links between nearby nodes. They are not proof dependencies unless the edge is part of the main dependency layout.
+      </p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-informal-proof-energy_pythagorean" data-obligation-id="informal-proof-energy_pythagorean">
+      <label class="checklist-label" for="obligation-check-informal-proof-energy_pythagorean">
+        <input id="obligation-check-informal-proof-energy_pythagorean" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;energy_pythagorean&#x27; (Dirichlet energy Pythagorean identity via weak harmonicity) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-energy_pythagorean">energy_pythagorean</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-root" data-obligation-id="informal-proof-root">
+      <label class="checklist-label" for="obligation-check-informal-proof-root">
+        <input id="obligation-check-informal-proof-root" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;root&#x27; (Harmonic functions minimize Dirichlet energy among competitors with the same boundary values) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-root">root</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="nodes-grid">
+        
+    <article class="node-card node-energy_pythagorean" id="node-energy_pythagorean" data-node-id="energy_pythagorean">
+      <h3>Dirichlet energy Pythagorean identity via weak harmonicity</h3>
+      <p class="meta">Node id: energy_pythagorean | Status: formal_failed</p>
+      <p class="meta">Display label: Energy Pythagorean identity</p>
+      <p class="meta">Formalization priority: 1. Rationale: This node captures the entire inferential content: the pointwise expansion \(|\nabla u + \nabla w|^2 = |\nabla u|^2 + 2\,\nabla u \cdot \nabla w + |\nabla w|^2\), integration linearity, and the key application of weak harmonicity with \(\varphi = w \in H_0^1(\Omega)\) to annihilate the cross term. These are the steps most likely to require real Lean 4 / Mathlib effort (Sobolev membership, weak formulation instantiation) and form the highest-yield formalization target.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Under the hypotheses of the main theorem, with \(w := v - u \in H_0^1(\Omega)\), the identity \(\int_\Omega |\nabla v|^2\,dx = \int_\Omega |\nabla u|^2\,dx + \int_\Omega |\nabla w|^2\,dx\) holds.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Write \(\nabla v = \nabla u + \nabla w\) and expand pointwise: \(|\nabla v|^2 = |\nabla u + \nabla w|^2 = |\nabla u|^2 + 2\,\nabla u \cdot \nabla w + |\nabla w|^2\). Integrating over \(\Omega\): \(\int_\Omega |\nabla v|^2\,dx = \int_\Omega |\nabla u|^2\,dx + 2\int_\Omega \nabla u \cdot \nabla w\,dx + \int_\Omega |\nabla w|^2\,dx\). Since \(w = v - u\) vanishes on \(\partial\Omega\), we have \(w \in H_0^1(\Omega)\). Taking \(\varphi = w\) in the weak harmonicity condition for \(u\) gives \(\int_\Omega \nabla u \cdot \nabla w\,dx = 0\), so the cross term vanishes and the identity follows.</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> energy_pythagorean_aristotle</p>
+        <p><strong>Coverage:</strong> concrete_sublemma</p><p class="meta">Accepted as a narrower concrete local core in the same ambient setting; it should support the parent node rather than count as full-node certification.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> energy_pythagorean_aristotle
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (Du Dw : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → EuclideanSpace <span class="tok-type">ℝ</span> (Fin d))
+    (hDu_sq : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖Du x‖ ^ <span class="tok-number">2</span>) (volume.restrict Ω))
+    (hDw_sq : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖Dw x‖ ^ <span class="tok-number">2</span>) (volume.restrict Ω))
+    (hcross : Integrable (<span class="tok-keyword">fun</span> x =&gt; @inner <span class="tok-type">ℝ</span> _ _ (Du x) (Dw x)) (volume.restrict Ω))
+    (h_harmonic : ∫ x <span class="tok-keyword">in</span> Ω, @inner <span class="tok-type">ℝ</span> _ _ (Du x) (Dw x) = <span class="tok-number">0</span>) :
+    ∫ x <span class="tok-keyword">in</span> Ω, ‖Du x + Dw x‖ ^ <span class="tok-number">2</span> =
+      ∫ x <span class="tok-keyword">in</span> Ω, ‖Du x‖ ^ <span class="tok-number">2</span> + ∫ x <span class="tok-keyword">in</span> Ω, ‖Dw x‖ ^ <span class="tok-number">2</span></code></pre>
+        </div>
+        <p><strong>Verification status:</strong> failed</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/energy_pythagorean_worker_20260406-015138_b58c6ee7.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code">/-
+# Dirichlet Energy Pythagorean Identity via Weak Harmonicity
+
+This file formalizes the Pythagorean identity for Dirichlet energy <span class="tok-keyword">in</span> <span class="tok-type">ℝ</span>^d:
+<span class="tok-keyword">if</span> `u` is weakly harmonic <span class="tok-keyword">in</span> a bounded domain `Ω ⊂ <span class="tok-type">ℝ</span>^d` and `w = v - u ∈ H₀¹(Ω)`, <span class="tok-keyword">then</span>
+
+  `∫_Ω ‖∇v‖² dx = ∫_Ω ‖∇u‖² dx + ∫_Ω ‖∇w‖² dx`
+
+The proof expands `∇v = ∇u + ∇w` pointwise using `‖a+b‖² = ‖a‖² + <span class="tok-number">2</span>⟨a,b⟩ + ‖b‖²`,
+integrates over Ω, and applies the weak harmonicity condition (<span class="tok-keyword">with</span> test function `w`)
+to eliminate the cross term `<span class="tok-number">2</span>∫_Ω ⟨∇u, ∇w⟩ dx`.
+
+The formalization uses `EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)` as the concrete ambient space <span class="tok-type">ℝ</span>^d.
+Gradients `Du` and `Dw` are functions `<span class="tok-type">ℝ</span>^d → <span class="tok-type">ℝ</span>^d`, and integration is performed <span class="tok-keyword">with</span>
+respect to the Lebesgue (volume) measure restricted to the domain `Ω`.
+-/
+<span class="tok-keyword">import</span> Mathlib
+
+<span class="tok-keyword">open</span> MeasureTheory MeasureTheory.Measure
+
+<span class="tok-keyword">variable</span> {d : <span class="tok-type">ℕ</span>}
+
+/<span class="tok-comment">-- **Dirichlet Energy Pythagorean Identity in ℝ^d.**</span>
+
+Let `Ω ⊂ <span class="tok-type">ℝ</span>^d` be a measurable domain, and <span class="tok-keyword">let</span> `Du`, `Dw : <span class="tok-type">ℝ</span>^d → <span class="tok-type">ℝ</span>^d` represent the
+gradients of a weakly harmonic function `u` and a perturbation `w = v - u` (<span class="tok-keyword">where</span>
+`w ∈ H₀¹(Ω)`), respectively.
+
+The weak harmonicity condition states that `∫_Ω ⟨∇u, ∇φ⟩ dx = <span class="tok-number">0</span>` for every test
+function `φ ∈ H₀¹(Ω)`. Taking `φ = w` yields the hypothesis
+`h_harmonic : ∫_Ω ⟨Du, Dw⟩ dx = <span class="tok-number">0</span>`.
+
+**Conclusion:**  `∫_Ω ‖Du + Dw‖² dx = ∫_Ω ‖Du‖² dx + ∫_Ω ‖Dw‖² dx`
+
+The proof expands `‖a + b‖² = ‖a‖² + <span class="tok-number">2</span>⟨a,b⟩ + ‖b‖²` pointwise, integrates over Ω,
+and uses the vanishing cross-term from weak harmonicity. -/
+<span class="tok-keyword">theorem</span> energy_pythagorean_aristotle
+    (Ω : Set (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (Du Dw : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → EuclideanSpace <span class="tok-type">ℝ</span> (Fin d))
+    (hDu_sq : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖Du x‖ ^ <span class="tok-number">2</span>) (volume.restrict Ω))
+    (hDw_sq : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖Dw x‖ ^ <span class="tok-number">2</span>) (volume.restrict Ω))
+    (hcross : Integrable (<span class="tok-keyword">fun</span> x =&gt; @inner <span class="tok-type">ℝ</span> _ _ (Du x) (Dw x)) (volume.restrict Ω))
+    (h_harmonic : ∫ x <span class="tok-keyword">in</span> Ω, @inner <span class="tok-type">ℝ</span> _ _ (Du x) (Dw x) = <span class="tok-number">0</span>) :
+    ∫ x <span class="tok-keyword">in</span> Ω, ‖Du x + Dw x‖ ^ <span class="tok-number">2</span> =
+      ∫ x <span class="tok-keyword">in</span> Ω, ‖Du x‖ ^ <span class="tok-number">2</span> + ∫ x <span class="tok-keyword">in</span> Ω, ‖Dw x‖ ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> key : ∀ x, ‖Du x + Dw x‖ ^ <span class="tok-number">2</span> =
+      ‖Du x‖ ^ <span class="tok-number">2</span> + <span class="tok-number">2</span> * @inner <span class="tok-type">ℝ</span> _ _ (Du x) (Dw x) + ‖Dw x‖ ^ <span class="tok-number">2</span> :=
+    <span class="tok-keyword">fun</span> x =&gt; norm_add_sq_real _ _
+  simp_rw [key]
+  <span class="tok-tactic">rw</span> [integral_add (hDu_sq.add (hcross.const_mul <span class="tok-number">2</span>)) hDw_sq,
+      integral_add hDu_sq (hcross.const_mul <span class="tok-number">2</span>),
+      integral_const_mul, h_harmonic, mul_zero, add_zero]</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/energy_pythagorean_worker_20260406-015138_b58c6ee7.lean:50:6: error: Tactic `rewrite` failed: Did not find an occurrence of the pattern
+  ∫ (a : EuclideanSpace ℝ (Fin d)) in Ω, ((fun x =&gt; ‖Du x‖ ^ 2) + fun x =&gt; 2 * inner ℝ (Du x) (Dw x)) a + ‖Dw a‖ ^ 2
+in the target expression
+  ∫ (x : EuclideanSpace ℝ (Fin d)) in Ω, ‖Du x‖ ^ 2 + 2 * inner ℝ (Du x) (Dw x) + ‖Dw x‖ ^ 2 =
+    ∫ (x : EuclideanSpace ℝ (Fin d)) in Ω, ‖Du x‖ ^ 2 + ∫ (x : EuclideanSpace ℝ (Fin d)) in Ω, ‖Dw x‖ ^ 2
+
+d : ℕ
+Ω : Set (EuclideanSpace ℝ (Fin d))
+Du Dw : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)
+hDu_sq : Integrable (fun x =&gt; ‖Du x‖ ^ 2) (volume.restrict Ω)
+hDw_sq : Integrable (fun x =&gt; ‖Dw x‖ ^ 2) (volume.restrict Ω)
+hcross : Integrable (fun x =&gt; inner ℝ (Du x) (Dw x)) (volume.restrict Ω)
+h_harmonic : ∫ (x : EuclideanSpace ℝ (Fin d)) in Ω, inner ℝ (Du x) (Dw x) = 0
+key : ∀ (x : EuclideanSpace ℝ (Fin d)), ‖Du x + Dw x‖ ^ 2 = ‖Du x‖ ^ 2 + 2 * inner ℝ (Du x) (Dw x) + ‖Dw x‖ ^ 2
+⊢ ∫ (x : EuclideanSpace ℝ (Fin d)) in Ω, ‖Du x‖ ^ 2 + 2 * inner ℝ (Du x) (Dw x) + ‖Dw x‖ ^ 2 =
+    ∫ (x : EuclideanSpace ℝ (Fin d)) in Ω, ‖Du x‖ ^ 2 + ∫ (x : EuclideanSpace ℝ (Fin d)) in Ω, ‖Dw x‖ ^ 2
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+
+    <article class="node-card node-root" id="node-root" data-node-id="root">
+      <h3>Harmonic functions minimize Dirichlet energy among competitors with the same boundary values</h3>
+      <p class="meta">Node id: root | Status: formal_failed</p>
+      <p class="meta">Display label: Main theorem: Dirichlet energy minimality</p>
+      <p class="meta">Formalization priority: 2. Rationale: A clean self-contained statement for a top-level Lean theorem declaration. Once the energy Pythagorean identity is formalized, this reduces to invoking the identity and quoting nonnegativity of \(L^2\)-norms, making it a natural wrapper but secondary in formalization difficulty.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \(u\) be weakly harmonic in \(\Omega\) with \(u = g\) on \(\partial\Omega\). For every sufficiently regular \(v\) with \(v = g\) on \(\partial\Omega\), \(\int_\Omega |\nabla v|^2\,dx = \int_\Omega |\nabla u|^2\,dx + \int_\Omega |\nabla(v-u)|^2\,dx \ge \int_\Omega |\nabla u|^2\,dx\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Set \(w := v - u\). Since \(u\) and \(v\) share the same boundary data, \(w \in H_0^1(\Omega)\). By the Dirichlet energy Pythagorean identity, \(\int_\Omega |\nabla v|^2\,dx = \int_\Omega |\nabla u|^2\,dx + \int_\Omega |\nabla w|^2\,dx\). Since \(\int_\Omega |\nabla w|^2\,dx \ge 0\), we conclude \(\int_\Omega |\nabla u|^2\,dx \le \int_\Omega |\nabla v|^2\,dx\). Substituting \(w = v - u\) gives the stated identity and inequality.</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> root_aristotle</p>
+        <p><strong>Coverage:</strong> over_abstract</p><p class="meta">Avoid replacing a concrete local claim with an arbitrary measure-space theorem.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> root_aristotle
+    (d : <span class="tok-type">ℕ</span>)
+    (μ : Measure (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (grad_u grad_v : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → EuclideanSpace <span class="tok-type">ℝ</span> (Fin d))
+    (hu_sq : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖grad_u x‖ ^ <span class="tok-number">2</span>) μ)
+    (hw_sq : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖grad_v x - grad_u x‖ ^ <span class="tok-number">2</span>) μ)
+    (h_cross : Integrable (<span class="tok-keyword">fun</span> x =&gt; ⟪grad_u x, grad_v x - grad_u x⟫_<span class="tok-type">ℝ</span>) μ)
+    (h_ortho : ∫ x, ⟪grad_u x, grad_v x - grad_u x⟫_<span class="tok-type">ℝ</span> ∂μ = <span class="tok-number">0</span>) :
+    (∫ x, ‖grad_v x‖ ^ <span class="tok-number">2</span> ∂μ =
+      ∫ x, ‖grad_u x‖ ^ <span class="tok-number">2</span> ∂μ + ∫ x, ‖grad_v x - grad_u x‖ ^ <span class="tok-number">2</span> ∂μ) ∧
+    (∫ x, ‖grad_u x‖ ^ <span class="tok-number">2</span> ∂μ ≤ ∫ x, ‖grad_v x‖ ^ <span class="tok-number">2</span> ∂μ)</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> failed</p>
+        <p><strong>Verification command:</strong> <code>faithfulness_guard</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+<span class="tok-keyword">open</span> MeasureTheory InnerProductSpace
+
+/-!
+# Harmonic functions minimize Dirichlet energy
+
+We formalize the <span class="tok-keyword">theorem</span> that weakly harmonic functions minimize the Dirichlet energy
+among competitors <span class="tok-keyword">with</span> the same boundary values.
+
+The setting: Ω ⊂ <span class="tok-type">ℝ</span>^d is a bounded domain. Functions u, v : Ω → <span class="tok-type">ℝ</span> <span class="tok-tactic">have</span> gradient fields
+∇u, ∇v : Ω → <span class="tok-type">ℝ</span>^d. We represent <span class="tok-type">ℝ</span>^d as `EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)` and integrate <span class="tok-keyword">with</span>
+respect to a measure μ on <span class="tok-type">ℝ</span>^d (standing for Lebesgue measure restricted to Ω).
+
+Weak harmonicity of u means ∫_Ω ⟨∇u, ∇φ⟩ dx = <span class="tok-number">0</span> for all test functions φ ∈ H₀¹(Ω).
+Since v and u share boundary data g on ∂Ω, w = v - u lies <span class="tok-keyword">in</span> H₀¹(Ω), giving the
+orthogonality condition ∫ ⟨∇u, ∇(v-u)⟩ dμ = <span class="tok-number">0</span>.
+
+From this we derive:
+<span class="tok-number">1</span>. The Pythagorean identity: ∫|∇v|² = ∫|∇u|² + ∫|∇(v-u)|²
+<span class="tok-number">2</span>. The minimality: ∫|∇u|² ≤ ∫|∇v|²
+-/
+
+noncomputable <span class="tok-keyword">section</span>
+
+<span class="tok-keyword">variable</span> {d : <span class="tok-type">ℕ</span>}
+
+/-
+Auxiliary: the Dirichlet energy Pythagorean identity. If the gradient fields ∇u and
+∇(v-u) are orthogonal <span class="tok-keyword">in</span> L²(Ω; <span class="tok-type">ℝ</span>^d) (as guaranteed <span class="tok-tactic">by</span> weak harmonicity of u and the
+fact that v - u ∈ H₀¹(Ω)), <span class="tok-keyword">then</span> ∫_Ω |∇v|² dx = ∫_Ω |∇u|² dx + ∫_Ω |∇(v-u)|² dx.
+-/
+<span class="tok-keyword">theorem</span> dirichlet_energy_pythagorean
+    (d : <span class="tok-type">ℕ</span>)
+    (μ : Measure (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (grad_u grad_v : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → EuclideanSpace <span class="tok-type">ℝ</span> (Fin d))
+    (hu_sq : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖grad_u x‖ ^ <span class="tok-number">2</span>) μ)
+    (hw_sq : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖grad_v x - grad_u x‖ ^ <span class="tok-number">2</span>) μ)
+    (h_cross : Integrable (<span class="tok-keyword">fun</span> x =&gt; ⟪grad_u x, grad_v x - grad_u x⟫_<span class="tok-type">ℝ</span>) μ)
+    (h_ortho : ∫ x, ⟪grad_u x, grad_v x - grad_u x⟫_<span class="tok-type">ℝ</span> ∂μ = <span class="tok-number">0</span>) :
+    ∫ x, ‖grad_v x‖ ^ <span class="tok-number">2</span> ∂μ =
+      ∫ x, ‖grad_u x‖ ^ <span class="tok-number">2</span> ∂μ + ∫ x, ‖grad_v x - grad_u x‖ ^ <span class="tok-number">2</span> ∂μ := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_split : ∫ x, ‖grad_v x‖ ^ <span class="tok-number">2</span> ∂μ = (∫ x, ‖grad_u x‖ ^ <span class="tok-number">2</span> ∂μ) + (∫ x, ‖grad_v x - grad_u x‖ ^ <span class="tok-number">2</span> ∂μ) + <span class="tok-number">2</span> * (∫ x, ⟪grad_u x, grad_v x - grad_u x⟫_<span class="tok-type">ℝ</span> ∂μ) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">rw</span> [ ← MeasureTheory.integral_const_mul, ← MeasureTheory.integral_add, ← MeasureTheory.integral_add ];
+    · congr; ext x; <span class="tok-tactic">rw</span> [ <span class="tok-tactic">show</span> ‖grad_v x‖ ^ <span class="tok-number">2</span> = ‖grad_u x‖ ^ <span class="tok-number">2</span> + ‖grad_v x - grad_u x‖ ^ <span class="tok-number">2</span> + <span class="tok-number">2</span> * ⟪grad_u x, grad_v x - grad_u x⟫_<span class="tok-type">ℝ</span> <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ <span class="tok-tactic">show</span> ‖grad_v x‖ ^ <span class="tok-number">2</span> = ‖grad_u x + ( grad_v x - grad_u x )‖ ^ <span class="tok-number">2</span> <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ add_sub_cancel ] ] ; <span class="tok-tactic">rw</span> [ @norm_add_sq <span class="tok-type">ℝ</span> ] ; <span class="tok-tactic">norm_num</span> ; <span class="tok-tactic">ring</span> ] ;
+    · <span class="tok-tactic">exact</span> hu_sq.add hw_sq;
+    · <span class="tok-tactic">exact</span> h_cross.const_mul _;
+    · <span class="tok-tactic">exact</span> hu_sq;
+    · <span class="tok-tactic">exact</span> hw_sq;
+  <span class="tok-tactic">linarith</span>
+
+/-
+**Harmonic functions minimize Dirichlet energy among competitors <span class="tok-keyword">with</span> the same
+boundary values.**
+
+Let u be weakly harmonic <span class="tok-keyword">in</span> Ω ⊂ <span class="tok-type">ℝ</span>^d <span class="tok-keyword">with</span> u = g on ∂Ω, and <span class="tok-keyword">let</span> v be any sufficiently
+regular function <span class="tok-keyword">with</span> v = g on ∂Ω. The gradient fields ∇u, ∇v : Ω → <span class="tok-type">ℝ</span>^d are represented
+as functions from `EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)` to `EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)`, and μ stands
+for Lebesgue measure restricted to Ω.
+
+The hypothesis `h_ortho` encodes weak harmonicity tested against the admissible variation
+w = v - u ∈ H₀¹(Ω): ∫_Ω ⟨∇u, ∇(v-u)⟩ dμ = <span class="tok-number">0</span>.
+
+Conclusion:
+• ∫_Ω |∇v|² dμ = ∫_Ω |∇u|² dμ + ∫_Ω |∇(v-u)|² dμ  (Pythagorean identity)
+• ∫_Ω |∇u|² dμ ≤ ∫_Ω |∇v|² dμ                       (energy minimality)
+-/
+<span class="tok-keyword">theorem</span> root_aristotle
+    (d : <span class="tok-type">ℕ</span>)
+    (μ : Measure (EuclideanSpace <span class="tok-type">ℝ</span> (Fin d)))
+    (grad_u grad_v : EuclideanSpace <span class="tok-type">ℝ</span> (Fin d) → EuclideanSpace <span class="tok-type">ℝ</span> (Fin d))
+    (hu_sq : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖grad_u x‖ ^ <span class="tok-number">2</span>) μ)
+    (hw_sq : Integrable (<span class="tok-keyword">fun</span> x =&gt; ‖grad_v x - grad_u x‖ ^ <span class="tok-number">2</span>) μ)
+    (h_cross : Integrable (<span class="tok-keyword">fun</span> x =&gt; ⟪grad_u x, grad_v x - grad_u x⟫_<span class="tok-type">ℝ</span>) μ)
+    (h_ortho : ∫ x, ⟪grad_u x, grad_v x - grad_u x⟫_<span class="tok-type">ℝ</span> ∂μ = <span class="tok-number">0</span>) :
+    (∫ x, ‖grad_v x‖ ^ <span class="tok-number">2</span> ∂μ =
+      ∫ x, ‖grad_u x‖ ^ <span class="tok-number">2</span> ∂μ + ∫ x, ‖grad_v x - grad_u x‖ ^ <span class="tok-number">2</span> ∂μ) ∧
+    (∫ x, ‖grad_u x‖ ^ <span class="tok-number">2</span> ∂μ ≤ ∫ x, ‖grad_v x‖ ^ <span class="tok-number">2</span> ∂μ) := <span class="tok-tactic">by</span>
+  convert dirichlet_energy_pythagorean d μ grad_u grad_v hu_sq hw_sq h_cross h_ortho;
+  <span class="tok-tactic">simp</span> +zetaDelta at *;
+  <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> h =&gt; h ▸ le_add_of_nonneg_right ( MeasureTheory.integral_nonneg <span class="tok-keyword">fun</span> x =&gt; sq_nonneg _ )
+
+<span class="tok-keyword">end</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+Formalization drifted too far from the target node. Avoid replacing a concrete local claim with an arbitrary measure-space theorem.</code></pre>
+        </details>
+        
+    </article>
+    
+      </div>
+    </section>
+  </main>
+</body>
+</html>

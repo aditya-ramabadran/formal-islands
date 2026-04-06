@@ -1,0 +1,20 @@
+[
+  {
+    "node_id": "deterministic_taylor_expansion",
+    "status": "failed",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/deterministic_taylor_expansion_worker_20260405-220834_91916f91.lean",
+    "attempt_count": 2,
+    "stderr": "",
+    "faithfulness_classification": "concrete_sublemma",
+    "lean_theorem_name": "deterministic_taylor_expansion_aristotle"
+  },
+  {
+    "node_id": "quadratic_variation_convergence",
+    "status": "failed",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/quadratic_variation_convergence_worker_20260405-220834_7a28527d.lean",
+    "attempt_count": 1,
+    "stderr": "Lean verification timed out after 120.0 seconds.",
+    "faithfulness_classification": "concrete_sublemma",
+    "lean_theorem_name": "quadratic_variation_convergence_aristotle"
+  }
+]

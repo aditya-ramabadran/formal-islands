@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Heat equation uniqueness by the energy method - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: rgba(255, 250, 241, 0.98);
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
+      --graph-shell-top: rgba(255, 251, 242, 0.96);
+      --graph-shell-bottom: rgba(245, 238, 227, 0.96);
+      --checklist-panel: rgba(255, 250, 241, 0.95);
+      --target-panel: #fff8ee;
+      --code-surface: #f4efe6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161311;
+        --panel: #211b17;
+        --ink: #f3ede5;
+        --muted: #c0b2a3;
+        --border: #4a3d32;
+        --accent: #f0b47b;
+        --accent-soft: #3a2b20;
+        --highlight: #ffb25c;
+        --highlight-soft: #3f2d19;
+        --preview-soft: #312419;
+        --checked: #65c08a;
+        --checked-soft: #213126;
+        --edge: #8f8172;
+        --status-informal-stroke: #d69760;
+        --status-informal-fill: rgba(46, 34, 26, 0.96);
+        --status-candidate-stroke: #f0a64e;
+        --status-candidate-fill: #3f2d18;
+        --status-verified-stroke: #65c08a;
+        --status-verified-fill: #213126;
+        --status-failed-stroke: #dd8a79;
+        --status-failed-fill: #3b2320;
+        --graph-shell-top: rgba(44, 34, 27, 0.98);
+        --graph-shell-bottom: rgba(32, 25, 21, 0.98);
+        --checklist-panel: rgba(36, 29, 24, 0.98);
+        --target-panel: #31261f;
+        --code-surface: #2a231e;
+      }
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(circle at top, #2a211b, var(--bg));
+      }
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .math-text mjx-container {
+      max-width: 100%;
+    }
+    .math-text mjx-container[display="true"] {
+      margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .math-text mjx-container[jax="CHTML"][display="true"] {
+      padding: 0 !important;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--graph-shell-top), var(--graph-shell-bottom));
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+    .graph-frame {
+      width: min(100%, 460px);
+      margin: 0 auto;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 240px;
+      overflow: visible;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 2.8;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-edge.edge-provenance {
+      stroke-dasharray: 7 5;
+      opacity: 0.66;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-box {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-title {
+      fill: var(--ink);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 9.5px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--checklist-panel);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {
+      min-width: 0;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: var(--target-panel);
+    }
+    pre {
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 0.75rem;
+      background: var(--code-surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin: 0.6rem 0;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    code.inline-code {
+      background: var(--code-surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.95em;
+      white-space: break-spaces;
+    }
+    .statement-code {
+      margin-top: 0.35rem;
+    }
+    .statement-code pre,
+    .checklist-code pre {
+      margin-top: 0.35rem;
+      background: var(--code-surface);
+    }
+    .lean-code {
+      color: #2a241f;
+    }
+    .lean-code .tok-keyword {
+      color: #8b2f18;
+      font-weight: 700;
+    }
+    .lean-code .tok-tactic {
+      color: #9d5d17;
+      font-weight: 600;
+    }
+    .lean-code .tok-type {
+      color: #245f7a;
+    }
+    .lean-code .tok-number {
+      color: #7442a8;
+    }
+    .lean-code .tok-comment {
+      color: #6e7a60;
+      font-style: italic;
+    }
+    .lean-code .tok-string {
+      color: #2d7f4d;
+    }
+    @media (prefers-color-scheme: dark) {
+      .lean-code {
+        color: #f2e8dc;
+      }
+      .lean-code .tok-keyword {
+        color: #f08f63;
+      }
+      .lean-code .tok-tactic {
+        color: #f4b35d;
+      }
+      .lean-code .tok-type {
+        color: #73c7ff;
+      }
+      .lean-code .tok-number {
+        color: #be8cff;
+      }
+      .lean-code .tok-comment {
+        color: #97b18b;
+      }
+      .lean-code .tok-string {
+        color: #67d59a;
+      }
+    }
+    
+            .report-root:has(a.node-energy_dissipation:hover) .node-energy_dissipation.node-card,
+            .report-root:has(#node-energy_dissipation:target) a.node-energy_dissipation .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-energy_dissipation:hover) .node-energy_dissipation.node-card,
+            .report-root:has(#node-energy_dissipation:target).report-root .node-energy_dissipation.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-heat_uniqueness:hover) .node-heat_uniqueness.node-card,
+            .report-root:has(#node-heat_uniqueness:target) a.node-heat_uniqueness .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-heat_uniqueness:hover) .node-heat_uniqueness.node-card,
+            .report-root:has(#node-heat_uniqueness:target).report-root .node-heat_uniqueness.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-heat_uniqueness_refined_local_claim:hover) .node-heat_uniqueness_refined_local_claim.node-card,
+            .report-root:has(#node-heat_uniqueness_refined_local_claim:target) a.node-heat_uniqueness_refined_local_claim .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-heat_uniqueness_refined_local_claim:hover) .node-heat_uniqueness_refined_local_claim.node-card,
+            .report-root:has(#node-heat_uniqueness_refined_local_claim:target).report-root .node-heat_uniqueness_refined_local_claim.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-energy_dissipation:hover) a.node-energy_dissipation .graph-node-box,
+.report-root:has(.obligation-informal-proof-energy_dissipation:hover) .node-energy_dissipation.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-energy_dissipation:checked) a.node-energy_dissipation .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-energy_dissipation:checked) .node-energy_dissipation.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-energy_dissipation:hover) .obligation-informal-proof-energy_dissipation {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-energy_dissipation:checked) .obligation-informal-proof-energy_dissipation {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-heat_uniqueness:hover) a.node-heat_uniqueness .graph-node-box,
+.report-root:has(.obligation-semantic-match-heat_uniqueness:hover) .node-heat_uniqueness.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-heat_uniqueness:checked) a.node-heat_uniqueness .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-heat_uniqueness:checked) .node-heat_uniqueness.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-heat_uniqueness:checked) .edge-heat_uniqueness_refined_local_claim-heat_uniqueness {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-heat_uniqueness:hover) .obligation-semantic-match-heat_uniqueness {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-heat_uniqueness:checked) .obligation-semantic-match-heat_uniqueness {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-heat_uniqueness_refined_local_claim:hover) a.node-heat_uniqueness_refined_local_claim .graph-node-box,
+.report-root:has(.obligation-semantic-match-heat_uniqueness_refined_local_claim:hover) .node-heat_uniqueness_refined_local_claim.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-heat_uniqueness_refined_local_claim:checked) a.node-heat_uniqueness_refined_local_claim .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-heat_uniqueness_refined_local_claim:checked) .node-heat_uniqueness_refined_local_claim.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-heat_uniqueness_refined_local_claim:checked) .edge-heat_uniqueness_refined_local_claim-heat_uniqueness {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-heat_uniqueness_refined_local_claim:hover) .obligation-semantic-match-heat_uniqueness_refined_local_claim {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-heat_uniqueness_refined_local_claim:checked) .obligation-semantic-match-heat_uniqueness_refined_local_claim {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-boundary-energy_dissipation-heat_uniqueness_refined_local_claim:hover) a.node-energy_dissipation .graph-node-box,
+.report-root:has(.obligation-boundary-energy_dissipation-heat_uniqueness_refined_local_claim:hover) a.node-heat_uniqueness_refined_local_claim .graph-node-box,
+.report-root:has(.obligation-boundary-energy_dissipation-heat_uniqueness_refined_local_claim:hover) .node-energy_dissipation.node-card,
+.report-root:has(.obligation-boundary-energy_dissipation-heat_uniqueness_refined_local_claim:hover) .node-heat_uniqueness_refined_local_claim.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-energy_dissipation-heat_uniqueness_refined_local_claim:checked) a.node-energy_dissipation .graph-node-box,
+.report-root:has(#obligation-check-boundary-energy_dissipation-heat_uniqueness_refined_local_claim:checked) a.node-heat_uniqueness_refined_local_claim .graph-node-box,
+.report-root:has(#obligation-check-boundary-energy_dissipation-heat_uniqueness_refined_local_claim:checked) .node-energy_dissipation.node-card,
+.report-root:has(#obligation-check-boundary-energy_dissipation-heat_uniqueness_refined_local_claim:checked) .node-heat_uniqueness_refined_local_claim.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-energy_dissipation-heat_uniqueness_refined_local_claim:checked) .edge-heat_uniqueness_refined_local_claim-heat_uniqueness {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-boundary-energy_dissipation-heat_uniqueness_refined_local_claim:hover) .obligation-boundary-energy_dissipation-heat_uniqueness_refined_local_claim {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-boundary-energy_dissipation-heat_uniqueness_refined_local_claim:checked) .obligation-boundary-energy_dissipation-heat_uniqueness_refined_local_claim {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-root">
+    <section>
+      <h1>Heat equation uniqueness by the energy method</h1>
+      <div class="math-text">Uniqueness for the heat equation by the energy method.
+
+Let \(u,v\) be sufficiently regular solutions of the heat equation on the interval \((0,L)\) for times \(t \in [0,T]\):
+\[
+u_t = u_{xx}, \qquad v_t = v_{xx},
+\]
+with the same initial data
+\[
+u(x,0)=v(x,0),
+\]
+and the same homogeneous Dirichlet boundary conditions
+\[
+u(0,t)=u(L,t)=v(0,t)=v(L,t)=0.
+\]
+Then \(u=v\) on \([0,L]\times[0,T]\).</div>
+      <p class="meta">Root node: heat_uniqueness</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 3</span>
+        <span class="pill">Edges: 2</span>
+        <span class="pill">Informal: 0</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 2</span>
+        <span class="pill">Failed: 1</span>
+      </p>
+      <div class="graph-shell">
+        
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><line class="graph-edge edge-energy_dissipation-heat_uniqueness_refined_local_claim edge-provenance" x1="210.0" y1="201.0" x2="210.0" y2="259.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-heat_uniqueness_refined_local_claim-heat_uniqueness" x1="210.0" y1="319.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line></g>
+        <g>
+    <a class="graph-node-link node-energy_dissipation status-formal-failed" href="#node-energy_dissipation">
+      <rect class="graph-node-box status-formal-failed" x="144.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="160">\(E&#x27;(t) =</tspan>
+<tspan x="210.0" y="172">-\int_0^L |w_x|…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="186">energy_dissipation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-heat_uniqueness status-formal-verified" href="#node-heat_uniqueness">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="20" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="32" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="42">Heat uniqueness</tspan>
+<tspan x="210.0" y="54">(energy method)</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">heat_uniqueness</text>
+    </a>
+    
+
+    <a class="graph-node-link node-heat_uniqueness_refined_local_claim status-formal-verified" href="#node-heat_uniqueness_refined_local_claim">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="278">E ≡ 0 by</tspan>
+<tspan x="210.0" y="290">monotone squeeze</tspan></text>
+      <text class="graph-node-id" x="210.0" y="304">heat_uniqueness_refined_local_claim</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+      </div>
+      <p class="graph-caption">
+        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+      </p>
+      <p class="graph-caption">
+        Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
+      </p>
+      <p class="graph-caption">
+        Dashed gray edges show provenance or refinement links between nearby nodes. They are not proof dependencies unless the edge is part of the main dependency layout.
+      </p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-informal-proof-energy_dissipation" data-obligation-id="informal-proof-energy_dissipation">
+      <label class="checklist-label" for="obligation-check-informal-proof-energy_dissipation">
+        <input id="obligation-check-informal-proof-energy_dissipation" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;energy_dissipation&#x27; (Energy is nonincreasing: E&#x27;(t) ≤ 0) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-energy_dissipation">energy_dissipation</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-heat_uniqueness" data-obligation-id="semantic-match-heat_uniqueness">
+      <label class="checklist-label" for="obligation-check-semantic-match-heat_uniqueness">
+        <input id="obligation-check-semantic-match-heat_uniqueness" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;heat_uniqueness&#x27; (Heat equation uniqueness by the energy method) matches the verified Lean statement &#x27;theorem heat_uniqueness_aristotle
+    {L T : ℝ} (hL : 0 &lt; L) (hT : 0 ≤ T)
+    {u v : ℝ → ℝ → ℝ}
+    -- Same initial data
+    (hinit : ∀ x ∈ Icc 0 L, u x 0 = v x 0)
+    -- Continuity of u - v in x for each t (regularity)
+    (hcont : ∀ t ∈ Icc 0 T, Continuous (fun x =&gt; u x t - v x t))
+    -- Energy functional E(t) = ∫₀ᴸ (u(x,t) - v(x,t))² dx
+    {E : ℝ → ℝ}
+    (hE_def : ∀ t ∈ Icc 0 T, E t = ∫ x in (0:ℝ)..L, (u x t - v x t) ^ 2)
+    -- Regularity of E
+    (hE_cont : ContinuousOn E (Icc 0 T))
+    (hE_diff : DifferentiableOn ℝ E (Ioo 0 T))
+    -- Energy dissipation (from the heat equation + integration by parts)
+    (hE_dissip : ∀ t ∈ Ioo 0 T, deriv E t ≤ 0)
+    -- Integrability
+    (hint : ∀ t ∈ Icc 0 T, IntervalIntegrable (fun x =&gt; (u x t - v x t) ^ 2) volume 0 L) :
+    ∀ x ∈ Icc 0 L, ∀ t ∈ Icc 0 T, u x t = v x t&#x27;.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> heat_uniqueness_aristotle
+    {L T : <span class="tok-type">ℝ</span>} (hL : <span class="tok-number">0</span> &lt; L) (hT : <span class="tok-number">0</span> ≤ T)
+    {u v : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>}
+    <span class="tok-comment">-- Same initial data</span>
+    (hinit : ∀ x ∈ Icc <span class="tok-number">0</span> L, u x <span class="tok-number">0</span> = v x <span class="tok-number">0</span>)
+    <span class="tok-comment">-- Continuity of u - v in x for each t (regularity)</span>
+    (hcont : ∀ t ∈ Icc <span class="tok-number">0</span> T, Continuous (<span class="tok-keyword">fun</span> x =&gt; u x t - v x t))
+    <span class="tok-comment">-- Energy functional E(t) = ∫₀ᴸ (u(x,t) - v(x,t))² dx</span>
+    {E : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>}
+    (hE_def : ∀ t ∈ Icc <span class="tok-number">0</span> T, E t = ∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, (u x t - v x t) ^ <span class="tok-number">2</span>)
+    <span class="tok-comment">-- Regularity of E</span>
+    (hE_cont : ContinuousOn E (Icc <span class="tok-number">0</span> T))
+    (hE_diff : DifferentiableOn <span class="tok-type">ℝ</span> E (Ioo <span class="tok-number">0</span> T))
+    <span class="tok-comment">-- Energy dissipation (from the heat equation + integration by parts)</span>
+    (hE_dissip : ∀ t ∈ Ioo <span class="tok-number">0</span> T, deriv E t ≤ <span class="tok-number">0</span>)
+    <span class="tok-comment">-- Integrability</span>
+    (hint : ∀ t ∈ Icc <span class="tok-number">0</span> T, IntervalIntegrable (<span class="tok-keyword">fun</span> x =&gt; (u x t - v x t) ^ <span class="tok-number">2</span>) volume <span class="tok-number">0</span> L) :
+    ∀ x ∈ Icc <span class="tok-number">0</span> L, ∀ t ∈ Icc <span class="tok-number">0</span> T, u x t = v x t</code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-heat_uniqueness">heat_uniqueness</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-heat_uniqueness_refined_local_claim" data-obligation-id="semantic-match-heat_uniqueness_refined_local_claim">
+      <label class="checklist-label" for="obligation-check-semantic-match-heat_uniqueness_refined_local_claim">
+        <input id="obligation-check-semantic-match-heat_uniqueness_refined_local_claim" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;heat_uniqueness_refined_local_claim&#x27; (Nonincreasing nonneg energy vanishing from zero: E(t) = 0 for all t) matches the verified Lean statement &#x27;theorem heat_uniqueness_refined_local_claim_aristotle
+    {T : ℝ} (hT : 0 ≤ T) {E : ℝ → ℝ}
+    (hcont : ContinuousOn E (Icc 0 T))
+    (hdiff : DifferentiableOn ℝ E (Ioo 0 T))
+    (hderiv : ∀ t ∈ Ioo 0 T, deriv E t ≤ 0)
+    (hE0 : E 0 = 0)
+    (hnneg : ∀ t ∈ Icc 0 T, 0 ≤ E t) :
+    ∀ t ∈ Icc 0 T, E t = 0&#x27;.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> heat_uniqueness_refined_local_claim_aristotle
+    {T : <span class="tok-type">ℝ</span>} (hT : <span class="tok-number">0</span> ≤ T) {E : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>}
+    (hcont : ContinuousOn E (Icc <span class="tok-number">0</span> T))
+    (hdiff : DifferentiableOn <span class="tok-type">ℝ</span> E (Ioo <span class="tok-number">0</span> T))
+    (hderiv : ∀ t ∈ Ioo <span class="tok-number">0</span> T, deriv E t ≤ <span class="tok-number">0</span>)
+    (hE0 : E <span class="tok-number">0</span> = <span class="tok-number">0</span>)
+    (hnneg : ∀ t ∈ Icc <span class="tok-number">0</span> T, <span class="tok-number">0</span> ≤ E t) :
+    ∀ t ∈ Icc <span class="tok-number">0</span> T, E t = <span class="tok-number">0</span></code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-heat_uniqueness_refined_local_claim">heat_uniqueness_refined_local_claim</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-boundary-energy_dissipation-heat_uniqueness_refined_local_claim" data-obligation-id="boundary-energy_dissipation-heat_uniqueness_refined_local_claim">
+      <label class="checklist-label" for="obligation-check-boundary-energy_dissipation-heat_uniqueness_refined_local_claim">
+        <input id="obligation-check-boundary-energy_dissipation-heat_uniqueness_refined_local_claim" type="checkbox" />
+        <span>
+          <span class="checklist-kind">boundary_interface_check</span><br />
+          Check that formal child &#x27;heat_uniqueness_refined_local_claim&#x27; proves exactly what informal parent &#x27;energy_dissipation&#x27; uses across their dependency boundary.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-energy_dissipation">energy_dissipation</a>, <a class="node-jump" href="#node-heat_uniqueness_refined_local_claim">heat_uniqueness_refined_local_claim</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="nodes-grid">
+        
+    <article class="node-card node-energy_dissipation" id="node-energy_dissipation" data-node-id="energy_dissipation">
+      <h3>Energy is nonincreasing: E&#x27;(t) ≤ 0</h3>
+      <p class="meta">Node id: energy_dissipation | Status: formal_failed</p>
+      <p class="meta">Display label: \(E&#x27;(t) = -\int_0^L |w_x|^2\,dx \le 0\)</p>
+      <p class="meta">Formalization priority: 1. Rationale: This node contains the entire technical core of the proof: differentiation under the integral, PDE substitution, the integration-by-parts identity ∫w·w_xx dx = [w·w_x]₀ᴸ − ∫|w_x|² dx, and cancellation of boundary terms. It is a concrete, self-contained computation, directly formalizable, and carries the main inferential load.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \(w = u - v\) satisfy \(w_t = w_{xx}\) on \((0,L)\times(0,T)\) with \(w(0,t)=w(L,t)=0\), and define the energy \(E(t) = \tfrac{1}{2}\int_0^L w(x,t)^2\,dx\). Then \(E&#x27;(t) = -\int_0^L |w_x(x,t)|^2\,dx \le 0\) for all \(t \in [0,T]\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Differentiating under the integral sign (justified by the assumed regularity of \(w\)):
+\[
+E&#x27;(t) = \int_0^L w\, w_t\,dx.
+\]
+Substituting the PDE \(w_t = w_{xx}\):
+\[
+E&#x27;(t) = \int_0^L w\, w_{xx}\,dx.
+\]
+Integrating by parts in \(x\):
+\[
+\int_0^L w\, w_{xx}\,dx = \bigl[w\, w_x\bigr]_{0}^{L} - \int_0^L |w_x|^2\,dx.
+\]
+The boundary term vanishes because \(w(0,t) = w(L,t) = 0\), giving
+\[
+E&#x27;(t) = -\int_0^L |w_x(x,t)|^2\,dx \le 0.
+\]</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> energy_dissipation_aristotle</p>
+        <p><strong>Coverage:</strong> over_abstract</p><p class="meta">Avoid replacing the node with unrelated families of functions or indexed maps absent from the original claim.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> energy_dissipation_aristotle
+    (L : <span class="tok-type">ℝ</span>) (hL : <span class="tok-number">0</span> &lt; L)
+    (w w&#x27; w&#x27;&#x27; : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>)
+    (hw : ∀ x ∈ Set.uIcc <span class="tok-number">0</span> L, HasDerivWithinAt w (w&#x27; x) (Set.uIcc <span class="tok-number">0</span> L) x)
+    (hw&#x27; : ∀ x ∈ Set.uIcc <span class="tok-number">0</span> L, HasDerivWithinAt w&#x27; (w&#x27;&#x27; x) (Set.uIcc <span class="tok-number">0</span> L) x)
+    (hw&#x27;_int : IntervalIntegrable w&#x27; volume <span class="tok-number">0</span> L)
+    (hw&#x27;&#x27;_int : IntervalIntegrable w&#x27;&#x27; volume <span class="tok-number">0</span> L)
+    (hbc0 : w <span class="tok-number">0</span> = <span class="tok-number">0</span>) (hbcL : w L = <span class="tok-number">0</span>) :
+    (∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, w x * w&#x27;&#x27; x) = -(∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, w&#x27; x ^ <span class="tok-number">2</span>)
+    ∧ (∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, w x * w&#x27;&#x27; x) ≤ <span class="tok-number">0</span></code></pre>
+        </div>
+        <p><strong>Verification status:</strong> failed</p>
+        <p><strong>Verification command:</strong> <code>faithfulness_guard</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+<span class="tok-keyword">open</span> MeasureTheory Set intervalIntegral
+
+/-!
+# Energy dissipation for the heat equation
+
+We formalize the core computation of the energy method for uniqueness of the heat equation.
+
+Given `w` <span class="tok-keyword">with</span> spatial derivative `w&#x27;` and second spatial derivative `w&#x27;&#x27;` on `[<span class="tok-number">0</span>, L]`,
+and boundary conditions `w(<span class="tok-number">0</span>) = w(L) = <span class="tok-number">0</span>`, integration <span class="tok-tactic">by</span> parts gives:
+
+  ∫₀ᴸ w(x) · w&#x27;&#x27;(x) dx = -∫₀ᴸ (w&#x27;(x))² dx ≤ <span class="tok-number">0</span>
+
+In the energy method for the heat equation, `w = u - v` satisfies `wₜ = w_xx` <span class="tok-keyword">with</span>
+homogeneous Dirichlet boundary conditions. The energy `E(t) = ½∫₀ᴸ w² dx` satisfies
+`E&#x27;(t) = ∫₀ᴸ w · wₜ dx = ∫₀ᴸ w · w_xx dx` (<span class="tok-tactic">by</span> differentiation under the integral
+and PDE substitution). The result below <span class="tok-keyword">then</span> gives `E&#x27;(t) = -∫₀ᴸ (w_x)² dx ≤ <span class="tok-number">0</span>`,
+proving that the energy is nonincreasing.
+-/
+
+/<span class="tok-comment">-- **Integration by parts identity with vanishing boundary conditions.**</span>
+
+At a fixed time `t`, <span class="tok-keyword">let</span> `w` satisfy homogeneous Dirichlet boundary conditions `w(<span class="tok-number">0</span>) = w(L) = <span class="tok-number">0</span>`
+on `[<span class="tok-number">0</span>, L]`, <span class="tok-keyword">with</span> spatial derivative `w&#x27;` and second spatial derivative `w&#x27;&#x27;`. Then
+
+  `∫₀ᴸ w · w&#x27;&#x27; dx = -∫₀ᴸ (w&#x27;)² dx`
+
+This is the identity at the heart of the energy method: combined <span class="tok-keyword">with</span> `E&#x27;(t) = ∫ w · w_t`
+(differentiation under the integral sign) and the PDE `w_t = w_xx`, it gives
+`E&#x27;(t) = -∫₀ᴸ (w_x)² dx ≤ <span class="tok-number">0</span>`, proving energy dissipation. -/
+<span class="tok-keyword">theorem</span> ibp_boundary_vanishing
+    (L : <span class="tok-type">ℝ</span>) (_hL : <span class="tok-number">0</span> &lt; L)
+    (w w&#x27; w&#x27;&#x27; : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>)
+    (hw : ∀ x ∈ Set.uIcc <span class="tok-number">0</span> L, HasDerivWithinAt w (w&#x27; x) (Set.uIcc <span class="tok-number">0</span> L) x)
+    (hw&#x27; : ∀ x ∈ Set.uIcc <span class="tok-number">0</span> L, HasDerivWithinAt w&#x27; (w&#x27;&#x27; x) (Set.uIcc <span class="tok-number">0</span> L) x)
+    (hw&#x27;_int : IntervalIntegrable w&#x27; volume <span class="tok-number">0</span> L)
+    (hw&#x27;&#x27;_int : IntervalIntegrable w&#x27;&#x27; volume <span class="tok-number">0</span> L)
+    (hbc0 : w <span class="tok-number">0</span> = <span class="tok-number">0</span>) (hbcL : w L = <span class="tok-number">0</span>) :
+    ∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, w x * w&#x27;&#x27; x = -(∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, w&#x27; x ^ <span class="tok-number">2</span>) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_parts : ∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, w x * w&#x27;&#x27; x =
+      (w L * w&#x27; L - w <span class="tok-number">0</span> * w&#x27; <span class="tok-number">0</span>) - ∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, w&#x27; x * w&#x27; x :=
+    integral_mul_deriv_eq_deriv_mul_of_hasDerivWithinAt hw hw&#x27; hw&#x27;_int hw&#x27;&#x27;_int
+  <span class="tok-tactic">rw</span> [h_parts, hbc0, hbcL]
+  <span class="tok-tactic">simp</span> [sq]
+
+/<span class="tok-comment">-- **Energy dissipation for the heat equation (E&#x27;(t) ≤ 0).**</span>
+
+Let `w` be a sufficiently regular solution of `wₜ = w_xx` on `(<span class="tok-number">0</span>,L)` <span class="tok-keyword">with</span> homogeneous
+Dirichlet boundary conditions `w(<span class="tok-number">0</span>,t) = w(L,t) = <span class="tok-number">0</span>`. Define the energy
+`E(t) = ½∫₀ᴸ w(x,t)² dx`. Then `E&#x27;(t) = -∫₀ᴸ (w_x)² dx ≤ <span class="tok-number">0</span>`.
+
+This <span class="tok-keyword">theorem</span> takes as hypotheses the regularity of `w` (differentiability and integrability
+of spatial derivatives) and the boundary conditions, and concludes that the energy derivative
+(expressed as `∫₀ᴸ w · w_xx dx` after differentiation under the integral and PDE substitution)
+is nonpositive. -/
+<span class="tok-keyword">theorem</span> energy_dissipation_aristotle
+    (L : <span class="tok-type">ℝ</span>) (hL : <span class="tok-number">0</span> &lt; L)
+    (w w&#x27; w&#x27;&#x27; : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>)
+    (hw : ∀ x ∈ Set.uIcc <span class="tok-number">0</span> L, HasDerivWithinAt w (w&#x27; x) (Set.uIcc <span class="tok-number">0</span> L) x)
+    (hw&#x27; : ∀ x ∈ Set.uIcc <span class="tok-number">0</span> L, HasDerivWithinAt w&#x27; (w&#x27;&#x27; x) (Set.uIcc <span class="tok-number">0</span> L) x)
+    (hw&#x27;_int : IntervalIntegrable w&#x27; volume <span class="tok-number">0</span> L)
+    (hw&#x27;&#x27;_int : IntervalIntegrable w&#x27;&#x27; volume <span class="tok-number">0</span> L)
+    (hbc0 : w <span class="tok-number">0</span> = <span class="tok-number">0</span>) (hbcL : w L = <span class="tok-number">0</span>) :
+    (∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, w x * w&#x27;&#x27; x) = -(∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, w&#x27; x ^ <span class="tok-number">2</span>)
+    ∧ (∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, w x * w&#x27;&#x27; x) ≤ <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">refine</span> ⟨ibp_boundary_vanishing L hL w w&#x27; w&#x27;&#x27; hw hw&#x27; hw&#x27;_int hw&#x27;&#x27;_int hbc0 hbcL, ?_⟩
+  <span class="tok-tactic">rw</span> [ibp_boundary_vanishing L hL w w&#x27; w&#x27;&#x27; hw hw&#x27; hw&#x27;_int hw&#x27;&#x27;_int hbc0 hbcL]
+  <span class="tok-tactic">have</span> h_nn : <span class="tok-number">0</span> ≤ ∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, w&#x27; x ^ <span class="tok-number">2</span> :=
+    intervalIntegral.integral_nonneg hL.le (<span class="tok-keyword">fun</span> u _ =&gt; sq_nonneg (w&#x27; u))
+  <span class="tok-tactic">linarith</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+Formalization drifted too far from the target node. Avoid replacing the node with unrelated families of functions or indexed maps absent from the original claim.</code></pre>
+        </details>
+        
+    </article>
+    
+
+    <article class="node-card node-heat_uniqueness" id="node-heat_uniqueness" data-node-id="heat_uniqueness">
+      <h3>Heat equation uniqueness by the energy method</h3>
+      <p class="meta">Node id: heat_uniqueness | Status: formal_verified</p>
+      <p class="meta">Display label: Heat uniqueness (energy method)</p>
+      <p class="meta">Formalization priority: 3. Rationale: Promoted after verified child &#x27;heat_uniqueness_refined_local_claim&#x27; certified a local core; attempting broader parent coverage.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Under the stated hypotheses, \(u = v\) on \([0,L]\times[0,T]\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Set \(w = u - v\). Then \(w\) satisfies \(w_t = w_{xx}\) on \((0,L)\times(0,T)\) with zero initial data \(w(x,0)=0\) and zero Dirichlet boundary conditions \(w(0,t)=w(L,t)=0\).
+
+Define \(E(t) = \tfrac{1}{2}\int_0^L w(x,t)^2\,dx\). By the energy dissipation lemma, \(E&#x27;(t) \le 0\), so \(E\) is nonincreasing. At \(t=0\), \(w(x,0)=0\) gives \(E(0) = 0\). Since \(E(t) \ge 0\) by definition and \(E\) is nonincreasing from \(0\), we conclude \(E(t) = 0\) for all \(t \in [0,T]\).
+
+Hence \(\int_0^L w(x,t)^2\,dx = 0\) for all \(t\), so \(w(x,t) = 0\) for all \((x,t)\), i.e., \(u = v\).</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> heat_uniqueness_aristotle</p>
+        <p><strong>Coverage:</strong> full_node</p><p class="meta">The Lean theorem concludes exactly ∀ x ∈ Icc 0 L, ∀ t ∈ Icc 0 T, u x t = v x t, matching the target&#x27;s conclusion u = v on [0,L]×[0,T]. It faithfully captures the full energy method argument: same initial data giving E(0)=0, energy dissipation hE_dissip giving E nonincreasing, and E≥0 forcing E≡0 hence u=v. The PDE condition (w_t=w_xx with zero BCs) is abstracted into the energy dissipation hypothesis, which is standard and appropriate for Lean formalization. No major step of the energy method proof is missing — the theorem covers the target node&#x27;s content at the right level of abstraction.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> heat_uniqueness_aristotle
+    {L T : <span class="tok-type">ℝ</span>} (hL : <span class="tok-number">0</span> &lt; L) (hT : <span class="tok-number">0</span> ≤ T)
+    {u v : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>}
+    <span class="tok-comment">-- Same initial data</span>
+    (hinit : ∀ x ∈ Icc <span class="tok-number">0</span> L, u x <span class="tok-number">0</span> = v x <span class="tok-number">0</span>)
+    <span class="tok-comment">-- Continuity of u - v in x for each t (regularity)</span>
+    (hcont : ∀ t ∈ Icc <span class="tok-number">0</span> T, Continuous (<span class="tok-keyword">fun</span> x =&gt; u x t - v x t))
+    <span class="tok-comment">-- Energy functional E(t) = ∫₀ᴸ (u(x,t) - v(x,t))² dx</span>
+    {E : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>}
+    (hE_def : ∀ t ∈ Icc <span class="tok-number">0</span> T, E t = ∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, (u x t - v x t) ^ <span class="tok-number">2</span>)
+    <span class="tok-comment">-- Regularity of E</span>
+    (hE_cont : ContinuousOn E (Icc <span class="tok-number">0</span> T))
+    (hE_diff : DifferentiableOn <span class="tok-type">ℝ</span> E (Ioo <span class="tok-number">0</span> T))
+    <span class="tok-comment">-- Energy dissipation (from the heat equation + integration by parts)</span>
+    (hE_dissip : ∀ t ∈ Ioo <span class="tok-number">0</span> T, deriv E t ≤ <span class="tok-number">0</span>)
+    <span class="tok-comment">-- Integrability</span>
+    (hint : ∀ t ∈ Icc <span class="tok-number">0</span> T, IntervalIntegrable (<span class="tok-keyword">fun</span> x =&gt; (u x t - v x t) ^ <span class="tok-number">2</span>) volume <span class="tok-number">0</span> L) :
+    ∀ x ∈ Icc <span class="tok-number">0</span> L, ∀ t ∈ Icc <span class="tok-number">0</span> T, u x t = v x t</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+<span class="tok-keyword">open</span> MeasureTheory Set intervalIntegral
+
+/-!
+# Heat equation uniqueness <span class="tok-tactic">by</span> the energy method
+
+We formalize the uniqueness <span class="tok-keyword">theorem</span> for the heat equation via the energy method.
+Given `u, v : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>` (functions of space and time) that are solutions to
+the heat equation on `[<span class="tok-number">0</span>,L] × [<span class="tok-number">0</span>,T]` <span class="tok-keyword">with</span> the same initial data and homogeneous
+Dirichlet boundary conditions, we prove `u = v`.
+
+The proof sets `w = u - v`, defines the energy `E(t) = ∫₀ᴸ w(x,t)² dx`,
+and uses:
+<span class="tok-number">1</span>. `E(<span class="tok-number">0</span>) = <span class="tok-number">0</span>` (from the same initial data),
+<span class="tok-number">2</span>. `E(t) ≥ <span class="tok-number">0</span>` (integral of a square),
+<span class="tok-number">3</span>. `E&#x27;(t) ≤ <span class="tok-number">0</span>` (energy dissipation, assumed from the PDE + integration <span class="tok-tactic">by</span> parts),
+<span class="tok-number">4</span>. A verified <span class="tok-keyword">lemma</span> showing that a nonincreasing nonneg function starting at <span class="tok-number">0</span> must vanish,
+<span class="tok-number">5</span>. `∫ f² = <span class="tok-number">0</span>` <span class="tok-keyword">with</span> `f` continuous implies `f = <span class="tok-number">0</span>`.
+-/
+
+/-
+The energy vanishing <span class="tok-keyword">lemma</span>: a nonneg, nonincreasing, continuous function starting at <span class="tok-number">0</span>
+is identically <span class="tok-number">0</span>. This is a verified supporting <span class="tok-keyword">lemma</span>.
+-/
+<span class="tok-keyword">theorem</span> heat_uniqueness_refined_local_claim_aristotle
+    {T : <span class="tok-type">ℝ</span>} (hT : <span class="tok-number">0</span> ≤ T) {E : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>}
+    (hcont : ContinuousOn E (Icc <span class="tok-number">0</span> T))
+    (hdiff : DifferentiableOn <span class="tok-type">ℝ</span> E (Ioo <span class="tok-number">0</span> T))
+    (hderiv : ∀ t ∈ Ioo <span class="tok-number">0</span> T, deriv E t ≤ <span class="tok-number">0</span>)
+    (hE0 : E <span class="tok-number">0</span> = <span class="tok-number">0</span>)
+    (hnneg : ∀ t ∈ Icc <span class="tok-number">0</span> T, <span class="tok-number">0</span> ≤ E t) :
+    ∀ t ∈ Icc <span class="tok-number">0</span> T, E t = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intro</span> t ht; by_contra h_contra; simp_all +decide [ lintegral_const ] ;
+      <span class="tok-comment">-- Apply the mean value theorem to the interval $[0, t]$.</span>
+      <span class="tok-tactic">obtain</span> ⟨c, hc⟩ : ∃ c ∈ Set.Ioo <span class="tok-number">0</span> t, deriv E c = (E t - E <span class="tok-number">0</span>) / (t - <span class="tok-number">0</span>) := <span class="tok-tactic">by</span>
+        apply_rules [ exists_deriv_eq_slope ];
+        · <span class="tok-tactic">exact</span> ht.<span class="tok-number">1</span>.lt_of_ne ( <span class="tok-tactic">by</span> <span class="tok-tactic">aesop</span> );
+        · <span class="tok-tactic">exact</span> hcont.mono ( Set.Icc_subset_Icc le_rfl ht.<span class="tok-number">2</span> );
+        · <span class="tok-tactic">exact</span> hdiff.mono &lt;| Set.Ioo_subset_Ioo_right ht.<span class="tok-number">2</span>;
+      <span class="tok-tactic">exact</span> h_contra ( <span class="tok-tactic">by</span> nlinarith [ hderiv c hc.<span class="tok-number">1.1</span> ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hc.<span class="tok-number">1.2</span> ] ), hnneg t ht.<span class="tok-number">1</span> ht.<span class="tok-number">2</span>, mul_div_cancel₀ ( E t - E <span class="tok-number">0</span> ) ( sub_ne_zero.<span class="tok-number">2</span> ( <span class="tok-tactic">by</span> <span class="tok-tactic">aesop</span> : t ≠ <span class="tok-number">0</span> ) ) ] )
+
+/-
+If a continuous function has zero interval integral of its square on `[<span class="tok-number">0</span>, L]` <span class="tok-keyword">with</span> `L &gt; <span class="tok-number">0</span>`,
+    <span class="tok-keyword">then</span> the function vanishes on `[<span class="tok-number">0</span>, L]`.
+-/
+<span class="tok-keyword">lemma</span> eq_zero_of_sq_interval_integral_zero {L : <span class="tok-type">ℝ</span>} (hL : <span class="tok-number">0</span> &lt; L)
+    {f : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>} (hf_cont : Continuous f)
+    (hf_int : IntervalIntegrable (<span class="tok-keyword">fun</span> x =&gt; f x ^ <span class="tok-number">2</span>) volume <span class="tok-number">0</span> L)
+    (hf_zero : ∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, f x ^ <span class="tok-number">2</span> = <span class="tok-number">0</span>) :
+    ∀ x ∈ Icc <span class="tok-number">0</span> L, f x = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+      <span class="tok-comment">-- By `integral_eq_zero_iff_of_le_of_nonneg_ae`, f² =ᵐ[volume.restrict (Ioc 0 L)] 0.</span>
+      <span class="tok-tactic">have</span> h_ae_zero : f^<span class="tok-number">2</span> =ᵐ[volume.restrict (Ioc <span class="tok-number">0</span> L)] <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">rw</span> [ intervalIntegral.integral_of_le hL.le ] at hf_zero;
+        <span class="tok-tactic">rw</span> [ MeasureTheory.integral_eq_zero_iff_of_nonneg ( <span class="tok-keyword">fun</span> x =&gt; sq_nonneg _ ) ] at hf_zero ; <span class="tok-tactic">aesop</span>;
+        <span class="tok-tactic">exact</span> hf_int.<span class="tok-number">1</span>;
+      <span class="tok-comment">-- Since $f$ is continuous on $[0, L]$, if $f$ were non-zero at some point in $[0, L]$, then there would be an open interval around that point where $f$ is non-zero.</span>
+      <span class="tok-tactic">have</span> h_cont_zero : ∀ x ∈ Set.Icc <span class="tok-number">0</span> L, f x = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">intro</span> x hx
+        by_contra h_nonzero
+        <span class="tok-tactic">obtain</span> ⟨ε, hε⟩ : ∃ ε &gt; <span class="tok-number">0</span>, ∀ y ∈ Metric.ball x ε, f y ≠ <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+          <span class="tok-tactic">exact</span> Metric.mem_nhds_iff.mp ( hf_cont.continuousAt.eventually_ne h_nonzero )
+        <span class="tok-tactic">rw</span> [ Filter.EventuallyEq, MeasureTheory.ae_restrict_iff&#x27; ] at h_ae_zero &lt;;&gt; simp_all +decide [ Filter.EventuallyEq ];
+        <span class="tok-tactic">rw</span> [ MeasureTheory.ae_iff ] at h_ae_zero; contrapose! h_ae_zero; simp_all +decide [ Filter.eventually_inf_principal ] ;
+        <span class="tok-comment">-- Since $f$ is non-zero on the interval $(x - \epsilon, x + \epsilon)$, the measure of this interval is positive.</span>
+        <span class="tok-tactic">have</span> h_pos_measure : <span class="tok-number">0</span> &lt; MeasureTheory.MeasureSpace.volume (Set.Ioo (max <span class="tok-number">0</span> (x - ε)) (min L (x + ε))) := <span class="tok-tactic">by</span>
+          <span class="tok-tactic">simp</span> +zetaDelta at *;
+          <span class="tok-tactic">exact</span> ⟨ ⟨ hL, <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ⟩, <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span>, <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ⟩;
+        <span class="tok-tactic">exact</span> ne_of_gt ( lt_of_lt_of_le h_pos_measure ( MeasureTheory.measure_mono <span class="tok-keyword">fun</span> y hy =&gt; ⟨ <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> max_cases <span class="tok-number">0</span> ( x - ε ) &lt;;&gt; <span class="tok-tactic">linarith</span> [ hy.<span class="tok-number">1</span>, hy.<span class="tok-number">2</span> ], <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> min_cases L ( x + ε ) &lt;;&gt; <span class="tok-tactic">linarith</span> [ hy.<span class="tok-number">1</span>, hy.<span class="tok-number">2</span> ], hε.<span class="tok-number">2</span> y &lt;| abs_lt.<span class="tok-number">2</span> ⟨ <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> max_cases <span class="tok-number">0</span> ( x - ε ) &lt;;&gt; <span class="tok-tactic">linarith</span> [ hy.<span class="tok-number">1</span>, hy.<span class="tok-number">2</span> ], <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> min_cases L ( x + ε ) &lt;;&gt; <span class="tok-tactic">linarith</span> [ hy.<span class="tok-number">1</span>, hy.<span class="tok-number">2</span> ] ⟩ ⟩ ) );
+      assumption
+
+/<span class="tok-comment">-- **Heat equation uniqueness by the energy method.**</span>
+
+Given functions `u, v : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>` (of space `x` and time `t`) satisfying:
+- the same initial data: `u(x,<span class="tok-number">0</span>) = v(x,<span class="tok-number">0</span>)` for `x ∈ [<span class="tok-number">0</span>,L]`,
+- sufficient regularity so that `u - v` is continuous <span class="tok-keyword">in</span> `x` for each fixed `t`,
+- an energy functional `E(t) = ∫₀ᴸ (u(x,t) - v(x,t))² dx` that is continuous on `[<span class="tok-number">0</span>,T]`,
+  differentiable on `(<span class="tok-number">0</span>,T)`, and satisfies `E&#x27;(t) ≤ <span class="tok-number">0</span>` (energy dissipation,
+  which follows from the heat equation and integration <span class="tok-tactic">by</span> parts),
+
+we conclude `u(x,t) = v(x,t)` for all `(x,t) ∈ [<span class="tok-number">0</span>,L] × [<span class="tok-number">0</span>,T]`.
+
+The energy dissipation `E&#x27;(t) ≤ <span class="tok-number">0</span>` is assumed as a hypothesis because <span class="tok-keyword">deriving</span> it from
+the PDE requires integration-<span class="tok-tactic">by</span>-parts machinery not yet available <span class="tok-keyword">in</span> Mathlib. In the
+informal proof, this step is referred to as <span class="tok-string">&quot;the energy dissipation lemma.&quot;</span>
+-/
+<span class="tok-keyword">theorem</span> heat_uniqueness_aristotle
+    {L T : <span class="tok-type">ℝ</span>} (hL : <span class="tok-number">0</span> &lt; L) (hT : <span class="tok-number">0</span> ≤ T)
+    {u v : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>}
+    <span class="tok-comment">-- Same initial data</span>
+    (hinit : ∀ x ∈ Icc <span class="tok-number">0</span> L, u x <span class="tok-number">0</span> = v x <span class="tok-number">0</span>)
+    <span class="tok-comment">-- Continuity of u - v in x for each t (regularity)</span>
+    (hcont : ∀ t ∈ Icc <span class="tok-number">0</span> T, Continuous (<span class="tok-keyword">fun</span> x =&gt; u x t - v x t))
+    <span class="tok-comment">-- Energy functional E(t) = ∫₀ᴸ (u(x,t) - v(x,t))² dx</span>
+    {E : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>}
+    (hE_def : ∀ t ∈ Icc <span class="tok-number">0</span> T, E t = ∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, (u x t - v x t) ^ <span class="tok-number">2</span>)
+    <span class="tok-comment">-- Regularity of E</span>
+    (hE_cont : ContinuousOn E (Icc <span class="tok-number">0</span> T))
+    (hE_diff : DifferentiableOn <span class="tok-type">ℝ</span> E (Ioo <span class="tok-number">0</span> T))
+    <span class="tok-comment">-- Energy dissipation (from the heat equation + integration by parts)</span>
+    (hE_dissip : ∀ t ∈ Ioo <span class="tok-number">0</span> T, deriv E t ≤ <span class="tok-number">0</span>)
+    <span class="tok-comment">-- Integrability</span>
+    (hint : ∀ t ∈ Icc <span class="tok-number">0</span> T, IntervalIntegrable (<span class="tok-keyword">fun</span> x =&gt; (u x t - v x t) ^ <span class="tok-number">2</span>) volume <span class="tok-number">0</span> L) :
+    ∀ x ∈ Icc <span class="tok-number">0</span> L, ∀ t ∈ Icc <span class="tok-number">0</span> T, u x t = v x t := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Step 1: E(0) = 0 from same initial data</span>
+  <span class="tok-tactic">have</span> h0T : (<span class="tok-number">0</span> : <span class="tok-type">ℝ</span>) ∈ Icc <span class="tok-number">0</span> T := left_mem_Icc.mpr hT
+  <span class="tok-tactic">have</span> hE0 : E <span class="tok-number">0</span> = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">rw</span> [hE_def <span class="tok-number">0</span> h0T]
+    <span class="tok-tactic">apply</span> intervalIntegral.integral_zero_ae
+    filter_upwards <span class="tok-keyword">with</span> x
+    <span class="tok-tactic">intro</span> hx
+    <span class="tok-tactic">rw</span> [Set.uIoc_of_le (le_of_lt hL)] at hx
+    <span class="tok-tactic">have</span> : x ∈ Icc <span class="tok-number">0</span> L := Ioc_subset_Icc_self hx
+    <span class="tok-tactic">rw</span> [hinit x this, sub_self, zero_pow (<span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> : <span class="tok-number">2</span> ≠ <span class="tok-number">0</span>)]
+  <span class="tok-comment">-- Step 2: E(t) ≥ 0 for all t (integral of nonneg function)</span>
+  <span class="tok-tactic">have</span> hEnneg : ∀ t ∈ Icc <span class="tok-number">0</span> T, <span class="tok-number">0</span> ≤ E t := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">intro</span> t ht
+    <span class="tok-tactic">rw</span> [hE_def t ht]
+    <span class="tok-tactic">exact</span> intervalIntegral.integral_nonneg (le_of_lt hL) (<span class="tok-keyword">fun</span> x _ =&gt; sq_nonneg _)
+  <span class="tok-comment">-- Step 3: Apply energy vanishing lemma</span>
+  <span class="tok-tactic">have</span> hEzero : ∀ t ∈ Icc <span class="tok-number">0</span> T, E t = <span class="tok-number">0</span> :=
+    heat_uniqueness_refined_local_claim_aristotle hT hE_cont hE_diff hE_dissip hE0 hEnneg
+  <span class="tok-comment">-- Step 4: Conclude u = v</span>
+  <span class="tok-tactic">intro</span> x hx t ht
+  <span class="tok-tactic">have</span> hEt : ∫ x <span class="tok-keyword">in</span> (<span class="tok-number">0</span>:<span class="tok-type">ℝ</span>)..L, (u x t - v x t) ^ <span class="tok-number">2</span> = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> := hEzero t ht
+    rwa [hE_def t ht] at this
+  <span class="tok-tactic">have</span> hw := eq_zero_of_sq_interval_integral_zero hL (hcont t ht) (hint t ht) hEt x hx
+  <span class="tok-tactic">linarith</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean:27:13: warning: unused variable `hT`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean:34:57: warning: This simp argument is unused:
+  lintegral_const
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide ̵[̵ ̵l̵i̵n̵t̵e̵g̵r̵a̵l̵_̵c̵o̵n̵s̵t̵ ̵]̵
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean:63:103: warning: This simp argument is unused:
+  Filter.EventuallyEq
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide ̵[̵ ̵F̵i̵l̵t̵e̵r̵.̵E̵v̵e̵n̵t̵u̵a̵l̵l̵y̵E̵q̵ ̵]̵
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_worker_20260406-003822_5f1dac39.lean:64:92: warning: This simp argument is unused:
+  Filter.eventually_inf_principal
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide ̵[̵ ̵F̵i̵l̵t̵e̵r̵.̵e̵v̵e̵n̵t̵u̵a̵l̵l̵y̵_̵i̵n̵f̵_̵p̵r̵i̵n̵c̵i̵p̵a̵l̵ ̵]̵
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+
+    <article class="node-card node-heat_uniqueness_refined_local_claim" id="node-heat_uniqueness_refined_local_claim" data-node-id="heat_uniqueness_refined_local_claim">
+      <h3>Nonincreasing nonneg energy vanishing from zero: E(t) = 0 for all t</h3>
+      <p class="meta">Node id: heat_uniqueness_refined_local_claim | Status: formal_verified</p>
+      <p class="meta">Display label: E ≡ 0 by monotone squeeze</p>
+      <p class="meta">Formalization priority: 1. Rationale: This is the key analytic hinge of the uniqueness argument: it converts the energy-dissipation inequality (supplied by the parent node) and the zero-initial-data condition into the conclusion E ≡ 0. It is strictly narrower than the full uniqueness theorem (it makes no reference to the PDE, w, or u/v), is self-contained as a real-analysis lemma, and carries the primary inferential load that bridges the energy estimate to w = 0.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \(E:[0,T]\to\mathbb{R}\) satisfy \(E(0)=0\), \(E&#x27;(t)\le 0\) for all \(t\in[0,T]\), and \(E(t)\ge 0\) for all \(t\in[0,T]\). Then \(E(t)=0\) for all \(t\in[0,T]\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Because \(E&#x27;(t)\le 0\) on \([0,T]\), the function \(E\) is nonincreasing, so \(E(t)\le E(0)=0\) for all \(t\in[0,T]\). Combined with \(E(t)\ge 0\), we obtain \(E(t)=0\) for all \(t\in[0,T]\).</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> heat_uniqueness_refined_local_claim_aristotle</p>
+        <p><strong>Coverage:</strong> full_node</p><p class="meta">The Lean theorem matches the target node essentially exactly. It formalizes the same real-analysis lemma: given E continuous on [0,T], differentiable on (0,T) with E&#x27;(t)≤0 on the open interval, E(0)=0, and E(t)≥0 on [0,T], conclude E(t)=0 for all t∈[0,T]. The use of the open interval (0,T) for the derivative condition rather than the closed interval is the standard rigorous formulation (matching the hypotheses needed for the mean-value/monotonicity argument), not a narrowing of the result. All key hypotheses (zero initial data, nonincreasing via derivative bound, nonnegativity) and the full conclusion are present. No major step is missing.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> heat_uniqueness_refined_local_claim_aristotle
+    {T : <span class="tok-type">ℝ</span>} (hT : <span class="tok-number">0</span> ≤ T) {E : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>}
+    (hcont : ContinuousOn E (Icc <span class="tok-number">0</span> T))
+    (hdiff : DifferentiableOn <span class="tok-type">ℝ</span> E (Ioo <span class="tok-number">0</span> T))
+    (hderiv : ∀ t ∈ Ioo <span class="tok-number">0</span> T, deriv E t ≤ <span class="tok-number">0</span>)
+    (hE0 : E <span class="tok-number">0</span> = <span class="tok-number">0</span>)
+    (hnneg : ∀ t ∈ Icc <span class="tok-number">0</span> T, <span class="tok-number">0</span> ≤ E t) :
+    ∀ t ∈ Icc <span class="tok-number">0</span> T, E t = <span class="tok-number">0</span></code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/heat_uniqueness_refined_local_claim_worker_20260405-235312_2c6e6a23.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+/-!
+# Nonincreasing nonneg energy vanishing from zero
+
+Let `E : [<span class="tok-number">0</span>,T] → <span class="tok-type">ℝ</span>` satisfy `E(<span class="tok-number">0</span>) = <span class="tok-number">0</span>`, `E&#x27;(t) ≤ <span class="tok-number">0</span>` for all `t ∈ [<span class="tok-number">0</span>,T]`, and `E(t) ≥ <span class="tok-number">0</span>`
+for all `t ∈ [<span class="tok-number">0</span>,T]`. Then `E(t) = <span class="tok-number">0</span>` for all `t ∈ [<span class="tok-number">0</span>,T]`.
+
+This is the key analytic <span class="tok-keyword">lemma</span> <span class="tok-keyword">in</span> the energy-method proof of uniqueness for the heat equation:
+it converts the energy-dissipation inequality and the zero-initial-data condition into E ≡ <span class="tok-number">0</span>.
+-/
+
+<span class="tok-keyword">open</span> Set <span class="tok-keyword">in</span>
+/<span class="tok-comment">-- **Nonincreasing nonneg energy vanishing from zero.**</span>
+Let `E : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>` be continuous on `[<span class="tok-number">0</span>, T]`, differentiable on `(<span class="tok-number">0</span>, T)`, <span class="tok-keyword">with</span> `deriv E t ≤ <span class="tok-number">0</span>`
+for all `t ∈ (<span class="tok-number">0</span>, T)`, `E <span class="tok-number">0</span> = <span class="tok-number">0</span>`, and `E t ≥ <span class="tok-number">0</span>` for all `t ∈ [<span class="tok-number">0</span>, T]`. Then `E t = <span class="tok-number">0</span>` for all
+`t ∈ [<span class="tok-number">0</span>, T]`. -/
+<span class="tok-keyword">theorem</span> heat_uniqueness_refined_local_claim_aristotle
+    {T : <span class="tok-type">ℝ</span>} (hT : <span class="tok-number">0</span> ≤ T) {E : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>}
+    (hcont : ContinuousOn E (Icc <span class="tok-number">0</span> T))
+    (hdiff : DifferentiableOn <span class="tok-type">ℝ</span> E (Ioo <span class="tok-number">0</span> T))
+    (hderiv : ∀ t ∈ Ioo <span class="tok-number">0</span> T, deriv E t ≤ <span class="tok-number">0</span>)
+    (hE0 : E <span class="tok-number">0</span> = <span class="tok-number">0</span>)
+    (hnneg : ∀ t ∈ Icc <span class="tok-number">0</span> T, <span class="tok-number">0</span> ≤ E t) :
+    ∀ t ∈ Icc <span class="tok-number">0</span> T, E t = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Because E&#x27;(t) ≤ 0 on (0,T), the function E is nonincreasing (antitone) on (0,T) by `antitoneOn_of_deriv_nonpos`.</span>
+  <span class="tok-tactic">have</span> h_antitone : AntitoneOn E (Set.Icc <span class="tok-number">0</span> T) := <span class="tok-tactic">by</span>
+    apply_rules [ antitoneOn_of_deriv_nonpos ];
+    · <span class="tok-tactic">exact</span> convex_Icc _ _;
+    · <span class="tok-tactic">aesop</span>;
+    · <span class="tok-tactic">aesop</span>;
+  <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> t ht =&gt; le_antisymm ( le_trans ( h_antitone ( <span class="tok-tactic">show</span> <span class="tok-number">0</span> ∈ Set.Icc <span class="tok-number">0</span> T <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span>; <span class="tok-tactic">linarith</span> ) ht ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span> ] ) ) hE0.le ) ( hnneg t ht )</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+      </div>
+    </section>
+  </main>
+</body>
+</html>
