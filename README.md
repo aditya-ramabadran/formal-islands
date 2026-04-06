@@ -130,6 +130,8 @@ Useful options:
 --model gpt-5.4
 ```
 
+Formalization mode is agentic-only in the CLI. The older structured repair-loop mode is deprecated and no longer exposed as a user-facing option.
+
 You can also split planning and formalization backends:
 
 ```bash
@@ -229,6 +231,7 @@ The report supports:
 - syntax-highlighted Lean code
 - automatic light/dark mode
 - dashed gray provenance / refinement edges for nearby nodes that are not proof dependencies
+- result labels that distinguish faithful cores, downstream consequences, dimensional analogues, and other narrower outcomes
 
 ## Current Formalization Behavior
 
@@ -247,6 +250,8 @@ The prompt now also includes a lightweight coverage sketch for the target node, 
 The formalization prompt also splits nearby nodes into:
 - verified supporting lemmas already certified in this run, which may be relied on as established facts
 - context-only sibling ingredients, which are only there for orientation and should not be assumed
+
+After a formalization verifies, the pipeline asks the planning backend for a combined semantic review of the Lean theorem against the target node. That review can classify the result as a full match, a faithful core, a downstream consequence, a dimensional analogue, or a helper shard, and it controls whether coverage expansion should run.
 
 The agentic prompt also explicitly reminds the worker where Mathlib lives in this workspace:
 - `.lake/packages/mathlib/Mathlib`
@@ -280,6 +285,13 @@ The system then classifies the result as:
 - full-node success
 - concrete supporting sublemma
 - or failure
+
+The current verification path is a little richer than that summary:
+- the heuristic faithfulness guard runs first and rejects obvious abstraction drift, including dimension downgrades
+- the planning backend may then refine the result kind and coverage estimate after verification
+- repair retries combine fast Lean-specific heuristics with an optional planning-backend diagnosis
+- if the result is only a concrete supporting sublemma, the pipeline may run one bounded coverage-expansion attempt from the verified file
+- if the result is still a concrete sublemma but the planning backend says it is worth another try, a single bonus retry may be attempted on the main proof path
 
 If the agentic run times out but leaves a usable Lean file behind, the pipeline will try to salvage and locally verify it.
 

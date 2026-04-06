@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from enum import StrEnum
 from collections import defaultdict, deque
 from dataclasses import asdict, dataclass
 
@@ -29,6 +30,25 @@ FORMALIZATION_SYSTEM_PROMPT = (
 )
 
 RELATION_MARKERS = ("\\le", "\\ge", "\\to", "\\Rightarrow", "\\implies", "≤", "≥", "=", "<", ">")
+DIMENSION_DOWNGRADE_NODE_MARKERS = (
+    "integral",
+    "gradient",
+    "boundary",
+    "domain",
+    "variational",
+    "weak",
+    "compactness",
+    "minimizing sequence",
+    "function space",
+    "hilbert",
+    "banach",
+    "convergence",
+)
+DIMENSION_DOWNGRADE_LEAN_MARKERS = (
+    "EuclideanSpace",
+    "FiniteDimensional",
+    "Matrix",
+)
 
 
 class FormalizationFaithfulnessError(ValueError):
@@ -54,6 +74,37 @@ class ConcreteSublemmaSummary:
 
     informal_statement: str
     informal_proof_text: str
+
+
+@dataclass(frozen=True)
+class CombinedFormalizationAssessment:
+    """Planning-backend judgment about the quality and recoverability of a verified theorem."""
+
+    result_kind: str
+    certifies_main_burden: bool
+    coverage_score: int
+    expansion_warranted: bool
+    worth_retrying_later: bool
+    reason: str
+
+
+class RepairCategory(StrEnum):
+    """Structured repair buckets for retry guidance."""
+
+    SETTING_FIX = "setting_fix"
+    THEOREM_SHAPE_FIX = "theorem_shape_fix"
+    LEAN_PACKAGING_FIX = "lean_packaging_fix"
+    PROOF_STRATEGY_FIX = "proof_strategy_fix"
+    TRY_SMALLER_SUBLEMMA = "try_smaller_sublemma"
+    TRY_LARGER_CORE = "try_larger_core"
+
+
+@dataclass(frozen=True)
+class RepairAssessment:
+    """Planning-backend or heuristic diagnosis of a failed attempt."""
+
+    category: RepairCategory
+    note: str
 
 
 @dataclass(frozen=True)
@@ -203,6 +254,30 @@ def format_local_proof_context(context: LocalProofContext) -> str:
         "it is not a proof dependency unless the prompt explicitly marks it as one."
     )
     return "\n\n".join(sections)
+
+
+def _format_coverage_sketch_for_prompt(sketch: CoverageSketch) -> str:
+    lines = [f"Summary: {sketch.summary}", "Components:"]
+    for component in sketch.components:
+        lines.append(f"- [{component.kind}] {component.text}")
+    return "\n".join(lines)
+
+
+def format_faithfulness_notes(result_kind: str, reason: str) -> str:
+    """Encode semantic assessment notes in a compact, human-readable format."""
+
+    return f"[{result_kind}] {reason}".strip()
+
+
+def parse_faithfulness_notes(notes: str | None) -> tuple[str | None, str | None]:
+    """Parse the compact faithfulness note format when available."""
+
+    if not notes:
+        return None, None
+    match = re.match(r"^\[(?P<kind>[^\]]+)\]\s*(?P<reason>.*)$", notes, flags=re.S)
+    if match is None:
+        return None, notes
+    return match.group("kind").strip() or None, match.group("reason").strip() or None
 
 
 def _split_coverage_clauses(text: str) -> list[str]:
@@ -383,6 +458,129 @@ def build_formalization_request(
     )
 
 
+def build_combined_verification_assessment_request(
+    *,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+) -> StructuredBackendRequest:
+    node = next(node for node in graph.nodes if node.id == node_id)
+    local_context = build_local_proof_context(graph, node_id)
+    sketch = build_node_coverage_sketch(node)
+    prompt = "\n\n".join(
+        [
+            f"Theorem title: {graph.theorem_title}",
+            (
+                "Target node:\n"
+                f"- id: {node.id}\n"
+                f"- title: {node.title}\n"
+                f"- informal statement: {node.informal_statement}\n"
+                f"- informal proof text: {node.informal_proof_text}\n"
+                f"- formalization priority: {node.formalization_priority if node.formalization_priority is not None else 'unset'}\n"
+                f"- formalization rationale: {node.formalization_rationale or '(no rationale recorded)'}"
+            ),
+            (
+                "Verified Lean theorem to assess:\n"
+                f"- theorem name: {artifact.lean_theorem_name}\n"
+                f"- Lean statement: {artifact.lean_statement}\n"
+                "Only use the theorem statement for the semantic judgment; the proof text is not part of the comparison."
+            ),
+            "Coverage sketch:",
+            _format_coverage_sketch_for_prompt(sketch),
+            "Local proof neighborhood:",
+            format_local_proof_context(local_context),
+            (
+                "Assess the relationship between the verified Lean theorem and the target node. "
+                "Be conservative: if the theorem is only a consequence, an analogue, or a smaller shard, say so. "
+                "If the theorem already matches the target node closely enough that growing it further would be redundant, "
+                "call it full_match. Distinguish faithful_core from certifies_main_burden: faithful_core means the same "
+                "setting and same proof path, while certifies_main_burden means the theorem covers the hardest inferential "
+                "step in the node. Coverage score: give a number from 0 to 10 describing how much of the node's proof burden "
+                "this theorem already covers."
+            ),
+            (
+                "Return JSON with keys result_kind, certifies_main_burden, coverage_score, expansion_warranted, "
+                "worth_retrying_later, and reason."
+            ),
+        ]
+    )
+    return StructuredBackendRequest(
+        prompt=prompt,
+        system_prompt=(
+            "You are a conservative semantic reviewer for a verified Lean theorem. Return only JSON matching "
+            "the schema."
+        ),
+        json_schema={
+            "type": "object",
+            "properties": {
+                "result_kind": {
+                    "type": "string",
+                    "enum": [
+                        "full_match",
+                        "faithful_core",
+                        "downstream_consequence",
+                        "dimensional_analogue",
+                        "helper_shard",
+                    ],
+                },
+                "certifies_main_burden": {"type": "boolean"},
+                "coverage_score": {"type": "integer", "minimum": 0, "maximum": 10},
+                "expansion_warranted": {"type": "boolean"},
+                "worth_retrying_later": {"type": "boolean"},
+                "reason": {"type": "string", "minLength": 1},
+            },
+            "required": [
+                "result_kind",
+                "certifies_main_burden",
+                "coverage_score",
+                "expansion_warranted",
+                "worth_retrying_later",
+                "reason",
+            ],
+            "additionalProperties": False,
+        },
+        task_name="assess_verified_formalization",
+    )
+
+
+def request_combined_verification_assessment(
+    *,
+    backend: StructuredBackend,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+) -> CombinedFormalizationAssessment:
+    response = backend.run_structured(
+        build_combined_verification_assessment_request(
+            graph=graph,
+            node_id=node_id,
+            artifact=artifact,
+        )
+    )
+    payload = response.payload
+    if "result_kind" not in payload:
+        already_matches_target = bool(payload.get("already_matches_target", False))
+        reason = str(payload.get("reason", "")).strip()
+        if not reason:
+            reason = "Legacy compatibility payload."
+        return CombinedFormalizationAssessment(
+            result_kind="full_match" if already_matches_target else "helper_shard",
+            certifies_main_burden=already_matches_target,
+            coverage_score=10 if already_matches_target else int(payload.get("coverage_score", 0)),
+            expansion_warranted=not already_matches_target,
+            worth_retrying_later=False,
+            reason=reason,
+        )
+    return CombinedFormalizationAssessment(
+        result_kind=str(payload["result_kind"]).strip(),
+        certifies_main_burden=bool(payload["certifies_main_burden"]),
+        coverage_score=int(payload["coverage_score"]),
+        expansion_warranted=bool(payload["expansion_warranted"]),
+        worth_retrying_later=bool(payload["worth_retrying_later"]),
+        reason=str(payload["reason"]).strip(),
+    )
+
+
 def request_node_formalization(
     backend: StructuredBackend,
     graph: ProofGraph,
@@ -506,80 +704,198 @@ def request_concrete_sublemma_summary(
     )
 
 
-def build_coverage_expansion_assessment_request(
-    *,
-    graph: ProofGraph,
-    node_id: str,
-    artifact: FormalArtifact,
-) -> StructuredBackendRequest:
-    node = next(node for node in graph.nodes if node.id == node_id)
-    prompt = "\n\n".join(
-        [
-            f"Theorem title: {graph.theorem_title}",
-            (
-                "Target node (this is the theorem we are trying to cover):\n"
-                f"- id: {node.id}\n"
-                f"- title: {node.title}\n"
-                f"- informal statement: {node.informal_statement}\n"
-                f"- informal proof text: {node.informal_proof_text}\n"
-                f"- formalization rationale: {node.formalization_rationale or '(no rationale recorded)'}"
-            ),
-            (
-                "Verified Lean theorem to compare against the target node:\n"
-                f"- theorem name: {artifact.lean_theorem_name}\n"
-                f"- Lean statement: {artifact.lean_statement}"
-            ),
-            (
-                "Question: is the verified Lean theorem already essentially the same theorem as the target node, "
-                "so that no coverage-expansion follow-up is needed?\n"
-                "Return already_matches_target = true only if the theorem already matches the target node closely "
-                "enough that growing it further would be redundant.\n"
-                "Return already_matches_target = false if the theorem is genuinely narrower than the target node, "
-                "misses a major step, or you are uncertain.\n"
-                "Be conservative: if in doubt, answer false and explain why."
-            ),
-            (
-                "Return a JSON object with keys already_matches_target and reason."
-            ),
-        ]
-    )
-    return StructuredBackendRequest(
-        prompt=prompt,
-        system_prompt=(
-            "You are checking whether a verified Lean theorem is already the full intended theorem for the target "
-            "node. Return only JSON matching the schema."
-        ),
-        json_schema={
-            "type": "object",
-            "properties": {
-                "already_matches_target": {"type": "boolean"},
-                "reason": {"type": "string", "minLength": 1},
-            },
-            "required": ["already_matches_target", "reason"],
-            "additionalProperties": False,
-        },
-        task_name="assess_coverage_expansion",
-    )
-
-
 def request_coverage_expansion_assessment(
     *,
     backend: StructuredBackend,
     graph: ProofGraph,
     node_id: str,
     artifact: FormalArtifact,
-) -> CoverageExpansionAssessment:
+) -> CombinedFormalizationAssessment:
+    return request_combined_verification_assessment(
+        backend=backend,
+        graph=graph,
+        node_id=node_id,
+        artifact=artifact,
+    )
+
+
+def build_coverage_expansion_assessment_request(
+    *,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+) -> StructuredBackendRequest:
+    return build_combined_verification_assessment_request(
+        graph=graph,
+        node_id=node_id,
+        artifact=artifact,
+    )
+
+
+def build_repair_assessment_request(
+    *,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+    failure_text: str,
+) -> StructuredBackendRequest:
+    node = next(node for node in graph.nodes if node.id == node_id)
+    local_context = build_local_proof_context(graph, node_id)
+    prompt = "\n\n".join(
+        [
+            f"Theorem title: {graph.theorem_title}",
+            (
+                "Target node:\n"
+                f"- id: {node.id}\n"
+                f"- title: {node.title}\n"
+                f"- informal statement: {node.informal_statement}\n"
+                f"- informal proof text: {node.informal_proof_text}"
+            ),
+            (
+                "Current Lean theorem:\n"
+                f"- theorem name: {artifact.lean_theorem_name}\n"
+                f"- Lean statement: {artifact.lean_statement}"
+            ),
+            "Local proof neighborhood:",
+            format_local_proof_context(local_context),
+            (
+                "Failure text:\n"
+                f"{failure_text}\n\n"
+                "Classify the most specific next repair step. Prefer the narrowest category that actually fits the "
+                "failure. If the theorem is in the wrong mathematical setting, use setting_fix. If it proves the wrong "
+                "logical claim, use theorem_shape_fix. If Lean engineering is the main issue, use lean_packaging_fix. "
+                "If the theorem shape is correct but the proof approach is brittle, use proof_strategy_fix. "
+                "If the target should be smaller, use try_smaller_sublemma. If a broader concrete core should be tried, "
+                "use try_larger_core."
+            ),
+            "Return JSON with keys repair_category and repair_note.",
+        ]
+    )
+    return StructuredBackendRequest(
+        prompt=prompt,
+        system_prompt=(
+            "You are a conservative Lean repair reviewer. Return only JSON matching the schema."
+        ),
+        json_schema={
+            "type": "object",
+            "properties": {
+                "repair_category": {
+                    "type": "string",
+                    "enum": [category.value for category in RepairCategory],
+                },
+                "repair_note": {"type": "string", "minLength": 1},
+            },
+            "required": ["repair_category", "repair_note"],
+            "additionalProperties": False,
+        },
+        task_name="assess_repair",
+    )
+
+
+def request_repair_assessment(
+    *,
+    backend: StructuredBackend,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+    failure_text: str,
+) -> RepairAssessment:
     response = backend.run_structured(
-        build_coverage_expansion_assessment_request(
+        build_repair_assessment_request(
             graph=graph,
             node_id=node_id,
             artifact=artifact,
+            failure_text=failure_text,
         )
     )
     payload = response.payload
-    return CoverageExpansionAssessment(
-        already_matches_target=bool(payload["already_matches_target"]),
-        reason=str(payload["reason"]).strip(),
+    return RepairAssessment(
+        category=RepairCategory(str(payload["repair_category"]).strip()),
+        note=str(payload["repair_note"]).strip(),
+    )
+
+
+def classify_heuristic_repair_assessment(
+    *,
+    previous_result: VerificationResult,
+    extra_guidance: str | None = None,
+) -> RepairAssessment:
+    """Classify a retry without consulting a planning backend."""
+
+    text = "\n".join(
+        part for part in [previous_result.stderr, previous_result.stdout, extra_guidance or ""] if part
+    ).lower()
+
+    if any(marker in text for marker in ("measure-space theorem", "finite-dimensional", "euclideanspace")):
+        return RepairAssessment(
+            category=RepairCategory.SETTING_FIX,
+            note=(
+                "The current attempt appears to have shifted into a different mathematical setting. "
+                "Keep the same ambient universe, dimension profile, and proof role."
+            ),
+        )
+
+    if any(
+        marker in text
+        for marker in (
+            "unknown identifier",
+            "unknown constant",
+            "unknown namespace",
+            "expected token",
+            "failed to synthesize instance",
+            "invalid field",
+            "unknown type",
+        )
+    ):
+        return RepairAssessment(
+            category=RepairCategory.LEAN_PACKAGING_FIX,
+            note=(
+                "Fix the Lean packaging or syntax first: check imports, namespaces, typeclass instances, "
+                "and ASCII-safe identifiers before changing the theorem shape."
+            ),
+        )
+
+    if "type mismatch" in text:
+        if any(marker in text for marker in ("measure", "euclideanspace", "finite-dimensional", "function space")):
+            return RepairAssessment(
+                category=RepairCategory.SETTING_FIX,
+                note=(
+                    "The type mismatch suggests the theorem moved into the wrong mathematical setting. "
+                    "Keep the same space, operators, and ambient structure."
+                ),
+            )
+        return RepairAssessment(
+            category=RepairCategory.THEOREM_SHAPE_FIX,
+            note=(
+                "The compiler mismatch suggests the theorem statement does not yet line up with the intended "
+                "target shape. Preserve the original claim more literally."
+            ),
+        )
+
+    if any(marker in text for marker in ("unsolved goals", "rewrite", "simp", "nlinarith", "linarith", "ring")):
+        return RepairAssessment(
+            category=RepairCategory.PROOF_STRATEGY_FIX,
+            note=(
+                "The statement may be close enough, but the proof strategy needs to be simplified or redirected. "
+                "Try a more direct lemma chain or a smaller local argument."
+            ),
+        )
+
+    if any(marker in text for marker in ("faithfulness guard", "over abstract", "too abstract", "arbitrary type")):
+        return RepairAssessment(
+            category=RepairCategory.THEOREM_SHAPE_FIX,
+            note=(
+                "The attempt drifted away from the intended theorem shape. Re-center on the node's concrete "
+                "statement and proof role."
+            ),
+        )
+
+    return RepairAssessment(
+        category=RepairCategory.PROOF_STRATEGY_FIX,
+        note=(
+            "Keep the theorem close to the target node and simplify the proof path. If needed, isolate a smaller "
+            "but still honest local step."
+        ),
     )
 
 
@@ -678,7 +994,23 @@ def _collect_over_abstract_issues(node, artifact: FormalArtifact) -> list[str]:
             "Avoid replacing the node with unrelated families of functions or indexed maps absent from the original claim."
         )
 
+    if _looks_like_dimension_downgrade(node_text=node_text, lean_text=lean_text):
+        issues.append(
+            "Avoid replacing an infinite-dimensional or functional-analytic argument with a finite-dimensional analogue."
+        )
+
     return issues
+
+
+def _looks_like_dimension_downgrade(*, node_text: str, lean_text: str) -> bool:
+    node_hits = sum(1 for marker in DIMENSION_DOWNGRADE_NODE_MARKERS if marker in node_text)
+    if node_hits < 2:
+        return False
+
+    if any(marker in lean_text for marker in DIMENSION_DOWNGRADE_LEAN_MARKERS):
+        return True
+
+    return bool(re.search(r"\bFin\s+[A-Za-z_][A-Za-z0-9_']*\b", lean_text))
 
 
 def _node_does_not_invite_measure_abstraction(node_text: str) -> bool:

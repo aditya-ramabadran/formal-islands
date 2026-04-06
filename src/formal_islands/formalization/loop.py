@@ -18,11 +18,17 @@ from formal_islands.formalization.agentic import (
 from formal_islands.formalization.aristotle import request_aristotle_formalization
 from formal_islands.formalization.lean import LeanVerifier
 from formal_islands.formalization.pipeline import (
+    CombinedFormalizationAssessment,
     FaithfulnessClassification,
     FormalizationFaithfulnessError,
+    RepairAssessment,
+    RepairCategory,
     build_node_coverage_sketch,
-    request_coverage_expansion_assessment,
+    classify_heuristic_repair_assessment,
+    format_faithfulness_notes,
+    request_combined_verification_assessment,
     request_concrete_sublemma_summary,
+    request_repair_assessment,
     request_node_formalization,
 )
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode, VerificationResult
@@ -64,14 +70,14 @@ def formalize_candidate_node(
     node_id: str,
     max_attempts: int = MAX_TOTAL_FORMALIZATION_ATTEMPTS,
     on_update: FormalizationUpdateCallback | None = None,
-    mode: str = "auto",
+    mode: str = "agentic",
 ) -> FormalizationOutcome:
     """Attempt to formalize and verify one candidate node with bounded retries."""
 
     if max_attempts < 1:
         raise ValueError("max_attempts must be at least 1")
-    if mode not in {"auto", "agentic", "structured"}:
-        raise ValueError("mode must be one of: auto, agentic, structured")
+    if mode != "agentic":
+        raise ValueError("formalization mode is agentic-only in this prototype")
 
     _progress(f"starting formalization for node {node_id}")
     if isinstance(backend, AristotleBackend):
@@ -85,7 +91,7 @@ def formalize_candidate_node(
             on_update=on_update,
         )
 
-    if _should_use_agentic_formalization(backend=backend, mode=mode):
+    if hasattr(backend, "run_agentic_structured"):
         return _formalize_candidate_node_agentic(
             backend=backend,
             planning_backend=planning_backend,
@@ -95,15 +101,18 @@ def formalize_candidate_node(
             on_update=on_update,
         )
 
-    return _formalize_candidate_node_structured(
-        backend=backend,
-        planning_backend=planning_backend,
-        verifier=verifier,
-        graph=graph,
-        node_id=node_id,
-        max_attempts=max_attempts,
-        on_update=on_update,
-    )
+    if hasattr(backend, "run_structured"):
+        return _formalize_candidate_node_structured(
+            backend=backend,
+            planning_backend=planning_backend,
+            verifier=verifier,
+            graph=graph,
+            node_id=node_id,
+            max_attempts=max_attempts,
+            on_update=on_update,
+        )
+
+    raise ValueError("formalization backend must support either agentic or structured output")
 
 
 def formalize_candidate_nodes(
@@ -115,7 +124,7 @@ def formalize_candidate_nodes(
     node_ids: list[str] | None = None,
     max_attempts: int = MAX_TOTAL_FORMALIZATION_ATTEMPTS,
     on_update: FormalizationUpdateCallback | None = None,
-    mode: str = "auto",
+    mode: str = "agentic",
 ) -> MultiFormalizationOutcome:
     """Formalize multiple candidate nodes sequentially, reusing the updated graph each time.
 
@@ -264,8 +273,16 @@ def _formalize_candidate_node_structured(
             _emit_update(current_graph, node_id, latest_artifact, on_update)
             if attempt_number >= attempt_limit:
                 break
+            repair_assessment = _request_planning_repair_assessment(
+                planning_backend=planning_backend,
+                graph=current_graph,
+                node_id=node_id,
+                artifact=latest_artifact,
+                failure_text=str(verification.stderr or verification.stdout),
+            )
             latest_feedback = _build_repair_feedback(
                 previous_result=verification,
+                repair_assessment=repair_assessment,
                 extra_guidance=(
                     "The previous theorem was rejected by the faithfulness guard. Stay much closer to the node text."
                 ),
@@ -317,7 +334,17 @@ def _formalize_candidate_node_structured(
             break
 
         _progress(f"node {node_id}: retrying after compiler feedback")
-        latest_feedback = _build_repair_feedback(previous_result=verification)
+        repair_assessment = _request_planning_repair_assessment(
+            planning_backend=planning_backend,
+            graph=current_graph,
+            node_id=node_id,
+            artifact=latest_artifact,
+            failure_text=f"{verification.stderr}\n{verification.stdout}",
+        )
+        latest_feedback = _build_repair_feedback(
+            previous_result=verification,
+            repair_assessment=repair_assessment,
+        )
 
     assert latest_artifact is not None
     return FormalizationOutcome(graph=current_graph, node_id=node_id, artifact=latest_artifact)
@@ -408,7 +435,26 @@ def _formalize_candidate_node_aristotle(
                 break
             _progress(f"node {node_id}: retrying after compiler feedback")
             previous_lean_code = scratch_path.read_text(encoding="utf-8") if scratch_path.exists() else None
-            faithfulness_feedback = _build_aristotle_faithfulness_feedback(previous_result=verification)
+            repair_assessment = _request_planning_repair_assessment(
+                planning_backend=planning_backend,
+                graph=current_graph,
+                node_id=node_id,
+                artifact=latest_artifact,
+                failure_text=str(verification.stderr or verification.stdout),
+            )
+            faithfulness_feedback = "\n\n".join(
+                [
+                    _build_aristotle_faithfulness_feedback(previous_result=verification),
+                    _build_repair_feedback(
+                        previous_result=verification,
+                        repair_assessment=repair_assessment,
+                        extra_guidance=(
+                            "The previous Aristotle submission was rejected by the faithfulness guard. "
+                            "Keep the theorem much closer to the node text."
+                        ),
+                    ),
+                ]
+            )
             continue
 
         verification = verifier.verify_existing_file(file_path=scratch_path, attempt_number=attempt_number)
@@ -418,6 +464,12 @@ def _formalize_candidate_node_aristotle(
                 "verification": verification,
                 "attempt_history": attempt_history.copy(),
             }
+        )
+        latest_artifact, assessment = _apply_combined_verification_assessment(
+            planning_backend=planning_backend,
+            graph=current_graph,
+            node_id=node_id,
+            artifact=latest_artifact,
         )
         if latest_artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA:
             expanded_artifact = _attempt_aristotle_coverage_expansion(
@@ -429,9 +481,28 @@ def _formalize_candidate_node_aristotle(
                 artifact=latest_artifact,
                 scratch_path=scratch_path,
                 attempt_history=attempt_history,
+                assessment=assessment,
             )
             if expanded_artifact is not None:
                 latest_artifact = expanded_artifact
+        if (
+            attempt_number < attempt_limit
+            and latest_artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA
+            and _should_run_bonus_retry(graph=current_graph, node_id=node_id, assessment=assessment)
+        ):
+            _progress(f"node {node_id}: trying bonus larger-core retry")
+            bonus_artifact = _attempt_bonus_retry(
+                backend=backend,
+                verifier=verifier,
+                graph=current_graph,
+                node_id=node_id,
+                artifact=latest_artifact,
+                scratch_path=scratch_path,
+                attempt_history=attempt_history,
+                assessment=assessment,
+            )
+            if bonus_artifact is not None:
+                latest_artifact = bonus_artifact
         current_graph = _integrate_successful_formalization(
             graph=current_graph,
             backend=backend,
@@ -448,7 +519,17 @@ def _formalize_candidate_node_aristotle(
         if attempt_number >= attempt_limit or not _is_repairable_failure(verification):
             break
 
-        latest_feedback = _build_repair_feedback(previous_result=verification)
+        repair_assessment = _request_planning_repair_assessment(
+            planning_backend=planning_backend,
+            graph=current_graph,
+            node_id=node_id,
+            artifact=latest_artifact,
+            failure_text=f"{verification.stderr}\n{verification.stdout}",
+        )
+        latest_feedback = _build_repair_feedback(
+            previous_result=verification,
+            repair_assessment=repair_assessment,
+        )
         previous_lean_code = scratch_path.read_text(encoding="utf-8") if scratch_path.exists() else None
 
     assert latest_artifact is not None
@@ -585,6 +666,12 @@ def _formalize_candidate_node_agentic(
                 "attempt_history": attempt_history.copy(),
             }
         )
+        artifact, assessment = _apply_combined_verification_assessment(
+            planning_backend=planning_backend,
+            graph=current_graph,
+            node_id=node_id,
+            artifact=artifact,
+        )
         if artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA:
             _progress(f"node {node_id}: trying bounded coverage expansion for concrete sublemma")
             expanded_artifact = _attempt_agentic_coverage_expansion(
@@ -596,9 +683,28 @@ def _formalize_candidate_node_agentic(
                 artifact=artifact,
                 scratch_path=scratch_path,
                 attempt_history=attempt_history,
+                assessment=assessment,
             )
             if expanded_artifact is not None:
                 artifact = expanded_artifact
+        if (
+            attempt_number < 2
+            and artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA
+            and _should_run_bonus_retry(graph=current_graph, node_id=node_id, assessment=assessment)
+        ):
+            _progress(f"node {node_id}: trying bonus larger-core retry")
+            bonus_artifact = _attempt_bonus_retry(
+                backend=backend,
+                verifier=verifier,
+                graph=current_graph,
+                node_id=node_id,
+                artifact=artifact,
+                scratch_path=scratch_path,
+                attempt_history=attempt_history,
+                assessment=assessment,
+            )
+            if bonus_artifact is not None:
+                artifact = bonus_artifact
         updated_graph = _integrate_successful_formalization(
             graph=current_graph,
             backend=backend,
@@ -624,6 +730,7 @@ def _attempt_aristotle_coverage_expansion(
     artifact: FormalArtifact,
     scratch_path: Path,
     attempt_history: list[VerificationResult],
+    assessment: CombinedFormalizationAssessment | None = None,
 ) -> FormalArtifact | None:
     if (
         artifact.verification.status != "verified"
@@ -631,14 +738,27 @@ def _attempt_aristotle_coverage_expansion(
     ):
         return None
 
-    upgraded = _maybe_upgrade_concrete_sublemma_to_full_node(
-        planning_backend=planning_backend,
-        graph=graph,
-        node_id=node_id,
-        artifact=artifact,
-    )
-    if upgraded is not None:
-        return upgraded
+    if assessment is None:
+        upgraded = _maybe_upgrade_concrete_sublemma_to_full_node(
+            planning_backend=planning_backend,
+            graph=graph,
+            node_id=node_id,
+            artifact=artifact,
+        )
+        if upgraded is not None:
+            return upgraded
+    elif assessment.result_kind == "full_match":
+        return artifact.model_copy(
+            update={
+                "faithfulness_classification": FaithfulnessClassification.FULL_NODE,
+                "faithfulness_notes": format_faithfulness_notes(
+                    assessment.result_kind,
+                    assessment.reason,
+                ),
+            }
+        )
+    elif not assessment.expansion_warranted:
+        return None
 
     original_code = artifact.lean_code
     try:
@@ -679,12 +799,6 @@ def _attempt_aristotle_coverage_expansion(
     return None
 
 
-def _should_use_agentic_formalization(*, backend: StructuredBackend, mode: str) -> bool:
-    if mode == "structured":
-        return False
-    return hasattr(backend, "run_agentic_structured")
-
-
 def _is_repairable_failure(verification: VerificationResult) -> bool:
     text = f"{verification.stdout}\n{verification.stderr}".lower()
     repairable_markers = (
@@ -704,22 +818,40 @@ def _is_repairable_failure(verification: VerificationResult) -> bool:
 def _build_repair_feedback(
     *,
     previous_result: VerificationResult,
+    repair_assessment: RepairAssessment | None = None,
     extra_guidance: str | None = None,
 ) -> str:
+    heuristic = classify_heuristic_repair_assessment(
+        previous_result=previous_result,
+        extra_guidance=extra_guidance,
+    )
     parts = [
-        "Compiler feedback from the previous attempt:",
-        previous_result.stderr or "(no stderr)",
-        "Stdout from the previous attempt:",
-        previous_result.stdout or "(no stdout)",
-        (
-            "Repair guidance: fix the Lean syntax or compiler issue and keep the theorem concrete and faithful to the original node. "
-            "Reuse the node's variable names and hypotheses when reasonable. Avoid arbitrary `Type*` parameters, unrelated function "
-            "families, unnecessary higher-order abstraction, or a shift to an arbitrary measure-space theorem when the node is concrete. "
-            "Preserve the ambient setting when possible. Prefer plain Lean syntax that compiles in a scratch file. "
-            "Use a short, specific import list that matches the identifiers actually used, and avoid both `import Mathlib` "
-            "for tiny local theorems and speculative deep imports that may not exist in the pinned workspace."
-        ),
     ]
+    if repair_assessment is not None:
+        parts.extend(
+            [
+                "Planning backend repair diagnosis:",
+                f"[{repair_assessment.category.value}] {repair_assessment.note}",
+            ]
+        )
+    parts.extend(
+        [
+            "Heuristic repair diagnosis:",
+            f"[{heuristic.category.value}] {heuristic.note}",
+            "Compiler feedback from the previous attempt:",
+            previous_result.stderr or "(no stderr)",
+            "Stdout from the previous attempt:",
+            previous_result.stdout or "(no stdout)",
+            (
+                "Repair guidance: fix the Lean syntax or compiler issue and keep the theorem concrete and faithful to the original node. "
+                "Reuse the node's variable names and hypotheses when reasonable. Avoid arbitrary `Type*` parameters, unrelated function "
+                "families, unnecessary higher-order abstraction, or a shift to an arbitrary measure-space theorem when the node is concrete. "
+                "Preserve the ambient setting when possible. Prefer plain Lean syntax that compiles in a scratch file. "
+                "Use a short, specific import list that matches the identifiers actually used, and avoid both `import Mathlib` "
+                "for tiny local theorems and speculative deep imports that may not exist in the pinned workspace."
+            ),
+        ]
+    )
     if extra_guidance:
         parts.append(extra_guidance)
     return "\n\n".join(parts)
@@ -822,6 +954,187 @@ def _integrate_successful_formalization(
     return _update_node(graph, node_id, "formal_failed", artifact)
 
 
+def _apply_combined_verification_assessment(
+    *,
+    planning_backend: StructuredBackend | None,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+) -> tuple[FormalArtifact, CombinedFormalizationAssessment | None]:
+    if planning_backend is None:
+        return artifact, None
+
+    try:
+        assessment = request_combined_verification_assessment(
+            backend=planning_backend,
+            graph=_graph_for_retry_request(graph, node_id),
+            node_id=node_id,
+            artifact=artifact,
+        )
+    except BackendError:
+        return artifact, None
+
+    updated = artifact.model_copy(
+        update={
+            "faithfulness_notes": format_faithfulness_notes(
+                assessment.result_kind,
+                assessment.reason,
+            )
+        }
+    )
+    if assessment.result_kind == "full_match" and updated.faithfulness_classification != FaithfulnessClassification.FULL_NODE:
+        updated = updated.model_copy(
+            update={"faithfulness_classification": FaithfulnessClassification.FULL_NODE}
+        )
+    return updated, assessment
+
+
+def _request_planning_repair_assessment(
+    *,
+    planning_backend: StructuredBackend | None,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+    failure_text: str,
+) -> RepairAssessment | None:
+    if planning_backend is None:
+        return None
+
+    try:
+        return request_repair_assessment(
+            backend=planning_backend,
+            graph=_graph_for_retry_request(graph, node_id),
+            node_id=node_id,
+            artifact=artifact,
+            failure_text=failure_text,
+        )
+    except BackendError:
+        return None
+
+
+def _node_is_on_main_proof_path(graph: ProofGraph, node_id: str) -> bool:
+    reverse_edges: dict[str, set[str]] = {}
+    provenance_labels = {"refined_from", "uses", "formal_sublemma_for"}
+    for edge in graph.edges:
+        if edge.label in provenance_labels:
+            continue
+        reverse_edges.setdefault(edge.target_id, set()).add(edge.source_id)
+
+    queue = [node_id]
+    seen = {node_id}
+    while queue:
+        current = queue.pop(0)
+        if current == graph.root_node_id:
+            return True
+        for parent in reverse_edges.get(current, set()):
+            if parent in seen:
+                continue
+            seen.add(parent)
+            queue.append(parent)
+    return False
+
+
+def _should_run_bonus_retry(
+    *,
+    graph: ProofGraph,
+    node_id: str,
+    assessment: CombinedFormalizationAssessment | None,
+) -> bool:
+    if assessment is None:
+        return False
+    if assessment.result_kind in {"full_match", "faithful_core"}:
+        return False
+    if assessment.certifies_main_burden:
+        return False
+    if assessment.coverage_score > 6:
+        return False
+    if not assessment.worth_retrying_later:
+        return False
+    if not _node_is_on_main_proof_path(graph, node_id):
+        return False
+    node = next((candidate for candidate in graph.nodes if candidate.id == node_id), None)
+    if node is None or node.formalization_priority not in {1, 2}:
+        return False
+    return True
+
+
+def _build_bonus_retry_feedback(*, assessment: CombinedFormalizationAssessment) -> str:
+    return "\n\n".join(
+        [
+            "Planning backend bonus-retry guidance:",
+            f"[{RepairCategory.TRY_LARGER_CORE.value}] {assessment.reason}",
+            (
+                "Try a broader concrete core in the same mathematical setting. Keep the same proof path and "
+                "expand toward the missing parent burden rather than changing to an easier analogue."
+            ),
+        ]
+    )
+
+
+def _attempt_bonus_retry(
+    *,
+    backend: FormalizationBackend,
+    verifier: LeanVerifier,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+    scratch_path: Path,
+    attempt_history: list[VerificationResult],
+    assessment: CombinedFormalizationAssessment,
+) -> FormalArtifact | None:
+    bonus_feedback = _build_bonus_retry_feedback(assessment=assessment)
+    original_code = artifact.lean_code
+    try:
+        if isinstance(backend, AristotleBackend):
+            bonus = request_aristotle_formalization(
+                backend=backend,
+                graph=_graph_for_retry_request(graph, node_id),
+                node_id=node_id,
+                workspace_root=verifier.workspace.root.resolve(),
+                scratch_file_path=scratch_path,
+                faithfulness_feedback=bonus_feedback,
+                previous_lean_code=artifact.lean_code,
+                compiler_feedback="Try to expand the verified local core upward toward the parent node.",
+            )
+            verification = verifier.verify_existing_file(
+                file_path=scratch_path,
+                attempt_number=(artifact.verification.attempt_count or 1) + 1,
+            )
+        else:
+            bonus = request_agentic_formalization(
+                backend=backend,
+                graph=_graph_for_retry_request(graph, node_id),
+                node_id=node_id,
+                workspace_root=verifier.workspace.root.resolve(),
+                scratch_file_path=scratch_path,
+                faithfulness_feedback=bonus_feedback,
+                previous_lean_code=artifact.lean_code,
+            )
+            verification = verifier.verify_existing_file(
+                file_path=scratch_path,
+                attempt_number=(artifact.verification.attempt_count or 1) + 1,
+            )
+    except (BackendError, FormalizationFaithfulnessError):
+        scratch_path.write_text(original_code, encoding="utf-8")
+        return None
+
+    if verification.status != "verified":
+        scratch_path.write_text(original_code, encoding="utf-8")
+        return None
+
+    bonus = bonus.model_copy(
+        update={
+            "verification": verification,
+            "attempt_history": attempt_history.copy() + [verification],
+        }
+    )
+    if bonus.faithfulness_classification == FaithfulnessClassification.FULL_NODE:
+        return bonus
+
+    scratch_path.write_text(original_code, encoding="utf-8")
+    return None
+
+
 def _maybe_upgrade_concrete_sublemma_to_full_node(
     *,
     planning_backend: StructuredBackend | None,
@@ -835,7 +1148,7 @@ def _maybe_upgrade_concrete_sublemma_to_full_node(
         return None
 
     try:
-        assessment = request_coverage_expansion_assessment(
+        assessment = request_combined_verification_assessment(
             backend=planning_backend,
             graph=_graph_for_retry_request(graph, node_id),
             node_id=node_id,
@@ -844,7 +1157,7 @@ def _maybe_upgrade_concrete_sublemma_to_full_node(
     except BackendError:
         return None
 
-    if not assessment.already_matches_target:
+    if assessment.result_kind != "full_match":
         return None
 
     _progress(
@@ -854,7 +1167,10 @@ def _maybe_upgrade_concrete_sublemma_to_full_node(
     return artifact.model_copy(
         update={
             "faithfulness_classification": FaithfulnessClassification.FULL_NODE,
-            "faithfulness_notes": assessment.reason,
+            "faithfulness_notes": format_faithfulness_notes(
+                assessment.result_kind,
+                assessment.reason,
+            ),
         }
     )
 
@@ -997,6 +1313,41 @@ def _merge_formalization_outcome(
     return current_graph.model_copy(update={"nodes": list(current_nodes.values()), "edges": current_edges})
 
 
+def _apply_combined_verification_assessment(
+    *,
+    planning_backend: StructuredBackend | None,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+) -> tuple[FormalArtifact, CombinedFormalizationAssessment | None]:
+    if planning_backend is None:
+        return artifact, None
+
+    try:
+        assessment = request_combined_verification_assessment(
+            backend=planning_backend,
+            graph=_graph_for_retry_request(graph, node_id),
+            node_id=node_id,
+            artifact=artifact,
+        )
+    except BackendError:
+        return artifact, None
+
+    updated = artifact.model_copy(
+        update={
+            "faithfulness_notes": format_faithfulness_notes(
+                assessment.result_kind,
+                assessment.reason,
+            )
+        }
+    )
+    if assessment.result_kind == "full_match" and updated.faithfulness_classification != FaithfulnessClassification.FULL_NODE:
+        updated = updated.model_copy(
+            update={"faithfulness_classification": FaithfulnessClassification.FULL_NODE}
+        )
+    return updated, assessment
+
+
 def _attempt_structured_coverage_expansion(
     *,
     backend: StructuredBackend,
@@ -1006,6 +1357,7 @@ def _attempt_structured_coverage_expansion(
     node_id: str,
     artifact: FormalArtifact,
     attempt_history: list[VerificationResult],
+    assessment: CombinedFormalizationAssessment | None = None,
 ) -> FormalArtifact | None:
     if (
         artifact.verification.status != "verified"
@@ -1013,14 +1365,27 @@ def _attempt_structured_coverage_expansion(
     ):
         return None
 
-    upgraded = _maybe_upgrade_concrete_sublemma_to_full_node(
-        planning_backend=planning_backend,
-        graph=graph,
-        node_id=node_id,
-        artifact=artifact,
-    )
-    if upgraded is not None:
-        return upgraded
+    if assessment is None:
+        upgraded = _maybe_upgrade_concrete_sublemma_to_full_node(
+            planning_backend=planning_backend,
+            graph=graph,
+            node_id=node_id,
+            artifact=artifact,
+        )
+        if upgraded is not None:
+            return upgraded
+    elif assessment.result_kind == "full_match":
+        return artifact.model_copy(
+            update={
+                "faithfulness_classification": FaithfulnessClassification.FULL_NODE,
+                "faithfulness_notes": format_faithfulness_notes(
+                    assessment.result_kind,
+                    assessment.reason,
+                ),
+            }
+        )
+    elif not assessment.expansion_warranted:
+        return None
 
     _progress(f"node {node_id}: running structured coverage expansion")
     try:
@@ -1065,6 +1430,7 @@ def _attempt_agentic_coverage_expansion(
     artifact: FormalArtifact,
     scratch_path: Path,
     attempt_history: list[VerificationResult],
+    assessment: CombinedFormalizationAssessment | None = None,
 ) -> FormalArtifact | None:
     if (
         artifact.verification.status != "verified"
@@ -1072,14 +1438,27 @@ def _attempt_agentic_coverage_expansion(
     ):
         return None
 
-    upgraded = _maybe_upgrade_concrete_sublemma_to_full_node(
-        planning_backend=planning_backend,
-        graph=graph,
-        node_id=node_id,
-        artifact=artifact,
-    )
-    if upgraded is not None:
-        return upgraded
+    if assessment is None:
+        upgraded = _maybe_upgrade_concrete_sublemma_to_full_node(
+            planning_backend=planning_backend,
+            graph=graph,
+            node_id=node_id,
+            artifact=artifact,
+        )
+        if upgraded is not None:
+            return upgraded
+    elif assessment.result_kind == "full_match":
+        return artifact.model_copy(
+            update={
+                "faithfulness_classification": FaithfulnessClassification.FULL_NODE,
+                "faithfulness_notes": format_faithfulness_notes(
+                    assessment.result_kind,
+                    assessment.reason,
+                ),
+            }
+        )
+    elif not assessment.expansion_warranted:
+        return None
 
     _progress(f"node {node_id}: running agentic coverage expansion")
     original_code = artifact.lean_code
@@ -1118,6 +1497,8 @@ def _attempt_agentic_coverage_expansion(
 
     scratch_path.write_text(original_code, encoding="utf-8")
     return None
+
+
 def _build_concrete_sublemma_text(
     *,
     graph: ProofGraph,

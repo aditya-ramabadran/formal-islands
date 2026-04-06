@@ -1,0 +1,29 @@
+[
+  {
+    "node_id": "bernoulli_ineq_refined_local_claim",
+    "status": "verified",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/bernoulli_ineq_refined_local_claim_worker_20260406-062648_f11fcf67.lean",
+    "attempt_count": 1,
+    "stderr": "",
+    "faithfulness_classification": "full_node",
+    "lean_theorem_name": "bernoulli_ineq_refined_local_claim_aristotle"
+  },
+  {
+    "node_id": "fq_convex",
+    "status": "failed",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/fq_convex_worker_20260406-062648_b8f53846.lean",
+    "attempt_count": 2,
+    "stderr": "",
+    "faithfulness_classification": "concrete_sublemma",
+    "lean_theorem_name": "fq_convex_aristotle"
+  },
+  {
+    "node_id": "bernoulli_ineq",
+    "status": "failed",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/bernoulli_ineq_worker_20260406-071621_3c2f3e96.lean",
+    "attempt_count": 2,
+    "stderr": "",
+    "faithfulness_classification": "concrete_sublemma",
+    "lean_theorem_name": "bernoulli_ineq_aristotle"
+  }
+]

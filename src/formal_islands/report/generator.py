@@ -7,6 +7,7 @@ import re
 from collections import Counter, defaultdict, deque
 from html import escape
 
+from formal_islands.formalization.pipeline import parse_faithfulness_notes
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode, ReviewObligation
 
 
@@ -16,7 +17,7 @@ ROW_GAP = 52
 COL_GAP = 36
 MARGIN_X = 24
 MARGIN_Y = 20
-PROVENANCE_EDGE_LABELS = {"refined_from"}
+PROVENANCE_EDGE_LABELS = {"refined_from", "formal_sublemma_for", "uses"}
 
 
 def export_report_bundle(graph: ProofGraph, obligations: list[ReviewObligation]) -> dict:
@@ -516,13 +517,16 @@ def _render_node_section(node: ProofNode) -> str:
     formal_block = ""
     if node.formal_artifact is not None:
         verification = node.formal_artifact.verification
-        coverage_note = (
-            f"<p><strong>Coverage:</strong> {escape(node.formal_artifact.faithfulness_classification)}</p>"
+        result_kind, reason = parse_faithfulness_notes(node.formal_artifact.faithfulness_notes)
+        coverage_label = _render_faithfulness_label(
+            result_kind=result_kind,
+            classification=str(node.formal_artifact.faithfulness_classification),
         )
-        if node.formal_artifact.faithfulness_notes:
-            coverage_note += (
-                f"<p class=\"meta\">{escape(node.formal_artifact.faithfulness_notes)}</p>"
-            )
+        coverage_note = f"<p><strong>Coverage:</strong> {escape(coverage_label)}</p>"
+        if reason:
+            coverage_note += f"<p class=\"meta\">{escape(reason)}</p>"
+        elif node.formal_artifact.faithfulness_notes:
+            coverage_note += f"<p class=\"meta\">{escape(node.formal_artifact.faithfulness_notes)}</p>"
         formal_block = f"""
         <h4>Formal Artifact</h4>
         <p><strong>Lean theorem name:</strong> {escape(node.formal_artifact.lean_theorem_name)}</p>
@@ -566,6 +570,19 @@ stderr:
 def _render_math_text(text: str) -> str:
     compacted = _compact_report_text(text)
     return f'<div class="math-text">{_render_inline_code_html(compacted)}</div>'
+
+
+def _render_faithfulness_label(*, result_kind: str | None, classification: str) -> str:
+    if result_kind is None:
+        return classification
+    labels = {
+        "full_match": "full match",
+        "faithful_core": "faithful core",
+        "downstream_consequence": "downstream consequence",
+        "dimensional_analogue": "dimensional analogue",
+        "helper_shard": "helper shard",
+    }
+    return labels.get(result_kind, result_kind.replace("_", " "))
 
 
 def _render_inline_code_html(text: str) -> str:

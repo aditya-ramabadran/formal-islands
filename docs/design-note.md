@@ -268,6 +268,16 @@ It contains:
 Verified supporting lemmas are included as text context with their theorem names and Lean statements when available.
 They may be relied on as established facts for proof planning, but they are not auto-imported as generated Lean source files in the Aristotle snapshot.
 
+User-facing formalization is now agentic-only in the CLI. The older structured repair-loop path is retained only as an internal compatibility fallback for legacy callers and tests, not as a supported mode for normal use.
+
+The formalization loop also now does more than just accept or reject a proof:
+
+- the heuristic guard runs first and rejects obvious abstraction drift, including dimension downgrades
+- after verification, the planning backend can classify the Lean theorem against the target node and decide whether the result is already the full match, only a faithful core, a downstream consequence, a dimensional analogue, or just a helper shard
+- that same combined semantic review also decides whether bounded coverage expansion is worthwhile
+- if a failure occurs, repair guidance is built from a cheap heuristic diagnosis plus an optional planning-backend semantic diagnosis
+- if a verified concrete sublemma is still a genuine candidate for more coverage, the loop can make one bounded bonus retry on the main proof path
+
 When `formalize-all-candidates` uses Aristotle, the jobs are submitted in parallel batches. Newly promoted parents from a verified concrete sublemma are picked up by the next batch rather than waiting for a fully sequential pass.
 
 This backend is intended for theorem-statement formalization runs where the host pipeline already knows the target node and wants project-level Lean proof completion rather than a chat-style JSON response.
@@ -293,6 +303,21 @@ This was strengthened significantly after the benchmark suite exposed two failur
 
 - useful concrete narrowing was being rejected too harshly
 - narrower formal cores were being overreported as full-node formalizations
+
+The current faithfulness path now has a two-layer shape:
+
+1. **Heuristic first pass**
+   - catches obvious over-abstraction
+   - includes the usual `Type*` / measure-space / inner-product-space checks
+   - now also includes a dimension-downgrade check for cases where a function-space or variational claim has been replaced by a finite-dimensional Euclidean / matrix / `Fin n` analogue
+
+2. **Planning-backend semantic review**
+   - runs only after a verified Lean artifact exists
+   - asks whether the theorem is a full match, a faithful core, a downstream consequence, a dimensional analogue, or a helper shard
+   - records a coverage score and a short reason
+   - is used to decide whether coverage expansion is warranted and whether a later retry is worth attempting
+
+The result of that semantic review is stored in `faithfulness_notes` in a structured text form so the report can show more specific labels than the old generic “concrete sublemma” wording.
 
 ### 5.4 Review extraction
 
@@ -329,6 +354,7 @@ The report now supports:
 - automatic dark mode
 - better honesty for certified local core nodes
 - dashed gray provenance / refinement edges that are shown as provenance, not proof dependencies
+- node-detail labels that distinguish faithful cores, downstream consequences, dimensional analogues, and similar narrower outcomes
 
 ## 6. CLI Entry Point
 
@@ -358,6 +384,7 @@ Important current behavior:
 - `formalize-all-candidates` runs candidates through the updated graph, and with Aristotle it submits each batch in parallel before merging the results back into the shared graph
 - `run-benchmark` is the one-command smoke path and, when `--node-id auto`, it now keeps walking the graph in priority order instead of stopping after the first success
 - `--formalization-timeout-seconds` controls the agentic backend timeout for the formalization step
+- The CLI now exposes agentic formalization only; the old structured repair-loop mode is deprecated and kept only as an internal compatibility path
 
 ## 7. Backend Layer
 

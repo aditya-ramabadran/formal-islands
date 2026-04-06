@@ -101,9 +101,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     formalize_parser.add_argument(
         "--formalization-mode",
-        choices=["agentic", "structured", "auto"],
+        choices=["agentic"],
         default="agentic",
-        help="Formalization execution mode. Default: one-shot agentic worker when supported by the selected backend.",
+        help="Formalization execution mode. Agentic is the only supported option.",
     )
     add_formalization_timeout_arg(formalize_parser)
     formalize_parser.set_defaults(func=cmd_formalize_one)
@@ -125,9 +125,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     formalize_all_parser.add_argument(
         "--formalization-mode",
-        choices=["agentic", "structured", "auto"],
+        choices=["agentic"],
         default="agentic",
-        help="Formalization execution mode. Default: one-shot agentic worker when supported by the selected backend.",
+        help="Formalization execution mode. Agentic is the only supported option.",
     )
     add_formalization_timeout_arg(formalize_all_parser)
     formalize_all_parser.set_defaults(func=cmd_formalize_all_candidates)
@@ -154,9 +154,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument(
         "--formalization-mode",
-        choices=["agentic", "structured", "auto"],
+        choices=["agentic"],
         default="agentic",
-        help="Formalization execution mode. Default: agentic Codex worker, with structured fallback available.",
+        help="Formalization execution mode. Agentic is the only supported option.",
     )
     add_formalization_timeout_arg(run_parser)
     run_parser.set_defaults(func=cmd_run_example)
@@ -193,9 +193,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     benchmark_parser.add_argument(
         "--formalization-mode",
-        choices=["agentic", "structured", "auto"],
+        choices=["agentic"],
         default="agentic",
-        help="Formalization execution mode. Default: one-shot agentic worker when supported by the selected backend.",
+        help="Formalization execution mode. Agentic is the only supported option.",
     )
     add_formalization_timeout_arg(benchmark_parser)
     benchmark_parser.set_defaults(func=cmd_run_benchmark)
