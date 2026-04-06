@@ -1,0 +1,309 @@
+{
+  "status": "completed",
+  "task_name": "plan_theorem",
+  "backend_name": "gemini_cli",
+  "command": [
+    "/opt/homebrew/bin/gemini",
+    "-p",
+    "System instructions:\n\nPlan a compact, faithful, formalization-sensitive proof graph for the user's theorem. Return only JSON that matches the supplied schema. In one pass, choose the graph shape and rank the best local formalization candidates. Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible.\n\nUser task:\n\nTheorem title hint: It\u00f4's formula for a twice continuously differentiable function of Brownian motion\n\nTheorem statement:\nIt\u00f4's formula for a twice continuously differentiable function of Brownian motion.\n\nLet \\((B_t)_{t\\ge 0}\\) be a standard one-dimensional Brownian motion, let \\(T>0\\), and let \\(f:\\mathbb{R}\\to\\mathbb{R}\\) be a \\(C^2\\) function. Assume for simplicity that \\(f'\\) and \\(f''\\) are bounded and that \\(f''\\) is uniformly continuous on \\(\\mathbb{R}\\). Then for every \\(t\\in[0,T]\\),\n\\[\nf(B_t)\n=\nf(B_0)\n+\n\\int_0^t f'(B_s)\\,dB_s\n+\n\\frac12\\int_0^t f''(B_s)\\,ds.\n\\]\n\n\nRaw informal proof:\nFix \\(t\\in[0,T]\\), and let\n\\[\n0=t_0<t_1<\\cdots<t_n=t\n\\]\nbe a partition of \\([0,t]\\). Write\n\\[\n\\Delta B_k := B_{t_{k+1}}-B_{t_k},\n\\qquad\n\\Delta t_k := t_{k+1}-t_k.\n\\]\nWe begin from the telescoping identity\n\\[\nf(B_t)-f(B_0)\n=\n\\sum_{k=0}^{n-1}\\bigl(f(B_{t_{k+1}})-f(B_{t_k})\\bigr).\n\\]\n\nNow apply Taylor's theorem with remainder to each increment. For each \\(k\\), there exists a point \\(\\xi_k\\) between \\(B_{t_k}\\) and \\(B_{t_{k+1}}\\) such that\n\\[\nf(B_{t_{k+1}})\n=\nf(B_{t_k})\n+\nf'(B_{t_k})\\,\\Delta B_k\n+\n\\frac12 f''(B_{t_k}) (\\Delta B_k)^2\n+\n\\frac12\\bigl(f''(\\xi_k)-f''(B_{t_k})\\bigr)(\\Delta B_k)^2.\n\\]\nTherefore\n\\[\nf(B_t)-f(B_0)\n=\n\\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k\n+\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n+\nR_n,\n\\]\nwhere\n\\[\nR_n\n:=\n\\frac12\\sum_{k=0}^{n-1}\\bigl(f''(\\xi_k)-f''(B_{t_k})\\bigr)(\\Delta B_k)^2.\n\\]\n\nWe now analyze the three terms separately.\n\nFirst term: convergence to the It\u00f4 integral.\nBy definition of the It\u00f4 integral for simple adapted processes, and then by the standard construction of the It\u00f4 integral by \\(L^2\\)-limits, the left-endpoint sums\n\\[\n\\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k\n\\]\nconverge in \\(L^2\\) (hence in probability, and along a subsequence almost surely) to\n\\[\n\\int_0^t f'(B_s)\\,dB_s.\n\\]\nThis is exactly why the left-endpoint stochastic sum appears in the statement of It\u00f4's formula.\n\nSecond term: extraction of the quadratic variation contribution.\nWrite\n\\[\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n=\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})\\,\\Delta t_k\n+\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr).\n\\]\nWe claim that the second sum on the right converges to \\(0\\), while the first converges to the ordinary integral \\(\\int_0^t f''(B_s)\\,ds\\).\n\nFor the first sum, because Brownian paths are almost surely continuous and \\(f''\\) is continuous, the process \\(s\\mapsto f''(B_s)\\) is almost surely continuous on \\([0,t]\\). Hence the Riemann sums\n\\[\n\\sum_{k=0}^{n-1} f''(B_{t_k})\\,\\Delta t_k\n\\]\nconverge almost surely to\n\\[\n\\int_0^t f''(B_s)\\,ds.\n\\]\n\nFor the second sum, set\n\\[\nM_n := \\sum_{k=0}^{n-1} f''(B_{t_k})\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr).\n\\]\nSince \\(f''(B_{t_k})\\) is \\(\\mathcal F_{t_k}\\)-measurable and \\(\\Delta B_k\\) is independent of \\(\\mathcal F_{t_k}\\), with\n\\[\n\\mathbb E\\bigl[(\\Delta B_k)^2-\\Delta t_k \\mid \\mathcal F_{t_k}\\bigr]=0,\n\\]\nthe cross terms vanish in \\(L^2\\). Thus\n\\[\n\\mathbb E[M_n^2]\n=\n\\sum_{k=0}^{n-1}\n\\mathbb E\\!\\left[\nf''(B_{t_k})^2\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr)^2\n\\right].\n\\]\nBecause \\(f''\\) is bounded, say \\(|f''|\\le C\\), and for a centered Gaussian increment with variance \\(\\Delta t_k\\) one has\n\\[\n\\mathbb E\\bigl[((\\Delta B_k)^2-\\Delta t_k)^2\\bigr]\n=\n2(\\Delta t_k)^2,\n\\]\nit follows that\n\\[\n\\mathbb E[M_n^2]\n\\le\n2C^2 \\sum_{k=0}^{n-1} (\\Delta t_k)^2.\n\\]\nAs the mesh of the partition tends to zero, \\(\\sum_k (\\Delta t_k)^2 \\to 0\\). Hence \\(M_n\\to 0\\) in \\(L^2\\), and therefore\n\\[\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n\\to\n\\frac12\\int_0^t f''(B_s)\\,ds\n\\]\nin probability, and along a subsequence almost surely.\n\nThird term: the Taylor remainder vanishes.\nLet \\(\\omega(\\delta)\\) be a modulus of continuity for \\(f''\\); because \\(f''\\) is uniformly continuous, \\(\\omega(\\delta)\\to 0\\) as \\(\\delta\\to 0\\). Since \\(\\xi_k\\) lies between \\(B_{t_k}\\) and \\(B_{t_{k+1}}\\),\n\\[\n|f''(\\xi_k)-f''(B_{t_k})|\n\\le\n\\omega(|\\Delta B_k|).\n\\]\nTherefore\n\\[\n|R_n|\n\\le\n\\frac12 \\sum_{k=0}^{n-1}\\omega(|\\Delta B_k|)(\\Delta B_k)^2\n\\le\n\\frac12\\,\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2.\n\\]\nNow Brownian paths are almost surely uniformly continuous on the compact interval \\([0,t]\\), so along any sequence of partitions whose mesh tends to \\(0\\),\n\\[\n\\max_k |\\Delta B_k| \\to 0\n\\qquad\\text{almost surely.}\n\\]\nAlso, the quadratic variation of Brownian motion on \\([0,t]\\) is \\(t\\), so\n\\[\n\\sum_{k=0}^{n-1}(\\Delta B_k)^2 \\to t\n\\qquad\\text{in probability, and along subsequences almost surely.}\n\\]\nHence\n\\[\n\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2 \\to 0,\n\\]\nso \\(R_n\\to 0\\) in probability.\n\nPutting everything together, we have shown that as the mesh of the partition tends to zero,\n\\[\nf(B_t)-f(B_0)\n=\n\\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k\n+\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n+\nR_n\n\\]\nconverges to\n\\[\n\\int_0^t f'(B_s)\\,dB_s\n+\n\\frac12\\int_0^t f''(B_s)\\,ds.\n\\]\nTherefore\n\\[\nf(B_t)\n=\nf(B_0)\n+\n\\int_0^t f'(B_s)\\,dB_s\n+\n\\frac12\\int_0^t f''(B_s)\\,ds.\n\\]\n\nThis is It\u00f4's formula for a \\(C^2\\) function of one-dimensional Brownian motion.\n\nRemarks.\n1. The assumptions that \\(f'\\) and \\(f''\\) are bounded and that \\(f''\\) is uniformly continuous are convenient hypotheses ensuring the above estimates are clean. The general \\(C^2\\) case follows by a standard localization argument.\n2. The crucial formal-island step in this proof is the deterministic Taylor-expansion identity\n\\[\n\\sum_{k=0}^{n-1}\\bigl(f(B_{t_{k+1}})-f(B_{t_k})\\bigr)\n=\n\\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k\n+\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n+\nR_n,\n\\]\ntogether with the explicit bound on the remainder\n\\[\n|R_n|\n\\le\n\\frac12\\,\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2.\n\\]\nThat step is entirely deterministic and is the most obvious formal island inside the larger stochastic theorem.\n\n\nReturn one JSON object with top-level keys theorem_title, theorem_statement, root_node_id, nodes, edges, and candidates.\n\nThe nodes and edges must follow the same informal extraction schema as before: nodes include id, title, informal_statement, informal_proof_text, and optional display_label; edges include source_id, target_id, and optional label and explanation.\n\nThe candidates array must include objects with node_id, priority, and rationale. Priority must be an integer from 1 to 3, where 1 is highest and 3 is lowest. Do not use words like high, medium, or low. Candidates should refer only to node ids that exist in the graph you emit.\n\nPlan the graph and candidate ranking jointly. Optimize for a compact, faithful, formalization-sensitive graph with a small, high-yield candidate set.\n\nA node should exist only if it is the root theorem, a nontrivial intermediate claim, a meaningful candidate formal island, a reused claim, a separate review obligation, or a conceptually distinct proof step that improves the final mixed informal/formal report.\n\nDo not create separate nodes for bare assumptions, local variable setup, trivial restatements, goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims.\n\nWhen choosing graph granularity, preserve one or two local technical subclaims if they are concrete, inferentially important, plausibly formalizable, and substantially used by the surrounding proof. Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic simplifications, monotonicity or concavity consequences, and concrete local estimates.\n\nKeep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims that are much weaker than the surrounding local argument.\n\nFor a tiny proof, prefer a single root node unless a second node for a reusable or conceptually distinct lemma clearly improves the graph.\n\nPreserve the original mathematical notation in your output whenever feasible. Do not normalize LaTeX into plain ASCII unless absolutely necessary.",
+    "--output-format",
+    "json"
+  ],
+  "cwd": null,
+  "system_prompt": "Plan a compact, faithful, formalization-sensitive proof graph for the user's theorem. Return only JSON that matches the supplied schema. In one pass, choose the graph shape and rank the best local formalization candidates. Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible.",
+  "prompt": "Theorem title hint: It\u00f4's formula for a twice continuously differentiable function of Brownian motion\n\nTheorem statement:\nIt\u00f4's formula for a twice continuously differentiable function of Brownian motion.\n\nLet \\((B_t)_{t\\ge 0}\\) be a standard one-dimensional Brownian motion, let \\(T>0\\), and let \\(f:\\mathbb{R}\\to\\mathbb{R}\\) be a \\(C^2\\) function. Assume for simplicity that \\(f'\\) and \\(f''\\) are bounded and that \\(f''\\) is uniformly continuous on \\(\\mathbb{R}\\). Then for every \\(t\\in[0,T]\\),\n\\[\nf(B_t)\n=\nf(B_0)\n+\n\\int_0^t f'(B_s)\\,dB_s\n+\n\\frac12\\int_0^t f''(B_s)\\,ds.\n\\]\n\n\nRaw informal proof:\nFix \\(t\\in[0,T]\\), and let\n\\[\n0=t_0<t_1<\\cdots<t_n=t\n\\]\nbe a partition of \\([0,t]\\). Write\n\\[\n\\Delta B_k := B_{t_{k+1}}-B_{t_k},\n\\qquad\n\\Delta t_k := t_{k+1}-t_k.\n\\]\nWe begin from the telescoping identity\n\\[\nf(B_t)-f(B_0)\n=\n\\sum_{k=0}^{n-1}\\bigl(f(B_{t_{k+1}})-f(B_{t_k})\\bigr).\n\\]\n\nNow apply Taylor's theorem with remainder to each increment. For each \\(k\\), there exists a point \\(\\xi_k\\) between \\(B_{t_k}\\) and \\(B_{t_{k+1}}\\) such that\n\\[\nf(B_{t_{k+1}})\n=\nf(B_{t_k})\n+\nf'(B_{t_k})\\,\\Delta B_k\n+\n\\frac12 f''(B_{t_k}) (\\Delta B_k)^2\n+\n\\frac12\\bigl(f''(\\xi_k)-f''(B_{t_k})\\bigr)(\\Delta B_k)^2.\n\\]\nTherefore\n\\[\nf(B_t)-f(B_0)\n=\n\\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k\n+\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n+\nR_n,\n\\]\nwhere\n\\[\nR_n\n:=\n\\frac12\\sum_{k=0}^{n-1}\\bigl(f''(\\xi_k)-f''(B_{t_k})\\bigr)(\\Delta B_k)^2.\n\\]\n\nWe now analyze the three terms separately.\n\nFirst term: convergence to the It\u00f4 integral.\nBy definition of the It\u00f4 integral for simple adapted processes, and then by the standard construction of the It\u00f4 integral by \\(L^2\\)-limits, the left-endpoint sums\n\\[\n\\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k\n\\]\nconverge in \\(L^2\\) (hence in probability, and along a subsequence almost surely) to\n\\[\n\\int_0^t f'(B_s)\\,dB_s.\n\\]\nThis is exactly why the left-endpoint stochastic sum appears in the statement of It\u00f4's formula.\n\nSecond term: extraction of the quadratic variation contribution.\nWrite\n\\[\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n=\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})\\,\\Delta t_k\n+\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr).\n\\]\nWe claim that the second sum on the right converges to \\(0\\), while the first converges to the ordinary integral \\(\\int_0^t f''(B_s)\\,ds\\).\n\nFor the first sum, because Brownian paths are almost surely continuous and \\(f''\\) is continuous, the process \\(s\\mapsto f''(B_s)\\) is almost surely continuous on \\([0,t]\\). Hence the Riemann sums\n\\[\n\\sum_{k=0}^{n-1} f''(B_{t_k})\\,\\Delta t_k\n\\]\nconverge almost surely to\n\\[\n\\int_0^t f''(B_s)\\,ds.\n\\]\n\nFor the second sum, set\n\\[\nM_n := \\sum_{k=0}^{n-1} f''(B_{t_k})\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr).\n\\]\nSince \\(f''(B_{t_k})\\) is \\(\\mathcal F_{t_k}\\)-measurable and \\(\\Delta B_k\\) is independent of \\(\\mathcal F_{t_k}\\), with\n\\[\n\\mathbb E\\bigl[(\\Delta B_k)^2-\\Delta t_k \\mid \\mathcal F_{t_k}\\bigr]=0,\n\\]\nthe cross terms vanish in \\(L^2\\). Thus\n\\[\n\\mathbb E[M_n^2]\n=\n\\sum_{k=0}^{n-1}\n\\mathbb E\\!\\left[\nf''(B_{t_k})^2\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr)^2\n\\right].\n\\]\nBecause \\(f''\\) is bounded, say \\(|f''|\\le C\\), and for a centered Gaussian increment with variance \\(\\Delta t_k\\) one has\n\\[\n\\mathbb E\\bigl[((\\Delta B_k)^2-\\Delta t_k)^2\\bigr]\n=\n2(\\Delta t_k)^2,\n\\]\nit follows that\n\\[\n\\mathbb E[M_n^2]\n\\le\n2C^2 \\sum_{k=0}^{n-1} (\\Delta t_k)^2.\n\\]\nAs the mesh of the partition tends to zero, \\(\\sum_k (\\Delta t_k)^2 \\to 0\\). Hence \\(M_n\\to 0\\) in \\(L^2\\), and therefore\n\\[\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n\\to\n\\frac12\\int_0^t f''(B_s)\\,ds\n\\]\nin probability, and along a subsequence almost surely.\n\nThird term: the Taylor remainder vanishes.\nLet \\(\\omega(\\delta)\\) be a modulus of continuity for \\(f''\\); because \\(f''\\) is uniformly continuous, \\(\\omega(\\delta)\\to 0\\) as \\(\\delta\\to 0\\). Since \\(\\xi_k\\) lies between \\(B_{t_k}\\) and \\(B_{t_{k+1}}\\),\n\\[\n|f''(\\xi_k)-f''(B_{t_k})|\n\\le\n\\omega(|\\Delta B_k|).\n\\]\nTherefore\n\\[\n|R_n|\n\\le\n\\frac12 \\sum_{k=0}^{n-1}\\omega(|\\Delta B_k|)(\\Delta B_k)^2\n\\le\n\\frac12\\,\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2.\n\\]\nNow Brownian paths are almost surely uniformly continuous on the compact interval \\([0,t]\\), so along any sequence of partitions whose mesh tends to \\(0\\),\n\\[\n\\max_k |\\Delta B_k| \\to 0\n\\qquad\\text{almost surely.}\n\\]\nAlso, the quadratic variation of Brownian motion on \\([0,t]\\) is \\(t\\), so\n\\[\n\\sum_{k=0}^{n-1}(\\Delta B_k)^2 \\to t\n\\qquad\\text{in probability, and along subsequences almost surely.}\n\\]\nHence\n\\[\n\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2 \\to 0,\n\\]\nso \\(R_n\\to 0\\) in probability.\n\nPutting everything together, we have shown that as the mesh of the partition tends to zero,\n\\[\nf(B_t)-f(B_0)\n=\n\\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k\n+\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n+\nR_n\n\\]\nconverges to\n\\[\n\\int_0^t f'(B_s)\\,dB_s\n+\n\\frac12\\int_0^t f''(B_s)\\,ds.\n\\]\nTherefore\n\\[\nf(B_t)\n=\nf(B_0)\n+\n\\int_0^t f'(B_s)\\,dB_s\n+\n\\frac12\\int_0^t f''(B_s)\\,ds.\n\\]\n\nThis is It\u00f4's formula for a \\(C^2\\) function of one-dimensional Brownian motion.\n\nRemarks.\n1. The assumptions that \\(f'\\) and \\(f''\\) are bounded and that \\(f''\\) is uniformly continuous are convenient hypotheses ensuring the above estimates are clean. The general \\(C^2\\) case follows by a standard localization argument.\n2. The crucial formal-island step in this proof is the deterministic Taylor-expansion identity\n\\[\n\\sum_{k=0}^{n-1}\\bigl(f(B_{t_{k+1}})-f(B_{t_k})\\bigr)\n=\n\\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k\n+\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n+\nR_n,\n\\]\ntogether with the explicit bound on the remainder\n\\[\n|R_n|\n\\le\n\\frac12\\,\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2.\n\\]\nThat step is entirely deterministic and is the most obvious formal island inside the larger stochastic theorem.\n\n\nReturn one JSON object with top-level keys theorem_title, theorem_statement, root_node_id, nodes, edges, and candidates.\n\nThe nodes and edges must follow the same informal extraction schema as before: nodes include id, title, informal_statement, informal_proof_text, and optional display_label; edges include source_id, target_id, and optional label and explanation.\n\nThe candidates array must include objects with node_id, priority, and rationale. Priority must be an integer from 1 to 3, where 1 is highest and 3 is lowest. Do not use words like high, medium, or low. Candidates should refer only to node ids that exist in the graph you emit.\n\nPlan the graph and candidate ranking jointly. Optimize for a compact, faithful, formalization-sensitive graph with a small, high-yield candidate set.\n\nA node should exist only if it is the root theorem, a nontrivial intermediate claim, a meaningful candidate formal island, a reused claim, a separate review obligation, or a conceptually distinct proof step that improves the final mixed informal/formal report.\n\nDo not create separate nodes for bare assumptions, local variable setup, trivial restatements, goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims.\n\nWhen choosing graph granularity, preserve one or two local technical subclaims if they are concrete, inferentially important, plausibly formalizable, and substantially used by the surrounding proof. Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic simplifications, monotonicity or concavity consequences, and concrete local estimates.\n\nKeep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims that are much weaker than the surrounding local argument.\n\nFor a tiny proof, prefer a single root node unless a second node for a reusable or conceptually distinct lemma clearly improves the graph.\n\nPreserve the original mathematical notation in your output whenever feasible. Do not normalize LaTeX into plain ASCII unless absolutely necessary.",
+  "rendered_prompt": "System instructions:\n\nPlan a compact, faithful, formalization-sensitive proof graph for the user's theorem. Return only JSON that matches the supplied schema. In one pass, choose the graph shape and rank the best local formalization candidates. Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible.\n\nUser task:\n\nTheorem title hint: It\u00f4's formula for a twice continuously differentiable function of Brownian motion\n\nTheorem statement:\nIt\u00f4's formula for a twice continuously differentiable function of Brownian motion.\n\nLet \\((B_t)_{t\\ge 0}\\) be a standard one-dimensional Brownian motion, let \\(T>0\\), and let \\(f:\\mathbb{R}\\to\\mathbb{R}\\) be a \\(C^2\\) function. Assume for simplicity that \\(f'\\) and \\(f''\\) are bounded and that \\(f''\\) is uniformly continuous on \\(\\mathbb{R}\\). Then for every \\(t\\in[0,T]\\),\n\\[\nf(B_t)\n=\nf(B_0)\n+\n\\int_0^t f'(B_s)\\,dB_s\n+\n\\frac12\\int_0^t f''(B_s)\\,ds.\n\\]\n\n\nRaw informal proof:\nFix \\(t\\in[0,T]\\), and let\n\\[\n0=t_0<t_1<\\cdots<t_n=t\n\\]\nbe a partition of \\([0,t]\\). Write\n\\[\n\\Delta B_k := B_{t_{k+1}}-B_{t_k},\n\\qquad\n\\Delta t_k := t_{k+1}-t_k.\n\\]\nWe begin from the telescoping identity\n\\[\nf(B_t)-f(B_0)\n=\n\\sum_{k=0}^{n-1}\\bigl(f(B_{t_{k+1}})-f(B_{t_k})\\bigr).\n\\]\n\nNow apply Taylor's theorem with remainder to each increment. For each \\(k\\), there exists a point \\(\\xi_k\\) between \\(B_{t_k}\\) and \\(B_{t_{k+1}}\\) such that\n\\[\nf(B_{t_{k+1}})\n=\nf(B_{t_k})\n+\nf'(B_{t_k})\\,\\Delta B_k\n+\n\\frac12 f''(B_{t_k}) (\\Delta B_k)^2\n+\n\\frac12\\bigl(f''(\\xi_k)-f''(B_{t_k})\\bigr)(\\Delta B_k)^2.\n\\]\nTherefore\n\\[\nf(B_t)-f(B_0)\n=\n\\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k\n+\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n+\nR_n,\n\\]\nwhere\n\\[\nR_n\n:=\n\\frac12\\sum_{k=0}^{n-1}\\bigl(f''(\\xi_k)-f''(B_{t_k})\\bigr)(\\Delta B_k)^2.\n\\]\n\nWe now analyze the three terms separately.\n\nFirst term: convergence to the It\u00f4 integral.\nBy definition of the It\u00f4 integral for simple adapted processes, and then by the standard construction of the It\u00f4 integral by \\(L^2\\)-limits, the left-endpoint sums\n\\[\n\\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k\n\\]\nconverge in \\(L^2\\) (hence in probability, and along a subsequence almost surely) to\n\\[\n\\int_0^t f'(B_s)\\,dB_s.\n\\]\nThis is exactly why the left-endpoint stochastic sum appears in the statement of It\u00f4's formula.\n\nSecond term: extraction of the quadratic variation contribution.\nWrite\n\\[\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n=\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})\\,\\Delta t_k\n+\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr).\n\\]\nWe claim that the second sum on the right converges to \\(0\\), while the first converges to the ordinary integral \\(\\int_0^t f''(B_s)\\,ds\\).\n\nFor the first sum, because Brownian paths are almost surely continuous and \\(f''\\) is continuous, the process \\(s\\mapsto f''(B_s)\\) is almost surely continuous on \\([0,t]\\). Hence the Riemann sums\n\\[\n\\sum_{k=0}^{n-1} f''(B_{t_k})\\,\\Delta t_k\n\\]\nconverge almost surely to\n\\[\n\\int_0^t f''(B_s)\\,ds.\n\\]\n\nFor the second sum, set\n\\[\nM_n := \\sum_{k=0}^{n-1} f''(B_{t_k})\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr).\n\\]\nSince \\(f''(B_{t_k})\\) is \\(\\mathcal F_{t_k}\\)-measurable and \\(\\Delta B_k\\) is independent of \\(\\mathcal F_{t_k}\\), with\n\\[\n\\mathbb E\\bigl[(\\Delta B_k)^2-\\Delta t_k \\mid \\mathcal F_{t_k}\\bigr]=0,\n\\]\nthe cross terms vanish in \\(L^2\\). Thus\n\\[\n\\mathbb E[M_n^2]\n=\n\\sum_{k=0}^{n-1}\n\\mathbb E\\!\\left[\nf''(B_{t_k})^2\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr)^2\n\\right].\n\\]\nBecause \\(f''\\) is bounded, say \\(|f''|\\le C\\), and for a centered Gaussian increment with variance \\(\\Delta t_k\\) one has\n\\[\n\\mathbb E\\bigl[((\\Delta B_k)^2-\\Delta t_k)^2\\bigr]\n=\n2(\\Delta t_k)^2,\n\\]\nit follows that\n\\[\n\\mathbb E[M_n^2]\n\\le\n2C^2 \\sum_{k=0}^{n-1} (\\Delta t_k)^2.\n\\]\nAs the mesh of the partition tends to zero, \\(\\sum_k (\\Delta t_k)^2 \\to 0\\). Hence \\(M_n\\to 0\\) in \\(L^2\\), and therefore\n\\[\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n\\to\n\\frac12\\int_0^t f''(B_s)\\,ds\n\\]\nin probability, and along a subsequence almost surely.\n\nThird term: the Taylor remainder vanishes.\nLet \\(\\omega(\\delta)\\) be a modulus of continuity for \\(f''\\); because \\(f''\\) is uniformly continuous, \\(\\omega(\\delta)\\to 0\\) as \\(\\delta\\to 0\\). Since \\(\\xi_k\\) lies between \\(B_{t_k}\\) and \\(B_{t_{k+1}}\\),\n\\[\n|f''(\\xi_k)-f''(B_{t_k})|\n\\le\n\\omega(|\\Delta B_k|).\n\\]\nTherefore\n\\[\n|R_n|\n\\le\n\\frac12 \\sum_{k=0}^{n-1}\\omega(|\\Delta B_k|)(\\Delta B_k)^2\n\\le\n\\frac12\\,\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2.\n\\]\nNow Brownian paths are almost surely uniformly continuous on the compact interval \\([0,t]\\), so along any sequence of partitions whose mesh tends to \\(0\\),\n\\[\n\\max_k |\\Delta B_k| \\to 0\n\\qquad\\text{almost surely.}\n\\]\nAlso, the quadratic variation of Brownian motion on \\([0,t]\\) is \\(t\\), so\n\\[\n\\sum_{k=0}^{n-1}(\\Delta B_k)^2 \\to t\n\\qquad\\text{in probability, and along subsequences almost surely.}\n\\]\nHence\n\\[\n\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2 \\to 0,\n\\]\nso \\(R_n\\to 0\\) in probability.\n\nPutting everything together, we have shown that as the mesh of the partition tends to zero,\n\\[\nf(B_t)-f(B_0)\n=\n\\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k\n+\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n+\nR_n\n\\]\nconverges to\n\\[\n\\int_0^t f'(B_s)\\,dB_s\n+\n\\frac12\\int_0^t f''(B_s)\\,ds.\n\\]\nTherefore\n\\[\nf(B_t)\n=\nf(B_0)\n+\n\\int_0^t f'(B_s)\\,dB_s\n+\n\\frac12\\int_0^t f''(B_s)\\,ds.\n\\]\n\nThis is It\u00f4's formula for a \\(C^2\\) function of one-dimensional Brownian motion.\n\nRemarks.\n1. The assumptions that \\(f'\\) and \\(f''\\) are bounded and that \\(f''\\) is uniformly continuous are convenient hypotheses ensuring the above estimates are clean. The general \\(C^2\\) case follows by a standard localization argument.\n2. The crucial formal-island step in this proof is the deterministic Taylor-expansion identity\n\\[\n\\sum_{k=0}^{n-1}\\bigl(f(B_{t_{k+1}})-f(B_{t_k})\\bigr)\n=\n\\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k\n+\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2\n+\nR_n,\n\\]\ntogether with the explicit bound on the remainder\n\\[\n|R_n|\n\\le\n\\frac12\\,\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2.\n\\]\nThat step is entirely deterministic and is the most obvious formal island inside the larger stochastic theorem.\n\n\nReturn one JSON object with top-level keys theorem_title, theorem_statement, root_node_id, nodes, edges, and candidates.\n\nThe nodes and edges must follow the same informal extraction schema as before: nodes include id, title, informal_statement, informal_proof_text, and optional display_label; edges include source_id, target_id, and optional label and explanation.\n\nThe candidates array must include objects with node_id, priority, and rationale. Priority must be an integer from 1 to 3, where 1 is highest and 3 is lowest. Do not use words like high, medium, or low. Candidates should refer only to node ids that exist in the graph you emit.\n\nPlan the graph and candidate ranking jointly. Optimize for a compact, faithful, formalization-sensitive graph with a small, high-yield candidate set.\n\nA node should exist only if it is the root theorem, a nontrivial intermediate claim, a meaningful candidate formal island, a reused claim, a separate review obligation, or a conceptually distinct proof step that improves the final mixed informal/formal report.\n\nDo not create separate nodes for bare assumptions, local variable setup, trivial restatements, goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims.\n\nWhen choosing graph granularity, preserve one or two local technical subclaims if they are concrete, inferentially important, plausibly formalizable, and substantially used by the surrounding proof. Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic simplifications, monotonicity or concavity consequences, and concrete local estimates.\n\nKeep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims that are much weaker than the surrounding local argument.\n\nFor a tiny proof, prefer a single root node unless a second node for a reusable or conceptually distinct lemma clearly improves the graph.\n\nPreserve the original mathematical notation in your output whenever feasible. Do not normalize LaTeX into plain ASCII unless absolutely necessary.",
+  "json_schema": {
+    "$defs": {
+      "CandidateSelection": {
+        "additionalProperties": false,
+        "description": "Single candidate-formalization decision.",
+        "properties": {
+          "node_id": {
+            "minLength": 1,
+            "title": "Node Id",
+            "type": "string"
+          },
+          "priority": {
+            "maximum": 3,
+            "minimum": 1,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "rationale": {
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_id",
+          "priority",
+          "rationale"
+        ],
+        "title": "CandidateSelection",
+        "type": "object"
+      },
+      "ExtractedEdge": {
+        "additionalProperties": false,
+        "description": "Dependency edge shape expected from the graph-extraction pass.",
+        "properties": {
+          "source_id": {
+            "minLength": 1,
+            "title": "Source Id",
+            "type": "string"
+          },
+          "target_id": {
+            "minLength": 1,
+            "title": "Target Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Explanation"
+          }
+        },
+        "required": [
+          "source_id",
+          "target_id"
+        ],
+        "title": "ExtractedEdge",
+        "type": "object"
+      },
+      "ExtractedNode": {
+        "additionalProperties": false,
+        "description": "Node shape expected from the graph-extraction LLM pass.",
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "informal_statement": {
+            "minLength": 1,
+            "title": "Informal Statement",
+            "type": "string"
+          },
+          "informal_proof_text": {
+            "minLength": 1,
+            "title": "Informal Proof Text",
+            "type": "string"
+          },
+          "display_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Display Label"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "informal_statement",
+          "informal_proof_text"
+        ],
+        "title": "ExtractedNode",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Merged theorem-level planning payload: graph plus ranked formalization candidates.",
+    "properties": {
+      "theorem_title": {
+        "minLength": 1,
+        "title": "Theorem Title",
+        "type": "string"
+      },
+      "theorem_statement": {
+        "minLength": 1,
+        "title": "Theorem Statement",
+        "type": "string"
+      },
+      "root_node_id": {
+        "minLength": 1,
+        "title": "Root Node Id",
+        "type": "string"
+      },
+      "nodes": {
+        "items": {
+          "$ref": "#/$defs/ExtractedNode"
+        },
+        "minItems": 1,
+        "title": "Nodes",
+        "type": "array"
+      },
+      "edges": {
+        "items": {
+          "$ref": "#/$defs/ExtractedEdge"
+        },
+        "title": "Edges",
+        "type": "array"
+      },
+      "candidates": {
+        "items": {
+          "$ref": "#/$defs/CandidateSelection"
+        },
+        "title": "Candidates",
+        "type": "array"
+      }
+    },
+    "required": [
+      "theorem_title",
+      "theorem_statement",
+      "root_node_id",
+      "nodes",
+      "edges"
+    ],
+    "title": "PlannedProofGraph",
+    "type": "object"
+  },
+  "model": null,
+  "agentic": false,
+  "use_yolo": false,
+  "approval_mode": null,
+  "timeout_seconds": 180.0,
+  "started_at_epoch_seconds": 1775436092.485297,
+  "elapsed_seconds": 65.86102390289307,
+  "exit_code": 0,
+  "raw_stdout": "{\n  \"session_id\": \"8bc952c9-dc4e-434d-b6e7-9c751d8a2861\",\n  \"response\": \"```json\\n{\\n  \\\"theorem_title\\\": \\\"It\u00f4's formula for a twice continuously differentiable function of Brownian motion\\\",\\n  \\\"theorem_statement\\\": \\\"Let $(B_t)_{t\\\\\\\\ge 0}$ be a standard one-dimensional Brownian motion, let $T>0$, and let $f:\\\\\\\\mathbb{R}\\\\\\\\to\\\\\\\\mathbb{R}$ be a $C^2$ function. Assume for simplicity that $f'$ and $f''$ are bounded and that $f''$ is uniformly continuous on $\\\\\\\\mathbb{R}$. Then for every $t\\\\\\\\in[0,T]$,\\\\n\\\\\\\\[\\\\nf(B_t) = f(B_0) + \\\\\\\\int_0^t f'(B_s)\\\\\\\\,dB_s + \\\\\\\\frac12\\\\\\\\int_0^t f''(B_s)\\\\\\\\,ds.\\\\n\\\\\\\\]\\\",\\n  \\\"root_node_id\\\": \\\"ito_formula\\\",\\n  \\\"nodes\\\": [\\n    {\\n      \\\"id\\\": \\\"ito_formula\\\",\\n      \\\"title\\\": \\\"It\u00f4's formula (Main Theorem)\\\",\\n      \\\"informal_statement\\\": \\\"Let $(B_t)_{t\\\\\\\\ge 0}$ be a standard one-dimensional Brownian motion, let $T>0$, and let $f:\\\\\\\\mathbb{R}\\\\\\\\to\\\\\\\\mathbb{R}$ be a $C^2$ function. Assume that $f'$ and $f''$ are bounded and that $f''$ is uniformly continuous on $\\\\\\\\mathbb{R}$. Then for every $t\\\\\\\\in[0,T]$,\\\\n\\\\\\\\[\\\\nf(B_t) = f(B_0) + \\\\\\\\int_0^t f'(B_s)\\\\\\\\,dB_s + \\\\\\\\frac12\\\\\\\\int_0^t f''(B_s)\\\\\\\\,ds.\\\\n\\\\\\\\]\\\",\\n      \\\"informal_proof_text\\\": \\\"Fix $t\\\\\\\\in[0,T]$ and a partition $0=t_0<t_1<\\\\\\\\cdots<t_n=t$. Write $\\\\\\\\Delta B_k := B_{t_{k+1}}-B_{t_k}$. By the deterministic Taylor expansion identity, we have\\\\n\\\\\\\\[\\\\nf(B_t)-f(B_0) = \\\\\\\\sum_{k=0}^{n-1} f'(B_{t_k})\\\\\\\\,\\\\\\\\Delta B_k + \\\\\\\\frac12 \\\\\\\\sum_{k=0}^{n-1} f''(B_{t_k})(\\\\\\\\Delta B_k)^2 + R_n,\\\\n\\\\\\\\]\\\\nwhere the remainder satisfies $|R_n| \\\\\\\\le \\\\\\\\frac12\\\\\\\\,\\\\\\\\omega\\\\\\\\!\\\\\\\\left(\\\\\\\\max_k |\\\\\\\\Delta B_k|\\\\\\\\right)\\\\\\\\sum_{k=0}^{n-1}(\\\\\\\\Delta B_k)^2$, with $\\\\\\\\omega$ being a modulus of continuity for $f''$.\\\\n\\\\nWe analyze the three terms as the mesh of the partition tends to zero.\\\\nFirst, the left-endpoint sums converge in $L^2$ (and hence in probability) to the It\u00f4 integral $\\\\\\\\int_0^t f'(B_s)\\\\\\\\,dB_s$.\\\\nSecond, the quadratic variation sums converge in probability to $\\\\\\\\frac12\\\\\\\\int_0^t f''(B_s)\\\\\\\\,ds$.\\\\nThird, since Brownian paths are almost surely uniformly continuous on $[0,t]$, $\\\\\\\\max_k |\\\\\\\\Delta B_k| \\\\\\\\to 0$ almost surely. Furthermore, the quadratic variation $\\\\\\\\sum_{k=0}^{n-1}(\\\\\\\\Delta B_k)^2$ converges to $t$ in probability. Hence $R_n \\\\\\\\to 0$ in probability.\\\\n\\\\nPutting everything together, the sum converges to the terms in It\u00f4's formula.\\\"\\n    },\\n    {\\n      \\\"id\\\": \\\"deterministic_taylor_expansion\\\",\\n      \\\"title\\\": \\\"Deterministic Taylor expansion for increments\\\",\\n      \\\"informal_statement\\\": \\\"Let $f:\\\\\\\\mathbb{R}\\\\\\\\to\\\\\\\\mathbb{R}$ be a $C^2$ function and let $\\\\\\\\omega$ be a modulus of continuity for $f''$. For any finite sequence of real numbers $B_{t_0}, B_{t_1}, \\\\\\\\dots, B_{t_n}$, let $\\\\\\\\Delta B_k = B_{t_{k+1}}-B_{t_k}$. Then\\\\n\\\\\\\\[\\\\nf(B_{t_n})-f(B_{t_0}) = \\\\\\\\sum_{k=0}^{n-1} f'(B_{t_k})\\\\\\\\,\\\\\\\\Delta B_k + \\\\\\\\frac12 \\\\\\\\sum_{k=0}^{n-1} f''(B_{t_k})(\\\\\\\\Delta B_k)^2 + R_n,\\\\n\\\\\\\\]\\\\nwhere the remainder $R_n$ satisfies\\\\n\\\\\\\\[\\\\n|R_n| \\\\\\\\le \\\\\\\\frac12\\\\\\\\,\\\\\\\\omega\\\\\\\\!\\\\\\\\left(\\\\\\\\max_{0 \\\\\\\\le k \\\\\\\\le n-1} |\\\\\\\\Delta B_k|\\\\\\\\right)\\\\\\\\sum_{k=0}^{n-1}(\\\\\\\\Delta B_k)^2.\\\\n\\\\\\\\]\\\",\\n      \\\"informal_proof_text\\\": \\\"We begin with the telescoping identity $f(B_{t_n})-f(B_{t_0}) = \\\\\\\\sum_{k=0}^{n-1}\\\\\\\\bigl(f(B_{t_{k+1}})-f(B_{t_k})\\\\\\\\bigr)$.\\\\nApplying Taylor's theorem with remainder to each increment, there exists $\\\\\\\\xi_k$ between $B_{t_k}$ and $B_{t_{k+1}}$ such that\\\\n\\\\\\\\[\\\\nf(B_{t_{k+1}}) = f(B_{t_k}) + f'(B_{t_k})\\\\\\\\,\\\\\\\\Delta B_k + \\\\\\\\frac12 f''(B_{t_k}) (\\\\\\\\Delta B_k)^2 + \\\\\\\\frac12\\\\\\\\bigl(f''(\\\\\\\\xi_k)-f''(B_{t_k})\\\\\\\\bigr)(\\\\\\\\Delta B_k)^2.\\\\n\\\\\\\\]\\\\nSumming over $k$, we obtain the stated identity with remainder\\\\n\\\\\\\\[\\\\nR_n = \\\\\\\\frac12\\\\\\\\sum_{k=0}^{n-1}\\\\\\\\bigl(f''(\\\\\\\\xi_k)-f''(B_{t_k})\\\\\\\\bigr)(\\\\\\\\Delta B_k)^2.\\\\n\\\\\\\\]\\\\nSince $\\\\\\\\xi_k$ lies between $B_{t_k}$ and $B_{t_{k+1}}$, we have $|\\\\\\\\xi_k - B_{t_k}| \\\\\\\\le |\\\\\\\\Delta B_k|$. By the definition of the modulus of continuity, $|f''(\\\\\\\\xi_k)-f''(B_{t_k})| \\\\\\\\le \\\\\\\\omega(|\\\\\\\\Delta B_k|) \\\\\\\\le \\\\\\\\omega(\\\\\\\\max_j |\\\\\\\\Delta B_j|)$. The bound on $|R_n|$ then follows from the triangle inequality.\\\"\\n    },\\n    {\\n      \\\"id\\\": \\\"quadratic_variation_convergence\\\",\\n      \\\"title\\\": \\\"Convergence of the quadratic variation term\\\",\\n      \\\"informal_statement\\\": \\\"Let $(B_t)_{t\\\\\\\\ge 0}$ be a standard Brownian motion and $f''$ be a bounded continuous function. For a partition $0=t_0<t_1<\\\\\\\\cdots<t_n=t$, let $\\\\\\\\Delta B_k = B_{t_{k+1}}-B_{t_k}$ and $\\\\\\\\Delta t_k = t_{k+1}-t_k$. As the mesh of the partition tends to zero,\\\\n\\\\\\\\[\\\\n\\\\\\\\frac12 \\\\\\\\sum_{k=0}^{n-1} f''(B_{t_k})(\\\\\\\\Delta B_k)^2 \\\\\\\\to \\\\\\\\frac12\\\\\\\\int_0^t f''(B_s)\\\\\\\\,ds\\\\n\\\\\\\\]\\\\nin probability.\\\",\\n      \\\"informal_proof_text\\\": \\\"We can split the sum as follows:\\\\n\\\\\\\\[\\\\n\\\\\\\\frac12 \\\\\\\\sum_{k=0}^{n-1} f''(B_{t_k})(\\\\\\\\Delta B_k)^2 = \\\\\\\\frac12 \\\\\\\\sum_{k=0}^{n-1} f''(B_{t_k})\\\\\\\\,\\\\\\\\Delta t_k + \\\\\\\\frac12 M_n,\\\\n\\\\\\\\]\\\\nwhere $M_n := \\\\\\\\sum_{k=0}^{n-1} f''(B_{t_k})\\\\\\\\bigl((\\\\\\\\Delta B_k)^2-\\\\\\\\Delta t_k\\\\\\\\bigr)$.\\\\n\\\\nFor the first term, since $s\\\\\\\\mapsto f''(B_s)$ is almost surely continuous, the Riemann sums converge almost surely to $\\\\\\\\int_0^t f''(B_s)\\\\\\\\,ds$.\\\\n\\\\nFor the second term, observe that $M_n$ is a sum of martingale differences. Let $C$ be a bound on $|f''|$. Using the fact that $\\\\\\\\mathbb E\\\\\\\\bigl[((\\\\\\\\Delta B_k)^2-\\\\\\\\Delta t_k)^2 \\\\\\\\mid \\\\\\\\mathcal F_{t_k}\\\\\\\\bigr] = 2(\\\\\\\\Delta t_k)^2$, we have\\\\n\\\\\\\\[\\\\n\\\\\\\\mathbb E[M_n^2] = \\\\\\\\sum_{k=0}^{n-1} \\\\\\\\mathbb E\\\\\\\\!\\\\\\\\left[ f''(B_{t_k})^2\\\\\\\\bigl((\\\\\\\\Delta B_k)^2-\\\\\\\\Delta t_k\\\\\\\\bigr)^2 \\\\\\\\right] \\\\\\\\le 2C^2 \\\\\\\\sum_{k=0}^{n-1} (\\\\\\\\Delta t_k)^2.\\\\n\\\\\\\\]\\\\nAs the mesh tends to zero, $\\\\\\\\sum_{k=0}^{n-1} (\\\\\\\\Delta t_k)^2 \\\\\\\\to 0$, so $M_n \\\\\\\\to 0$ in $L^2$, and thus in probability. The result follows.\\\"\\n    }\\n  ],\\n  \\\"edges\\\": [\\n    {\\n      \\\"source_id\\\": \\\"deterministic_taylor_expansion\\\",\\n      \\\"target_id\\\": \\\"ito_formula\\\",\\n      \\\"label\\\": \\\"algebraic expansion\\\",\\n      \\\"explanation\\\": \\\"Provides the discrete formula and explicitly bounds the remainder term for the telescoping sum.\\\"\\n    },\\n    {\\n      \\\"source_id\\\": \\\"quadratic_variation_convergence\\\",\\n      \\\"target_id\\\": \\\"ito_formula\\\",\\n      \\\"label\\\": \\\"quadratic variation limit\\\",\\n      \\\"explanation\\\": \\\"Evaluates the limit of the second derivative sum to yield the non-martingale integral in It\u00f4's formula.\\\"\\n    }\\n  ],\\n  \\\"candidates\\\": [\\n    {\\n      \\\"node_id\\\": \\\"deterministic_taylor_expansion\\\",\\n      \\\"priority\\\": 1,\\n      \\\"rationale\\\": \\\"An entirely deterministic, algebraic inequality that isolates the analytic Taylor expansion step from the stochastic elements. It has extremely clear boundaries and is straightforward to formalize, making it a perfect, high-yield formal island.\\\"\\n    },\\n    {\\n      \\\"node_id\\\": \\\"quadratic_variation_convergence\\\",\\n      \\\"priority\\\": 2,\\n      \\\"rationale\\\": \\\"A highly standard application of $L^2$ martingale techniques to bounded predictable integrands to compute the specific $dt$ contribution. While reliant on stochastic integration definitions, it functions as a solid, standalone probabilistic estimate.\\\"\\n    }\\n  ]\\n}\\n```\",\n  \"stats\": {\n    \"models\": {\n      \"gemini-3.1-pro-preview\": {\n        \"api\": {\n          \"totalRequests\": 1,\n          \"totalErrors\": 0,\n          \"totalLatencyMs\": 61942\n        },\n        \"tokens\": {\n          \"input\": 11775,\n          \"prompt\": 11775,\n          \"candidates\": 2465,\n          \"total\": 20013,\n          \"cached\": 0,\n          \"thoughts\": 5773,\n          \"tool\": 0\n        },\n        \"roles\": {\n          \"main\": {\n            \"totalRequests\": 1,\n            \"totalErrors\": 0,\n            \"totalLatencyMs\": 61942,\n            \"tokens\": {\n              \"input\": 11775,\n              \"prompt\": 11775,\n              \"candidates\": 2465,\n              \"total\": 20013,\n              \"cached\": 0,\n              \"thoughts\": 5773,\n              \"tool\": 0\n            }\n          }\n        }\n      }\n    },\n    \"tools\": {\n      \"totalCalls\": 0,\n      \"totalSuccess\": 0,\n      \"totalFail\": 0,\n      \"totalDurationMs\": 0,\n      \"totalDecisions\": {\n        \"accept\": 0,\n        \"reject\": 0,\n        \"modify\": 0,\n        \"auto_accept\": 0\n      },\n      \"byName\": {}\n    },\n    \"files\": {\n      \"totalLinesAdded\": 0,\n      \"totalLinesRemoved\": 0\n    }\n  }\n}",
+  "raw_stderr": "Keychain initialization encountered an error: Cannot find module '../build/Release/keytar.node'\nRequire stack:\n- /opt/homebrew/Cellar/gemini-cli/0.36.0/libexec/lib/node_modules/@google/gemini-cli/node_modules/keytar/lib/keytar.js\nUsing FileKeychain fallback for secure storage.\nLoaded cached credentials.\n",
+  "payload": {
+    "theorem_title": "It\u00f4's formula for a twice continuously differentiable function of Brownian motion",
+    "theorem_statement": "Let $(B_t)_{t\\ge 0}$ be a standard one-dimensional Brownian motion, let $T>0$, and let $f:\\mathbb{R}\\to\\mathbb{R}$ be a $C^2$ function. Assume for simplicity that $f'$ and $f''$ are bounded and that $f''$ is uniformly continuous on $\\mathbb{R}$. Then for every $t\\in[0,T]$,\n\\[\nf(B_t) = f(B_0) + \\int_0^t f'(B_s)\\,dB_s + \\frac12\\int_0^t f''(B_s)\\,ds.\n\\]",
+    "root_node_id": "ito_formula",
+    "nodes": [
+      {
+        "id": "ito_formula",
+        "title": "It\u00f4's formula (Main Theorem)",
+        "informal_statement": "Let $(B_t)_{t\\ge 0}$ be a standard one-dimensional Brownian motion, let $T>0$, and let $f:\\mathbb{R}\\to\\mathbb{R}$ be a $C^2$ function. Assume that $f'$ and $f''$ are bounded and that $f''$ is uniformly continuous on $\\mathbb{R}$. Then for every $t\\in[0,T]$,\n\\[\nf(B_t) = f(B_0) + \\int_0^t f'(B_s)\\,dB_s + \\frac12\\int_0^t f''(B_s)\\,ds.\n\\]",
+        "informal_proof_text": "Fix $t\\in[0,T]$ and a partition $0=t_0<t_1<\\cdots<t_n=t$. Write $\\Delta B_k := B_{t_{k+1}}-B_{t_k}$. By the deterministic Taylor expansion identity, we have\n\\[\nf(B_t)-f(B_0) = \\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k + \\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2 + R_n,\n\\]\nwhere the remainder satisfies $|R_n| \\le \\frac12\\,\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2$, with $\\omega$ being a modulus of continuity for $f''$.\n\nWe analyze the three terms as the mesh of the partition tends to zero.\nFirst, the left-endpoint sums converge in $L^2$ (and hence in probability) to the It\u00f4 integral $\\int_0^t f'(B_s)\\,dB_s$.\nSecond, the quadratic variation sums converge in probability to $\\frac12\\int_0^t f''(B_s)\\,ds$.\nThird, since Brownian paths are almost surely uniformly continuous on $[0,t]$, $\\max_k |\\Delta B_k| \\to 0$ almost surely. Furthermore, the quadratic variation $\\sum_{k=0}^{n-1}(\\Delta B_k)^2$ converges to $t$ in probability. Hence $R_n \\to 0$ in probability.\n\nPutting everything together, the sum converges to the terms in It\u00f4's formula."
+      },
+      {
+        "id": "deterministic_taylor_expansion",
+        "title": "Deterministic Taylor expansion for increments",
+        "informal_statement": "Let $f:\\mathbb{R}\\to\\mathbb{R}$ be a $C^2$ function and let $\\omega$ be a modulus of continuity for $f''$. For any finite sequence of real numbers $B_{t_0}, B_{t_1}, \\dots, B_{t_n}$, let $\\Delta B_k = B_{t_{k+1}}-B_{t_k}$. Then\n\\[\nf(B_{t_n})-f(B_{t_0}) = \\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k + \\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2 + R_n,\n\\]\nwhere the remainder $R_n$ satisfies\n\\[\n|R_n| \\le \\frac12\\,\\omega\\!\\left(\\max_{0 \\le k \\le n-1} |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2.\n\\]",
+        "informal_proof_text": "We begin with the telescoping identity $f(B_{t_n})-f(B_{t_0}) = \\sum_{k=0}^{n-1}\\bigl(f(B_{t_{k+1}})-f(B_{t_k})\\bigr)$.\nApplying Taylor's theorem with remainder to each increment, there exists $\\xi_k$ between $B_{t_k}$ and $B_{t_{k+1}}$ such that\n\\[\nf(B_{t_{k+1}}) = f(B_{t_k}) + f'(B_{t_k})\\,\\Delta B_k + \\frac12 f''(B_{t_k}) (\\Delta B_k)^2 + \\frac12\\bigl(f''(\\xi_k)-f''(B_{t_k})\\bigr)(\\Delta B_k)^2.\n\\]\nSumming over $k$, we obtain the stated identity with remainder\n\\[\nR_n = \\frac12\\sum_{k=0}^{n-1}\\bigl(f''(\\xi_k)-f''(B_{t_k})\\bigr)(\\Delta B_k)^2.\n\\]\nSince $\\xi_k$ lies between $B_{t_k}$ and $B_{t_{k+1}}$, we have $|\\xi_k - B_{t_k}| \\le |\\Delta B_k|$. By the definition of the modulus of continuity, $|f''(\\xi_k)-f''(B_{t_k})| \\le \\omega(|\\Delta B_k|) \\le \\omega(\\max_j |\\Delta B_j|)$. The bound on $|R_n|$ then follows from the triangle inequality."
+      },
+      {
+        "id": "quadratic_variation_convergence",
+        "title": "Convergence of the quadratic variation term",
+        "informal_statement": "Let $(B_t)_{t\\ge 0}$ be a standard Brownian motion and $f''$ be a bounded continuous function. For a partition $0=t_0<t_1<\\cdots<t_n=t$, let $\\Delta B_k = B_{t_{k+1}}-B_{t_k}$ and $\\Delta t_k = t_{k+1}-t_k$. As the mesh of the partition tends to zero,\n\\[\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2 \\to \\frac12\\int_0^t f''(B_s)\\,ds\n\\]\nin probability.",
+        "informal_proof_text": "We can split the sum as follows:\n\\[\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2 = \\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})\\,\\Delta t_k + \\frac12 M_n,\n\\]\nwhere $M_n := \\sum_{k=0}^{n-1} f''(B_{t_k})\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr)$.\n\nFor the first term, since $s\\mapsto f''(B_s)$ is almost surely continuous, the Riemann sums converge almost surely to $\\int_0^t f''(B_s)\\,ds$.\n\nFor the second term, observe that $M_n$ is a sum of martingale differences. Let $C$ be a bound on $|f''|$. Using the fact that $\\mathbb E\\bigl[((\\Delta B_k)^2-\\Delta t_k)^2 \\mid \\mathcal F_{t_k}\\bigr] = 2(\\Delta t_k)^2$, we have\n\\[\n\\mathbb E[M_n^2] = \\sum_{k=0}^{n-1} \\mathbb E\\!\\left[ f''(B_{t_k})^2\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr)^2 \\right] \\le 2C^2 \\sum_{k=0}^{n-1} (\\Delta t_k)^2.\n\\]\nAs the mesh tends to zero, $\\sum_{k=0}^{n-1} (\\Delta t_k)^2 \\to 0$, so $M_n \\to 0$ in $L^2$, and thus in probability. The result follows."
+      }
+    ],
+    "edges": [
+      {
+        "source_id": "deterministic_taylor_expansion",
+        "target_id": "ito_formula",
+        "label": "algebraic expansion",
+        "explanation": "Provides the discrete formula and explicitly bounds the remainder term for the telescoping sum."
+      },
+      {
+        "source_id": "quadratic_variation_convergence",
+        "target_id": "ito_formula",
+        "label": "quadratic variation limit",
+        "explanation": "Evaluates the limit of the second derivative sum to yield the non-martingale integral in It\u00f4's formula."
+      }
+    ],
+    "candidates": [
+      {
+        "node_id": "deterministic_taylor_expansion",
+        "priority": 1,
+        "rationale": "An entirely deterministic, algebraic inequality that isolates the analytic Taylor expansion step from the stochastic elements. It has extremely clear boundaries and is straightforward to formalize, making it a perfect, high-yield formal island."
+      },
+      {
+        "node_id": "quadratic_variation_convergence",
+        "priority": 2,
+        "rationale": "A highly standard application of $L^2$ martingale techniques to bounded predictable integrands to compute the specific $dt$ contribution. While reliant on stochastic integration definitions, it functions as a solid, standalone probabilistic estimate."
+      }
+    ]
+  },
+  "response_wrapper": {
+    "session_id": "8bc952c9-dc4e-434d-b6e7-9c751d8a2861",
+    "response": "```json\n{\n  \"theorem_title\": \"It\u00f4's formula for a twice continuously differentiable function of Brownian motion\",\n  \"theorem_statement\": \"Let $(B_t)_{t\\\\ge 0}$ be a standard one-dimensional Brownian motion, let $T>0$, and let $f:\\\\mathbb{R}\\\\to\\\\mathbb{R}$ be a $C^2$ function. Assume for simplicity that $f'$ and $f''$ are bounded and that $f''$ is uniformly continuous on $\\\\mathbb{R}$. Then for every $t\\\\in[0,T]$,\\n\\\\[\\nf(B_t) = f(B_0) + \\\\int_0^t f'(B_s)\\\\,dB_s + \\\\frac12\\\\int_0^t f''(B_s)\\\\,ds.\\n\\\\]\",\n  \"root_node_id\": \"ito_formula\",\n  \"nodes\": [\n    {\n      \"id\": \"ito_formula\",\n      \"title\": \"It\u00f4's formula (Main Theorem)\",\n      \"informal_statement\": \"Let $(B_t)_{t\\\\ge 0}$ be a standard one-dimensional Brownian motion, let $T>0$, and let $f:\\\\mathbb{R}\\\\to\\\\mathbb{R}$ be a $C^2$ function. Assume that $f'$ and $f''$ are bounded and that $f''$ is uniformly continuous on $\\\\mathbb{R}$. Then for every $t\\\\in[0,T]$,\\n\\\\[\\nf(B_t) = f(B_0) + \\\\int_0^t f'(B_s)\\\\,dB_s + \\\\frac12\\\\int_0^t f''(B_s)\\\\,ds.\\n\\\\]\",\n      \"informal_proof_text\": \"Fix $t\\\\in[0,T]$ and a partition $0=t_0<t_1<\\\\cdots<t_n=t$. Write $\\\\Delta B_k := B_{t_{k+1}}-B_{t_k}$. By the deterministic Taylor expansion identity, we have\\n\\\\[\\nf(B_t)-f(B_0) = \\\\sum_{k=0}^{n-1} f'(B_{t_k})\\\\,\\\\Delta B_k + \\\\frac12 \\\\sum_{k=0}^{n-1} f''(B_{t_k})(\\\\Delta B_k)^2 + R_n,\\n\\\\]\\nwhere the remainder satisfies $|R_n| \\\\le \\\\frac12\\\\,\\\\omega\\\\!\\\\left(\\\\max_k |\\\\Delta B_k|\\\\right)\\\\sum_{k=0}^{n-1}(\\\\Delta B_k)^2$, with $\\\\omega$ being a modulus of continuity for $f''$.\\n\\nWe analyze the three terms as the mesh of the partition tends to zero.\\nFirst, the left-endpoint sums converge in $L^2$ (and hence in probability) to the It\u00f4 integral $\\\\int_0^t f'(B_s)\\\\,dB_s$.\\nSecond, the quadratic variation sums converge in probability to $\\\\frac12\\\\int_0^t f''(B_s)\\\\,ds$.\\nThird, since Brownian paths are almost surely uniformly continuous on $[0,t]$, $\\\\max_k |\\\\Delta B_k| \\\\to 0$ almost surely. Furthermore, the quadratic variation $\\\\sum_{k=0}^{n-1}(\\\\Delta B_k)^2$ converges to $t$ in probability. Hence $R_n \\\\to 0$ in probability.\\n\\nPutting everything together, the sum converges to the terms in It\u00f4's formula.\"\n    },\n    {\n      \"id\": \"deterministic_taylor_expansion\",\n      \"title\": \"Deterministic Taylor expansion for increments\",\n      \"informal_statement\": \"Let $f:\\\\mathbb{R}\\\\to\\\\mathbb{R}$ be a $C^2$ function and let $\\\\omega$ be a modulus of continuity for $f''$. For any finite sequence of real numbers $B_{t_0}, B_{t_1}, \\\\dots, B_{t_n}$, let $\\\\Delta B_k = B_{t_{k+1}}-B_{t_k}$. Then\\n\\\\[\\nf(B_{t_n})-f(B_{t_0}) = \\\\sum_{k=0}^{n-1} f'(B_{t_k})\\\\,\\\\Delta B_k + \\\\frac12 \\\\sum_{k=0}^{n-1} f''(B_{t_k})(\\\\Delta B_k)^2 + R_n,\\n\\\\]\\nwhere the remainder $R_n$ satisfies\\n\\\\[\\n|R_n| \\\\le \\\\frac12\\\\,\\\\omega\\\\!\\\\left(\\\\max_{0 \\\\le k \\\\le n-1} |\\\\Delta B_k|\\\\right)\\\\sum_{k=0}^{n-1}(\\\\Delta B_k)^2.\\n\\\\]\",\n      \"informal_proof_text\": \"We begin with the telescoping identity $f(B_{t_n})-f(B_{t_0}) = \\\\sum_{k=0}^{n-1}\\\\bigl(f(B_{t_{k+1}})-f(B_{t_k})\\\\bigr)$.\\nApplying Taylor's theorem with remainder to each increment, there exists $\\\\xi_k$ between $B_{t_k}$ and $B_{t_{k+1}}$ such that\\n\\\\[\\nf(B_{t_{k+1}}) = f(B_{t_k}) + f'(B_{t_k})\\\\,\\\\Delta B_k + \\\\frac12 f''(B_{t_k}) (\\\\Delta B_k)^2 + \\\\frac12\\\\bigl(f''(\\\\xi_k)-f''(B_{t_k})\\\\bigr)(\\\\Delta B_k)^2.\\n\\\\]\\nSumming over $k$, we obtain the stated identity with remainder\\n\\\\[\\nR_n = \\\\frac12\\\\sum_{k=0}^{n-1}\\\\bigl(f''(\\\\xi_k)-f''(B_{t_k})\\\\bigr)(\\\\Delta B_k)^2.\\n\\\\]\\nSince $\\\\xi_k$ lies between $B_{t_k}$ and $B_{t_{k+1}}$, we have $|\\\\xi_k - B_{t_k}| \\\\le |\\\\Delta B_k|$. By the definition of the modulus of continuity, $|f''(\\\\xi_k)-f''(B_{t_k})| \\\\le \\\\omega(|\\\\Delta B_k|) \\\\le \\\\omega(\\\\max_j |\\\\Delta B_j|)$. The bound on $|R_n|$ then follows from the triangle inequality.\"\n    },\n    {\n      \"id\": \"quadratic_variation_convergence\",\n      \"title\": \"Convergence of the quadratic variation term\",\n      \"informal_statement\": \"Let $(B_t)_{t\\\\ge 0}$ be a standard Brownian motion and $f''$ be a bounded continuous function. For a partition $0=t_0<t_1<\\\\cdots<t_n=t$, let $\\\\Delta B_k = B_{t_{k+1}}-B_{t_k}$ and $\\\\Delta t_k = t_{k+1}-t_k$. As the mesh of the partition tends to zero,\\n\\\\[\\n\\\\frac12 \\\\sum_{k=0}^{n-1} f''(B_{t_k})(\\\\Delta B_k)^2 \\\\to \\\\frac12\\\\int_0^t f''(B_s)\\\\,ds\\n\\\\]\\nin probability.\",\n      \"informal_proof_text\": \"We can split the sum as follows:\\n\\\\[\\n\\\\frac12 \\\\sum_{k=0}^{n-1} f''(B_{t_k})(\\\\Delta B_k)^2 = \\\\frac12 \\\\sum_{k=0}^{n-1} f''(B_{t_k})\\\\,\\\\Delta t_k + \\\\frac12 M_n,\\n\\\\]\\nwhere $M_n := \\\\sum_{k=0}^{n-1} f''(B_{t_k})\\\\bigl((\\\\Delta B_k)^2-\\\\Delta t_k\\\\bigr)$.\\n\\nFor the first term, since $s\\\\mapsto f''(B_s)$ is almost surely continuous, the Riemann sums converge almost surely to $\\\\int_0^t f''(B_s)\\\\,ds$.\\n\\nFor the second term, observe that $M_n$ is a sum of martingale differences. Let $C$ be a bound on $|f''|$. Using the fact that $\\\\mathbb E\\\\bigl[((\\\\Delta B_k)^2-\\\\Delta t_k)^2 \\\\mid \\\\mathcal F_{t_k}\\\\bigr] = 2(\\\\Delta t_k)^2$, we have\\n\\\\[\\n\\\\mathbb E[M_n^2] = \\\\sum_{k=0}^{n-1} \\\\mathbb E\\\\!\\\\left[ f''(B_{t_k})^2\\\\bigl((\\\\Delta B_k)^2-\\\\Delta t_k\\\\bigr)^2 \\\\right] \\\\le 2C^2 \\\\sum_{k=0}^{n-1} (\\\\Delta t_k)^2.\\n\\\\]\\nAs the mesh tends to zero, $\\\\sum_{k=0}^{n-1} (\\\\Delta t_k)^2 \\\\to 0$, so $M_n \\\\to 0$ in $L^2$, and thus in probability. The result follows.\"\n    }\n  ],\n  \"edges\": [\n    {\n      \"source_id\": \"deterministic_taylor_expansion\",\n      \"target_id\": \"ito_formula\",\n      \"label\": \"algebraic expansion\",\n      \"explanation\": \"Provides the discrete formula and explicitly bounds the remainder term for the telescoping sum.\"\n    },\n    {\n      \"source_id\": \"quadratic_variation_convergence\",\n      \"target_id\": \"ito_formula\",\n      \"label\": \"quadratic variation limit\",\n      \"explanation\": \"Evaluates the limit of the second derivative sum to yield the non-martingale integral in It\u00f4's formula.\"\n    }\n  ],\n  \"candidates\": [\n    {\n      \"node_id\": \"deterministic_taylor_expansion\",\n      \"priority\": 1,\n      \"rationale\": \"An entirely deterministic, algebraic inequality that isolates the analytic Taylor expansion step from the stochastic elements. It has extremely clear boundaries and is straightforward to formalize, making it a perfect, high-yield formal island.\"\n    },\n    {\n      \"node_id\": \"quadratic_variation_convergence\",\n      \"priority\": 2,\n      \"rationale\": \"A highly standard application of $L^2$ martingale techniques to bounded predictable integrands to compute the specific $dt$ contribution. While reliant on stochastic integration definitions, it functions as a solid, standalone probabilistic estimate.\"\n    }\n  ]\n}\n```",
+    "stats": {
+      "models": {
+        "gemini-3.1-pro-preview": {
+          "api": {
+            "totalRequests": 1,
+            "totalErrors": 0,
+            "totalLatencyMs": 61942
+          },
+          "tokens": {
+            "input": 11775,
+            "prompt": 11775,
+            "candidates": 2465,
+            "total": 20013,
+            "cached": 0,
+            "thoughts": 5773,
+            "tool": 0
+          },
+          "roles": {
+            "main": {
+              "totalRequests": 1,
+              "totalErrors": 0,
+              "totalLatencyMs": 61942,
+              "tokens": {
+                "input": 11775,
+                "prompt": 11775,
+                "candidates": 2465,
+                "total": 20013,
+                "cached": 0,
+                "thoughts": 5773,
+                "tool": 0
+              }
+            }
+          }
+        }
+      },
+      "tools": {
+        "totalCalls": 0,
+        "totalSuccess": 0,
+        "totalFail": 0,
+        "totalDurationMs": 0,
+        "totalDecisions": {
+          "accept": 0,
+          "reject": 0,
+          "modify": 0,
+          "auto_accept": 0
+        },
+        "byName": {}
+      },
+      "files": {
+        "totalLinesAdded": 0,
+        "totalLinesRemoved": 0
+      }
+    }
+  }
+}

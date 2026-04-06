@@ -177,7 +177,10 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark_parser.add_argument(
         "--node-id",
         default="auto",
-        help="Candidate node id to formalize. Default: auto-pick highest-priority candidate.",
+        help=(
+            "Candidate node id to formalize. Default 'auto': formalize all candidates in priority order. "
+            "Pass a specific node id to formalize only that one node."
+        ),
     )
     benchmark_parser.add_argument(
         "--max-attempts",
@@ -465,21 +468,25 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
         )
     )
     candidate_graph_path = output_dir / "02_candidate_graph.json"
-    cmd_formalize_one(
-        argparse.Namespace(
-            backend=args.backend,
-            model=args.model,
-            graph=str(candidate_graph_path),
-            output_dir=str(output_dir),
-            workspace=args.workspace,
-            node_id=args.node_id,
-            max_attempts=args.max_attempts,
-            formalization_mode=args.formalization_mode,
-            formalization_timeout_seconds=getattr(
-                args, "formalization_timeout_seconds", FORMALIZATION_BACKEND_TIMEOUT_SECONDS
-            ),
-        )
+    formalization_timeout = getattr(
+        args, "formalization_timeout_seconds", FORMALIZATION_BACKEND_TIMEOUT_SECONDS
     )
+    common = argparse.Namespace(
+        backend=args.backend,
+        model=args.model,
+        graph=str(candidate_graph_path),
+        output_dir=str(output_dir),
+        workspace=args.workspace,
+        max_attempts=args.max_attempts,
+        formalization_mode=args.formalization_mode,
+        formalization_timeout_seconds=formalization_timeout,
+    )
+    if args.node_id == "auto":
+        cmd_formalize_all_candidates(common)
+    else:
+        cmd_formalize_one(
+            argparse.Namespace(**vars(common), node_id=args.node_id)
+        )
     formalized_graph_path = output_dir / "03_formalized_graph.json"
     cmd_report(
         argparse.Namespace(

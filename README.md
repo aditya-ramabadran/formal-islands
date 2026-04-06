@@ -208,12 +208,22 @@ That means Codex gets one bounded full-auto run to:
 - run `lake env lean`
 - revise the same file
 
+The prompt now also includes a lightweight coverage sketch for the target node, so the worker can see which local subclaims the node is really made of.
+
 The system then classifies the result as:
 - full-node success
 - concrete supporting sublemma
 - or failure
 
 If the agentic run times out but leaves a usable Lean file behind, the pipeline will try to salvage and locally verify it.
+
+When a verified result is only a concrete supporting sublemma, the pipeline makes one additional bounded coverage-expansion attempt from the verified Lean file. That follow-up is intentionally narrow: it tries to grow the same local claim upward toward the parent node rather than restarting from scratch.
+
+Two more details matter in the current run loop:
+- if a recovered agentic artifact verifies as a concrete sublemma, it still gets the same bounded expansion attempt
+- when a refined local claim is certified, any broader parent reached through a `uses` edge can be promoted into the candidate set in a later dynamic pass, so a successful narrow core can feed a follow-up formalization target
+
+The refined-local-claim ranking also penalizes point-evaluation fragments like `F_q(q) = 0` when they look like isolated snapshot facts rather than a reusable local theorem. That keeps the system from over-valuing tiny algebraic shards over broader claims with real inferential load.
 
 ## Development
 

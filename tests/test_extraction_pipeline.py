@@ -205,6 +205,49 @@ def test_plan_proof_graph_calibrates_small_candidate_set() -> None:
     assert candidates == ["n2", "n3"]
 
 
+def test_plan_proof_graph_normalizes_textual_candidate_priority_labels() -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "theorem_title": "Toy theorem",
+                "theorem_statement": "If A then B.",
+                "root_node_id": "n1",
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "title": "Main claim",
+                        "informal_statement": "B holds.",
+                        "informal_proof_text": "Use n2.",
+                    },
+                    {
+                        "id": "n2",
+                        "title": "Lemma",
+                        "informal_statement": "A implies B.",
+                        "informal_proof_text": "By inspection.",
+                    },
+                ],
+                "edges": [{"source_id": "n1", "target_id": "n2"}],
+                "candidates": [
+                    {
+                        "node_id": "n2",
+                        "priority": "high",
+                        "rationale": "Self-contained technical node.",
+                    }
+                ],
+            }
+        ]
+    )
+
+    artifacts = plan_proof_graph(
+        backend=backend,
+        theorem_statement="If A then B.",
+        raw_proof_text="Assume A and deduce B.",
+    )
+
+    selected = next(node for node in artifacts.candidate_graph.nodes if node.id == "n2")
+    assert selected.formalization_priority == 1
+
+
 def test_extract_proof_graph_preserves_input_theorem_statement_exactly() -> None:
     original_statement = r"Let \(f : \mathbb{R}^d \to \mathbb{C}\). Then \[\|f\|_{L^2}^2 \le 1.\]"
     backend = MockBackend(
@@ -542,6 +585,78 @@ def test_refine_candidate_nodes_adds_generic_local_consequence() -> None:
     assert any(edge.source_id == refined_node.id and edge.target_id == "n2" for edge in refined.edges)
     original_candidate = next(node for node in refined.nodes if node.id == "n2")
     assert original_candidate.status == "informal"
+
+
+def test_refine_candidate_nodes_prefers_backend_proposal_when_available() -> None:
+    graph = ProofGraph(
+        theorem_title="Toy estimate theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Main argument",
+                informal_statement="The desired conclusion follows.",
+                informal_proof_text="Use the refined local claim n2.",
+            ),
+            ProofNode(
+                id="n2",
+                title="Reusable estimate",
+                informal_statement=(
+                    "For sufficiently regular inputs,\n"
+                    "\\[\n"
+                    "A\\le C B.\n"
+                    "\\]\n"
+                    "Applying it in the present situation gives\n"
+                    "\\[\n"
+                    "Q(t)\\le C\\sqrt{R(t)}\\,S(t).\n"
+                    "\\]"
+                ),
+                informal_proof_text=(
+                    "The broader estimate is available, and the real downstream claim is the concrete bound "
+                    "\\(Q(t)\\le C\\sqrt{R(t)}\\,S(t)\\)."
+                ),
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Broad estimate node.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n2")],
+    )
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "proposals": [
+                    {
+                        "title": "Concrete downstream estimate",
+                        "display_label": "Backend refined claim",
+                        "informal_statement": (
+                            "For the present quantities,\n"
+                            "\\[\n"
+                            "Q(t)\\le C\\sqrt{R(t)}\\,S(t).\n"
+                            "\\]"
+                        ),
+                        "informal_proof_text": (
+                            "Combine the broader estimate with the local identities already established in the parent argument."
+                        ),
+                        "rationale": (
+                            "This is the exact downstream estimate the parent proof uses, and it is narrower than the broad reusable source estimate."
+                        ),
+                    }
+                ]
+            }
+        ]
+    )
+
+    refined = refine_candidate_nodes(graph, backend=backend)
+
+    refined_node = next(node for node in refined.nodes if node.status == "candidate_formal")
+    assert refined_node.title == "Concrete downstream estimate"
+    assert refined_node.display_label == "Backend refined claim"
+    assert refined_node.informal_statement.startswith("For the present quantities")
+    assert "Combine the broader estimate" in refined_node.informal_proof_text
+    assert refined_node.informal_proof_text.endswith("parent argument.")
+    assert len(backend.requests) == 1
 
 
 def test_refine_candidate_nodes_leaves_already_concrete_candidate_alone() -> None:

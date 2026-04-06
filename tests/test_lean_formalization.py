@@ -111,6 +111,8 @@ def test_build_agentic_formalization_request_includes_concrete_setting_guidance(
     assert "one designated main theorem" in request.prompt.lower()
     assert "helper lemmas" in request.prompt.lower()
     assert "must correspond to that single main theorem" in request.prompt.lower()
+    assert "coverage sketch" in request.prompt.lower()
+    assert "component of the sketch" in request.prompt.lower()
 
 
 def test_recover_agentic_artifact_prefers_expected_main_theorem(tmp_path: Path) -> None:

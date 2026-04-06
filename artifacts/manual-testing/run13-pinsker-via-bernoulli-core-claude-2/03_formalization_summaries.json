@@ -1,0 +1,20 @@
+[
+  {
+    "node_id": "bernoulli_ineq",
+    "status": "failed",
+    "artifact_path": null,
+    "attempt_count": 1,
+    "stderr": "Claude CLI timed out while waiting for structured output for task 'formalize_node_agentic' after 600.0 seconds.",
+    "faithfulness_classification": "full_node",
+    "lean_theorem_name": "bernoulli_ineq_backend_failure"
+  },
+  {
+    "node_id": "dpi",
+    "status": "failed",
+    "artifact_path": null,
+    "attempt_count": 1,
+    "stderr": "Claude CLI failed with exit code 1: ",
+    "faithfulness_classification": "full_node",
+    "lean_theorem_name": "dpi_backend_failure"
+  }
+]

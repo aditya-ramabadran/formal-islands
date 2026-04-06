@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from formal_islands.backends import StructuredBackend, StructuredBackendRequest
 from formal_islands.formalization.schemas import FormalizationResult
@@ -26,6 +26,8 @@ FORMALIZATION_SYSTEM_PROMPT = (
     "Treat the local Lean workspace as the source of truth for available imports and prefer "
     "small, concrete, stable import lists over broad or speculative boilerplate."
 )
+
+RELATION_MARKERS = ("\\le", "\\ge", "\\to", "\\Rightarrow", "\\implies", "≤", "≥", "=", "<", ">")
 
 
 class FormalizationFaithfulnessError(ValueError):
@@ -51,6 +53,76 @@ class ConcreteSublemmaSummary:
 
     informal_statement: str
     informal_proof_text: str
+
+
+@dataclass(frozen=True)
+class CoverageComponent:
+    """A small local piece of a node's proof burden."""
+
+    kind: str
+    text: str
+
+
+@dataclass(frozen=True)
+class CoverageSketch:
+    """A lightweight decomposition of the target node's coverage structure."""
+
+    summary: str
+    components: list[CoverageComponent]
+
+
+def build_node_coverage_sketch(node, *, max_components: int = 4) -> CoverageSketch:
+    """Summarize a node into a few concrete local coverage components."""
+
+    text = "\n".join([node.title, node.informal_statement, node.informal_proof_text])
+    components: list[CoverageComponent] = []
+    for clause in _split_coverage_clauses(text):
+        kind = _coverage_component_kind(clause)
+        if kind is None:
+            continue
+        components.append(CoverageComponent(kind=kind, text=clause))
+        if len(components) >= max_components:
+            break
+
+    if not components:
+        components = [CoverageComponent(kind="goal", text=_normalize_coverage_text(node.informal_statement))]
+
+    return CoverageSketch(
+        summary=_normalize_coverage_text(node.informal_statement),
+        components=components,
+    )
+
+
+def _split_coverage_clauses(text: str) -> list[str]:
+    clauses = re.split(r"(?<=[.;])\s+|\n+", text)
+    return [clause.strip() for clause in clauses if clause.strip()]
+
+
+def _normalize_coverage_text(text: str) -> str:
+    return " ".join(text.split())
+
+
+def _coverage_component_kind(clause: str) -> str | None:
+    lowered = clause.lower()
+    if len(clause.split()) <= 3 and not _has_relation_marker(clause):
+        return None
+    if any(word in lowered for word in ("define", "set", "write")):
+        return "setup"
+    if any(word in lowered for word in ("expand", "rewrite", "simplify", "reduce", "cancel")):
+        return "algebraic_step"
+    if any(word in lowered for word in ("differentiate", "derive", "compute")):
+        return "calculus_step"
+    if any(word in lowered for word in ("apply", "use", "combine", "substitute", "specialize")):
+        return "local_inference"
+    if any(word in lowered for word in ("hence", "thus", "therefore", "conclude", "obtain", "gives", "yields")):
+        return "conclusion"
+    if _has_relation_marker(clause):
+        return "identity_or_estimate"
+    return "local_step"
+
+
+def _has_relation_marker(text: str) -> bool:
+    return any(marker in text for marker in RELATION_MARKERS)
 
 
 def build_formalization_request(
@@ -106,6 +178,8 @@ def build_formalization_request(
                 },
                 indent=2,
             ),
+            "Coverage sketch:",
+            json.dumps(asdict(build_node_coverage_sketch(node)), indent=2),
             (
                 "Immediate parent summary:\n" + json.dumps(parent_summaries[0], indent=2)
                 if parent_summaries
@@ -151,6 +225,10 @@ def build_formalization_request(
                 "If you simplify, simplify the local inferential step while keeping the same concrete objects and "
                 "ambient setting. Prefer a concrete sublemma about the same named quantities, variables, operators, "
                 "or integrals over a theorem about an arbitrary type, arbitrary measure, or unrelated families of functions."
+            ),
+            (
+                "Use the coverage sketch to decide what the theorem is supposed to cover. If you only prove one "
+                "component of the sketch, keep the result honest and avoid pretending to certify the whole node."
             ),
             (
                 "If the node mixes a reusable source estimate with a more concrete downstream application, "

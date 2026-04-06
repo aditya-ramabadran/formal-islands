@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 import re
@@ -16,6 +17,7 @@ from formal_islands.formalization.lean import LeanVerifier
 from formal_islands.formalization.pipeline import (
     FaithfulnessClassification,
     FormalizationFaithfulnessError,
+    build_node_coverage_sketch,
     request_concrete_sublemma_summary,
     request_node_formalization,
 )
@@ -89,33 +91,65 @@ def formalize_candidate_nodes(
     on_update: FormalizationUpdateCallback | None = None,
     mode: str = "auto",
 ) -> MultiFormalizationOutcome:
-    """Formalize multiple candidate nodes sequentially, reusing the updated graph each time."""
+    """Formalize multiple candidate nodes sequentially, reusing the updated graph each time.
+
+    When node_ids is None (auto mode), the loop is dynamic: nodes promoted to
+    candidate_formal during the run (e.g. informal parents of a verified refined
+    local claim) are discovered and attempted after the original candidates.
+
+    When node_ids is explicitly provided, only those nodes are attempted in order.
+    """
 
     current_graph = graph
     outcomes: list[FormalizationOutcome] = []
-    target_ids = node_ids or [
-        node.id
-        for node in sorted(
-            [node for node in current_graph.nodes if node.status == "candidate_formal"],
-            key=lambda node: ((node.formalization_priority or 999), node.id),
-        )
-    ]
+    attempted_ids: set[str] = set()
 
-    for node_id in target_ids:
-        current_node = next((node for node in current_graph.nodes if node.id == node_id), None)
-        if current_node is None or current_node.status != "candidate_formal":
-            continue
-        outcome = formalize_candidate_node(
-            backend=backend,
-            verifier=verifier,
-            graph=current_graph,
-            node_id=node_id,
-            max_attempts=max_attempts,
-            on_update=on_update,
-            mode=mode,
-        )
-        current_graph = outcome.graph
-        outcomes.append(outcome)
+    if node_ids is not None:
+        # Explicit list: static order, no dynamic discovery.
+        for node_id in node_ids:
+            current_node = next((n for n in current_graph.nodes if n.id == node_id), None)
+            if current_node is None or current_node.status != "candidate_formal":
+                continue
+            attempted_ids.add(node_id)
+            outcome = formalize_candidate_node(
+                backend=backend,
+                verifier=verifier,
+                graph=current_graph,
+                node_id=node_id,
+                max_attempts=max_attempts,
+                on_update=on_update,
+                mode=mode,
+            )
+            current_graph = outcome.graph
+            outcomes.append(outcome)
+    else:
+        # Auto mode: dynamic discovery picks up any newly promoted candidates.
+        while True:
+            next_node = next(
+                (
+                    node
+                    for node in sorted(
+                        current_graph.nodes,
+                        key=lambda n: (n.formalization_priority or 999, n.id),
+                    )
+                    if node.status == "candidate_formal" and node.id not in attempted_ids
+                ),
+                None,
+            )
+            if next_node is None:
+                break
+            attempted_ids.add(next_node.id)
+            outcome = formalize_candidate_node(
+                backend=backend,
+                verifier=verifier,
+                graph=current_graph,
+                node_id=next_node.id,
+                max_attempts=max_attempts,
+                on_update=on_update,
+                mode=mode,
+            )
+            current_graph = outcome.graph
+            outcomes.append(outcome)
 
     return MultiFormalizationOutcome(graph=current_graph, outcomes=outcomes)
 
@@ -206,16 +240,17 @@ def _formalize_candidate_node_structured(
                 "attempt_history": attempt_history.copy(),
             }
         )
-        expanded_artifact = _attempt_structured_coverage_expansion(
-            backend=backend,
-            verifier=verifier,
-            graph=current_graph,
-            node_id=node_id,
-            artifact=latest_artifact,
-            attempt_history=attempt_history,
-        )
-        if expanded_artifact is not None:
-            latest_artifact = expanded_artifact
+        if latest_artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA:
+            expanded_artifact = _attempt_structured_coverage_expansion(
+                backend=backend,
+                verifier=verifier,
+                graph=current_graph,
+                node_id=node_id,
+                artifact=latest_artifact,
+                attempt_history=attempt_history,
+            )
+            if expanded_artifact is not None:
+                latest_artifact = expanded_artifact
         current_graph = _integrate_successful_formalization(
             graph=current_graph,
             backend=backend,
@@ -275,6 +310,22 @@ def _formalize_candidate_node_agentic(
                 backend=backend,
             )
             if salvaged_artifact is not None:
+                expanded_artifact = (
+                    _attempt_agentic_coverage_expansion(
+                        backend=backend,
+                        verifier=verifier,
+                        graph=current_graph,
+                        node_id=node_id,
+                        artifact=salvaged_artifact,
+                        scratch_path=scratch_path,
+                        attempt_history=attempt_history,
+                    )
+                    if salvaged_artifact.faithfulness_classification
+                    == FaithfulnessClassification.CONCRETE_SUBLEMMA
+                    else None
+                )
+                if expanded_artifact is not None:
+                    salvaged_artifact = expanded_artifact
                 updated_graph = _integrate_successful_formalization(
                     graph=current_graph,
                     backend=backend,
@@ -340,17 +391,18 @@ def _formalize_candidate_node_agentic(
                 "attempt_history": attempt_history.copy(),
             }
         )
-        expanded_artifact = _attempt_agentic_coverage_expansion(
-            backend=backend,
-            verifier=verifier,
-            graph=current_graph,
-            node_id=node_id,
-            artifact=artifact,
-            scratch_path=scratch_path,
-            attempt_history=attempt_history,
-        )
-        if expanded_artifact is not None:
-            artifact = expanded_artifact
+        if artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA:
+            expanded_artifact = _attempt_agentic_coverage_expansion(
+                backend=backend,
+                verifier=verifier,
+                graph=current_graph,
+                node_id=node_id,
+                artifact=artifact,
+                scratch_path=scratch_path,
+                attempt_history=attempt_history,
+            )
+            if expanded_artifact is not None:
+                artifact = expanded_artifact
         updated_graph = _integrate_successful_formalization(
             graph=current_graph,
             backend=backend,
@@ -467,7 +519,8 @@ def _integrate_successful_formalization(
         return _update_node(graph, node_id, "formal_failed", artifact)
 
     if artifact.faithfulness_classification == FaithfulnessClassification.FULL_NODE:
-        return _update_node(graph, node_id, "formal_verified", artifact)
+        updated = _update_node(graph, node_id, "formal_verified", artifact)
+        return _promote_informal_parents_via_uses_edges(updated, node_id)
 
     if artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA:
         return _promote_concrete_sublemma(
@@ -478,6 +531,52 @@ def _integrate_successful_formalization(
         )
 
     return _update_node(graph, node_id, "formal_failed", artifact)
+
+
+def _promote_informal_parents_via_uses_edges(graph: ProofGraph, node_id: str) -> ProofGraph:
+    """After a full-node success, promote any informal parent reachable via a 'uses' edge.
+
+    A refined local claim node has an outgoing edge with label 'uses' pointing to
+    the broader informal node it was carved out from.  If that parent is still
+    informal, elevate it to candidate_formal at priority 3 so the dynamic
+    formalize_candidate_nodes loop can attempt it next.
+
+    Guards:
+    - Only promotes nodes whose current status is 'informal' (skips candidate_formal,
+      formal_verified, formal_failed).
+    - Uses 'attempted_ids' in the caller loop to prevent double-attempting.
+    """
+    parent_ids = [
+        edge.target_id
+        for edge in graph.edges
+        if edge.source_id == node_id and edge.label == "uses"
+    ]
+    if not parent_ids:
+        return graph
+
+    updated_nodes = []
+    promoted_any = False
+    for node in graph.nodes:
+        if node.id in parent_ids and node.status == "informal":
+            updated_nodes.append(
+                node.model_copy(
+                    update={
+                        "status": "candidate_formal",
+                        "formalization_priority": 3,
+                        "formalization_rationale": (
+                            f"Promoted after verified child '{node_id}' certified a local core; "
+                            "attempting broader parent coverage."
+                        ),
+                    }
+                )
+            )
+            promoted_any = True
+        else:
+            updated_nodes.append(node)
+
+    if not promoted_any:
+        return graph
+    return graph.model_copy(update={"nodes": updated_nodes})
 
 
 def _promote_concrete_sublemma(
@@ -676,14 +775,27 @@ def _build_concrete_sublemma_text(
 
 
 def _build_coverage_expansion_feedback(*, node: ProofNode, artifact: FormalArtifact) -> str:
-    targets = _node_coverage_targets(node)
-    target_lines = "\n".join(f"- {item}" for item in targets) or "- Broaden coverage toward the full node."
+    sketch = build_node_coverage_sketch(node)
+    component_lines = "\n".join(
+        f"- [{component.kind}] {component.text}" for component in sketch.components
+    ) or "- Broaden coverage toward the full node."
     return "\n\n".join(
         [
             "Coverage expansion follow-up:",
             (
                 "A verified Lean theorem was accepted as a narrower concrete local core, not as full-node coverage. "
                 "Continue from the already verified code and try to enlarge coverage upward while staying in the same concrete setting."
+            ),
+            "Coverage sketch:",
+            json.dumps(
+                {
+                    "summary": sketch.summary,
+                    "components": [
+                        {"kind": component.kind, "text": component.text}
+                        for component in sketch.components
+                    ],
+                },
+                indent=2,
             ),
             "Currently verified Lean theorem:",
             artifact.lean_statement,
@@ -698,7 +810,7 @@ def _build_coverage_expansion_feedback(*, node: ProofNode, artifact: FormalArtif
                 "missing steps in the same local argument."
             ),
             "Potential missing substeps from the parent node:",
-            target_lines,
+            component_lines,
         ]
     )
 

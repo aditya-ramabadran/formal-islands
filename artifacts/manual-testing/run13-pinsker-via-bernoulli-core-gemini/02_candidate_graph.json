@@ -1,0 +1,37 @@
+{
+  "theorem_title": "Pinsker's inequality via reduction to the Bernoulli case",
+  "theorem_statement": "Pinsker's inequality via reduction to the Bernoulli case.\n\nLet \\((X,\\mathcal F)\\) be a measurable space, and let \\(P\\) and \\(Q\\) be probability measures on \\((X,\\mathcal F)\\). Assume \\(P\\ll Q\\), so that the Kullback\u2013Leibler divergence\n\\[\nD_{\\mathrm{KL}}(P\\|Q)\n:=\n\\int_X \\log\\!\\left(\\frac{dP}{dQ}\\right)\\,dP\n\\]\nis well defined in \\([0,\\infty]\\).\n\nThen\n\\[\nD_{\\mathrm{KL}}(P\\|Q)\\ge 2\\,\\|P-Q\\|_{\\mathrm{TV}}^2,\n\\]\nwhere\n\\[\n\\|P-Q\\|_{\\mathrm{TV}}:=\\sup_{A\\in\\mathcal F}|P(A)-Q(A)|.\n\\]\n\nEquivalently, if \\(\\delta:=\\|P-Q\\|_{\\mathrm{TV}}\\), then\n\\[\nD_{\\mathrm{KL}}(P\\|Q)\\ge 2\\delta^2.\n\\]\n\nThe key local scalar step is the Bernoulli inequality\n\\[\np\\log\\!\\left(\\frac{p}{q}\\right)+(1-p)\\log\\!\\left(\\frac{1-p}{1-q}\\right)\\ge 2(p-q)^2,\n\\qquad 0<p,q<1,\n\\]\nwhich appears after collapsing the general measures to a two-point partition.",
+  "root_node_id": "pinsker_main",
+  "nodes": [
+    {
+      "id": "pinsker_main",
+      "title": "Pinsker's inequality",
+      "informal_statement": "Let \\((X,\\mathcal F)\\) be a measurable space, and let \\(P\\) and \\(Q\\) be probability measures on \\((X,\\mathcal F)\\). Assume \\(P\\ll Q\\). Then \\(D_{\\mathrm{KL}}(P\\|Q)\\ge 2\\|P-Q\\|_{\\mathrm{TV}}^2\\).",
+      "informal_proof_text": "Let \\(\\delta:=\\|P-Q\\|_{\\mathrm{TV}}=\\sup_{A\\in\\mathcal F}|P(A)-Q(A)|\\). We will prove \\(D_{\\mathrm{KL}}(P\\|Q)\\ge 2\\delta^2\\). Choose a measurable set \\(A\\in\\mathcal F\\) such that \\(|P(A)-Q(A)|=\\delta\\). Replacing \\(A\\) by its complement if necessary, we may assume \\(P(A)-Q(A)=\\delta\\ge 0\\). Set \\(p:=P(A)\\) and \\(q:=Q(A)\\). Then \\(p-q=\\delta\\).\n\nDefine the measurable map \\(T:X\\to\\{0,1\\}\\) by \\(T(x)=\\mathbf 1_A(x)\\). The pushforward measures on \\(\\{0,1\\}\\) are \\(T_\\#P=(p,1-p)\\) and \\(T_\\#Q=(q,1-q)\\). By the monotonicity of relative entropy under measurable pushforward (the data-processing inequality), we have\n\\[\nD_{\\mathrm{KL}}(P\\|Q) \\ge D_{\\mathrm{KL}}(T_\\#P\\|T_\\#Q) = p\\log\\!\\left(\\frac pq\\right) + (1-p)\\log\\!\\left(\\frac{1-p}{1-q}\\right).\n\\]\nBy the Bernoulli inequality for relative entropy, this lower bound is at least \\(2(p-q)^2\\). Since \\(p-q=\\delta\\), we conclude \\(D_{\\mathrm{KL}}(P\\|Q)\\ge 2\\delta^2\\), completing the proof.",
+      "status": "informal",
+      "display_label": null,
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "bernoulli_inequality",
+      "title": "Bernoulli inequality for relative entropy",
+      "informal_statement": "For \\(0<p,q<1\\),\n\\[\np\\log\\!\\left(\\frac pq\\right) + (1-p)\\log\\!\\left(\\frac{1-p}{1-q}\\right) \\ge 2(p-q)^2.\n\\]",
+      "informal_proof_text": "Fix \\(q\\in(0,1)\\), and define for \\(p\\in(0,1)\\)\n\\[\nF_q(p) := p\\log\\!\\left(\\frac{p}{q}\\right) + (1-p)\\log\\!\\left(\\frac{1-p}{1-q}\\right) - 2(p-q)^2.\n\\]\nWe will show that \\(F_q(p)\\ge 0\\) for all \\(p\\in(0,1)\\).\n\nEvaluating at \\(p=q\\) yields \\(F_q(q) = 0\\). Now compute the first derivative with respect to \\(p\\):\n\\[\nF_q'(p) = \\log\\!\\left(\\frac{p(1-q)}{q(1-p)}\\right) - 4(p-q).\n\\]\nEvaluating the first derivative at \\(p=q\\) gives \\(F_q'(q) = 0\\).\n\nDifferentiating again, we find the second derivative:\n\\[\nF_q''(p) = \\frac1p + \\frac{1}{1-p} - 4 = \\frac{1}{p(1-p)} - 4.\n\\]\nFor \\(0<p<1\\), the elementary inequality \\(p(1-p)\\le \\frac14\\) holds, which implies \\(\\frac{1}{p(1-p)}\\ge 4\\). Therefore, \\(F_q''(p)\\ge 0\\) for all \\(p\\in(0,1)\\), meaning \\(F_q\\) is convex on \\((0,1)\\).\n\nSince \\(p=q\\) is a critical point of the convex function \\(F_q\\), it is a global minimizer. Since \\(F_q(q)=0\\), it follows that \\(F_q(p)\\ge 0\\) for all \\(p\\in(0,1)\\), which is exactly the claimed inequality.",
+      "status": "candidate_formal",
+      "display_label": null,
+      "formalization_priority": 1,
+      "formalization_rationale": "This scalar inequality is the core analytical engine of the proof. It requires only single-variable real calculus and is completely decoupled from measure theory and general KL divergence, making it an excellent, self-contained formal island.",
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "bernoulli_inequality",
+      "target_id": "pinsker_main",
+      "label": "provides the lower bound for the two-point relative entropy",
+      "explanation": null
+    }
+  ]
+}

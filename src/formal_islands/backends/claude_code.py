@@ -70,6 +70,7 @@ class ClaudeCodeBackend:
             "-p",
             "--output-format",
             "stream-json",
+            "--verbose",
             "--input-format",
             "text",
         ]

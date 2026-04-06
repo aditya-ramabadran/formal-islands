@@ -75,7 +75,7 @@ def test_claude_backend_parses_structured_output() -> None:
     env = run_mock.call_args.kwargs["env"]
 
     assert Path(command[0]).name == "claude"
-    assert command[1:4] == ["-p", "--output-format", "stream-json"]
+    assert command[1:6] == ["-p", "--output-format", "stream-json", "--verbose", "--input-format"]
     assert "--json-schema" in command
     assert "--tools" in command
     assert env["CLAUDE_CODE_MAX_OUTPUT_TOKENS"] == "1234"

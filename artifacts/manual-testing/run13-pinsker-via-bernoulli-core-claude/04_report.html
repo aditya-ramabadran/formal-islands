@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pinsker&#x27;s inequality via reduction to the Bernoulli case - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: rgba(255, 250, 241, 0.98);
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
+      --graph-shell-top: rgba(255, 251, 242, 0.96);
+      --graph-shell-bottom: rgba(245, 238, 227, 0.96);
+      --checklist-panel: rgba(255, 250, 241, 0.95);
+      --target-panel: #fff8ee;
+      --code-surface: #f4efe6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161311;
+        --panel: #211b17;
+        --ink: #f3ede5;
+        --muted: #c0b2a3;
+        --border: #4a3d32;
+        --accent: #f0b47b;
+        --accent-soft: #3a2b20;
+        --highlight: #ffb25c;
+        --highlight-soft: #3f2d19;
+        --preview-soft: #312419;
+        --checked: #65c08a;
+        --checked-soft: #213126;
+        --edge: #8f8172;
+        --status-informal-stroke: #d69760;
+        --status-informal-fill: rgba(46, 34, 26, 0.96);
+        --status-candidate-stroke: #f0a64e;
+        --status-candidate-fill: #3f2d18;
+        --status-verified-stroke: #65c08a;
+        --status-verified-fill: #213126;
+        --status-failed-stroke: #dd8a79;
+        --status-failed-fill: #3b2320;
+        --graph-shell-top: rgba(44, 34, 27, 0.98);
+        --graph-shell-bottom: rgba(32, 25, 21, 0.98);
+        --checklist-panel: rgba(36, 29, 24, 0.98);
+        --target-panel: #31261f;
+        --code-surface: #2a231e;
+      }
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(circle at top, #2a211b, var(--bg));
+      }
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .math-text mjx-container {
+      max-width: 100%;
+    }
+    .math-text mjx-container[display="true"] {
+      margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .math-text mjx-container[jax="CHTML"][display="true"] {
+      padding: 0 !important;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--graph-shell-top), var(--graph-shell-bottom));
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+    .graph-frame {
+      width: min(100%, 460px);
+      margin: 0 auto;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 240px;
+      overflow: visible;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 2.8;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-box {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-title {
+      fill: var(--ink);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 9.5px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--checklist-panel);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {
+      min-width: 0;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: var(--target-panel);
+    }
+    pre {
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 0.75rem;
+      background: var(--code-surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin: 0.6rem 0;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    code.inline-code {
+      background: var(--code-surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.95em;
+      white-space: break-spaces;
+    }
+    .statement-code {
+      margin-top: 0.35rem;
+    }
+    .statement-code pre,
+    .checklist-code pre {
+      margin-top: 0.35rem;
+      background: var(--code-surface);
+    }
+    .lean-code {
+      color: #2a241f;
+    }
+    .lean-code .tok-keyword {
+      color: #8b2f18;
+      font-weight: 700;
+    }
+    .lean-code .tok-tactic {
+      color: #9d5d17;
+      font-weight: 600;
+    }
+    .lean-code .tok-type {
+      color: #245f7a;
+    }
+    .lean-code .tok-number {
+      color: #7442a8;
+    }
+    .lean-code .tok-comment {
+      color: #6e7a60;
+      font-style: italic;
+    }
+    .lean-code .tok-string {
+      color: #2d7f4d;
+    }
+    @media (prefers-color-scheme: dark) {
+      .lean-code {
+        color: #f2e8dc;
+      }
+      .lean-code .tok-keyword {
+        color: #f08f63;
+      }
+      .lean-code .tok-tactic {
+        color: #f4b35d;
+      }
+      .lean-code .tok-type {
+        color: #73c7ff;
+      }
+      .lean-code .tok-number {
+        color: #be8cff;
+      }
+      .lean-code .tok-comment {
+        color: #97b18b;
+      }
+      .lean-code .tok-string {
+        color: #67d59a;
+      }
+    }
+    
+            .report-root:has(a.node-root:hover) .node-root.node-card,
+            .report-root:has(#node-root:target) a.node-root .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-root:hover) .node-root.node-card,
+            .report-root:has(#node-root:target).report-root .node-root.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-dpi:hover) .node-dpi.node-card,
+            .report-root:has(#node-dpi:target) a.node-dpi .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-dpi:hover) .node-dpi.node-card,
+            .report-root:has(#node-dpi:target).report-root .node-dpi.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-bernoulli_ineq:hover) .node-bernoulli_ineq.node-card,
+            .report-root:has(#node-bernoulli_ineq:target) a.node-bernoulli_ineq .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-bernoulli_ineq:hover) .node-bernoulli_ineq.node-card,
+            .report-root:has(#node-bernoulli_ineq:target).report-root .node-bernoulli_ineq.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-convexity_fq:hover) .node-convexity_fq.node-card,
+            .report-root:has(#node-convexity_fq:target) a.node-convexity_fq .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-convexity_fq:hover) .node-convexity_fq.node-card,
+            .report-root:has(#node-convexity_fq:target).report-root .node-convexity_fq.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-bernoulli_ineq_refined_local_claim:hover) .node-bernoulli_ineq_refined_local_claim.node-card,
+            .report-root:has(#node-bernoulli_ineq_refined_local_claim:target) a.node-bernoulli_ineq_refined_local_claim .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-bernoulli_ineq_refined_local_claim:hover) .node-bernoulli_ineq_refined_local_claim.node-card,
+            .report-root:has(#node-bernoulli_ineq_refined_local_claim:target).report-root .node-bernoulli_ineq_refined_local_claim.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-root:hover) a.node-root .graph-node-box,
+.report-root:has(.obligation-informal-proof-root:hover) .node-root.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-root:checked) a.node-root .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-root:checked) .node-root.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-root:checked) .edge-bernoulli_ineq-root,
+.report-root:has(#obligation-check-informal-proof-root:checked) .edge-dpi-root {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-root:hover) .obligation-informal-proof-root {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-root:checked) .obligation-informal-proof-root {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-dpi:hover) a.node-dpi .graph-node-box,
+.report-root:has(.obligation-informal-proof-dpi:hover) .node-dpi.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-dpi:checked) a.node-dpi .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-dpi:checked) .node-dpi.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-dpi:checked) .edge-dpi-root {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-dpi:hover) .obligation-informal-proof-dpi {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-dpi:checked) .obligation-informal-proof-dpi {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-bernoulli_ineq:hover) a.node-bernoulli_ineq .graph-node-box,
+.report-root:has(.obligation-informal-proof-bernoulli_ineq:hover) .node-bernoulli_ineq.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-bernoulli_ineq:checked) a.node-bernoulli_ineq .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-bernoulli_ineq:checked) .node-bernoulli_ineq.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-bernoulli_ineq:checked) .edge-bernoulli_ineq-root,
+.report-root:has(#obligation-check-informal-proof-bernoulli_ineq:checked) .edge-bernoulli_ineq_refined_local_claim-bernoulli_ineq {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-bernoulli_ineq:hover) .obligation-informal-proof-bernoulli_ineq {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-bernoulli_ineq:checked) .obligation-informal-proof-bernoulli_ineq {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-convexity_fq:hover) a.node-convexity_fq .graph-node-box,
+.report-root:has(.obligation-informal-proof-convexity_fq:hover) .node-convexity_fq.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-convexity_fq:checked) a.node-convexity_fq .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-convexity_fq:checked) .node-convexity_fq.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-convexity_fq:checked) .edge-convexity_fq-bernoulli_ineq_refined_local_claim {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-convexity_fq:hover) .obligation-informal-proof-convexity_fq {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-convexity_fq:checked) .obligation-informal-proof-convexity_fq {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-bernoulli_ineq_refined_local_claim:hover) a.node-bernoulli_ineq_refined_local_claim .graph-node-box,
+.report-root:has(.obligation-semantic-match-bernoulli_ineq_refined_local_claim:hover) .node-bernoulli_ineq_refined_local_claim.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-bernoulli_ineq_refined_local_claim:checked) a.node-bernoulli_ineq_refined_local_claim .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-bernoulli_ineq_refined_local_claim:checked) .node-bernoulli_ineq_refined_local_claim.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-bernoulli_ineq_refined_local_claim:checked) .edge-bernoulli_ineq_refined_local_claim-bernoulli_ineq,
+.report-root:has(#obligation-check-semantic-match-bernoulli_ineq_refined_local_claim:checked) .edge-convexity_fq-bernoulli_ineq_refined_local_claim {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-bernoulli_ineq_refined_local_claim:hover) .obligation-semantic-match-bernoulli_ineq_refined_local_claim {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-bernoulli_ineq_refined_local_claim:checked) .obligation-semantic-match-bernoulli_ineq_refined_local_claim {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-boundary-convexity_fq-bernoulli_ineq_refined_local_claim:hover) a.node-convexity_fq .graph-node-box,
+.report-root:has(.obligation-boundary-convexity_fq-bernoulli_ineq_refined_local_claim:hover) a.node-bernoulli_ineq_refined_local_claim .graph-node-box,
+.report-root:has(.obligation-boundary-convexity_fq-bernoulli_ineq_refined_local_claim:hover) .node-convexity_fq.node-card,
+.report-root:has(.obligation-boundary-convexity_fq-bernoulli_ineq_refined_local_claim:hover) .node-bernoulli_ineq_refined_local_claim.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-convexity_fq-bernoulli_ineq_refined_local_claim:checked) a.node-convexity_fq .graph-node-box,
+.report-root:has(#obligation-check-boundary-convexity_fq-bernoulli_ineq_refined_local_claim:checked) a.node-bernoulli_ineq_refined_local_claim .graph-node-box,
+.report-root:has(#obligation-check-boundary-convexity_fq-bernoulli_ineq_refined_local_claim:checked) .node-convexity_fq.node-card,
+.report-root:has(#obligation-check-boundary-convexity_fq-bernoulli_ineq_refined_local_claim:checked) .node-bernoulli_ineq_refined_local_claim.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-convexity_fq-bernoulli_ineq_refined_local_claim:checked) .edge-bernoulli_ineq_refined_local_claim-bernoulli_ineq,
+.report-root:has(#obligation-check-boundary-convexity_fq-bernoulli_ineq_refined_local_claim:checked) .edge-convexity_fq-bernoulli_ineq_refined_local_claim {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-boundary-convexity_fq-bernoulli_ineq_refined_local_claim:hover) .obligation-boundary-convexity_fq-bernoulli_ineq_refined_local_claim {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-boundary-convexity_fq-bernoulli_ineq_refined_local_claim:checked) .obligation-boundary-convexity_fq-bernoulli_ineq_refined_local_claim {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-root">
+    <section>
+      <h1>Pinsker&#x27;s inequality via reduction to the Bernoulli case</h1>
+      <div class="math-text">Pinsker&#x27;s inequality via reduction to the Bernoulli case.
+
+Let \((X,\mathcal F)\) be a measurable space, and let \(P\) and \(Q\) be probability measures on \((X,\mathcal F)\). Assume \(P\ll Q\), so that the Kullback–Leibler divergence
+\[
+D_{\mathrm{KL}}(P\|Q)
+:=
+\int_X \log\!\left(\frac{dP}{dQ}\right)\,dP
+\]
+is well defined in \([0,\infty]\).
+
+Then
+\[
+D_{\mathrm{KL}}(P\|Q)\ge 2\,\|P-Q\|_{\mathrm{TV}}^2,
+\]
+where
+\[
+\|P-Q\|_{\mathrm{TV}}:=\sup_{A\in\mathcal F}|P(A)-Q(A)|.
+\]
+Equivalently, if \(\delta:=\|P-Q\|_{\mathrm{TV}}\), then
+\[
+D_{\mathrm{KL}}(P\|Q)\ge 2\delta^2.
+\]
+The key local scalar step is the Bernoulli inequality
+\[
+p\log\!\left(\frac{p}{q}\right)+(1-p)\log\!\left(\frac{1-p}{1-q}\right)\ge 2(p-q)^2,
+\qquad 0&lt;p,q&lt;1,
+\]
+which appears after collapsing the general measures to a two-point partition.</div>
+      <p class="meta">Root node: root</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 5</span>
+        <span class="pill">Edges: 4</span>
+        <span class="pill">Informal: 3</span>
+        <span class="pill">Candidates: 1</span>
+        <span class="pill">Verified: 1</span>
+        <span class="pill">Failed: 0</span>
+      </p>
+      <div class="graph-shell">
+        
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 578" width="420" height="578" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><line class="graph-edge edge-dpi-root" x1="210.0" y1="201.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-bernoulli_ineq-root" x1="210.0" y1="319.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-convexity_fq-bernoulli_ineq_refined_local_claim" x1="210.0" y1="437.0" x2="210.0" y2="495.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-bernoulli_ineq_refined_local_claim-bernoulli_ineq" x1="210.0" y1="555.0" x2="210.0" y2="259.0" marker-end="url(#graph-arrow)"></line></g>
+        <g>
+    <a class="graph-node-link node-root status-informal" href="#node-root">
+      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="42">Pinsker:</tspan>
+<tspan x="210.0" y="54">$D_{\mathrm{KL}…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">root</text>
+    </a>
+    
+
+    <a class="graph-node-link node-dpi status-informal" href="#node-dpi">
+      <rect class="graph-node-box status-informal" x="144.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="160">DPI:</tspan>
+<tspan x="210.0" y="172">$D_{\mathrm{KL}…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="186">dpi</text>
+    </a>
+    
+
+    <a class="graph-node-link node-bernoulli_ineq status-informal" href="#node-bernoulli_ineq">
+      <rect class="graph-node-box status-informal" x="144.0" y="256" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="278">Bernoulli:</tspan>
+<tspan x="210.0" y="290">$p\log\frac{p}{…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="304">bernoulli_ineq</text>
+    </a>
+    
+
+    <a class="graph-node-link node-convexity_fq status-informal" href="#node-convexity_fq">
+      <rect class="graph-node-box status-informal" x="144.0" y="374" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="386" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="396">$F_q&#x27;&#x27;(p)=\frac{1}{p(1-p)}-4\ge</tspan>
+<tspan x="210.0" y="408">0$</tspan></text>
+      <text class="graph-node-id" x="210.0" y="422">convexity_fq</text>
+    </a>
+    
+
+    <a class="graph-node-link node-bernoulli_ineq_refined_local_claim status-formal-verified" href="#node-bernoulli_ineq_refined_local_claim">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="492" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="504" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="519">Fq_zero_at_q</tspan></text>
+      <text class="graph-node-id" x="210.0" y="540">bernoulli_ineq_refined_local_claim</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+      </div>
+      <p class="graph-caption">
+        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+      </p>
+      <p class="graph-caption">
+        Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
+      </p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-informal-proof-root" data-obligation-id="informal-proof-root">
+      <label class="checklist-label" for="obligation-check-informal-proof-root">
+        <input id="obligation-check-informal-proof-root" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;root&#x27; (Pinsker&#x27;s Inequality) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-root">root</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-dpi" data-obligation-id="informal-proof-dpi">
+      <label class="checklist-label" for="obligation-check-informal-proof-dpi">
+        <input id="obligation-check-informal-proof-dpi" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;dpi&#x27; (Data-Processing Inequality for KL Divergence) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-dpi">dpi</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-bernoulli_ineq" data-obligation-id="informal-proof-bernoulli_ineq">
+      <label class="checklist-label" for="obligation-check-informal-proof-bernoulli_ineq">
+        <input id="obligation-check-informal-proof-bernoulli_ineq" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;bernoulli_ineq&#x27; (Bernoulli Scalar Inequality) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-bernoulli_ineq">bernoulli_ineq</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-convexity_fq" data-obligation-id="informal-proof-convexity_fq">
+      <label class="checklist-label" for="obligation-check-informal-proof-convexity_fq">
+        <input id="obligation-check-informal-proof-convexity_fq" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;convexity_fq&#x27; (Convexity of $F_q$ via Second-Derivative Bound) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-convexity_fq">convexity_fq</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-bernoulli_ineq_refined_local_claim" data-obligation-id="semantic-match-bernoulli_ineq_refined_local_claim">
+      <label class="checklist-label" for="obligation-check-semantic-match-bernoulli_ineq_refined_local_claim">
+        <input id="obligation-check-semantic-match-bernoulli_ineq_refined_local_claim" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;bernoulli_ineq_refined_local_claim&#x27; ($F_q$ vanishes at $p = q$) matches the verified Lean statement &#x27;theorem bernoulli_ineq_Fq_vanishes_at_q (q : ℝ) (hq0 : 0 &lt; q) (hq1 : q &lt; 1) :
+    q * log (q / q) + (1 - q) * log ((1 - q) / (1 - q)) - 2 * (q - q) ^ 2 = 0&#x27;.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> bernoulli_ineq_Fq_vanishes_at_q (q : <span class="tok-type">ℝ</span>) (hq0 : <span class="tok-number">0</span> &lt; q) (hq1 : q &lt; <span class="tok-number">1</span>) :
+    q * log (q / q) + (<span class="tok-number">1</span> - q) * log ((<span class="tok-number">1</span> - q) / (<span class="tok-number">1</span> - q)) - <span class="tok-number">2</span> * (q - q) ^ <span class="tok-number">2</span> = <span class="tok-number">0</span></code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-bernoulli_ineq_refined_local_claim">bernoulli_ineq_refined_local_claim</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-boundary-convexity_fq-bernoulli_ineq_refined_local_claim" data-obligation-id="boundary-convexity_fq-bernoulli_ineq_refined_local_claim">
+      <label class="checklist-label" for="obligation-check-boundary-convexity_fq-bernoulli_ineq_refined_local_claim">
+        <input id="obligation-check-boundary-convexity_fq-bernoulli_ineq_refined_local_claim" type="checkbox" />
+        <span>
+          <span class="checklist-kind">boundary_interface_check</span><br />
+          Check that formal child &#x27;bernoulli_ineq_refined_local_claim&#x27; proves exactly what informal parent &#x27;convexity_fq&#x27; uses across their dependency boundary.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-convexity_fq">convexity_fq</a>, <a class="node-jump" href="#node-bernoulli_ineq_refined_local_claim">bernoulli_ineq_refined_local_claim</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="nodes-grid">
+        
+    <article class="node-card node-root" id="node-root" data-node-id="root">
+      <h3>Pinsker&#x27;s Inequality</h3>
+      <p class="meta">Node id: root | Status: informal</p>
+      <p class="meta">Display label: Pinsker: $D_{\mathrm{KL}}(P\|Q)\ge 2\|P-Q\|_{\mathrm{TV}}^2$</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \ $(X,\mathcal{F})$ be a measurable space and $P,Q$ probability measures with $P\ll Q$. Then $D_{\mathrm{KL}}(P\|Q)\ge 2\,\|P-Q\|_{\mathrm{TV}}^2$.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Set $\delta:=\|P-Q\|_{\mathrm{TV}}$. By a Hahn-decomposition argument, choose $A\in\mathcal{F}$ with $P(A)-Q(A)=\delta\ge 0$. Put $p:=P(A)$, $q:=Q(A)$, and define $T:=\mathbf{1}_A:X\to\{0,1\}$. The pushforwards satisfy $T_\#P=(p,1-p)$ and $T_\#Q=(q,1-q)$, so $D_{\mathrm{KL}}(T_\#P\|T_\#Q)=p\log(p/q)+(1-p)\log((1-p)/(1-q))$. By the data-processing inequality (monotonicity of KL under pushforward), $D_{\mathrm{KL}}(P\|Q)\ge D_{\mathrm{KL}}(T_\#P\|T_\#Q)$. Applying the Bernoulli scalar inequality then gives $D_{\mathrm{KL}}(T_\#P\|T_\#Q)\ge 2(p-q)^2=2\delta^2$. Hence $D_{\mathrm{KL}}(P\|Q)\ge 2\delta^2=2\|P-Q\|_{\mathrm{TV}}^2$.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-dpi" id="node-dpi" data-node-id="dpi">
+      <h3>Data-Processing Inequality for KL Divergence</h3>
+      <p class="meta">Node id: dpi | Status: informal</p>
+      <p class="meta">Display label: DPI: $D_{\mathrm{KL}}(P\|Q)\ge D_{\mathrm{KL}}(T_\#P\|T_\#Q)$</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let $T:(X,\mathcal{F})\to(Y,\mathcal{G})$ be a measurable map. If $P\ll Q$, then $D_{\mathrm{KL}}(P\|Q)\ge D_{\mathrm{KL}}(T_\#P\|T_\#Q)$. In particular, for $T=\mathbf{1}_A$, $D_{\mathrm{KL}}(P\|Q)\ge p\log(p/q)+(1-p)\log((1-p)/(1-q))$ where $p=P(A)$, $q=Q(A)$.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">This is a standard measure-theoretic fact: coarsening the observation space by a measurable map can only decrease relative entropy. Concretely, if $f=dP/dQ$ is the Radon–Nikodym derivative, the log-sum inequality (Jensen applied to the convex function $t\mapsto t\log t$) gives $D_{\mathrm{KL}}(T_\#P\|T_\#Q)=\int_Y\log\frac{d(T_\#P)}{d(T_\#Q)}\,d(T_\#P)\le\int_X\log f\,dP=D_{\mathrm{KL}}(P\|Q)$. For the binary map $T=\mathbf{1}_A$ this specialises immediately.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-bernoulli_ineq" id="node-bernoulli_ineq" data-node-id="bernoulli_ineq">
+      <h3>Bernoulli Scalar Inequality</h3>
+      <p class="meta">Node id: bernoulli_ineq | Status: informal</p>
+      <p class="meta">Display label: Bernoulli: $p\log\frac{p}{q}+(1-p)\log\frac{1-p}{1-q}\ge 2(p-q)^2$</p>
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For all $p,q\in(0,1)$, $p\log\!\ \left(\tfrac{p}{q}\right)+(1-p)\log\!\left(\tfrac{1-p}{1-q}\right)\ge 2(p-q)^2$.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Fix $q\in(0,1)$ and define $F_q(p):=p\log(p/q)+(1-p)\log((1-p)/(1-q))-2(p-q)^2$ for $p\in(0,1)$. We show $F_q\ge 0$. First, $F_q(q)=0$. By the convexity of $F_q$ (proved separately) and the critical-point computation $F_q&#x27;(q)=\log(q/q)-\log((1-q)/(1-q))-4(q-q)=0$, the point $p=q$ is a global minimizer of $F_q$. Hence $F_q(p)\ge F_q(q)=0$ for all $p\in(0,1)$.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-convexity_fq" id="node-convexity_fq" data-node-id="convexity_fq">
+      <h3>Convexity of $F_q$ via Second-Derivative Bound</h3>
+      <p class="meta">Node id: convexity_fq | Status: candidate_formal</p>
+      <p class="meta">Display label: $F_q&#x27;&#x27;(p)=\frac{1}{p(1-p)}-4\ge 0$</p>
+      <p class="meta">Formalization priority: 2. Rationale: The second-derivative computation $F_q&#x27;&#x27;(p)=1/(p(1-p))-4\ge 0$ is the key technical lemma supporting the Bernoulli inequality. It is a concrete, checkable real-analysis fact (AM–GM for $p(1-p)\le 1/4$) and is a natural sub-lemma to formalize separately before assembling the full Bernoulli node.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For fixed $q\in(0,1)$, the function $F_q(p):=p\log(p/q)+(1-p)\log((1-p)/(1-q))-2(p-q)^2$ satisfies $F_q&#x27;&#x27;(p)=\tfrac{1}{p(1-p)}-4\ge 0$ for all $p\in(0,1)$, so $F_q$ is convex.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Differentiating twice: $\frac{d}{dp}[p\log(p/q)]=\log(p/q)+1$ and $\frac{d}{dp}[(1-p)\log((1-p)/(1-q))]=-\log((1-p)/(1-q))-1$, so $F_q&#x27;(p)=\log\frac{p(1-q)}{q(1-p)}-4(p-q)$. Differentiating again: $F_q&#x27;&#x27;(p)=\frac{1}{p}+\frac{1}{1-p}-4=\frac{1}{p(1-p)}-4$. The elementary AM–GM inequality gives $p(1-p)\le\left(\frac{p+(1-p)}{2}\right)^2=\tfrac{1}{4}$ for $p\in(0,1)$, so $\frac{1}{p(1-p)}\ge 4$, hence $F_q&#x27;&#x27;(p)\ge 0$. Therefore $F_q$ is convex on $(0,1)$.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-bernoulli_ineq_refined_local_claim" id="node-bernoulli_ineq_refined_local_claim" data-node-id="bernoulli_ineq_refined_local_claim">
+      <h3>$F_q$ vanishes at $p = q$</h3>
+      <p class="meta">Node id: bernoulli_ineq_refined_local_claim | Status: formal_verified</p>
+      <p class="meta">Display label: Fq_zero_at_q</p>
+      <p class="meta">Formalization priority: 1. Rationale: This establishes the baseline value needed to convert the global-minimiser conclusion into the inequality $F_q(p)\ge 0$. It is narrower and more atomic than the full Bernoulli claim, isolating the boundary-value computation as a standalone verifiable step.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For fixed $q\in(0,1)$, the function $F_q(p):=p\log(p/q)+(1-p)\log((1-p)/(1-q))-2(p-q)^2$ satisfies $F_q(q)=0$.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Substitute $p=q$: $q\log(q/q)+(1-q)\log((1-q)/(1-q))-2(q-q)^2=q\cdot 0+(1-q)\cdot 0-0=0$.</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> bernoulli_ineq_Fq_vanishes_at_q</p>
+        <p><strong>Coverage:</strong> full_node</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> bernoulli_ineq_Fq_vanishes_at_q (q : <span class="tok-type">ℝ</span>) (hq0 : <span class="tok-number">0</span> &lt; q) (hq1 : q &lt; <span class="tok-number">1</span>) :
+    q * log (q / q) + (<span class="tok-number">1</span> - q) * log ((<span class="tok-number">1</span> - q) / (<span class="tok-number">1</span> - q)) - <span class="tok-number">2</span> * (q - q) ^ <span class="tok-number">2</span> = <span class="tok-number">0</span></code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/bernoulli_ineq_refined_local_claim_worker_20260405-171444_c1d7a409.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib.Analysis.SpecialFunctions.Log.Basic
+
+<span class="tok-keyword">open</span> Real
+
+/-!
+# F_q vanishes at p = q
+
+For fixed q ∈ (<span class="tok-number">0</span>,<span class="tok-number">1</span>), the function
+  F_q(p) := p * log(p/q) + (<span class="tok-number">1</span>-p) * log((<span class="tok-number">1</span>-p)/(<span class="tok-number">1</span>-q)) - <span class="tok-number">2</span>*(p-q)^<span class="tok-number">2</span>
+satisfies F_q(q) = <span class="tok-number">0</span>.
+
+Proof: substitute p = q. Then q/q = <span class="tok-number">1</span>, (<span class="tok-number">1</span>-q)/(<span class="tok-number">1</span>-q) = <span class="tok-number">1</span>, log <span class="tok-number">1</span> = <span class="tok-number">0</span>, (q-q)^<span class="tok-number">2</span> = <span class="tok-number">0</span>.
+-/
+
+/<span class="tok-comment">-- For fixed q ∈ (0,1), the function</span>
+    F_q(p) := p * log(p/q) + (<span class="tok-number">1</span>-p) * log((<span class="tok-number">1</span>-p)/(<span class="tok-number">1</span>-q)) - <span class="tok-number">2</span>*(p-q)^<span class="tok-number">2</span>
+    vanishes at p = q. -/
+<span class="tok-keyword">theorem</span> bernoulli_ineq_Fq_vanishes_at_q (q : <span class="tok-type">ℝ</span>) (hq0 : <span class="tok-number">0</span> &lt; q) (hq1 : q &lt; <span class="tok-number">1</span>) :
+    q * log (q / q) + (<span class="tok-number">1</span> - q) * log ((<span class="tok-number">1</span> - q) / (<span class="tok-number">1</span> - q)) - <span class="tok-number">2</span> * (q - q) ^ <span class="tok-number">2</span> = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> hq_ne : q ≠ <span class="tok-number">0</span> := ne_of_gt hq0
+  <span class="tok-tactic">have</span> h1q_ne : <span class="tok-number">1</span> - q ≠ <span class="tok-number">0</span> := <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span>
+  <span class="tok-tactic">rw</span> [div_self hq_ne, div_self h1q_ne, log_one]
+  <span class="tok-tactic">ring</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+</code></pre>
+        </details>
+        
+    </article>
+    
+      </div>
+    </section>
+  </main>
+</body>
+</html>

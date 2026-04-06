@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from collections import defaultdict
+from dataclasses import asdict
 from dataclasses import dataclass
 
 from formal_islands.backends import StructuredBackend, StructuredBackendRequest
@@ -12,7 +13,10 @@ from formal_islands.extraction.schemas import (
     CandidateSelectionResult,
     ExtractedProofGraph,
     PlannedProofGraph,
+    RefinedLocalClaimProposal,
+    RefinedLocalClaimResult,
 )
+from formal_islands.formalization.pipeline import build_node_coverage_sketch
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
 
 
@@ -174,6 +178,7 @@ def build_theorem_planning_request(
             ),
             (
                 "The candidates array must include objects with node_id, priority, and rationale. "
+                "Priority must be an integer from 1 to 3, where 1 is highest and 3 is lowest. Do not use words like high, medium, or low. "
                 "Candidates should refer only to node ids that exist in the graph you emit."
             ),
             (
@@ -259,7 +264,8 @@ def extract_proof_graph(
             for edge in extracted.edges
         ],
     )
-    return simplify_proof_graph(graph)
+    graph = simplify_proof_graph(graph)
+    return refine_candidate_nodes(graph, backend=backend)
 
 
 def plan_proof_graph(
@@ -287,6 +293,7 @@ def plan_proof_graph(
     candidate_graph = _apply_candidate_selection_result(
         graph=simplified_graph,
         selection=CandidateSelectionResult(candidates=planned.candidates),
+        backend=backend,
     )
     return TheoremPlanningArtifacts(
         extracted_graph=simplified_graph,
@@ -304,7 +311,7 @@ def build_candidate_selection_request(graph: ProofGraph) -> StructuredBackendReq
             json.dumps(graph_payload, indent=2),
             (
                 "Return a JSON object with a single top-level key candidates. "
-                "Each candidate must include node_id, priority, and rationale."
+                "Each candidate must include node_id, priority, and rationale, and priority must be an integer from 1 to 3 with 1 as highest priority."
             ),
             (
                 "Choose only nodes that look like strong candidates for local Lean formalization "
@@ -344,7 +351,7 @@ def select_formalization_candidates(
 
     response = backend.run_structured(build_candidate_selection_request(graph))
     selection = CandidateSelectionResult.model_validate(response.payload)
-    return _apply_candidate_selection_result(graph=graph, selection=selection)
+    return _apply_candidate_selection_result(graph=graph, selection=selection, backend=backend)
 
 
 def _build_internal_graph(
@@ -383,6 +390,7 @@ def _apply_candidate_selection_result(
     *,
     graph: ProofGraph,
     selection: CandidateSelectionResult,
+    backend: StructuredBackend | None = None,
 ) -> ProofGraph:
     candidate_map = {candidate.node_id: candidate for candidate in selection.candidates}
     graph_node_ids = {node.id for node in graph.nodes}
@@ -413,10 +421,298 @@ def _apply_candidate_selection_result(
     updated_graph = graph.model_copy(update={"nodes": updated_nodes})
     updated_graph = _promote_high_yield_technical_candidate(updated_graph)
     updated_graph = _calibrate_candidate_set(updated_graph)
-    return refine_candidate_nodes(updated_graph)
+    return refine_candidate_nodes(updated_graph, backend=backend)
 
 
-def refine_candidate_nodes(graph: ProofGraph) -> ProofGraph:
+def build_local_refinement_request(
+    *,
+    graph: ProofGraph,
+    parent_id: str,
+    candidate_id: str,
+    span_hints: list[dict[str, str | int]] | None = None,
+) -> StructuredBackendRequest:
+    """Ask a backend to propose one or more narrower local claims inside a broad node."""
+
+    parent = next(node for node in graph.nodes if node.id == parent_id)
+    candidate = next(node for node in graph.nodes if node.id == candidate_id)
+    prompt_parts = [
+        f"Theorem title: {graph.theorem_title}",
+        "Parent informal node:",
+        json.dumps(
+            {
+                "id": parent.id,
+                "title": parent.title,
+                "informal_statement": parent.informal_statement,
+                "informal_proof_text": parent.informal_proof_text,
+            },
+            indent=2,
+        ),
+        "Broad candidate node to refine:",
+        json.dumps(
+            {
+                "id": candidate.id,
+                "title": candidate.title,
+                "informal_statement": candidate.informal_statement,
+                "informal_proof_text": candidate.informal_proof_text,
+            },
+            indent=2,
+        ),
+        "Coverage sketch for the broad candidate:",
+        json.dumps(asdict(build_node_coverage_sketch(candidate)), indent=2),
+    ]
+    if span_hints:
+        prompt_parts.extend(
+            [
+                "Deterministic span hints from the current extractor:",
+                json.dumps(
+                    [
+                        {
+                            "score": span.get("score"),
+                            "segment_kind": span.get("segment_kind"),
+                            "body": span.get("body"),
+                            "excerpt": _context_window(
+                                str(span["source_text"]),
+                                int(span["start"]),
+                                int(span["end"]),
+                            ),
+                        }
+                        for span in span_hints
+                    ],
+                    indent=2,
+                ),
+            ]
+        )
+
+    prompt_parts.extend(
+        [
+            (
+                "Propose 1 to 3 narrower concrete local subclaims that sit inside the broad candidate and still "
+                "carry real inferential load for the parent node. Prefer a complete mathematical claim over a "
+                "clipped fragment. Keep the same concrete setting and make each proposal substantially smaller than "
+                "the broad candidate, but not trivial."
+            ),
+            (
+                "Each proposal should include a concise title, an optional display label, a concrete informal statement, "
+                "a short informal proof text, and a brief rationale explaining why it is a better local formal island."
+            ),
+            (
+                "Do not over-abstract. Do not replace the candidate with a generic theorem that merely resembles the "
+                "proof. Do not output a clipped sentence ending in ellipsis unless that fragment is itself the full claim."
+            ),
+            (
+                "If you can only justify one good refined claim, return one. If multiple claims are plausible, rank them "
+                "from strongest to weakest."
+            ),
+            "Return a JSON object with a top-level key proposals.",
+        ]
+    )
+
+    return StructuredBackendRequest(
+        prompt="\n\n".join(prompt_parts),
+        system_prompt=(
+            "You propose narrower local claims extracted from a broad informal proof node. Return only JSON matching the schema."
+        ),
+        json_schema=RefinedLocalClaimResult.model_json_schema(),
+        task_name="refine_local_claim",
+    )
+
+
+def _rank_local_consequence_spans(
+    *,
+    graph: ProofGraph,
+    candidate_id: str,
+) -> list[dict[str, str | int]]:
+    node_by_id = {node.id: node for node in graph.nodes}
+    incoming = _incoming_edges(graph)
+    candidate = node_by_id[candidate_id]
+    parent_edges = incoming.get(candidate_id, [])
+    if len(parent_edges) != 1:
+        return []
+    parent_id = parent_edges[0].source_id
+    parent = node_by_id[parent_id]
+
+    existing_statements = {
+        _normalize_text(graph.theorem_statement),
+        *(
+            _normalize_text(node.informal_statement)
+            for node in graph.nodes
+            if node.id != candidate_id
+        ),
+    }
+
+    source_segments = [
+        ("statement", candidate.informal_statement),
+        ("proof", candidate.informal_proof_text),
+    ]
+
+    ranked: list[dict[str, str | int]] = []
+    for segment_kind, source_text in source_segments:
+        for span in _extract_math_spans(source_text):
+            score = _score_local_consequence_span(
+                span=span,
+                parent=parent,
+                candidate=candidate,
+                source_text=source_text,
+                segment_kind=segment_kind,
+                existing_statements=existing_statements,
+            )
+            if score <= 0:
+                continue
+            ranked.append(
+                span
+                | {
+                    "source_text": source_text,
+                    "segment_kind": segment_kind,
+                    "score": score,
+                    "parent_id": parent_id,
+                }
+            )
+
+    return sorted(
+        ranked,
+        key=lambda item: (
+            -int(item["score"]),
+            int(item["start"]),
+            int(item["end"]),
+        ),
+    )
+
+
+def _score_refined_local_claim_proposal(
+    *,
+    proposal: RefinedLocalClaimProposal,
+    parent: ProofNode,
+    candidate: ProofNode,
+) -> int:
+    statement = proposal.informal_statement.strip()
+    proof_text = proposal.informal_proof_text.strip()
+    normalized = _normalize_text(f"{statement}\n{proof_text}")
+    if not statement or not proof_text:
+        return 0
+    if "..." in statement or "..." in proof_text:
+        return 0
+    if len(statement.split()) < 4 or len(statement.split()) > 48:
+        return 0
+    if not _has_relation_marker(statement):
+        return 0
+    if _normalize_text(statement) in {
+        _normalize_text(parent.informal_statement),
+        _normalize_text(candidate.informal_statement),
+    }:
+        return 0
+
+    score = _high_yield_statement_score(statement)
+    if score <= 0:
+        return 0
+    if _shared_symbol_count(statement, candidate.informal_statement) >= 2:
+        score += 2
+    if _shared_symbol_count(statement, candidate.informal_proof_text) >= 2:
+        score += 2
+    if _shared_symbol_count(statement, parent.informal_proof_text) >= 2:
+        score += 1
+    if len(proof_text.split()) <= 120:
+        score += 1
+    if len(proof_text.split()) <= 60:
+        score += 1
+    if any(marker in normalized for marker in GENERIC_CLAIM_MARKERS):
+        score -= 1
+    if any(word in normalized for word in ("local", "concrete", "identity", "estimate")):
+        score += 1
+    if _is_point_evaluation(statement):
+        score -= 3
+    return score
+
+
+def _proposal_to_refinement(
+    *,
+    proposal: RefinedLocalClaimProposal,
+    parent_id: str,
+    candidate_id: str,
+) -> dict[str, str | int]:
+    title = proposal.title.strip()
+    display_label = proposal.display_label.strip() if proposal.display_label else _refined_label_for_span(
+        proposal.informal_statement
+    )
+    return {
+        "parent_id": parent_id,
+        "title": title,
+        "display_label": display_label,
+        "statement": proposal.informal_statement.strip(),
+        "proof_text": _normalize_refined_local_claim_text(proposal.informal_proof_text),
+        "priority": 1,
+        "rationale": proposal.rationale.strip(),
+    }
+
+
+def _normalize_refined_local_claim_text(text: str) -> str:
+    text = "".join(ch for ch in text if ch in ("\n", "\t") or ord(ch) >= 32)
+    text = text.replace("\\\\(", r"\(").replace("\\\\)", r"\)")
+    text = text.replace("\\\\[", r"\[").replace("\\\\]", r"\]")
+    return text.strip()
+
+
+def _request_refined_local_claim(
+    *,
+    backend: StructuredBackend,
+    graph: ProofGraph,
+    candidate_id: str,
+) -> dict[str, str | int] | None:
+    node_by_id = {node.id: node for node in graph.nodes}
+    incoming = _incoming_edges(graph)
+    candidate = node_by_id[candidate_id]
+    parent_edges = incoming.get(candidate_id, [])
+    if len(parent_edges) != 1:
+        return None
+    parent_id = parent_edges[0].source_id
+
+    span_hints = _rank_local_consequence_spans(graph=graph, candidate_id=candidate_id)[:3]
+    try:
+        response = backend.run_structured(
+            build_local_refinement_request(
+                graph=graph,
+                parent_id=parent_id,
+                candidate_id=candidate_id,
+                span_hints=span_hints,
+            )
+        )
+        proposals = RefinedLocalClaimResult.model_validate(response.payload).proposals
+    except Exception:
+        return None
+
+    scored_proposals: list[tuple[int, RefinedLocalClaimProposal]] = []
+    for proposal in proposals:
+        score = _score_refined_local_claim_proposal(
+            proposal=proposal,
+            parent=node_by_id[parent_id],
+            candidate=candidate,
+        )
+        if score <= 0:
+            continue
+        scored_proposals.append((score, proposal))
+
+    if not scored_proposals:
+        return None
+
+    _, best_proposal = max(
+        scored_proposals,
+        key=lambda item: (
+            item[0],
+            -len(item[1].informal_proof_text),
+            -len(item[1].informal_statement),
+            item[1].title,
+        ),
+    )
+    return _proposal_to_refinement(
+        proposal=best_proposal,
+        parent_id=parent_id,
+        candidate_id=candidate_id,
+    )
+
+
+def refine_candidate_nodes(
+    graph: ProofGraph,
+    backend: StructuredBackend | None = None,
+) -> ProofGraph:
     """Conservatively carve out at most one smaller downstream formal island."""
 
     if len(graph.nodes) >= 6:
@@ -433,10 +729,18 @@ def refine_candidate_nodes(graph: ProofGraph) -> ProofGraph:
     ]
 
     for candidate in broad_candidates:
-        refinement = _extract_local_consequence_refinement(
-            graph=graph,
-            candidate_id=candidate.id,
-        )
+        refinement = None
+        if backend is not None:
+            refinement = _request_refined_local_claim(
+                backend=backend,
+                graph=graph,
+                candidate_id=candidate.id,
+            )
+        if refinement is None:
+            refinement = _extract_local_consequence_refinement(
+                graph=graph,
+                candidate_id=candidate.id,
+            )
         if refinement is None:
             continue
         return _apply_candidate_refinement(
@@ -751,7 +1055,21 @@ def _remove_assumption_nodes(
 
 def _looks_like_broad_candidate(node: ProofNode) -> bool:
     statement = _normalize_text(node.informal_statement)
+    proof_text = _normalize_text(node.informal_proof_text)
     if any(marker in statement for marker in GENERIC_CLAIM_MARKERS):
+        return True
+    if any(
+        cue in proof_text
+        for cue in (
+            "broader estimate",
+            "broader claim",
+            "downstream claim",
+            "local argument",
+            "supporting sublemma",
+            "concrete bound",
+            "local core",
+        )
+    ):
         return True
     return len(statement.split()) >= 22
 
@@ -760,9 +1078,20 @@ def _looks_like_mixed_generic_application_candidate(node: ProofNode) -> bool:
     statement = _normalize_text(node.informal_statement)
     proof_text = _normalize_text(node.informal_proof_text)
     has_generic_part = any(marker in statement for marker in GENERIC_CLAIM_MARKERS)
+    has_generic_part = has_generic_part or any(marker in proof_text for marker in GENERIC_CLAIM_MARKERS)
     has_application_cue = any(
         cue in statement or cue in proof_text
-        for cue in ("applied to", "apply this with", "this gives", "hence", "therefore", "so")
+        for cue in (
+            "applied to",
+            "apply this with",
+            "this gives",
+            "hence",
+            "therefore",
+            "so",
+            "downstream claim",
+            "broader estimate",
+            "local argument",
+        )
     )
     span_count = len(_extract_math_spans(node.informal_statement)) + len(
         _extract_math_spans(node.informal_proof_text)
@@ -879,6 +1208,38 @@ def _score_local_consequence_span(
 
 def _has_relation_marker(text: str) -> bool:
     return any(marker in text for marker in RELATION_MARKERS)
+
+
+def _is_point_evaluation(statement: str) -> bool:
+    """Return True if the statement looks like a pure point-substitution equality.
+
+    Detects claims of the form "f(x) = 0" or "f(a, b) = c" that have no
+    inequality and no universal quantifier over a non-trivial domain.  Such
+    claims carry very little inferential weight as formal islands.
+
+    A statement is a point evaluation when ALL of:
+    - it contains '=' but no inequality marker (\\le, \\ge, ≤, ≥, <, >)
+    - it contains '= 0' or ends with a simple equality to a constant
+    - it has no quantifier or interval indicator (\\in, \\forall, 'for all',
+      'for every', 'for each', 'for p', 'for u', '[0,', '(0,', '\\in (', '\\in [')
+    """
+    has_equality = "=" in statement
+    has_inequality = any(m in statement for m in ("\\le", "\\ge", "≤", "≥", "<", ">"))
+    if not has_equality or has_inequality:
+        return False
+
+    universal_indicators = (
+        "\\forall", "for all", "for every", "for each",
+        "\\in (", "\\in [", "\\in\\;", r"\in ",
+        "[0,", "(0,", "\\in(0", "\\in[0",
+        "for $p", "for $u", "for $x", "for $t",
+        "for p \\", "for u \\", "for x \\",
+    )
+    normalized = statement.lower()
+    if any(ind.lower() in normalized for ind in universal_indicators):
+        return False
+
+    return True
 
 
 def _substantive_feature_score(text: str) -> int:

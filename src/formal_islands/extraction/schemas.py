@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class ExtractionSchemaModel(BaseModel):
@@ -47,6 +47,18 @@ class CandidateSelection(ExtractionSchemaModel):
     priority: int = Field(ge=1, le=3)
     rationale: str = Field(min_length=1)
 
+    @field_validator("priority", mode="before")
+    @classmethod
+    def normalize_priority(cls, value: object) -> int:
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            named_priorities = {"high": 1, "medium": 2, "low": 3}
+            if normalized in named_priorities:
+                return named_priorities[normalized]
+            if normalized.isdigit():
+                return int(normalized)
+        return value  # type: ignore[return-value]
+
 
 class CandidateSelectionResult(ExtractionSchemaModel):
     """Top-level candidate-selection payload."""
@@ -60,6 +72,31 @@ class CandidateSelectionResult(ExtractionSchemaModel):
         if duplicates:
             duplicate_list = ", ".join(sorted(duplicates))
             raise ValueError(f"duplicate candidate node ids: {duplicate_list}")
+        return self
+
+
+class RefinedLocalClaimProposal(ExtractionSchemaModel):
+    """A backend-proposed narrower local claim extracted from a broad node."""
+
+    title: str = Field(min_length=1)
+    display_label: str | None = None
+    informal_statement: str = Field(min_length=1)
+    informal_proof_text: str = Field(min_length=1)
+    rationale: str = Field(min_length=1)
+
+
+class RefinedLocalClaimResult(ExtractionSchemaModel):
+    """Top-level payload for a hybrid refined-local-claim proposal pass."""
+
+    proposals: list[RefinedLocalClaimProposal] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_unique_titles(self) -> RefinedLocalClaimResult:
+        titles = [proposal.title for proposal in self.proposals]
+        duplicates = {title for title in titles if titles.count(title) > 1}
+        if duplicates:
+            duplicate_list = ", ".join(sorted(duplicates))
+            raise ValueError(f"duplicate refined claim proposal titles: {duplicate_list}")
         return self
 
 

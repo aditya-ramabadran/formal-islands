@@ -1,0 +1,92 @@
+{
+  "theorem_title": "Pinsker's inequality via reduction to the Bernoulli case",
+  "theorem_statement": "Pinsker's inequality via reduction to the Bernoulli case.\n\nLet \\((X,\\mathcal F)\\) be a measurable space, and let \\(P\\) and \\(Q\\) be probability measures on \\((X,\\mathcal F)\\). Assume \\(P\\ll Q\\), so that the Kullback\u2013Leibler divergence\n\\[\nD_{\\mathrm{KL}}(P\\|Q)\n:=\n\\int_X \\log\\!\\left(\\frac{dP}{dQ}\\right)\\,dP\n\\]\nis well defined in \\([0,\\infty]\\).\n\nThen\n\\[\nD_{\\mathrm{KL}}(P\\|Q)\\ge 2\\,\\|P-Q\\|_{\\mathrm{TV}}^2,\n\\]\nwhere\n\\[\n\\|P-Q\\|_{\\mathrm{TV}}:=\\sup_{A\\in\\mathcal F}|P(A)-Q(A)|.\n\\]\n\nEquivalently, if \\(\\delta:=\\|P-Q\\|_{\\mathrm{TV}}\\), then\n\\[\nD_{\\mathrm{KL}}(P\\|Q)\\ge 2\\delta^2.\n\\]\n\nThe key local scalar step is the Bernoulli inequality\n\\[\np\\log\\!\\left(\\frac{p}{q}\\right)+(1-p)\\log\\!\\left(\\frac{1-p}{1-q}\\right)\\ge 2(p-q)^2,\n\\qquad 0<p,q<1,\n\\]\nwhich appears after collapsing the general measures to a two-point partition.",
+  "root_node_id": "pinsker_main",
+  "nodes": [
+    {
+      "id": "pinsker_main",
+      "title": "Pinsker's inequality",
+      "informal_statement": "Let \\((X,\\mathcal F)\\) be a measurable space, and let \\(P\\) and \\(Q\\) be probability measures on \\((X,\\mathcal F)\\). Assume \\(P\\ll Q\\). Then \\(D_{\\mathrm{KL}}(P\\|Q)\\ge 2\\|P-Q\\|_{\\mathrm{TV}}^2\\).",
+      "informal_proof_text": "Let \\(\\delta:=\\|P-Q\\|_{\\mathrm{TV}}=\\sup_{A\\in\\mathcal F}|P(A)-Q(A)|\\). We will prove \\(D_{\\mathrm{KL}}(P\\|Q)\\ge 2\\delta^2\\). Choose a measurable set \\(A\\in\\mathcal F\\) such that \\(|P(A)-Q(A)|=\\delta\\). Replacing \\(A\\) by its complement if necessary, we may assume \\(P(A)-Q(A)=\\delta\\ge 0\\). Set \\(p:=P(A)\\) and \\(q:=Q(A)\\). Then \\(p-q=\\delta\\).\n\nDefine the measurable map \\(T:X\\to\\{0,1\\}\\) by \\(T(x)=\\mathbf 1_A(x)\\). The pushforward measures on \\(\\{0,1\\}\\) are \\(T_\\#P=(p,1-p)\\) and \\(T_\\#Q=(q,1-q)\\). By the monotonicity of relative entropy under measurable pushforward (the data-processing inequality), we have\n\\[\nD_{\\mathrm{KL}}(P\\|Q) \\ge D_{\\mathrm{KL}}(T_\\#P\\|T_\\#Q) = p\\log\\!\\left(\\frac pq\\right) + (1-p)\\log\\!\\left(\\frac{1-p}{1-q}\\right).\n\\]\nBy the Bernoulli inequality for relative entropy, this lower bound is at least \\(2(p-q)^2\\). Since \\(p-q=\\delta\\), we conclude \\(D_{\\mathrm{KL}}(P\\|Q)\\ge 2\\delta^2\\), completing the proof.",
+      "status": "informal",
+      "display_label": null,
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "bernoulli_inequality",
+      "title": "Bernoulli inequality for relative entropy",
+      "informal_statement": "For \\(0<p,q<1\\),\n\\[\np\\log\\!\\left(\\frac pq\\right) + (1-p)\\log\\!\\left(\\frac{1-p}{1-q}\\right) \\ge 2(p-q)^2.\n\\]",
+      "informal_proof_text": "Fix \\(q\\in(0,1)\\), and define for \\(p\\in(0,1)\\)\n\\[\nF_q(p) := p\\log\\!\\left(\\frac{p}{q}\\right) + (1-p)\\log\\!\\left(\\frac{1-p}{1-q}\\right) - 2(p-q)^2.\n\\]\nWe will show that \\(F_q(p)\\ge 0\\) for all \\(p\\in(0,1)\\).\n\nEvaluating at \\(p=q\\) yields \\(F_q(q) = 0\\). Now compute the first derivative with respect to \\(p\\):\n\\[\nF_q'(p) = \\log\\!\\left(\\frac{p(1-q)}{q(1-p)}\\right) - 4(p-q).\n\\]\nEvaluating the first derivative at \\(p=q\\) gives \\(F_q'(q) = 0\\).\n\nDifferentiating again, we find the second derivative:\n\\[\nF_q''(p) = \\frac1p + \\frac{1}{1-p} - 4 = \\frac{1}{p(1-p)} - 4.\n\\]\nFor \\(0<p<1\\), the elementary inequality \\(p(1-p)\\le \\frac14\\) holds, which implies \\(\\frac{1}{p(1-p)}\\ge 4\\). Therefore, \\(F_q''(p)\\ge 0\\) for all \\(p\\in(0,1)\\), meaning \\(F_q\\) is convex on \\((0,1)\\).\n\nSince \\(p=q\\) is a critical point of the convex function \\(F_q\\), it is a global minimizer. Since \\(F_q(q)=0\\), it follows that \\(F_q(p)\\ge 0\\) for all \\(p\\in(0,1)\\), which is exactly the claimed inequality.",
+      "status": "informal",
+      "display_label": null,
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "bernoulli_inequality__formal_core",
+      "title": "Certified local core for Bernoulli inequality for relative entropy",
+      "informal_statement": "For any real number \\(p\\) such that \\(0 < p < 1\\), the inequality \\(4 \\le \\frac{1}{p(1-p)}\\) holds.",
+      "informal_proof_text": "This node records a verified supporting sublemma extracted from the formalization of parent node 'bernoulli_inequality'. Consider the quadratic expression \\(p(1-p)\\). By completing the square or using the AM-GM inequality, we find its maximum value occurs at \\(p = \\frac{1}{2}\\), which gives \\(p(1-p) \\le \\frac{1}{4}\\). Because \\(0 < p < 1\\), the product \\(p(1-p)\\) is strictly positive. Taking the reciprocal of both sides of \\(0 < p(1-p) \\le \\frac{1}{4}\\) yields \\(\\frac{1}{p(1-p)} \\ge 4\\).",
+      "status": "formal_verified",
+      "display_label": "Certified core",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": {
+        "lean_theorem_name": "bernoulli_second_derivative_bound",
+        "lean_statement": "lemma bernoulli_second_derivative_bound (p : \u211d) (hp0 : 0 < p) (hp1 : p < 1) :\n  4 \u2264 1 / (p * (1 - p))",
+        "lean_code": "import Mathlib.Data.Real.Basic\nimport Mathlib.Tactic.Linarith\nimport Mathlib.Tactic.Ring\n\nlemma bernoulli_second_derivative_bound (p : \u211d) (hp0 : 0 < p) (hp1 : p < 1) :\n  4 \u2264 1 / (p * (1 - p)) := by\n  have h1 : 0 < p * (1 - p) := mul_pos hp0 (by linarith)\n  rw [le_div_iff\u2080 h1]\n  have : 4 * (p * (1 - p)) = 1 - (2 * p - 1)^2 := by ring\n  linarith [sq_nonneg (2 * p - 1)]\n",
+        "faithfulness_classification": "concrete_sublemma",
+        "faithfulness_notes": "Accepted as a narrower concrete local core in the same ambient setting; it should support the parent node rather than count as full-node certification.",
+        "verification": {
+          "status": "verified",
+          "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/bernoulli_inequality_worker_20260405-173935_83528602.lean",
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "",
+          "elapsed_seconds": 12.585365375038236,
+          "attempt_count": 1,
+          "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/bernoulli_inequality_worker_20260405-173935_83528602.lean"
+        },
+        "attempt_history": [
+          {
+            "status": "failed",
+            "command": "backend_request",
+            "exit_code": null,
+            "stdout": "",
+            "stderr": "Recovered from an agentic backend failure using the scratch file left on disk.\nGemini CLI stream output did not include valid JSON",
+            "elapsed_seconds": 0.0,
+            "attempt_count": 1,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/bernoulli_inequality_worker_20260405-173935_83528602.lean"
+          },
+          {
+            "status": "verified",
+            "command": "lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/bernoulli_inequality_worker_20260405-173935_83528602.lean",
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "elapsed_seconds": 12.585365375038236,
+            "attempt_count": 1,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/bernoulli_inequality_worker_20260405-173935_83528602.lean"
+          }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "bernoulli_inequality",
+      "target_id": "pinsker_main",
+      "label": "provides the lower bound for the two-point relative entropy",
+      "explanation": null
+    },
+    {
+      "source_id": "bernoulli_inequality__formal_core",
+      "target_id": "bernoulli_inequality",
+      "label": "formal_sublemma_for",
+      "explanation": "This verified Lean theorem certifies a narrower concrete local core used inside the parent informal step."
+    }
+  ]
+}

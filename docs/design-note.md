@@ -548,6 +548,30 @@ Current behavior:
 - if it reaches `full_node`, great
 - otherwise keep the original verified core
 
+Important nuance:
+
+- if the bounded attempt starts from a recovered agentic scratch file, the recovered artifact can still be expanded as long as it verifies as a concrete sublemma
+
+### 9.8 Hybrid refined local claims
+
+The old refined-local-claim extraction was purely deterministic and span-based.
+That was good at finding the right neighborhood, but too brittle at choosing the actual subclaim.
+
+The current direction is hybrid:
+
+- use deterministic heuristics to decide that a candidate node is too broad
+- seed a backend refinement request with the broad node, its parent, a small coverage sketch, and a few high-scoring span hints
+- ask the backend for 1 to 3 narrower concrete local claims
+- rank the proposals deterministically and keep the best valid one
+- fall back to the original span/window extractor if no proposal is usable
+
+This keeps refinement anchored in the original proof while reducing the chance that a clipped fragment becomes the final refined node.
+
+Two refinements make that hybrid path more robust:
+
+- if the backend certifies a narrow local claim, the deterministic loop can later promote a broader parent reached by a `uses` edge, so a successful core can seed a second pass upward
+- the proposal ranker penalizes point-evaluation fragments such as `F_q(q) = 0` when they look like isolated snapshots rather than reusable theorems, which helps broader calculus claims outrank tiny bookkeeping facts
+
 ## 10. How the Current Faithfulness Classifier Works
 
 The classifier is deterministic and heuristic.
@@ -608,6 +632,7 @@ Current important prompt intentions:
 - document fallback in the plan file
 - use local scouting before committing
 - use one designated main theorem plus helper lemmas if needed
+- include a lightweight coverage sketch so the worker can see the node's internal proof components
 
 This “one main theorem plus helpers” requirement was added after Run 11 exposed confusion where the file contained two theorems:
 
@@ -621,6 +646,8 @@ Current behavior now is:
 - the worker must return the intended main theorem name
 - the file may contain helper lemmas
 - artifact extraction/recovery tries to align to the intended main theorem, not just the first declaration in the file
+- after a verified concrete sublemma, the loop makes one bounded coverage-expansion attempt from the verified file rather than treating the first successful core as terminal
+- if a certified refined local claim points to a broader parent through a `uses` edge, the parent may be promoted into the candidate set on a later dynamic pass
 
 ## 12. Manual Benchmark Suite
 

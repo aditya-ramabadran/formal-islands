@@ -1,0 +1,54 @@
+{
+  "theorem_title": "It\u00f4's formula for a twice continuously differentiable function of Brownian motion",
+  "theorem_statement": "It\u00f4's formula for a twice continuously differentiable function of Brownian motion.\n\nLet \\((B_t)_{t\\ge 0}\\) be a standard one-dimensional Brownian motion, let \\(T>0\\), and let \\(f:\\mathbb{R}\\to\\mathbb{R}\\) be a \\(C^2\\) function. Assume for simplicity that \\(f'\\) and \\(f''\\) are bounded and that \\(f''\\) is uniformly continuous on \\(\\mathbb{R}\\). Then for every \\(t\\in[0,T]\\),\n\\[\nf(B_t)\n=\nf(B_0)\n+\n\\int_0^t f'(B_s)\\,dB_s\n+\n\\frac12\\int_0^t f''(B_s)\\,ds.\n\\]\n",
+  "root_node_id": "ito_formula",
+  "nodes": [
+    {
+      "id": "ito_formula",
+      "title": "It\u00f4's formula (Main Theorem)",
+      "informal_statement": "Let $(B_t)_{t\\ge 0}$ be a standard one-dimensional Brownian motion, let $T>0$, and let $f:\\mathbb{R}\\to\\mathbb{R}$ be a $C^2$ function. Assume that $f'$ and $f''$ are bounded and that $f''$ is uniformly continuous on $\\mathbb{R}$. Then for every $t\\in[0,T]$,\n\\[\nf(B_t) = f(B_0) + \\int_0^t f'(B_s)\\,dB_s + \\frac12\\int_0^t f''(B_s)\\,ds.\n\\]",
+      "informal_proof_text": "Fix $t\\in[0,T]$ and a partition $0=t_0<t_1<\\cdots<t_n=t$. Write $\\Delta B_k := B_{t_{k+1}}-B_{t_k}$. By the deterministic Taylor expansion identity, we have\n\\[\nf(B_t)-f(B_0) = \\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k + \\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2 + R_n,\n\\]\nwhere the remainder satisfies $|R_n| \\le \\frac12\\,\\omega\\!\\left(\\max_k |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2$, with $\\omega$ being a modulus of continuity for $f''$.\n\nWe analyze the three terms as the mesh of the partition tends to zero.\nFirst, the left-endpoint sums converge in $L^2$ (and hence in probability) to the It\u00f4 integral $\\int_0^t f'(B_s)\\,dB_s$.\nSecond, the quadratic variation sums converge in probability to $\\frac12\\int_0^t f''(B_s)\\,ds$.\nThird, since Brownian paths are almost surely uniformly continuous on $[0,t]$, $\\max_k |\\Delta B_k| \\to 0$ almost surely. Furthermore, the quadratic variation $\\sum_{k=0}^{n-1}(\\Delta B_k)^2$ converges to $t$ in probability. Hence $R_n \\to 0$ in probability.\n\nPutting everything together, the sum converges to the terms in It\u00f4's formula.",
+      "status": "informal",
+      "display_label": null,
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "deterministic_taylor_expansion",
+      "title": "Deterministic Taylor expansion for increments",
+      "informal_statement": "Let $f:\\mathbb{R}\\to\\mathbb{R}$ be a $C^2$ function and let $\\omega$ be a modulus of continuity for $f''$. For any finite sequence of real numbers $B_{t_0}, B_{t_1}, \\dots, B_{t_n}$, let $\\Delta B_k = B_{t_{k+1}}-B_{t_k}$. Then\n\\[\nf(B_{t_n})-f(B_{t_0}) = \\sum_{k=0}^{n-1} f'(B_{t_k})\\,\\Delta B_k + \\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2 + R_n,\n\\]\nwhere the remainder $R_n$ satisfies\n\\[\n|R_n| \\le \\frac12\\,\\omega\\!\\left(\\max_{0 \\le k \\le n-1} |\\Delta B_k|\\right)\\sum_{k=0}^{n-1}(\\Delta B_k)^2.\n\\]",
+      "informal_proof_text": "We begin with the telescoping identity $f(B_{t_n})-f(B_{t_0}) = \\sum_{k=0}^{n-1}\\bigl(f(B_{t_{k+1}})-f(B_{t_k})\\bigr)$.\nApplying Taylor's theorem with remainder to each increment, there exists $\\xi_k$ between $B_{t_k}$ and $B_{t_{k+1}}$ such that\n\\[\nf(B_{t_{k+1}}) = f(B_{t_k}) + f'(B_{t_k})\\,\\Delta B_k + \\frac12 f''(B_{t_k}) (\\Delta B_k)^2 + \\frac12\\bigl(f''(\\xi_k)-f''(B_{t_k})\\bigr)(\\Delta B_k)^2.\n\\]\nSumming over $k$, we obtain the stated identity with remainder\n\\[\nR_n = \\frac12\\sum_{k=0}^{n-1}\\bigl(f''(\\xi_k)-f''(B_{t_k})\\bigr)(\\Delta B_k)^2.\n\\]\nSince $\\xi_k$ lies between $B_{t_k}$ and $B_{t_{k+1}}$, we have $|\\xi_k - B_{t_k}| \\le |\\Delta B_k|$. By the definition of the modulus of continuity, $|f''(\\xi_k)-f''(B_{t_k})| \\le \\omega(|\\Delta B_k|) \\le \\omega(\\max_j |\\Delta B_j|)$. The bound on $|R_n|$ then follows from the triangle inequality.",
+      "status": "candidate_formal",
+      "display_label": null,
+      "formalization_priority": 1,
+      "formalization_rationale": "An entirely deterministic, algebraic inequality that isolates the analytic Taylor expansion step from the stochastic elements. It has extremely clear boundaries and is straightforward to formalize, making it a perfect, high-yield formal island.",
+      "formal_artifact": null
+    },
+    {
+      "id": "quadratic_variation_convergence",
+      "title": "Convergence of the quadratic variation term",
+      "informal_statement": "Let $(B_t)_{t\\ge 0}$ be a standard Brownian motion and $f''$ be a bounded continuous function. For a partition $0=t_0<t_1<\\cdots<t_n=t$, let $\\Delta B_k = B_{t_{k+1}}-B_{t_k}$ and $\\Delta t_k = t_{k+1}-t_k$. As the mesh of the partition tends to zero,\n\\[\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2 \\to \\frac12\\int_0^t f''(B_s)\\,ds\n\\]\nin probability.",
+      "informal_proof_text": "We can split the sum as follows:\n\\[\n\\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})(\\Delta B_k)^2 = \\frac12 \\sum_{k=0}^{n-1} f''(B_{t_k})\\,\\Delta t_k + \\frac12 M_n,\n\\]\nwhere $M_n := \\sum_{k=0}^{n-1} f''(B_{t_k})\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr)$.\n\nFor the first term, since $s\\mapsto f''(B_s)$ is almost surely continuous, the Riemann sums converge almost surely to $\\int_0^t f''(B_s)\\,ds$.\n\nFor the second term, observe that $M_n$ is a sum of martingale differences. Let $C$ be a bound on $|f''|$. Using the fact that $\\mathbb E\\bigl[((\\Delta B_k)^2-\\Delta t_k)^2 \\mid \\mathcal F_{t_k}\\bigr] = 2(\\Delta t_k)^2$, we have\n\\[\n\\mathbb E[M_n^2] = \\sum_{k=0}^{n-1} \\mathbb E\\!\\left[ f''(B_{t_k})^2\\bigl((\\Delta B_k)^2-\\Delta t_k\\bigr)^2 \\right] \\le 2C^2 \\sum_{k=0}^{n-1} (\\Delta t_k)^2.\n\\]\nAs the mesh tends to zero, $\\sum_{k=0}^{n-1} (\\Delta t_k)^2 \\to 0$, so $M_n \\to 0$ in $L^2$, and thus in probability. The result follows.",
+      "status": "candidate_formal",
+      "display_label": null,
+      "formalization_priority": 2,
+      "formalization_rationale": "A highly standard application of $L^2$ martingale techniques to bounded predictable integrands to compute the specific $dt$ contribution. While reliant on stochastic integration definitions, it functions as a solid, standalone probabilistic estimate.",
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "deterministic_taylor_expansion",
+      "target_id": "ito_formula",
+      "label": "algebraic expansion",
+      "explanation": "Provides the discrete formula and explicitly bounds the remainder term for the telescoping sum."
+    },
+    {
+      "source_id": "quadratic_variation_convergence",
+      "target_id": "ito_formula",
+      "label": "quadratic variation limit",
+      "explanation": "Evaluates the limit of the second derivative sum to yield the non-martingale integral in It\u00f4's formula."
+    }
+  ]
+}

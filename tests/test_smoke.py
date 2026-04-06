@@ -426,7 +426,7 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
         return 0
 
     monkeypatch.setattr("formal_islands.smoke.cmd_plan", fake_plan)
-    monkeypatch.setattr("formal_islands.smoke.cmd_formalize_one", fake_formalize)
+    monkeypatch.setattr("formal_islands.smoke.cmd_formalize_all_candidates", fake_formalize)
     monkeypatch.setattr("formal_islands.smoke.cmd_report", fake_report)
 
     exit_code = cmd_run_benchmark(

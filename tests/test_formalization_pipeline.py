@@ -79,6 +79,7 @@ def test_build_formalization_request_includes_local_context() -> None:
     assert request.task_name == "formalize_node"
     assert request.json_schema["type"] == "object"
     assert "Immediate parent summary" in request.prompt
+    assert "Coverage sketch" in request.prompt
     assert "Arithmetic lemma" in request.prompt
     assert "arbitrary index types" in request.prompt.lower()
     assert "easy side consequence" in request.prompt.lower()
@@ -86,6 +87,7 @@ def test_build_formalization_request_includes_local_context() -> None:
     assert "do not guess deep or speculative module paths" in request.prompt.lower()
     assert "Ambient theorem statement:" in request.prompt
     assert "preserve the ambient mathematical setting" in request.prompt.lower()
+    assert "coverage sketch" in request.prompt.lower()
 
 
 def test_request_node_formalization_rejects_measure_space_abstraction_for_concrete_node() -> None:

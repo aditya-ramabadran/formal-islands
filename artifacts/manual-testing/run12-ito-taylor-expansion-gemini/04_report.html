@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Itô&#x27;s formula for a twice continuously differentiable function of Brownian motion - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: rgba(255, 250, 241, 0.98);
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
+      --graph-shell-top: rgba(255, 251, 242, 0.96);
+      --graph-shell-bottom: rgba(245, 238, 227, 0.96);
+      --checklist-panel: rgba(255, 250, 241, 0.95);
+      --target-panel: #fff8ee;
+      --code-surface: #f4efe6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161311;
+        --panel: #211b17;
+        --ink: #f3ede5;
+        --muted: #c0b2a3;
+        --border: #4a3d32;
+        --accent: #f0b47b;
+        --accent-soft: #3a2b20;
+        --highlight: #ffb25c;
+        --highlight-soft: #3f2d19;
+        --preview-soft: #312419;
+        --checked: #65c08a;
+        --checked-soft: #213126;
+        --edge: #8f8172;
+        --status-informal-stroke: #d69760;
+        --status-informal-fill: rgba(46, 34, 26, 0.96);
+        --status-candidate-stroke: #f0a64e;
+        --status-candidate-fill: #3f2d18;
+        --status-verified-stroke: #65c08a;
+        --status-verified-fill: #213126;
+        --status-failed-stroke: #dd8a79;
+        --status-failed-fill: #3b2320;
+        --graph-shell-top: rgba(44, 34, 27, 0.98);
+        --graph-shell-bottom: rgba(32, 25, 21, 0.98);
+        --checklist-panel: rgba(36, 29, 24, 0.98);
+        --target-panel: #31261f;
+        --code-surface: #2a231e;
+      }
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(circle at top, #2a211b, var(--bg));
+      }
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .math-text mjx-container {
+      max-width: 100%;
+    }
+    .math-text mjx-container[display="true"] {
+      margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .math-text mjx-container[jax="CHTML"][display="true"] {
+      padding: 0 !important;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--graph-shell-top), var(--graph-shell-bottom));
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+    .graph-frame {
+      width: min(100%, 460px);
+      margin: 0 auto;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 240px;
+      overflow: visible;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 2.8;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-box {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-title {
+      fill: var(--ink);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 9.5px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--checklist-panel);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {
+      min-width: 0;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: var(--target-panel);
+    }
+    pre {
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 0.75rem;
+      background: var(--code-surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin: 0.6rem 0;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    code.inline-code {
+      background: var(--code-surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.95em;
+      white-space: break-spaces;
+    }
+    .statement-code {
+      margin-top: 0.35rem;
+    }
+    .statement-code pre,
+    .checklist-code pre {
+      margin-top: 0.35rem;
+      background: var(--code-surface);
+    }
+    .lean-code {
+      color: #2a241f;
+    }
+    .lean-code .tok-keyword {
+      color: #8b2f18;
+      font-weight: 700;
+    }
+    .lean-code .tok-tactic {
+      color: #9d5d17;
+      font-weight: 600;
+    }
+    .lean-code .tok-type {
+      color: #245f7a;
+    }
+    .lean-code .tok-number {
+      color: #7442a8;
+    }
+    .lean-code .tok-comment {
+      color: #6e7a60;
+      font-style: italic;
+    }
+    .lean-code .tok-string {
+      color: #2d7f4d;
+    }
+    @media (prefers-color-scheme: dark) {
+      .lean-code {
+        color: #f2e8dc;
+      }
+      .lean-code .tok-keyword {
+        color: #f08f63;
+      }
+      .lean-code .tok-tactic {
+        color: #f4b35d;
+      }
+      .lean-code .tok-type {
+        color: #73c7ff;
+      }
+      .lean-code .tok-number {
+        color: #be8cff;
+      }
+      .lean-code .tok-comment {
+        color: #97b18b;
+      }
+      .lean-code .tok-string {
+        color: #67d59a;
+      }
+    }
+    
+            .report-root:has(a.node-ito_formula:hover) .node-ito_formula.node-card,
+            .report-root:has(#node-ito_formula:target) a.node-ito_formula .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-ito_formula:hover) .node-ito_formula.node-card,
+            .report-root:has(#node-ito_formula:target).report-root .node-ito_formula.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-deterministic_taylor_expansion:hover) .node-deterministic_taylor_expansion.node-card,
+            .report-root:has(#node-deterministic_taylor_expansion:target) a.node-deterministic_taylor_expansion .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-deterministic_taylor_expansion:hover) .node-deterministic_taylor_expansion.node-card,
+            .report-root:has(#node-deterministic_taylor_expansion:target).report-root .node-deterministic_taylor_expansion.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-quadratic_variation_convergence:hover) .node-quadratic_variation_convergence.node-card,
+            .report-root:has(#node-quadratic_variation_convergence:target) a.node-quadratic_variation_convergence .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-quadratic_variation_convergence:hover) .node-quadratic_variation_convergence.node-card,
+            .report-root:has(#node-quadratic_variation_convergence:target).report-root .node-quadratic_variation_convergence.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-ito_formula:hover) a.node-ito_formula .graph-node-box,
+.report-root:has(.obligation-informal-proof-ito_formula:hover) .node-ito_formula.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-ito_formula:checked) a.node-ito_formula .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-ito_formula:checked) .node-ito_formula.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-ito_formula:checked) .edge-deterministic_taylor_expansion-ito_formula,
+.report-root:has(#obligation-check-informal-proof-ito_formula:checked) .edge-quadratic_variation_convergence-ito_formula {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-ito_formula:hover) .obligation-informal-proof-ito_formula {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-ito_formula:checked) .obligation-informal-proof-ito_formula {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-deterministic_taylor_expansion:hover) a.node-deterministic_taylor_expansion .graph-node-box,
+.report-root:has(.obligation-informal-proof-deterministic_taylor_expansion:hover) .node-deterministic_taylor_expansion.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-deterministic_taylor_expansion:checked) a.node-deterministic_taylor_expansion .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-deterministic_taylor_expansion:checked) .node-deterministic_taylor_expansion.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-deterministic_taylor_expansion:checked) .edge-deterministic_taylor_expansion-ito_formula {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-deterministic_taylor_expansion:hover) .obligation-informal-proof-deterministic_taylor_expansion {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-deterministic_taylor_expansion:checked) .obligation-informal-proof-deterministic_taylor_expansion {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-quadratic_variation_convergence:hover) a.node-quadratic_variation_convergence .graph-node-box,
+.report-root:has(.obligation-informal-proof-quadratic_variation_convergence:hover) .node-quadratic_variation_convergence.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-quadratic_variation_convergence:checked) a.node-quadratic_variation_convergence .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-quadratic_variation_convergence:checked) .node-quadratic_variation_convergence.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-quadratic_variation_convergence:checked) .edge-quadratic_variation_convergence-ito_formula {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-quadratic_variation_convergence:hover) .obligation-informal-proof-quadratic_variation_convergence {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-quadratic_variation_convergence:checked) .obligation-informal-proof-quadratic_variation_convergence {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-root">
+    <section>
+      <h1>Itô&#x27;s formula for a twice continuously differentiable function of Brownian motion</h1>
+      <div class="math-text">Itô&#x27;s formula for a twice continuously differentiable function of Brownian motion.
+
+Let \((B_t)_{t\ge 0}\) be a standard one-dimensional Brownian motion, let \(T&gt;0\), and let \(f:\mathbb{R}\to\mathbb{R}\) be a \(C^2\) function. Assume for simplicity that \(f&#x27;\) and \(f&#x27;&#x27;\) are bounded and that \(f&#x27;&#x27;\) is uniformly continuous on \(\mathbb{R}\). Then for every \(t\in[0,T]\),
+\[
+f(B_t)
+=
+f(B_0)
++
+\int_0^t f&#x27;(B_s)\,dB_s
++
+\frac12\int_0^t f&#x27;&#x27;(B_s)\,ds.
+\]</div>
+      <p class="meta">Root node: ito_formula</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 3</span>
+        <span class="pill">Edges: 2</span>
+        <span class="pill">Informal: 1</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 0</span>
+        <span class="pill">Failed: 2</span>
+      </p>
+      <div class="graph-shell">
+        
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><line class="graph-edge edge-deterministic_taylor_expansion-ito_formula" x1="210.0" y1="201.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
+<line class="graph-edge edge-quadratic_variation_convergence-ito_formula" x1="210.0" y1="319.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line></g>
+        <g>
+    <a class="graph-node-link node-ito_formula status-informal" href="#node-ito_formula">
+      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="42">Itô&#x27;s formula</tspan>
+<tspan x="210.0" y="54">(Main Theorem)</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">ito_formula</text>
+    </a>
+    
+
+    <a class="graph-node-link node-deterministic_taylor_expansion status-formal-failed" href="#node-deterministic_taylor_expansion">
+      <rect class="graph-node-box status-formal-failed" x="144.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="160">Deterministic</tspan>
+<tspan x="210.0" y="172">Taylor expansio…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="186">deterministic_taylor_expansion</text>
+    </a>
+    
+
+    <a class="graph-node-link node-quadratic_variation_convergence status-formal-failed" href="#node-quadratic_variation_convergence">
+      <rect class="graph-node-box status-formal-failed" x="144.0" y="256" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="278">Convergence of</tspan>
+<tspan x="210.0" y="290">the quadratic v…</tspan></text>
+      <text class="graph-node-id" x="210.0" y="304">quadratic_variation_convergence</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+      </div>
+      <p class="graph-caption">
+        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+      </p>
+      <p class="graph-caption">
+        Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
+      </p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-informal-proof-ito_formula" data-obligation-id="informal-proof-ito_formula">
+      <label class="checklist-label" for="obligation-check-informal-proof-ito_formula">
+        <input id="obligation-check-informal-proof-ito_formula" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;ito_formula&#x27; (Itô&#x27;s formula (Main Theorem)) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-ito_formula">ito_formula</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-deterministic_taylor_expansion" data-obligation-id="informal-proof-deterministic_taylor_expansion">
+      <label class="checklist-label" for="obligation-check-informal-proof-deterministic_taylor_expansion">
+        <input id="obligation-check-informal-proof-deterministic_taylor_expansion" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;deterministic_taylor_expansion&#x27; (Deterministic Taylor expansion for increments) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-deterministic_taylor_expansion">deterministic_taylor_expansion</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-informal-proof-quadratic_variation_convergence" data-obligation-id="informal-proof-quadratic_variation_convergence">
+      <label class="checklist-label" for="obligation-check-informal-proof-quadratic_variation_convergence">
+        <input id="obligation-check-informal-proof-quadratic_variation_convergence" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;quadratic_variation_convergence&#x27; (Convergence of the quadratic variation term) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-quadratic_variation_convergence">quadratic_variation_convergence</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="nodes-grid">
+        
+    <article class="node-card node-ito_formula" id="node-ito_formula" data-node-id="ito_formula">
+      <h3>Itô&#x27;s formula (Main Theorem)</h3>
+      <p class="meta">Node id: ito_formula | Status: informal</p>
+      
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let $(B_t)_{t\ge 0}$ be a standard one-dimensional Brownian motion, let $T&gt;0$, and let $f:\mathbb{R}\to\mathbb{R}$ be a $C^2$ function. Assume that $f&#x27;$ and $f&#x27;&#x27;$ are bounded and that $f&#x27;&#x27;$ is uniformly continuous on $\mathbb{R}$. Then for every $t\in[0,T]$,
+\[
+f(B_t) = f(B_0) + \int_0^t f&#x27;(B_s)\,dB_s + \frac12\int_0^t f&#x27;&#x27;(B_s)\,ds.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Fix $t\in[0,T]$ and a partition $0=t_0&lt;t_1&lt;\cdots&lt;t_n=t$. Write $\Delta B_k := B_{t_{k+1}}-B_{t_k}$. By the deterministic Taylor expansion identity, we have
+\[
+f(B_t)-f(B_0) = \sum_{k=0}^{n-1} f&#x27;(B_{t_k})\,\Delta B_k + \frac12 \sum_{k=0}^{n-1} f&#x27;&#x27;(B_{t_k})(\Delta B_k)^2 + R_n,
+\]
+where the remainder satisfies $|R_n| \le \frac12\,\omega\!\left(\max_k |\Delta B_k|\right)\sum_{k=0}^{n-1}(\Delta B_k)^2$, with $\omega$ being a modulus of continuity for $f&#x27;&#x27;$.
+
+We analyze the three terms as the mesh of the partition tends to zero.
+First, the left-endpoint sums converge in $L^2$ (and hence in probability) to the Itô integral $\int_0^t f&#x27;(B_s)\,dB_s$.
+Second, the quadratic variation sums converge in probability to $\frac12\int_0^t f&#x27;&#x27;(B_s)\,ds$.
+Third, since Brownian paths are almost surely uniformly continuous on $[0,t]$, $\max_k |\Delta B_k| \to 0$ almost surely. Furthermore, the quadratic variation $\sum_{k=0}^{n-1}(\Delta B_k)^2$ converges to $t$ in probability. Hence $R_n \to 0$ in probability.
+
+Putting everything together, the sum converges to the terms in Itô&#x27;s formula.</div>
+      
+    </article>
+    
+
+    <article class="node-card node-deterministic_taylor_expansion" id="node-deterministic_taylor_expansion" data-node-id="deterministic_taylor_expansion">
+      <h3>Deterministic Taylor expansion for increments</h3>
+      <p class="meta">Node id: deterministic_taylor_expansion | Status: formal_failed</p>
+      
+      <p class="meta">Formalization priority: 1. Rationale: An entirely deterministic, algebraic inequality that isolates the analytic Taylor expansion step from the stochastic elements. It has extremely clear boundaries and is straightforward to formalize, making it a perfect, high-yield formal island.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let $f:\mathbb{R}\to\mathbb{R}$ be a $C^2$ function and let $\omega$ be a modulus of continuity for $f&#x27;&#x27;$. For any finite sequence of real numbers $B_{t_0}, B_{t_1}, \dots, B_{t_n}$, let $\Delta B_k = B_{t_{k+1}}-B_{t_k}$. Then
+\[
+f(B_{t_n})-f(B_{t_0}) = \sum_{k=0}^{n-1} f&#x27;(B_{t_k})\,\Delta B_k + \frac12 \sum_{k=0}^{n-1} f&#x27;&#x27;(B_{t_k})(\Delta B_k)^2 + R_n,
+\]
+where the remainder $R_n$ satisfies
+\[
+|R_n| \le \frac12\,\omega\!\left(\max_{0 \le k \le n-1} |\Delta B_k|\right)\sum_{k=0}^{n-1}(\Delta B_k)^2.
+\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">We begin with the telescoping identity $f(B_{t_n})-f(B_{t_0}) = \sum_{k=0}^{n-1}\bigl(f(B_{t_{k+1}})-f(B_{t_k})\bigr)$.
+Applying Taylor&#x27;s theorem with remainder to each increment, there exists $\xi_k$ between $B_{t_k}$ and $B_{t_{k+1}}$ such that
+\[
+f(B_{t_{k+1}}) = f(B_{t_k}) + f&#x27;(B_{t_k})\,\Delta B_k + \frac12 f&#x27;&#x27;(B_{t_k}) (\Delta B_k)^2 + \frac12\bigl(f&#x27;&#x27;(\xi_k)-f&#x27;&#x27;(B_{t_k})\bigr)(\Delta B_k)^2.
+\]
+Summing over $k$, we obtain the stated identity with remainder
+\[
+R_n = \frac12\sum_{k=0}^{n-1}\bigl(f&#x27;&#x27;(\xi_k)-f&#x27;&#x27;(B_{t_k})\bigr)(\Delta B_k)^2.
+\]
+Since $\xi_k$ lies between $B_{t_k}$ and $B_{t_{k+1}}$, we have $|\xi_k - B_{t_k}| \le |\Delta B_k|$. By the definition of the modulus of continuity, $|f&#x27;&#x27;(\xi_k)-f&#x27;&#x27;(B_{t_k})| \le \omega(|\Delta B_k|) \le \omega(\max_j |\Delta B_j|)$. The bound on $|R_n|$ then follows from the triangle inequality.</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> deterministic_taylor_expansion_backend_failure</p>
+        <p><strong>Coverage:</strong> full_node</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-comment">-- backend did not return a Lean statement</span></code></pre>
+        </div>
+        <p><strong>Verification status:</strong> failed</p>
+        <p><strong>Verification command:</strong> <code>backend_request</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-comment">-- backend did not return Lean code</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+Gemini CLI timed out while waiting for structured output for task &#x27;formalize_node_agentic&#x27; after 900.0 seconds.</code></pre>
+        </details>
+        
+    </article>
+    
+
+    <article class="node-card node-quadratic_variation_convergence" id="node-quadratic_variation_convergence" data-node-id="quadratic_variation_convergence">
+      <h3>Convergence of the quadratic variation term</h3>
+      <p class="meta">Node id: quadratic_variation_convergence | Status: formal_failed</p>
+      
+      <p class="meta">Formalization priority: 2. Rationale: A highly standard application of $L^2$ martingale techniques to bounded predictable integrands to compute the specific $dt$ contribution. While reliant on stochastic integration definitions, it functions as a solid, standalone probabilistic estimate.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let $(B_t)_{t\ge 0}$ be a standard Brownian motion and $f&#x27;&#x27;$ be a bounded continuous function. For a partition $0=t_0&lt;t_1&lt;\cdots&lt;t_n=t$, let $\Delta B_k = B_{t_{k+1}}-B_{t_k}$ and $\Delta t_k = t_{k+1}-t_k$. As the mesh of the partition tends to zero,
+\[
+\frac12 \sum_{k=0}^{n-1} f&#x27;&#x27;(B_{t_k})(\Delta B_k)^2 \to \frac12\int_0^t f&#x27;&#x27;(B_s)\,ds
+\]
+in probability.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">We can split the sum as follows:
+\[
+\frac12 \sum_{k=0}^{n-1} f&#x27;&#x27;(B_{t_k})(\Delta B_k)^2 = \frac12 \sum_{k=0}^{n-1} f&#x27;&#x27;(B_{t_k})\,\Delta t_k + \frac12 M_n,
+\]
+where $M_n := \sum_{k=0}^{n-1} f&#x27;&#x27;(B_{t_k})\bigl((\Delta B_k)^2-\Delta t_k\bigr)$.
+
+For the first term, since $s\mapsto f&#x27;&#x27;(B_s)$ is almost surely continuous, the Riemann sums converge almost surely to $\int_0^t f&#x27;&#x27;(B_s)\,ds$.
+
+For the second term, observe that $M_n$ is a sum of martingale differences. Let $C$ be a bound on $|f&#x27;&#x27;|$. Using the fact that $\mathbb E\bigl[((\Delta B_k)^2-\Delta t_k)^2 \mid \mathcal F_{t_k}\bigr] = 2(\Delta t_k)^2$, we have
+\[
+\mathbb E[M_n^2] = \sum_{k=0}^{n-1} \mathbb E\!\left[ f&#x27;&#x27;(B_{t_k})^2\bigl((\Delta B_k)^2-\Delta t_k\bigr)^2 \right] \le 2C^2 \sum_{k=0}^{n-1} (\Delta t_k)^2.
+\]
+As the mesh tends to zero, $\sum_{k=0}^{n-1} (\Delta t_k)^2 \to 0$, so $M_n \to 0$ in $L^2$, and thus in probability. The result follows.</div>
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> quadratic_variation_convergence_backend_failure</p>
+        <p><strong>Coverage:</strong> full_node</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-comment">-- backend did not return a Lean statement</span></code></pre>
+        </div>
+        <p><strong>Verification status:</strong> failed</p>
+        <p><strong>Verification command:</strong> <code>backend_request</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-comment">-- backend did not return Lean code</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+Gemini CLI stream output did not include valid JSON</code></pre>
+        </details>
+        
+    </article>
+    
+      </div>
+    </section>
+  </main>
+</body>
+</html>

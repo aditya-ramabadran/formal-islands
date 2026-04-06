@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import asdict
 from pathlib import Path
 
 from formal_islands.backends import (
@@ -14,6 +15,7 @@ from formal_islands.backends import (
 from formal_islands.formalization.pipeline import (
     FormalizationFaithfulnessError,
     enforce_formalization_faithfulness,
+    build_node_coverage_sketch,
 )
 from formal_islands.formalization.schemas import AgenticFormalizationResult
 from formal_islands.models import FormalArtifact, ProofGraph, VerificationResult
@@ -95,6 +97,13 @@ def build_agentic_formalization_request(
                 },
                 indent=2,
             ),
+            "Coverage sketch:",
+            json.dumps(asdict(build_node_coverage_sketch(node)), indent=2),
+            (
+                "Mathlib lives under the workspace's `.lake/packages/mathlib/Mathlib` directory. "
+                "Do not assume a `lean_project/mathlib/Mathlib` path. If you need to inspect Mathlib source, "
+                "use the workspace root and the `.lake/packages` layout that actually exists on disk."
+            ),
             (
                 "Immediate parent summary:\n" + json.dumps(parent_summaries[0], indent=2)
                 if parent_summaries
@@ -136,11 +145,13 @@ def build_agentic_formalization_request(
             ),
             (
                 "Default to the most literal whole-node theorem shape that directly mirrors the target node's stated "
-                "mathematical claim. Treat that literal whole-node target as the starting point, not as an optional stretch goal."
+                "mathematical claim. Treat that literal whole-node target as the real starting point, not as an optional stretch goal "
+                "or a theorem you only mention briefly before falling back."
             ),
             (
                 "Only fall back to a narrower concrete sublemma if your local scouting or compiler experiments show that "
-                "the literal whole-node target is infeasible in the available time or Mathlib surface area."
+                "the literal whole-node target is genuinely infeasible in the available time or Mathlib surface area, after a "
+                "real attempt to prove the literal node-level statement or a very close transcription of it."
             ),
             (
                 "If you do fall back, record that explicitly in the plan file: note the literal whole-node target you tried, "
@@ -186,6 +197,11 @@ def build_agentic_formalization_request(
                 "or integrals over a theorem about an arbitrary type, arbitrary measure, or unrelated families of functions."
             ),
             (
+                "Use the coverage sketch to decide what the theorem is supposed to cover. If you only prove one "
+                "component of the sketch, keep the plan and Lean file honest about that partial coverage rather than "
+                "pretending to certify the whole node."
+            ),
+            (
                 "Do not replace a concrete statement with a generic measure-space or arbitrary ambient-type theorem "
                 "unless the original node is already phrased in that abstract setting."
             ),
@@ -194,9 +210,10 @@ def build_agentic_formalization_request(
                 "replacement should still carry meaningful inferential load in the parent proof."
             ),
             (
-                "Before settling on a fallback theorem, spend a short attempt on the literal node-level statement or the "
+                "Before settling on a fallback theorem, spend a short but genuine attempt on the literal node-level statement or the "
                 "closest direct transcription that seems syntactically realistic. Do not jump immediately to a more abstract "
-                "or indirect theorem just because it is familiar."
+                "or indirect theorem just because it is familiar, and do not treat a tiny side lemma as an acceptable fallback "
+                "unless it really is the best reachable core after that attempt."
             ),
             (
                 "Return a JSON object with keys lean_theorem_name, lean_statement, final_file_path, and plan_file_path. "
