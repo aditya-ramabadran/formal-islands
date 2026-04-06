@@ -88,6 +88,7 @@ def test_build_formalization_request_includes_local_context() -> None:
     assert "Ambient theorem statement:" in request.prompt
     assert "preserve the ambient mathematical setting" in request.prompt.lower()
     assert "coverage sketch" in request.prompt.lower()
+    assert "mathlib search results" not in request.prompt.lower()
 
 
 def test_request_node_formalization_rejects_measure_space_abstraction_for_concrete_node() -> None:

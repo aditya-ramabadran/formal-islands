@@ -322,7 +322,8 @@ Important current behavior:
 
 - `formalize-one` formalizes one chosen candidate node
 - `formalize-all-candidates` runs candidates sequentially through the updated graph
-- `run-benchmark` is the one-command smoke path
+- `run-benchmark` is the one-command smoke path and, when `--node-id auto`, it now keeps walking the graph in priority order instead of stopping after the first success
+- `--formalization-timeout-seconds` controls the agentic backend timeout for the formalization step
 
 ## 7. Backend Layer
 
@@ -331,6 +332,7 @@ The backend layer lives in:
 - [backends/base.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/backends/base.py)
 - [backends/codex_cli.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/backends/codex_cli.py)
 - [backends/claude_code.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/backends/claude_code.py)
+- [backends/gemini_cli.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/backends/gemini_cli.py)
 - [backends/mock.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/backends/mock.py)
 
 ### 7.1 Codex backend
@@ -363,17 +365,29 @@ It supports:
 - executable discovery including common local install locations
 - smoke CLI integration
 
-At the time of writing:
-
-- it has been wired and tested locally at the adapter level
-- but not yet exercised in the full benchmark suite in this conversation
+It has now been exercised in the benchmark suite in this repo alongside Codex and Gemini.
 
 So it should be treated as:
 
 - implementation-ready
-- benchmark-untested
+- benchmarked
 
-### 7.3 Backend logs
+### 7.3 Gemini backend
+
+The Gemini backend also exists as a real parallel backend.
+
+It supports:
+
+- structured output mode
+- agentic mode
+- stream-json handling
+- yolo approval mode for the Lean worker path
+- backend logging
+- smoke CLI integration
+
+The Gemini adapter is now used both for planning and for agentic formalization runs, with prompt guidance tuned to avoid tiny fallback shards and to keep the worker moving toward a faithful theorem shape.
+
+### 7.4 Backend logs
 
 Each run writes backend logs in the run folder under:
 
@@ -412,8 +426,8 @@ Generated worker/scratch files live in:
 
 Important file patterns:
 
-- `<node>_worker.lean`
-- `<node>_worker_plan.md`
+- `<node>_worker_<timestamp>_<suffix>.lean`
+- `<node>_worker_<timestamp>_<suffix>_plan.md`
 - `<node>_attempt_<k>.lean`
 
 The verifier logic lives in:
@@ -432,6 +446,32 @@ The pipeline now also has salvage/recovery logic:
 - and still write back `03_*` artifacts
 
 This was added because some runs produced useful Lean files but failed to complete the backend structured handoff.
+
+### 8.1 External Mathlib search helper
+
+The worker search bottleneck has been pushed out of Lean itself.
+
+The repository now has a dedicated retrieval layer in:
+
+- [mathlib_search.py](/Users/adihaya/GitHub/formal-islands/src/formal_islands/mathlib_search.py)
+
+It supports:
+
+- Loogle exact-shape search
+- LeanSearch natural-language search
+- a local `formal-islands-search` CLI helper for highly targeted follow-up search outside Lean
+
+Example direct use:
+
+```bash
+./.venv/bin/formal-islands-search --query "Real.log, Real.sqrt" --provider loogle
+```
+
+The important policy is:
+
+- the formalization prompts mention the helper, but the host pipeline does not precompute and inject search bundles by default
+- if more search is truly needed, keep it to at most 2 targeted helper queries
+- prefer one exact Loogle-shaped query and one LeanSearch natural-language query
 
 ## 9. Evolution of the Architecture
 
@@ -485,6 +525,8 @@ It allowed:
 - real Lean reruns
 - local API scouting and planning
 - better recovery from compiler issues
+
+The current search strategy changed after repeated benchmark runs showed that broad grep-based scouting was too slow and too noisy. The worker is now told about the local `formal-islands-search` helper and a strict retrieval budget, but the host pipeline does not precompute or inject search hints by default. The prompt still tells it to commit to a theorem shape sooner.
 
 ### 9.4 Planning markdown file
 
@@ -630,7 +672,10 @@ Current important prompt intentions:
 - start from the most literal whole-node theorem shape
 - only fall back to a concrete sublemma if needed
 - document fallback in the plan file
-- use local scouting before committing
+- the local `formal-islands-search` helper is available if it truly needs extra retrieval
+- if more search is truly needed, do at most 2 additional targeted searches with `formal-islands-search`
+- prefer one exact Loogle-shaped query and one LeanSearch natural-language query
+- explicitly use the workspace's real Mathlib location under `.lake/packages/mathlib/Mathlib`
 - use one designated main theorem plus helper lemmas if needed
 - include a lightweight coverage sketch so the worker can see the node's internal proof components
 
@@ -648,6 +693,7 @@ Current behavior now is:
 - artifact extraction/recovery tries to align to the intended main theorem, not just the first declaration in the file
 - after a verified concrete sublemma, the loop makes one bounded coverage-expansion attempt from the verified file rather than treating the first successful core as terminal
 - if a certified refined local claim points to a broader parent through a `uses` edge, the parent may be promoted into the candidate set on a later dynamic pass
+- timestamped worker and plan filenames avoid collisions when the same node is revisited
 
 ## 12. Manual Benchmark Suite
 
@@ -908,7 +954,16 @@ There is currently an input file:
 
 - [run12_ito_taylor_expansion.json](/Users/adihaya/GitHub/formal-islands/examples/manual-testing/run12_ito_taylor_expansion.json)
 
-As of this handoff note, this conversation has not yet established a comparable full artifact history for Run 12, so a future session should inspect its state directly rather than assuming it has already been characterized.
+Run 12 is now characterized in the repository history:
+
+- the extracted graph isolates the deterministic Taylor island and a secondary stochastic/convergence candidate
+- Gemini's deterministic-node attempt found the right Taylor neighborhood but still timed out before producing a finished theorem
+- the stochastic node search drifted too broadly into infrastructure-heavy probability/measure theory
+
+The main lesson is still current:
+
+- the benchmark choice is good
+- the worker still needs better theorem-shape commitment and better search discipline
 
 ## 13. UI / Report Lessons
 
@@ -939,6 +994,8 @@ At the current repository state, these things are working reasonably well:
 - backend logging/debuggability
 - honest support-node representation for certified local cores
 - report usability is much better than earlier
+- Claude and Gemini backends are real, usable parallel options
+- external Mathlib retrieval is now built in before formalization starts
 
 ## 15. Current Weaknesses / Bottlenecks
 
@@ -972,7 +1029,7 @@ It is weaker when:
 
 ### 15.4 Backend parity is newer for Claude
 
-Claude backend implementation is now largely ready, but benchmark experience is still mostly Codex-based.
+Claude backend implementation is now largely ready, and Gemini backend support is also in place. The remaining question is not backend availability, but how well each worker commits to a good theorem shape once it has enough local context and, if needed, a couple of tightly targeted search results from the helper.
 
 ## 16. Practical Commands for Future Sessions
 

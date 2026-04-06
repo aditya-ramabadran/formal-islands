@@ -736,8 +736,6 @@ def _attempt_agentic_coverage_expansion(
 
     scratch_path.write_text(original_code, encoding="utf-8")
     return None
-
-
 def _build_concrete_sublemma_text(
     *,
     graph: ProofGraph,

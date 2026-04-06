@@ -2,10 +2,10 @@
   {
     "node_id": "bernoulli_inequality",
     "status": "verified",
-    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/bernoulli_inequality_worker_20260405-173935_83528602.lean",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/bernoulli_inequality_worker_20260405-190055_c6b5ddd7.lean",
     "attempt_count": 1,
     "stderr": "",
     "faithfulness_classification": "concrete_sublemma",
-    "lean_theorem_name": "bernoulli_second_derivative_bound"
+    "lean_theorem_name": "bernoulli_inequality_second_deriv_lower_bound"
   }
 ]

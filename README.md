@@ -21,8 +21,8 @@ Given:
 the current pipeline:
 1. plans a small theorem-level proof graph
 2. marks candidate nodes for formalization
-3. picks one candidate and runs an agentic Codex worker on a Lean scratch file
-4. verifies the resulting Lean file locally
+3. runs one or more candidate formalization attempts with an agentic backend worker
+4. verifies the resulting Lean files locally
 5. produces an HTML report and JSON artifacts
 
 The system can distinguish between:
@@ -41,7 +41,7 @@ The system can distinguish between:
 - `/Users/adihaya/GitHub/formal-islands/lean_project`
   Local Lean/Mathlib workspace used for verification.
 - `/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated`
-  Generated worker files and scratch artifacts.
+  Timestamped worker files, plan files, and scratch artifacts.
 
 ## Setup
 
@@ -126,8 +126,11 @@ Useful options:
 --node-id auto
 --formalization-mode agentic
 --max-attempts 4
+--formalization-timeout-seconds 900
 --model gpt-5.4
 ```
+
+When `--node-id auto` is used, `run-benchmark` formalizes candidate nodes in priority order and can continue to later candidates after an early success. Use `formalize-one` only if you want exactly one node attempt.
 
 ## Stage Commands
 
@@ -174,13 +177,22 @@ Supported backends:
 - `gemini`
   Uses the local Gemini CLI for structured planning and one-shot agentic formalization.
 
+External Mathlib search helper:
+
+```bash
+./.venv/bin/formal-islands-search --query "Real.log, Real.sqrt" --provider loogle
+```
+
+Use this for highly targeted theorem-shape lookups outside Lean.
+The formalization prompts mention this helper so the agentic worker can use it if needed, but the main pipeline no longer precomputes and injects search bundles by default. The worker is still told to keep any self-directed follow-up search to at most two highly targeted queries.
+
 Agentic formalization also writes into:
 
 - `/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated`
 
 including:
-- `<node>_worker.lean`
-- `<node>_worker_plan.md`
+- timestamped worker files like `<node>_worker_<timestamp>_<suffix>.lean`
+- timestamped plan files like `<node>_worker_<timestamp>_<suffix>_plan.md`
 
 ## Reports
 
@@ -201,7 +213,7 @@ The report supports:
 The current default formalization mode is:
 - `agentic`
 
-That means Codex gets one bounded full-auto run to:
+That means the selected agentic backend gets one bounded full-auto run to:
 - inspect the local Lean workspace
 - write a plan markdown file
 - edit a single Lean scratch file
@@ -209,6 +221,12 @@ That means Codex gets one bounded full-auto run to:
 - revise the same file
 
 The prompt now also includes a lightweight coverage sketch for the target node, so the worker can see which local subclaims the node is really made of.
+
+The agentic prompt also explicitly reminds the worker where Mathlib lives in this workspace:
+- `.lake/packages/mathlib/Mathlib`
+- not `lean_project/mathlib/Mathlib`
+
+The worker is told to rely on the local `formal-islands-search` helper only if it truly needs extra retrieval, and to commit to a theorem shape sooner rather than wandering through broad library scouting.
 
 The system then classifies the result as:
 - full-node success
@@ -222,6 +240,11 @@ When a verified result is only a concrete supporting sublemma, the pipeline make
 Two more details matter in the current run loop:
 - if a recovered agentic artifact verifies as a concrete sublemma, it still gets the same bounded expansion attempt
 - when a refined local claim is certified, any broader parent reached through a `uses` edge can be promoted into the candidate set in a later dynamic pass, so a successful narrow core can feed a follow-up formalization target
+- when the graph is run in auto mode, `run-benchmark` now keeps discovering newly promoted candidates instead of stopping after the first success
+
+Generated worker filenames are timestamped to avoid conflicts:
+- `<node>_worker_<timestamp>_<suffix>.lean`
+- `<node>_worker_<timestamp>_<suffix>_plan.md`
 
 The refined-local-claim ranking also penalizes point-evaluation fragments like `F_q(q) = 0` when they look like isolated snapshot facts rather than a reusable local theorem. That keeps the system from over-valuing tiny algebraic shards over broader claims with real inferential load.
 

@@ -113,6 +113,7 @@ def test_build_agentic_formalization_request_includes_concrete_setting_guidance(
     assert "must correspond to that single main theorem" in request.prompt.lower()
     assert "coverage sketch" in request.prompt.lower()
     assert "component of the sketch" in request.prompt.lower()
+    assert "formal-islands-search" in request.prompt.lower()
 
 
 def test_recover_agentic_artifact_prefers_expected_main_theorem(tmp_path: Path) -> None:
@@ -672,7 +673,8 @@ def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failur
     assert "prefer ascii identifiers" in backend.requests[1].prompt.lower()
     assert "lambda1" in backend.requests[1].prompt
     assert "create the plan markdown file above first" in backend.requests[0].prompt.lower()
-    assert "keep api scouting minimal" in backend.requests[0].prompt.lower()
+    assert "formal-islands-search" in backend.requests[0].prompt.lower()
+    assert "at most 2 additional highly targeted searches" in backend.requests[0].prompt.lower()
     assert "appending a new labeled section" in backend.requests[1].prompt.lower()
     assert "explicitly reconsider the most literal whole-node theorem shape first" in backend.requests[1].prompt.lower()
     assert backend.worker_file.read_text(encoding="utf-8").startswith("import Mathlib.Data.Real.Basic")

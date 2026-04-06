@@ -81,167 +81,162 @@ def build_agentic_formalization_request(
         if child.id in children and child.formal_artifact is not None
     ][:1]
 
-    prompt = "\n\n".join(
-        [
-            f"Theorem title: {graph.theorem_title}",
-            f"Ambient theorem statement:\n{graph.theorem_statement}",
-            "Target node:",
-            json.dumps(
-                {
-                    "id": node.id,
-                    "title": node.title,
-                    "informal_statement": node.informal_statement,
-                    "informal_proof_text": node.informal_proof_text,
-                    "formalization_priority": node.formalization_priority,
-                    "formalization_rationale": node.formalization_rationale,
-                },
-                indent=2,
-            ),
-            "Coverage sketch:",
-            json.dumps(asdict(build_node_coverage_sketch(node)), indent=2),
-            (
-                "Mathlib lives under the workspace's `.lake/packages/mathlib/Mathlib` directory. "
-                "Do not assume a `lean_project/mathlib/Mathlib` path. If you need to inspect Mathlib source, "
-                "use the workspace root and the `.lake/packages` layout that actually exists on disk."
-            ),
-            (
-                "Immediate parent summary:\n" + json.dumps(parent_summaries[0], indent=2)
-                if parent_summaries
-                else "Immediate parent summary:\n[]"
-            ),
-            (
-                "Verified child context:\n" + json.dumps(child_summaries[0], indent=2)
-                if child_summaries
-                else "Verified child context:\n[]"
-            ),
-            f"Lean workspace root: {workspace_root}",
-            f"Scratch file to create and edit: {scratch_file_path}",
-            f"Plan markdown file to create and maintain: {plan_file_path}",
-            (
-                "Operate only inside the Lean workspace above, and only edit the specified scratch file. "
-                "Do not modify other repository files, except for the required plan markdown file above."
-            ),
-            (
-                "Within this single run, you may inspect local files, write the scratch file, run "
-                "`lake env lean <scratch_file_path>` from the Lean workspace root, read compiler feedback, "
-                "and revise the same file until it succeeds or you run out of time."
-            ),
-            (
-                "Start with a lightweight planning pass before serious Lean formalization. Create the plan markdown "
-                "file above first, then use it to decide the concrete theorem shape you will actually target."
-            ),
-            (
-                "Keep the plan brief — aim for under 10 lines total. Cover only: target theorem shape, key symbols "
-                "to preserve, intended proof route, and two or three likely Mathlib lemmas. Do not write a long "
-                "multi-section document."
-            ),
-            (
-                "Structure the Lean file around one designated main theorem that represents the certified result for this node. "
-                "Additional lemmas are allowed, but they should be clearly subordinate helper lemmas used to prove the main theorem."
-            ),
-            (
-                "The `lean_theorem_name` and `lean_statement` you return must correspond to that single main theorem, "
-                "not to a helper lemma. If you include helper lemmas, make sure the main theorem remains the primary claim in the file."
-            ),
-            (
-                "Default to the most literal whole-node theorem shape that directly mirrors the target node's stated "
-                "mathematical claim. Treat that literal whole-node target as the real starting point, not as an optional stretch goal "
-                "or a theorem you only mention briefly before falling back."
-            ),
-            (
-                "Only fall back to a narrower concrete sublemma if your local scouting or compiler experiments show that "
-                "the literal whole-node target is genuinely infeasible in the available time or Mathlib surface area, after a "
-                "real attempt to prove the literal node-level statement or a very close transcription of it."
-            ),
-            (
-                "If you do fall back, record that explicitly in the plan file: note the literal whole-node target you tried, "
-                "why it looked infeasible, and why the narrower replacement still captures meaningful inferential load."
-            ),
-            (
-                "Keep API scouting minimal. Prefer grep or ripgrep to search Mathlib source for lemma names rather "
-                "than repeated `lake env lean` compilation passes. Limit yourself to at most one or two `lake env lean` "
-                "calls during scouting before committing to the actual theorem. Move quickly to writing and compiling "
-                "real Lean code."
-            ),
-            (
-                "If you substantially change direction during the run, preserve visible plan history by appending a "
-                "new labeled section to the same markdown file instead of silently overwriting the old plan."
-            ),
-            (
-                "Prefer narrow, specific imports that match the identifiers actually used in the theorem. "
-                "Do not default to `import Mathlib` for a small local theorem when a few focused imports "
-                "would do, and do not guess speculative deep module paths."
-            ),
-            (
-                "Keep the Lean output syntactically conservative. Prefer ASCII identifiers in theorem names, "
-                "binder names, and hypotheses unless a non-ASCII symbol is clearly unavoidable. Avoid Unicode "
-                "variable names like `λ₁` in declarations; prefer plain names such as `lambda1`. Do not invent "
-                "fancy notation when ordinary Lean identifiers and explicit expressions work."
-            ),
-            (
-                "Prefer simple theorem signatures and straightforward binder lists over elaborate notation-heavy "
-                "declarations. When in doubt, choose the most boring Lean surface syntax that still states the right theorem."
-            ),
-            (
-                "Bias strongly toward faithfulness to the target node. Reuse the node's concrete variables and "
-                "hypotheses when reasonable. Do not introduce arbitrary index types, unrelated function families, "
-                "or a much more generic theorem unless the node text clearly requires that abstraction."
-            ),
-            (
-                "Preserve the ambient mathematical setting of the theorem and node. If the node is stated in a concrete "
-                "setting, keep that same setting in the Lean theorem unless the node itself explicitly states a more abstract generality."
-            ),
-            (
-                "If you simplify, simplify the local inferential step while keeping the same concrete objects and "
-                "ambient setting. Prefer a concrete sublemma about the same named quantities, variables, operators, "
-                "or integrals over a theorem about an arbitrary type, arbitrary measure, or unrelated families of functions."
-            ),
-            (
-                "Use the coverage sketch to decide what the theorem is supposed to cover. If you only prove one "
-                "component of the sketch, keep the plan and Lean file honest about that partial coverage rather than "
-                "pretending to certify the whole node."
-            ),
-            (
-                "Do not replace a concrete statement with a generic measure-space or arbitrary ambient-type theorem "
-                "unless the original node is already phrased in that abstract setting."
-            ),
-            (
-                "Do not game the task by collapsing the node to an easy nearby side fact. If you simplify, the "
-                "replacement should still carry meaningful inferential load in the parent proof."
-            ),
-            (
-                "Before settling on a fallback theorem, spend a short but genuine attempt on the literal node-level statement or the "
-                "closest direct transcription that seems syntactically realistic. Do not jump immediately to a more abstract "
-                "or indirect theorem just because it is familiar, and do not treat a tiny side lemma as an acceptable fallback "
-                "unless it really is the best reachable core after that attempt."
-            ),
-            (
-                "Return a JSON object with keys lean_theorem_name, lean_statement, final_file_path, and plan_file_path. "
-                "The final_file_path must be exactly the scratch file path above, and the plan_file_path must be exactly "
-                "the plan markdown path above."
-            ),
-        ]
-        + (
+    prompt_parts = [
+        f"Theorem title: {graph.theorem_title}",
+        f"Ambient theorem statement:\n{graph.theorem_statement}",
+        "Target node:",
+        json.dumps(
+            {
+                "id": node.id,
+                "title": node.title,
+                "informal_statement": node.informal_statement,
+                "informal_proof_text": node.informal_proof_text,
+                "formalization_priority": node.formalization_priority,
+                "formalization_rationale": node.formalization_rationale,
+            },
+            indent=2,
+        ),
+        "Coverage sketch:",
+        json.dumps(asdict(build_node_coverage_sketch(node)), indent=2),
+        (
+            "Mathlib lives under the workspace's `.lake/packages/mathlib/Mathlib` directory. "
+            "Do not assume a `lean_project/mathlib/Mathlib` path. If you need to inspect Mathlib source, "
+            "use the workspace root and the `.lake/packages` layout that actually exists on disk."
+        ),
+        (
+            "Immediate parent summary:\n" + json.dumps(parent_summaries[0], indent=2)
+            if parent_summaries
+            else "Immediate parent summary:\n[]"
+        ),
+        (
+            "Verified child context:\n" + json.dumps(child_summaries[0], indent=2)
+            if child_summaries
+            else "Verified child context:\n[]"
+        ),
+        f"Lean workspace root: {workspace_root}",
+        f"Scratch file to create and edit: {scratch_file_path}",
+        f"Plan markdown file to create and maintain: {plan_file_path}",
+        (
+            "Operate only inside the Lean workspace above, and only edit the specified scratch file. "
+            "Do not modify other repository files, except for the required plan markdown file above."
+        ),
+        (
+            "Within this single run, you may inspect local files, write the scratch file, run "
+            "`lake env lean <scratch_file_path>` from the Lean workspace root, read compiler feedback, "
+            "and revise the same file until it succeeds or you run out of time."
+        ),
+        (
+            "Start with a lightweight planning pass before serious Lean formalization. Create the plan markdown "
+            "file above first, then use it to decide the concrete theorem shape you will actually target."
+        ),
+        (
+            "Keep the plan brief — aim for under 10 lines total. Cover only: target theorem shape, key symbols "
+            "to preserve, intended proof route, and two or three likely Mathlib lemmas. Do not write a long "
+            "multi-section document."
+        ),
+        (
+            "Structure the Lean file around one designated main theorem that represents the certified result for this node. "
+            "Additional lemmas are allowed, but they should be clearly subordinate helper lemmas used to prove the main theorem."
+        ),
+        (
+            "The `lean_theorem_name` and `lean_statement` you return must correspond to that single main theorem, "
+            "not to a helper lemma. If you include helper lemmas, make sure the main theorem remains the primary claim in the file."
+        ),
+        (
+            "Default to the most literal whole-node theorem shape that directly mirrors the target node's stated "
+            "mathematical claim. Treat that literal whole-node target as the real starting point, not as an optional stretch goal "
+            "or a theorem you only mention briefly before falling back."
+        ),
+        (
+            "Only fall back to a narrower concrete sublemma if your local scouting or compiler experiments show that "
+            "the literal whole-node target is genuinely infeasible in the available time or Mathlib surface area, after a "
+            "real attempt to prove the literal node-level statement or a very close transcription of it."
+        ),
+        (
+            "If you do fall back, record that explicitly in the plan file: note the literal whole-node target you tried, "
+            "why it looked infeasible, and why the narrower replacement still captures meaningful inferential load."
+        ),
+        (
+            "A local `formal-islands-search` helper is available if you truly need it. Use it sparingly: "
+            "at most 2 additional highly targeted searches total, preferably one exact Loogle-shaped query "
+            "and one LeanSearch natural-language query. Do not do broad filesystem scouting, repeated broad "
+            "`grep` sweeps, or repeated `lake env lean` compilation passes before you have committed to a theorem shape."
+        ),
+        (
+            "If you substantially change direction during the run, preserve visible plan history by appending a "
+            "new labeled section to the same markdown file instead of silently overwriting the old plan."
+        ),
+        (
+            "Prefer narrow, specific imports that match the identifiers actually used in the theorem. "
+            "Do not default to `import Mathlib` for a small local theorem when a few focused imports "
+            "would do, and do not guess speculative deep module paths."
+        ),
+        (
+            "Keep the Lean output syntactically conservative. Prefer ASCII identifiers in theorem names, "
+            "binder names, and hypotheses unless a non-ASCII symbol is clearly unavoidable. Avoid Unicode "
+            "variable names like `λ₁` in declarations; prefer plain names such as `lambda1`. Do not invent "
+            "fancy notation when ordinary Lean identifiers and explicit expressions work."
+        ),
+        (
+            "Prefer simple theorem signatures and straightforward binder lists over elaborate notation-heavy "
+            "declarations. When in doubt, choose the most boring Lean surface syntax that still states the right theorem."
+        ),
+        (
+            "Bias strongly toward faithfulness to the target node. Reuse the node's concrete variables and "
+            "hypotheses when reasonable. Do not introduce arbitrary index types, unrelated function families, "
+            "or a much more generic theorem unless the node text clearly requires that abstraction."
+        ),
+        (
+            "Preserve the ambient mathematical setting of the theorem and node. If the node is stated in a concrete "
+            "setting, keep that same setting in the Lean theorem unless the node itself explicitly states a more abstract generality."
+        ),
+        (
+            "If you simplify, simplify the local inferential step while keeping the same concrete objects and "
+            "ambient setting. Prefer a concrete sublemma about the same named quantities, variables, operators, "
+            "or integrals over a theorem about an arbitrary type, arbitrary measure, or unrelated families of functions."
+        ),
+        (
+            "Use the coverage sketch to decide what the theorem is supposed to cover. If you only prove one "
+            "component of the sketch, keep the plan and Lean file honest about that partial coverage rather than "
+            "pretending to certify the whole node."
+        ),
+        (
+            "Do not replace a concrete statement with a generic measure-space or arbitrary ambient-type theorem "
+            "unless the original node is already phrased in that abstract setting."
+        ),
+        (
+            "Do not game the task by collapsing the node to an easy nearby side fact. If you simplify, the "
+            "replacement should still carry meaningful inferential load in the parent proof."
+        ),
+        (
+            "Before settling on a fallback theorem, spend a short but genuine attempt on the literal node-level statement or the "
+            "closest direct transcription that seems syntactically realistic. Do not jump immediately to a more abstract "
+            "or indirect theorem just because it is familiar, and do not treat a tiny side lemma as an acceptable fallback "
+            "unless it really is the best reachable core after that attempt."
+        ),
+        (
+            "Return a JSON object with keys lean_theorem_name, lean_statement, final_file_path, and plan_file_path. "
+            "The final_file_path must be exactly the scratch file path above, and the plan_file_path must be exactly "
+            "the plan markdown path above."
+        ),
+    ]
+    if faithfulness_feedback:
+        prompt_parts.extend(
             [
-                (
-                    "Previous faithfulness failure: the prior theorem/file was too abstract. Continue from the current "
-                    "scratch file instead of starting over. Revise it in place to stay much closer to the target node's "
-                    "concrete setting."
-                ),
-                faithfulness_feedback or "",
+                "Previous faithfulness failure: the prior theorem/file was too abstract. Continue from the current "
+                "scratch file instead of starting over. Revise it in place to stay much closer to the target node's "
+                "concrete setting.",
+                faithfulness_feedback,
             ]
-            if faithfulness_feedback
-            else []
         )
-        + (
+    if previous_lean_code:
+        prompt_parts.extend(
             [
                 "Current scratch file to revise:",
                 f"```lean\n{previous_lean_code}\n```",
             ]
-            if previous_lean_code
-            else []
         )
-    )
+    prompt = "\n\n".join(prompt_parts)
 
     return StructuredBackendRequest(
         prompt=prompt,
