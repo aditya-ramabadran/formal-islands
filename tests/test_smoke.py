@@ -7,8 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from formal_islands.backends import BackendInvocationError, MockBackend
+from formal_islands.backends import (
+    AristotleBackend,
+    BackendInvocationError,
+    BackendUnavailableError,
+    MockBackend,
+)
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
+from formal_islands.formalization import FormalizationOutcome, formalize_candidate_nodes
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
 from formal_islands.review import derive_review_obligations
 from formal_islands.smoke import (
@@ -341,6 +347,54 @@ def test_build_backend_supports_gemini(tmp_path: Path) -> None:
     assert backend.timeout_seconds == 180.0
 
 
+def test_build_backend_supports_aristotle_for_formalization(tmp_path: Path) -> None:
+    from formal_islands.smoke import build_backend
+
+    backend = build_backend(
+        "aristotle",
+        None,
+        tmp_path / "_backend_logs",
+        formalization=True,
+        timeout_seconds=900.0,
+    )
+
+    assert isinstance(backend, AristotleBackend)
+    assert backend.log_dir == tmp_path / "_backend_logs"
+    assert backend.timeout_seconds == 900.0
+
+
+def test_build_backend_defaults_aristotle_timeout_to_none(tmp_path: Path) -> None:
+    from formal_islands.smoke import build_backend
+
+    backend = build_backend("aristotle", None, tmp_path / "_backend_logs", formalization=True)
+
+    assert isinstance(backend, AristotleBackend)
+    assert backend.timeout_seconds is None
+
+
+def test_build_backend_rejects_aristotle_for_planning(tmp_path: Path) -> None:
+    from formal_islands.smoke import build_backend
+
+    with pytest.raises(ValueError, match="formalization backends"):
+        build_backend("aristotle", None, tmp_path / "_backend_logs")
+
+
+def test_aristotle_backend_requires_api_key(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from formal_islands.backends.aristotle import AristotleBackend
+
+    monkeypatch.delenv("ARISTOTLE_API_KEY", raising=False)
+    backend = AristotleBackend(log_dir=tmp_path / "_backend_logs", timeout_seconds=1.0)
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+
+    with pytest.raises(BackendUnavailableError, match="ARISTOTLE_API_KEY"):
+        backend.submit_project(
+            prompt="Prove 1 = 1.",
+            project_dir=project_dir,
+            task_name="test_task",
+        )
+
+
 def test_build_backend_allows_formalization_timeout_override(tmp_path: Path) -> None:
     from formal_islands.smoke import build_backend
 
@@ -451,6 +505,269 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
         ("report", str(expected_output_dir)),
     ]
     assert seen_timeout == [900.0]
+    progress_log = expected_output_dir / "_progress.log"
+    assert progress_log.exists()
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "running benchmark end-to-end" in log_text
+    assert "benchmark planning stage starting" in log_text
+    assert "benchmark formalization stage starting" in log_text
+    assert "benchmark report stage starting" in log_text
+
+
+def test_cmd_plan_and_formalize_support_split_backends(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from formal_islands.smoke import cmd_formalize_one, cmd_plan
+
+    input_path = tmp_path / "input.json"
+    input_path.write_text(
+        json.dumps(
+            {
+                "theorem_title": "Split backends",
+                "theorem_statement": "If A then B.",
+                "raw_proof_text": "Proof.",
+            }
+        ),
+        encoding="utf-8",
+    )
+    output_dir = tmp_path / "artifacts"
+    graph = ProofGraph(
+        theorem_title="Split backends",
+        theorem_statement="If A then B.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Main",
+                informal_statement="B",
+                informal_proof_text="Use n1.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Candidate",
+                informal_statement="A -> B",
+                informal_proof_text="...",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Candidate",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1")],
+    )
+
+    build_calls: list[tuple[str, bool]] = []
+
+    def fake_build_backend(name: str, model: str | None, log_dir: Path | None = None, timeout_seconds: float = 0.0, formalization: bool = False):
+        build_calls.append((name, formalization))
+        return object()
+
+    def fake_plan_proof_graph(**kwargs):
+        return type(
+            "Artifacts",
+            (),
+            {
+                "extracted_graph": graph.model_copy(),
+                "candidate_graph": graph.model_copy(
+                    update={
+                        "nodes": [
+                            node.model_copy(update={"status": "candidate_formal"})
+                            if node.id == "n1"
+                            else node
+                            for node in graph.nodes
+                        ]
+                    }
+                ),
+            },
+        )()
+
+    def fake_formalize_candidate_node(**kwargs):
+        return type(
+            "Outcome",
+            (),
+            {
+                "graph": graph.model_copy(),
+                "node_id": "n1",
+                "artifact": type(
+                    "Artifact",
+                    (),
+                    {
+                        "verification": type(
+                            "Verification",
+                            (),
+                            {
+                                "status": "verified",
+                                "artifact_path": "path",
+                                "attempt_count": 1,
+                                "stderr": "",
+                            },
+                        )(),
+                        "faithfulness_classification": "full_node",
+                        "lean_theorem_name": "t",
+                    },
+                )(),
+            },
+        )()
+
+    monkeypatch.setattr("formal_islands.smoke.build_backend", fake_build_backend)
+    monkeypatch.setattr("formal_islands.smoke.plan_proof_graph", fake_plan_proof_graph)
+    monkeypatch.setattr("formal_islands.smoke.formalize_candidate_node", fake_formalize_candidate_node)
+
+    plan_exit = cmd_plan(
+        Namespace(
+            backend=None,
+            model=None,
+            planning_backend="claude",
+            planning_model=None,
+            formalization_backend="aristotle",
+            formalization_model=None,
+            input=str(input_path),
+            output_dir=str(output_dir),
+        )
+    )
+    formalize_exit = cmd_formalize_one(
+        Namespace(
+            backend=None,
+            model=None,
+            planning_backend="claude",
+            planning_model=None,
+            formalization_backend="aristotle",
+            formalization_model=None,
+            graph=str(output_dir / "02_candidate_graph.json"),
+            output_dir=str(output_dir),
+            workspace="lean_project",
+            node_id="n1",
+            max_attempts=1,
+            formalization_mode="agentic",
+            formalization_timeout_seconds=900.0,
+        )
+    )
+
+    assert plan_exit == 0
+    assert formalize_exit == 0
+    assert build_calls == [
+        ("claude", False),
+        ("claude", False),
+        ("aristotle", True),
+    ]
+
+
+def test_formalize_all_candidates_runs_aristotle_jobs_in_parallel_and_preserves_diffs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import threading
+    import time
+
+    from formal_islands.backends.aristotle import AristotleBackend
+    from formal_islands.formalization.loop import formalize_candidate_nodes
+    from formal_islands.models import FormalArtifact, VerificationResult
+
+    graph = ProofGraph(
+        theorem_title="Parallel Aristotle",
+        theorem_statement="If A then B.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Root",
+                informal_statement="B.",
+                informal_proof_text="Use both leaves.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Leaf 1",
+                informal_statement="A -> B.",
+                informal_proof_text="...",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="First leaf.",
+            ),
+            ProofNode(
+                id="n2",
+                title="Leaf 2",
+                informal_statement="A -> B.",
+                informal_proof_text="...",
+                status="candidate_formal",
+                formalization_priority=2,
+                formalization_rationale="Second leaf.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1"), ProofEdge(source_id="n0", target_id="n2")],
+    )
+
+    start_times: list[tuple[str, float]] = []
+    start_lock = threading.Lock()
+
+    def fake_formalize_candidate_node(**kwargs):
+        node_id = kwargs["node_id"]
+        base_graph = kwargs["graph"]
+        with start_lock:
+            start_times.append((node_id, time.perf_counter()))
+        time.sleep(0.25)
+
+        updated_nodes = []
+        for node in base_graph.nodes:
+            if node.id == node_id:
+                updated_nodes.append(
+                    node.model_copy(
+                        update={
+                            "status": "formal_verified",
+                            "formal_artifact": FormalArtifact(
+                                lean_theorem_name=f"{node_id}_thm",
+                                lean_statement="theorem t : True",
+                                lean_code="theorem t : True := by trivial",
+                                verification=VerificationResult(
+                                    status="verified",
+                                    command="lake env lean test.lean",
+                                    attempt_count=1,
+                                    artifact_path="test.lean",
+                                ),
+                            ),
+                        }
+                    )
+                )
+            elif node.id == "n0" and node_id == "n1":
+                updated_nodes.append(
+                    node.model_copy(
+                        update={
+                            "status": "candidate_formal",
+                            "formalization_priority": 3,
+                            "formalization_rationale": "Promoted by n1.",
+                        }
+                    )
+                )
+            else:
+                updated_nodes.append(node)
+
+        updated_graph = base_graph.model_copy(update={"nodes": updated_nodes})
+        return FormalizationOutcome(
+            graph=updated_graph,
+            node_id=node_id,
+            artifact=next(node.formal_artifact for node in updated_graph.nodes if node.id == node_id),
+        )
+
+    monkeypatch.setattr("formal_islands.formalization.loop.formalize_candidate_node", fake_formalize_candidate_node)
+
+    outcome = formalize_candidate_nodes(
+        backend=AristotleBackend(log_dir=None, timeout_seconds=None),
+        verifier=LeanVerifier(workspace=build_workspace(tmp_path / "lean_project")),
+        graph=graph,
+        node_ids=None,
+        max_attempts=1,
+        mode="agentic",
+    )
+
+    root = next(node for node in outcome.graph.nodes if node.id == "n0")
+    assert len(start_times) == 3
+    first_two = sorted(start_times, key=lambda item: item[1])[:2]
+    third = sorted(start_times, key=lambda item: item[1])[2]
+    assert {node_id for node_id, _ in start_times} == {"n0", "n1", "n2"}
+    assert max(t for _, t in first_two) - min(t for _, t in first_two) < 0.15
+    assert third[1] - max(t for _, t in first_two) > 0.15
+    assert root.status == "formal_verified"
+    assert root.formalization_priority == 3
+    assert {node.id for node in outcome.graph.nodes if node.status == "formal_verified"} == {"n0", "n1", "n2"}
 
 
 def test_cmd_formalize_all_candidates_writes_batch_summary(

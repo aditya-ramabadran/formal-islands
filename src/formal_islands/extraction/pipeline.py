@@ -18,6 +18,7 @@ from formal_islands.extraction.schemas import (
 )
 from formal_islands.formalization.pipeline import build_node_coverage_sketch
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
+from formal_islands.progress import progress
 
 
 @dataclass(frozen=True)
@@ -231,6 +232,7 @@ def extract_proof_graph(
 ) -> ProofGraph:
     """Call a backend for graph extraction and validate the result."""
 
+    progress("extracting proof graph")
     response = backend.run_structured(
         build_extraction_request(
             theorem_statement=theorem_statement,
@@ -265,6 +267,7 @@ def extract_proof_graph(
         ],
     )
     graph = simplify_proof_graph(graph)
+    progress("refining candidate nodes")
     return refine_candidate_nodes(graph, backend=backend)
 
 
@@ -276,6 +279,7 @@ def plan_proof_graph(
 ) -> TheoremPlanningArtifacts:
     """Run a single theorem-level planning pass and emit explicit graph artifacts."""
 
+    progress("planning theorem graph")
     response = backend.run_structured(
         build_theorem_planning_request(
             theorem_statement=theorem_statement,
@@ -294,6 +298,10 @@ def plan_proof_graph(
         graph=simplified_graph,
         selection=CandidateSelectionResult(candidates=planned.candidates),
         backend=backend,
+    )
+    progress(
+        "planning complete: "
+        f"{len(simplified_graph.nodes)} nodes, {len([n for n in candidate_graph.nodes if n.status == 'candidate_formal'])} candidates"
     )
     return TheoremPlanningArtifacts(
         extracted_graph=simplified_graph,
@@ -349,9 +357,14 @@ def select_formalization_candidates(
 ) -> ProofGraph:
     """Apply validated candidate-selection metadata to matching nodes."""
 
+    progress("selecting formalization candidates")
     response = backend.run_structured(build_candidate_selection_request(graph))
     selection = CandidateSelectionResult.model_validate(response.payload)
-    return _apply_candidate_selection_result(graph=graph, selection=selection, backend=backend)
+    updated = _apply_candidate_selection_result(graph=graph, selection=selection, backend=backend)
+    progress(
+        f"selected {len([node for node in updated.nodes if node.status == 'candidate_formal'])} candidate nodes"
+    )
+    return updated
 
 
 def _build_internal_graph(
@@ -729,20 +742,28 @@ def refine_candidate_nodes(
     ]
 
     for candidate in broad_candidates:
+        print(
+            f"[formal-islands] considering local refinement for candidate {candidate.id} ({candidate.title})",
+            flush=True,
+        )
         refinement = None
         if backend is not None:
+            progress("asking backend for refined local claim proposal")
             refinement = _request_refined_local_claim(
                 backend=backend,
                 graph=graph,
                 candidate_id=candidate.id,
             )
         if refinement is None:
+            progress("using deterministic span-based refinement fallback")
             refinement = _extract_local_consequence_refinement(
                 graph=graph,
                 candidate_id=candidate.id,
             )
         if refinement is None:
+            progress("no refinement found for candidate")
             continue
+        progress(f"created refined local claim {refinement['title']}")
         return _apply_candidate_refinement(
             graph=graph,
             parent_id=refinement["parent_id"],
@@ -994,9 +1015,10 @@ def _apply_candidate_refinement(
                 ProofEdge(
                     source_id=parent_id,
                     target_id=refined_id,
-                    label="depends on",
+                    label="refined_from",
                     explanation=(
-                        "Parent proof uses a more concrete downstream consequence extracted from its local argument."
+                        "This refined local claim was carved out from the broader sibling node as provenance, "
+                        "not as a proof dependency."
                     ),
                 )
             )
@@ -1008,8 +1030,8 @@ def _apply_candidate_refinement(
             ProofEdge(
                 source_id=parent_id,
                 target_id=refined_id,
-                label="depends on",
-                explanation="Refined local consequence extracted for formalization.",
+                label="refined_from",
+                explanation="Refined local consequence extracted from the broader sibling node as provenance.",
             )
         )
 

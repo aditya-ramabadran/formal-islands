@@ -1,0 +1,16 @@
+2026-04-05T23:51:30-07:00 [formal-islands] running benchmark end-to-end
+2026-04-05T23:51:30-07:00 [formal-islands] benchmark planning stage starting
+2026-04-05T23:51:30-07:00 [formal-islands] plan stage starting
+2026-04-05T23:51:30-07:00 [formal-islands] planning theorem graph
+2026-04-05T23:52:38-07:00 [formal-islands] asking backend for refined local claim proposal
+2026-04-05T23:53:12-07:00 [formal-islands] created refined local claim Nonincreasing nonneg energy vanishing from zero: E(t) = 0 for all t
+2026-04-05T23:53:12-07:00 [formal-islands] planning complete: 2 nodes, 2 candidates
+2026-04-05T23:53:12-07:00 [formal-islands] benchmark formalization stage starting
+2026-04-05T23:53:12-07:00 [formal-islands] formalization stage starting
+2026-04-05T23:53:12-07:00 [formal-islands] Aristotle batch submitting 2 candidate node(s): energy_dissipation, heat_uniqueness_refined_local_claim
+2026-04-05T23:53:12-07:00 [formal-islands] starting formalization for node energy_dissipation
+2026-04-05T23:53:12-07:00 [formal-islands] starting formalization for node heat_uniqueness_refined_local_claim
+2026-04-05T23:53:12-07:00 [formal-islands] node heat_uniqueness_refined_local_claim: structured attempt 1/2
+2026-04-05T23:53:12-07:00 [formal-islands] node energy_dissipation: structured attempt 1/2
+2026-04-05T23:53:12-07:00 [formal-islands] Aristotle submitting node heat_uniqueness_refined_local_claim
+2026-04-05T23:53:12-07:00 [formal-islands] Aristotle submitting node energy_dissipation

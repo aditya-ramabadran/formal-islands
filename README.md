@@ -130,6 +130,16 @@ Useful options:
 --model gpt-5.4
 ```
 
+You can also split planning and formalization backends:
+
+```bash
+./.venv/bin/formal-islands-smoke run-benchmark \
+  --planning-backend claude \
+  --formalization-backend aristotle \
+  --input /Users/adihaya/GitHub/formal-islands/examples/manual-testing/run11_two_point_log_sobolev.json \
+  --output-dir /Users/adihaya/GitHub/formal-islands/artifacts/manual-testing/run11-two-point-log-sobolev
+```
+
 When `--node-id auto` is used, `run-benchmark` formalizes candidate nodes in priority order and can continue to later candidates after an early success. Use `formalize-one` only if you want exactly one node attempt.
 
 ## Stage Commands
@@ -166,6 +176,8 @@ A normal benchmark run writes:
   JSON bundle used by the report.
 - `04_report.html`
   Human-readable HTML report.
+- `_progress.log`
+  Shared run progress log in the output directory.
 - `_backend_logs/*.json`
   Logged backend requests/responses, timings, and raw CLI output.
 
@@ -176,6 +188,8 @@ Supported backends:
   Uses the local Claude Code CLI for structured planning and one-shot agentic formalization.
 - `gemini`
   Uses the local Gemini CLI for structured planning and one-shot agentic formalization.
+- `aristotle`
+  Uses Harmonic's Aristotle Python SDK for formalization only. Set `ARISTOTLE_API_KEY` in your environment before using it. Planning still uses the usual local CLI backends. Aristotle runs without a default timeout unless you explicitly pass one.
 
 External Mathlib search helper:
 
@@ -194,6 +208,13 @@ including:
 - timestamped worker files like `<node>_worker_<timestamp>_<suffix>.lean`
 - timestamped plan files like `<node>_worker_<timestamp>_<suffix>_plan.md`
 
+The smoke CLI accepts split backend flags:
+
+- `--planning-backend` for extraction / planning
+- `--formalization-backend` for the formalization worker
+
+If you omit them, the legacy `--backend` flag still acts as the shared default for both stages.
+
 ## Reports
 
 The HTML report includes:
@@ -207,6 +228,7 @@ The report supports:
 - MathJax-rendered math
 - syntax-highlighted Lean code
 - automatic light/dark mode
+- dashed gray provenance / refinement edges for nearby nodes that are not proof dependencies
 
 ## Current Formalization Behavior
 
@@ -222,11 +244,37 @@ That means the selected agentic backend gets one bounded full-auto run to:
 
 The prompt now also includes a lightweight coverage sketch for the target node, so the worker can see which local subclaims the node is really made of.
 
+The formalization prompt also splits nearby nodes into:
+- verified supporting lemmas already certified in this run, which may be relied on as established facts
+- context-only sibling ingredients, which are only there for orientation and should not be assumed
+
 The agentic prompt also explicitly reminds the worker where Mathlib lives in this workspace:
 - `.lake/packages/mathlib/Mathlib`
 - not `lean_project/mathlib/Mathlib`
 
 The worker is told to rely on the local `formal-islands-search` helper only if it truly needs extra retrieval, and to commit to a theorem shape sooner rather than wandering through broad library scouting.
+
+Aristotle submissions use a pruned Lean snapshot rather than the entire workspace tree:
+- the committed Lean project skeleton
+- the active scratch file
+- no `.lake` build tree
+- no `Generated` backlog from earlier runs
+- no `test_*.lean` scratch files
+
+The Aristotle prompt uses the same local-proof split in plain text. Verified supporting lemmas are listed with their theorem names and Lean statements when available; the generated Lean code for those lemmas is not auto-imported into the Aristotle snapshot.
+
+The Aristotle prompt itself is plain text, not a bundle of generated Lean source files. It includes:
+- the ambient theorem statement as context only
+- the target node's informal statement and informal proof text
+- a local proof neighborhood split into:
+  - verified supporting lemmas already certified in this run
+  - context-only sibling ingredients in the same proof neighborhood
+
+Verified supporting lemmas are given as text summaries with their Lean theorem name and Lean statement when available. They are treated as established facts for proof planning, but their generated Lean code is not auto-imported into the Aristotle snapshot.
+
+When `formalize-all-candidates` uses Aristotle, jobs are submitted in parallel batches so multiple candidate nodes can be worked on at once. Newly promoted parents are then picked up by the next batch.
+
+Every benchmark run also writes a shared progress log to `_progress.log` inside the corresponding output directory.
 
 The system then classifies the result as:
 - full-node success
@@ -241,6 +289,7 @@ Two more details matter in the current run loop:
 - if a recovered agentic artifact verifies as a concrete sublemma, it still gets the same bounded expansion attempt
 - when a refined local claim is certified, any broader parent reached through a `uses` edge can be promoted into the candidate set in a later dynamic pass, so a successful narrow core can feed a follow-up formalization target
 - when the graph is run in auto mode, `run-benchmark` now keeps discovering newly promoted candidates instead of stopping after the first success
+- when the result is only a concrete supporting sublemma, the planning backend can still be used to write the short informal statement/proof summary for that certified local core
 
 Generated worker filenames are timestamped to avoid conflicts:
 - `<node>_worker_<timestamp>_<suffix>.lean`

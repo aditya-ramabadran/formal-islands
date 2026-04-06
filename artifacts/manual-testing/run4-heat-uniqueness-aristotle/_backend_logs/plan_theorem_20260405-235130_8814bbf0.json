@@ -1,0 +1,796 @@
+{
+  "status": "completed",
+  "task_name": "plan_theorem",
+  "backend_name": "claude_code",
+  "command": [
+    "/Users/adihaya/.local/bin/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "text",
+    "--no-session-persistence",
+    "--system-prompt",
+    "Plan a compact, faithful, formalization-sensitive proof graph for the user's theorem. Return only JSON that matches the supplied schema. In one pass, choose the graph shape and rank the best local formalization candidates. Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible.",
+    "--tools",
+    "",
+    "--json-schema",
+    "{\"$defs\": {\"CandidateSelection\": {\"additionalProperties\": false, \"description\": \"Single candidate-formalization decision.\", \"properties\": {\"node_id\": {\"minLength\": 1, \"title\": \"Node Id\", \"type\": \"string\"}, \"priority\": {\"maximum\": 3, \"minimum\": 1, \"title\": \"Priority\", \"type\": \"integer\"}, \"rationale\": {\"minLength\": 1, \"title\": \"Rationale\", \"type\": \"string\"}}, \"required\": [\"node_id\", \"priority\", \"rationale\"], \"title\": \"CandidateSelection\", \"type\": \"object\"}, \"ExtractedEdge\": {\"additionalProperties\": false, \"description\": \"Dependency edge shape expected from the graph-extraction pass.\", \"properties\": {\"source_id\": {\"minLength\": 1, \"title\": \"Source Id\", \"type\": \"string\"}, \"target_id\": {\"minLength\": 1, \"title\": \"Target Id\", \"type\": \"string\"}, \"label\": {\"anyOf\": [{\"type\": \"string\"}, {\"type\": \"null\"}], \"default\": null, \"title\": \"Label\"}, \"explanation\": {\"anyOf\": [{\"type\": \"string\"}, {\"type\": \"null\"}], \"default\": null, \"title\": \"Explanation\"}}, \"required\": [\"source_id\", \"target_id\"], \"title\": \"ExtractedEdge\", \"type\": \"object\"}, \"ExtractedNode\": {\"additionalProperties\": false, \"description\": \"Node shape expected from the graph-extraction LLM pass.\", \"properties\": {\"id\": {\"minLength\": 1, \"title\": \"Id\", \"type\": \"string\"}, \"title\": {\"minLength\": 1, \"title\": \"Title\", \"type\": \"string\"}, \"informal_statement\": {\"minLength\": 1, \"title\": \"Informal Statement\", \"type\": \"string\"}, \"informal_proof_text\": {\"minLength\": 1, \"title\": \"Informal Proof Text\", \"type\": \"string\"}, \"display_label\": {\"anyOf\": [{\"type\": \"string\"}, {\"type\": \"null\"}], \"default\": null, \"title\": \"Display Label\"}}, \"required\": [\"id\", \"title\", \"informal_statement\", \"informal_proof_text\"], \"title\": \"ExtractedNode\", \"type\": \"object\"}}, \"additionalProperties\": false, \"description\": \"Merged theorem-level planning payload: graph plus ranked formalization candidates.\", \"properties\": {\"theorem_title\": {\"minLength\": 1, \"title\": \"Theorem Title\", \"type\": \"string\"}, \"theorem_statement\": {\"minLength\": 1, \"title\": \"Theorem Statement\", \"type\": \"string\"}, \"root_node_id\": {\"minLength\": 1, \"title\": \"Root Node Id\", \"type\": \"string\"}, \"nodes\": {\"items\": {\"$ref\": \"#/$defs/ExtractedNode\"}, \"minItems\": 1, \"title\": \"Nodes\", \"type\": \"array\"}, \"edges\": {\"items\": {\"$ref\": \"#/$defs/ExtractedEdge\"}, \"title\": \"Edges\", \"type\": \"array\"}, \"candidates\": {\"items\": {\"$ref\": \"#/$defs/CandidateSelection\"}, \"title\": \"Candidates\", \"type\": \"array\"}}, \"required\": [\"theorem_title\", \"theorem_statement\", \"root_node_id\", \"nodes\", \"edges\"], \"title\": \"PlannedProofGraph\", \"type\": \"object\"}"
+  ],
+  "cwd": null,
+  "system_prompt": "Plan a compact, faithful, formalization-sensitive proof graph for the user's theorem. Return only JSON that matches the supplied schema. In one pass, choose the graph shape and rank the best local formalization candidates. Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible.",
+  "prompt": "Theorem title hint: Heat equation uniqueness by the energy method\n\nTheorem statement:\nUniqueness for the heat equation by the energy method.\n\nLet \\(u,v\\) be sufficiently regular solutions of the heat equation on the interval \\((0,L)\\) for times \\(t \\in [0,T]\\):\n\\[\nu_t = u_{xx}, \\qquad v_t = v_{xx},\n\\]\nwith the same initial data\n\\[\nu(x,0)=v(x,0),\n\\]\nand the same homogeneous Dirichlet boundary conditions\n\\[\nu(0,t)=u(L,t)=v(0,t)=v(L,t)=0.\n\\]\nThen \\(u=v\\) on \\([0,L]\\times[0,T]\\).\n\nRaw informal proof:\nSet\n\\[\nw=u-v.\n\\]\nThen \\(w\\) satisfies\n\\[\nw_t=w_{xx}\n\\]\non \\((0,L)\\times(0,T)\\), with initial data\n\\[\nw(x,0)=0\n\\]\nand boundary conditions\n\\[\nw(0,t)=w(L,t)=0.\n\\]\n\nDefine the energy\n\\[\nE(t)=\\frac12\\int_0^L w(x,t)^2\\,dx.\n\\]\nBecause \\(w\\) is sufficiently regular, we may differentiate under the integral sign:\n\\[\nE'(t)=\\int_0^L w(x,t)\\,w_t(x,t)\\,dx.\n\\]\nUsing the equation \\(w_t=w_{xx}\\), we get\n\\[\nE'(t)=\\int_0^L w\\,w_{xx}\\,dx.\n\\]\n\nNow integrate by parts in \\(x\\):\n\\[\n\\int_0^L w\\,w_{xx}\\,dx\n=\n\\bigl[w\\,w_x\\bigr]_{0}^{L}\n-\n\\int_0^L |w_x|^2\\,dx.\n\\]\nSince \\(w(0,t)=w(L,t)=0\\), the boundary term vanishes, so\n\\[\nE'(t)=-\\int_0^L |w_x(x,t)|^2\\,dx \\le 0.\n\\]\nTherefore \\(E(t)\\) is nonincreasing in time.\n\nAt \\(t=0\\), we have \\(w(x,0)=0\\), so\n\\[\nE(0)=\\frac12\\int_0^L 0^2\\,dx=0.\n\\]\nSince \\(E(t)\\ge 0\\) by definition and \\(E\\) is nonincreasing, we must have\n\\[\nE(t)=0\n\\]\nfor all \\(t\\in[0,T]\\).\n\nThus\n\\[\n\\int_0^L w(x,t)^2\\,dx = 0\n\\]\nfor all \\(t\\), so \\(w(x,t)=0\\) for all \\(x,t\\). Hence \\(u=v\\).\n\nReturn one JSON object with top-level keys theorem_title, theorem_statement, root_node_id, nodes, edges, and candidates.\n\nThe nodes and edges must follow the same informal extraction schema as before: nodes include id, title, informal_statement, informal_proof_text, and optional display_label; edges include source_id, target_id, and optional label and explanation.\n\nThe candidates array must include objects with node_id, priority, and rationale. Priority must be an integer from 1 to 3, where 1 is highest and 3 is lowest. Do not use words like high, medium, or low. Candidates should refer only to node ids that exist in the graph you emit.\n\nPlan the graph and candidate ranking jointly. Optimize for a compact, faithful, formalization-sensitive graph with a small, high-yield candidate set.\n\nA node should exist only if it is the root theorem, a nontrivial intermediate claim, a meaningful candidate formal island, a reused claim, a separate review obligation, or a conceptually distinct proof step that improves the final mixed informal/formal report.\n\nDo not create separate nodes for bare assumptions, local variable setup, trivial restatements, goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims.\n\nWhen choosing graph granularity, preserve one or two local technical subclaims if they are concrete, inferentially important, plausibly formalizable, and substantially used by the surrounding proof. Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic simplifications, monotonicity or concavity consequences, and concrete local estimates.\n\nKeep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims that are much weaker than the surrounding local argument.\n\nFor a tiny proof, prefer a single root node unless a second node for a reusable or conceptually distinct lemma clearly improves the graph.\n\nPreserve the original mathematical notation in your output whenever feasible. Do not normalize LaTeX into plain ASCII unless absolutely necessary.",
+  "json_schema": {
+    "$defs": {
+      "CandidateSelection": {
+        "additionalProperties": false,
+        "description": "Single candidate-formalization decision.",
+        "properties": {
+          "node_id": {
+            "minLength": 1,
+            "title": "Node Id",
+            "type": "string"
+          },
+          "priority": {
+            "maximum": 3,
+            "minimum": 1,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "rationale": {
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_id",
+          "priority",
+          "rationale"
+        ],
+        "title": "CandidateSelection",
+        "type": "object"
+      },
+      "ExtractedEdge": {
+        "additionalProperties": false,
+        "description": "Dependency edge shape expected from the graph-extraction pass.",
+        "properties": {
+          "source_id": {
+            "minLength": 1,
+            "title": "Source Id",
+            "type": "string"
+          },
+          "target_id": {
+            "minLength": 1,
+            "title": "Target Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Explanation"
+          }
+        },
+        "required": [
+          "source_id",
+          "target_id"
+        ],
+        "title": "ExtractedEdge",
+        "type": "object"
+      },
+      "ExtractedNode": {
+        "additionalProperties": false,
+        "description": "Node shape expected from the graph-extraction LLM pass.",
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "informal_statement": {
+            "minLength": 1,
+            "title": "Informal Statement",
+            "type": "string"
+          },
+          "informal_proof_text": {
+            "minLength": 1,
+            "title": "Informal Proof Text",
+            "type": "string"
+          },
+          "display_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Display Label"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "informal_statement",
+          "informal_proof_text"
+        ],
+        "title": "ExtractedNode",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Merged theorem-level planning payload: graph plus ranked formalization candidates.",
+    "properties": {
+      "theorem_title": {
+        "minLength": 1,
+        "title": "Theorem Title",
+        "type": "string"
+      },
+      "theorem_statement": {
+        "minLength": 1,
+        "title": "Theorem Statement",
+        "type": "string"
+      },
+      "root_node_id": {
+        "minLength": 1,
+        "title": "Root Node Id",
+        "type": "string"
+      },
+      "nodes": {
+        "items": {
+          "$ref": "#/$defs/ExtractedNode"
+        },
+        "minItems": 1,
+        "title": "Nodes",
+        "type": "array"
+      },
+      "edges": {
+        "items": {
+          "$ref": "#/$defs/ExtractedEdge"
+        },
+        "title": "Edges",
+        "type": "array"
+      },
+      "candidates": {
+        "items": {
+          "$ref": "#/$defs/CandidateSelection"
+        },
+        "title": "Candidates",
+        "type": "array"
+      }
+    },
+    "required": [
+      "theorem_title",
+      "theorem_statement",
+      "root_node_id",
+      "nodes",
+      "edges"
+    ],
+    "title": "PlannedProofGraph",
+    "type": "object"
+  },
+  "model": null,
+  "max_output_tokens": null,
+  "effort": null,
+  "agentic": false,
+  "timeout_seconds": 180.0,
+  "started_at_epoch_seconds": 1775458290.678317,
+  "elapsed_seconds": 67.85417079925537,
+  "exit_code": 0,
+  "stream_events": [
+    {
+      "line_number": 1,
+      "raw": "{\"type\":\"system\",\"subtype\":\"hook_started\",\"hook_id\":\"9dcfbde6-7aa4-41ee-815c-2de42a154dd5\",\"hook_name\":\"SessionStart:startup\",\"hook_event\":\"SessionStart\",\"uuid\":\"2e67864c-f310-43a0-b860-ec14cec52d81\",\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\"}",
+      "event": {
+        "type": "system",
+        "subtype": "hook_started",
+        "hook_id": "9dcfbde6-7aa4-41ee-815c-2de42a154dd5",
+        "hook_name": "SessionStart:startup",
+        "hook_event": "SessionStart",
+        "uuid": "2e67864c-f310-43a0-b860-ec14cec52d81",
+        "session_id": "fb873c14-f1af-45c6-8f6c-bf6d78c1ea75"
+      }
+    },
+    {
+      "line_number": 2,
+      "raw": "{\"type\":\"system\",\"subtype\":\"hook_response\",\"hook_id\":\"9dcfbde6-7aa4-41ee-815c-2de42a154dd5\",\"hook_name\":\"SessionStart:startup\",\"hook_event\":\"SessionStart\",\"output\":\"Lean4 v4 ready: PLUGIN_ROOT=/Users/adihaya/.claude/plugins/marketplaces/lean4-skills/plugins/lean4\\n\",\"stdout\":\"Lean4 v4 ready: PLUGIN_ROOT=/Users/adihaya/.claude/plugins/marketplaces/lean4-skills/plugins/lean4\\n\",\"stderr\":\"\",\"exit_code\":0,\"outcome\":\"success\",\"uuid\":\"b6ab2acd-82c8-4059-b671-41e7430ac38f\",\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\"}",
+      "event": {
+        "type": "system",
+        "subtype": "hook_response",
+        "hook_id": "9dcfbde6-7aa4-41ee-815c-2de42a154dd5",
+        "hook_name": "SessionStart:startup",
+        "hook_event": "SessionStart",
+        "output": "Lean4 v4 ready: PLUGIN_ROOT=/Users/adihaya/.claude/plugins/marketplaces/lean4-skills/plugins/lean4\n",
+        "stdout": "Lean4 v4 ready: PLUGIN_ROOT=/Users/adihaya/.claude/plugins/marketplaces/lean4-skills/plugins/lean4\n",
+        "stderr": "",
+        "exit_code": 0,
+        "outcome": "success",
+        "uuid": "b6ab2acd-82c8-4059-b671-41e7430ac38f",
+        "session_id": "fb873c14-f1af-45c6-8f6c-bf6d78c1ea75"
+      }
+    },
+    {
+      "line_number": 3,
+      "raw": "{\"type\":\"system\",\"subtype\":\"init\",\"cwd\":\"/Users/adihaya/GitHub/formal-islands\",\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"tools\":[\"StructuredOutput\"],\"mcp_servers\":[],\"model\":\"claude-sonnet-4-6\",\"permissionMode\":\"default\",\"slash_commands\":[\"update-config\",\"debug\",\"simplify\",\"batch\",\"loop\",\"schedule\",\"claude-api\",\"lean4:autoformalize\",\"lean4:autoprove\",\"lean4:learn\",\"lean4:prove\",\"lean4:draft\",\"lean4:checkpoint\",\"lean4:review\",\"lean4:doctor\",\"lean4:refactor\",\"lean4:formalize\",\"lean4:golf\",\"lean4:lean4\",\"compact\",\"context\",\"cost\",\"heapdump\",\"init\",\"review\",\"security-review\",\"extra-usage\",\"insights\"],\"apiKeySource\":\"none\",\"claude_code_version\":\"2.1.92\",\"output_style\":\"default\",\"agents\":[\"general-purpose\",\"statusline-setup\",\"Explore\",\"Plan\",\"lean4:proof-repair\",\"lean4:axiom-eliminator\",\"lean4:sorry-filler-deep\",\"lean4:proof-golfer\"],\"skills\":[\"update-config\",\"debug\",\"simplify\",\"batch\",\"loop\",\"schedule\",\"claude-api\",\"lean4:lean4\"],\"plugins\":[{\"name\":\"lean4\",\"path\":\"/Users/adihaya/.claude/plugins/marketplaces/lean4-skills/plugins/lean4\",\"source\":\"lean4@lean4-skills\"}],\"uuid\":\"1d79b455-dcea-4606-8ff7-855e79699a98\",\"fast_mode_state\":\"off\"}",
+      "event": {
+        "type": "system",
+        "subtype": "init",
+        "cwd": "/Users/adihaya/GitHub/formal-islands",
+        "session_id": "fb873c14-f1af-45c6-8f6c-bf6d78c1ea75",
+        "tools": [
+          "StructuredOutput"
+        ],
+        "mcp_servers": [],
+        "model": "claude-sonnet-4-6",
+        "permissionMode": "default",
+        "slash_commands": [
+          "update-config",
+          "debug",
+          "simplify",
+          "batch",
+          "loop",
+          "schedule",
+          "claude-api",
+          "lean4:autoformalize",
+          "lean4:autoprove",
+          "lean4:learn",
+          "lean4:prove",
+          "lean4:draft",
+          "lean4:checkpoint",
+          "lean4:review",
+          "lean4:doctor",
+          "lean4:refactor",
+          "lean4:formalize",
+          "lean4:golf",
+          "lean4:lean4",
+          "compact",
+          "context",
+          "cost",
+          "heapdump",
+          "init",
+          "review",
+          "security-review",
+          "extra-usage",
+          "insights"
+        ],
+        "apiKeySource": "none",
+        "claude_code_version": "2.1.92",
+        "output_style": "default",
+        "agents": [
+          "general-purpose",
+          "statusline-setup",
+          "Explore",
+          "Plan",
+          "lean4:proof-repair",
+          "lean4:axiom-eliminator",
+          "lean4:sorry-filler-deep",
+          "lean4:proof-golfer"
+        ],
+        "skills": [
+          "update-config",
+          "debug",
+          "simplify",
+          "batch",
+          "loop",
+          "schedule",
+          "claude-api",
+          "lean4:lean4"
+        ],
+        "plugins": [
+          {
+            "name": "lean4",
+            "path": "/Users/adihaya/.claude/plugins/marketplaces/lean4-skills/plugins/lean4",
+            "source": "lean4@lean4-skills"
+          }
+        ],
+        "uuid": "1d79b455-dcea-4606-8ff7-855e79699a98",
+        "fast_mode_state": "off"
+      }
+    },
+    {
+      "line_number": 4,
+      "raw": "{\"type\":\"assistant\",\"message\":{\"model\":\"claude-sonnet-4-6\",\"id\":\"msg_01FCET6CAacr76vkwLJwXc2U\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Let me plan a compact proof graph for the heat equation uniqueness theorem using the energy method.\\n\\nThe proof structure is:\\n1. Set w = u - v, which satisfies the heat equation with zero IC and BCs\\n2. Define E(t) = \u00bd\u222b\u2080\u1d38 w\u00b2dx\\n3. Show E'(t) \u2264 0 (via differentiation, substitution of PDE, integration by parts)\\n4. Show E(0) = 0\\n5. Conclude E(t) = 0 for all t, hence w = 0, hence u = v\\n\\n\\nThe key technical step is the integration by parts calculation that yields E'(t) = -\u222b|w_x|\u00b2 dx, which immediately gives us the monotonicity we need. Since E starts at zero and can only decrease, it must remain zero throughout, forcing the difference between solutions to vanish.\\n\\nFor the proof graph, I should structure this as a root node for the main uniqueness result with a child node handling the energy monotonicity lemma\u2014that's where the real formalization work happens with the boundary term analysis and the integration by parts identity. The proof really breaks down into five steps, but most of them are straightforward consequences. Steps 3, 4, and 5 follow almost immediately once I establish that energy dissipates\u2014the hard part is actually computing E'(t) and showing it's nonpositive through integration by parts. So I'll structure the graph with just two nodes: the full uniqueness theorem as the root, and the energy dissipation calculation as the key technical subnode that does all the real work.\\n\\nNow I'm deciding which pieces to formalize first. The energy dissipation step is where the actual mathematics lives\u2014it's concrete, it's the bottleneck, and it's the kind of calculation that benefits from formal verification. The uniqueness theorem itself is important but mostly just assembles the pieces, so I'll prioritize getting the energy dissipation node solid first.\",\"signature\":\"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\"}],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":3,\"cache_creation_input_tokens\":2984,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":2984},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"context_management\":null},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"ad4c46bf-42a2-4101-a70b-bab26d21c8fa\"}",
+      "event": {
+        "type": "assistant",
+        "message": {
+          "model": "claude-sonnet-4-6",
+          "id": "msg_01FCET6CAacr76vkwLJwXc2U",
+          "type": "message",
+          "role": "assistant",
+          "content": [
+            {
+              "type": "thinking",
+              "thinking": "Let me plan a compact proof graph for the heat equation uniqueness theorem using the energy method.\n\nThe proof structure is:\n1. Set w = u - v, which satisfies the heat equation with zero IC and BCs\n2. Define E(t) = \u00bd\u222b\u2080\u1d38 w\u00b2dx\n3. Show E'(t) \u2264 0 (via differentiation, substitution of PDE, integration by parts)\n4. Show E(0) = 0\n5. Conclude E(t) = 0 for all t, hence w = 0, hence u = v\n\n\nThe key technical step is the integration by parts calculation that yields E'(t) = -\u222b|w_x|\u00b2 dx, which immediately gives us the monotonicity we need. Since E starts at zero and can only decrease, it must remain zero throughout, forcing the difference between solutions to vanish.\n\nFor the proof graph, I should structure this as a root node for the main uniqueness result with a child node handling the energy monotonicity lemma\u2014that's where the real formalization work happens with the boundary term analysis and the integration by parts identity. The proof really breaks down into five steps, but most of them are straightforward consequences. Steps 3, 4, and 5 follow almost immediately once I establish that energy dissipates\u2014the hard part is actually computing E'(t) and showing it's nonpositive through integration by parts. So I'll structure the graph with just two nodes: the full uniqueness theorem as the root, and the energy dissipation calculation as the key technical subnode that does all the real work.\n\nNow I'm deciding which pieces to formalize first. The energy dissipation step is where the actual mathematics lives\u2014it's concrete, it's the bottleneck, and it's the kind of calculation that benefits from formal verification. The uniqueness theorem itself is important but mostly just assembles the pieces, so I'll prioritize getting the energy dissipation node solid first.",
+              "signature": "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"
+            }
+          ],
+          "stop_reason": null,
+          "stop_sequence": null,
+          "stop_details": null,
+          "usage": {
+            "input_tokens": 3,
+            "cache_creation_input_tokens": 2984,
+            "cache_read_input_tokens": 0,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2984
+            },
+            "output_tokens": 1,
+            "service_tier": "standard",
+            "inference_geo": "not_available"
+          },
+          "context_management": null
+        },
+        "parent_tool_use_id": null,
+        "session_id": "fb873c14-f1af-45c6-8f6c-bf6d78c1ea75",
+        "uuid": "ad4c46bf-42a2-4101-a70b-bab26d21c8fa"
+      }
+    },
+    {
+      "line_number": 5,
+      "raw": "{\"type\":\"assistant\",\"message\":{\"model\":\"claude-sonnet-4-6\",\"id\":\"msg_01FCET6CAacr76vkwLJwXc2U\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_012wnetNN5Kc9VVYGPgMwugk\",\"name\":\"StructuredOutput\",\"input\":{\"theorem_title\":\"Heat equation uniqueness by the energy method\",\"theorem_statement\":\"Let \\\\(u,v\\\\) be sufficiently regular solutions of the heat equation on \\\\((0,L)\\\\times[0,T]\\\\) satisfying \\\\(u_t=u_{xx}\\\\), \\\\(v_t=v_{xx}\\\\), with the same initial data \\\\(u(x,0)=v(x,0)\\\\) and homogeneous Dirichlet boundary conditions \\\\(u(0,t)=u(L,t)=v(0,t)=v(L,t)=0\\\\). Then \\\\(u=v\\\\) on \\\\([0,L]\\\\times[0,T]\\\\).\",\"root_node_id\":\"heat_uniqueness\",\"nodes\":\"[\\n  {\\n    \\\"id\\\": \\\"energy_dissipation\\\",\\n    \\\"title\\\": \\\"Energy is nonincreasing: \\\\(E'(t) \\\\le 0\\\\)\\\",\\n    \\\"informal_statement\\\": \\\"Let \\\\(w = u - v\\\\) satisfy \\\\(w_t = w_{xx}\\\\) on \\\\((0,L)\\\\times(0,T)\\\\) with \\\\(w(0,t)=w(L,t)=0\\\\), and define the energy \\\\(E(t) = \\\\tfrac{1}{2}\\\\int_0^L w(x,t)^2\\\\,dx\\\\). Then \\\\(E'(t) = -\\\\int_0^L |w_x(x,t)|^2\\\\,dx \\\\le 0\\\\) for all \\\\(t \\\\in [0,T]\\\\).\\\",\\n    \\\"informal_proof_text\\\": \\\"Differentiating under the integral sign (justified by the assumed regularity of \\\\(w\\\\)):\\\\n\\\\\\\\[\\\\nE'(t) = \\\\\\\\int_0^L w\\\\\\\\, w_t\\\\\\\\,dx.\\\\n\\\\\\\\]\\\\nSubstituting the PDE \\\\(w_t = w_{xx}\\\\\\\\):\\\\n\\\\\\\\[\\\\nE'(t) = \\\\\\\\int_0^L w\\\\\\\\, w_{xx}\\\\\\\\,dx.\\\\n\\\\\\\\]\\\\nIntegrating by parts in \\\\(x\\\\\\\\):\\\\n\\\\\\\\[\\\\n\\\\\\\\int_0^L w\\\\\\\\, w_{xx}\\\\\\\\,dx = \\\\\\\\bigl[w\\\\\\\\, w_x\\\\\\\\bigr]_{0}^{L} - \\\\\\\\int_0^L |w_x|^2\\\\\\\\,dx.\\\\n\\\\\\\\]\\\\nThe boundary term vanishes because \\\\(w(0,t) = w(L,t) = 0\\\\\\\\), so\\\\n\\\\\\\\[\\\\nE'(t) = -\\\\\\\\int_0^L |w_x(x,t)|^2\\\\\\\\,dx \\\\\\\\le 0.\\\\n\\\\\\\\]\\\",\\n    \\\"display_label\\\": \\\"\\\\(E'(t) = -\\\\\\\\int_0^L |w_x|^2\\\\\\\\,dx \\\\\\\\le 0\\\\)\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"heat_uniqueness\\\",\\n    \\\"title\\\": \\\"Heat equation uniqueness by the energy method\\\",\\n    \\\"informal_statement\\\": \\\"Under the stated hypotheses, \\\\(u = v\\\\) on \\\\([0,L]\\\\\\\\times[0,T]\\\\\\\\).\\\",\\n    \\\"informal_proof_text\\\": \\\"Set \\\\(w = u - v\\\\\\\\). Then \\\\(w\\\\\\\\) satisfies \\\\(w_t = w_{xx}\\\\\\\\) on \\\\((0,L)\\\\\\\\times(0,T)\\\\\\\\) with zero initial data \\\\(w(x,0)=0\\\\\\\\) and zero Dirichlet boundary conditions \\\\(w(0,t)=w(L,t)=0\\\\\\\\).\\\\n\\\\nDefine \\\\(E(t) = \\\\\\\\tfrac{1}{2}\\\\\\\\int_0^L w(x,t)^2\\\\\\\\,dx\\\\\\\\). By the energy dissipation lemma, \\\\(E'(t) \\\\\\\\le 0\\\\\\\\), so \\\\(E\\\\\\\\) is nonincreasing. At \\\\(t=0\\\\\\\\), \\\\(w(x,0)=0\\\\\\\\) gives \\\\(E(0) = 0\\\\\\\\). Since \\\\(E(t) \\\\\\\\ge 0\\\\\\\\) by definition and \\\\(E\\\\\\\\) is nonincreasing from \\\\(0\\\\\\\\), we conclude \\\\(E(t) = 0\\\\\\\\) for all \\\\(t \\\\\\\\in [0,T]\\\\\\\\).\\\\n\\\\nHence \\\\(\\\\\\\\int_0^L w(x,t)^2\\\\\\\\,dx = 0\\\\\\\\) for all \\\\(t\\\\\\\\), so \\\\(w(x,t) = 0\\\\\\\\) for all \\\\((x,t)\\\\\\\\), i.e., \\\\(u = v\\\\\\\\).\\\",\\n    \\\"display_label\\\": \\\"Heat uniqueness (energy method)\\\"\\n  }\\n]\",\"edges\":[{\"source_id\":\"energy_dissipation\",\"target_id\":\"heat_uniqueness\",\"label\":\"used by\",\"explanation\":\"The nonincreasing property E'(t) \u2264 0 together with E(0)=0 and E(t)\u22650 forces E(t)=0 for all t, which is the key step in the root proof.\"}],\"candidates\":[{\"node_id\":\"energy_dissipation\",\"priority\":1,\"rationale\":\"This node contains the entire technical core of the proof: differentiation under the integral, PDE substitution, the integration-by-parts identity, and the cancellation of boundary terms. It is a concrete, self-contained computation that is directly formalizable and carries the main inferential load of the argument.\"},{\"node_id\":\"heat_uniqueness\",\"priority\":2,\"rationale\":\"The root theorem is the natural top-level Lean statement. Once energy_dissipation is formalized, the remaining steps\u2014E(0)=0, monotonicity forcing E\u22610, and pointwise vanishing of w\u2014are straightforward and can be verified efficiently, making the full root a good secondary candidate.\"}]},\"caller\":{\"type\":\"direct\"}}],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":3,\"cache_creation_input_tokens\":2984,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":2984},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"context_management\":null},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"986fdd8b-8324-4c5d-923e-2805b8855fbb\"}",
+      "event": {
+        "type": "assistant",
+        "message": {
+          "model": "claude-sonnet-4-6",
+          "id": "msg_01FCET6CAacr76vkwLJwXc2U",
+          "type": "message",
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool_use",
+              "id": "toolu_012wnetNN5Kc9VVYGPgMwugk",
+              "name": "StructuredOutput",
+              "input": {
+                "theorem_title": "Heat equation uniqueness by the energy method",
+                "theorem_statement": "Let \\(u,v\\) be sufficiently regular solutions of the heat equation on \\((0,L)\\times[0,T]\\) satisfying \\(u_t=u_{xx}\\), \\(v_t=v_{xx}\\), with the same initial data \\(u(x,0)=v(x,0)\\) and homogeneous Dirichlet boundary conditions \\(u(0,t)=u(L,t)=v(0,t)=v(L,t)=0\\). Then \\(u=v\\) on \\([0,L]\\times[0,T]\\).",
+                "root_node_id": "heat_uniqueness",
+                "nodes": "[\n  {\n    \"id\": \"energy_dissipation\",\n    \"title\": \"Energy is nonincreasing: \\(E'(t) \\le 0\\)\",\n    \"informal_statement\": \"Let \\(w = u - v\\) satisfy \\(w_t = w_{xx}\\) on \\((0,L)\\times(0,T)\\) with \\(w(0,t)=w(L,t)=0\\), and define the energy \\(E(t) = \\tfrac{1}{2}\\int_0^L w(x,t)^2\\,dx\\). Then \\(E'(t) = -\\int_0^L |w_x(x,t)|^2\\,dx \\le 0\\) for all \\(t \\in [0,T]\\).\",\n    \"informal_proof_text\": \"Differentiating under the integral sign (justified by the assumed regularity of \\(w\\)):\\n\\\\[\\nE'(t) = \\\\int_0^L w\\\\, w_t\\\\,dx.\\n\\\\]\\nSubstituting the PDE \\(w_t = w_{xx}\\\\):\\n\\\\[\\nE'(t) = \\\\int_0^L w\\\\, w_{xx}\\\\,dx.\\n\\\\]\\nIntegrating by parts in \\(x\\\\):\\n\\\\[\\n\\\\int_0^L w\\\\, w_{xx}\\\\,dx = \\\\bigl[w\\\\, w_x\\\\bigr]_{0}^{L} - \\\\int_0^L |w_x|^2\\\\,dx.\\n\\\\]\\nThe boundary term vanishes because \\(w(0,t) = w(L,t) = 0\\\\), so\\n\\\\[\\nE'(t) = -\\\\int_0^L |w_x(x,t)|^2\\\\,dx \\\\le 0.\\n\\\\]\",\n    \"display_label\": \"\\(E'(t) = -\\\\int_0^L |w_x|^2\\\\,dx \\\\le 0\\)\"\n  },\n  {\n    \"id\": \"heat_uniqueness\",\n    \"title\": \"Heat equation uniqueness by the energy method\",\n    \"informal_statement\": \"Under the stated hypotheses, \\(u = v\\) on \\([0,L]\\\\times[0,T]\\\\).\",\n    \"informal_proof_text\": \"Set \\(w = u - v\\\\). Then \\(w\\\\) satisfies \\(w_t = w_{xx}\\\\) on \\((0,L)\\\\times(0,T)\\\\) with zero initial data \\(w(x,0)=0\\\\) and zero Dirichlet boundary conditions \\(w(0,t)=w(L,t)=0\\\\).\\n\\nDefine \\(E(t) = \\\\tfrac{1}{2}\\\\int_0^L w(x,t)^2\\\\,dx\\\\). By the energy dissipation lemma, \\(E'(t) \\\\le 0\\\\), so \\(E\\\\) is nonincreasing. At \\(t=0\\\\), \\(w(x,0)=0\\\\) gives \\(E(0) = 0\\\\). Since \\(E(t) \\\\ge 0\\\\) by definition and \\(E\\\\) is nonincreasing from \\(0\\\\), we conclude \\(E(t) = 0\\\\) for all \\(t \\\\in [0,T]\\\\).\\n\\nHence \\(\\\\int_0^L w(x,t)^2\\\\,dx = 0\\\\) for all \\(t\\\\), so \\(w(x,t) = 0\\\\) for all \\((x,t)\\\\), i.e., \\(u = v\\\\).\",\n    \"display_label\": \"Heat uniqueness (energy method)\"\n  }\n]",
+                "edges": [
+                  {
+                    "source_id": "energy_dissipation",
+                    "target_id": "heat_uniqueness",
+                    "label": "used by",
+                    "explanation": "The nonincreasing property E'(t) \u2264 0 together with E(0)=0 and E(t)\u22650 forces E(t)=0 for all t, which is the key step in the root proof."
+                  }
+                ],
+                "candidates": [
+                  {
+                    "node_id": "energy_dissipation",
+                    "priority": 1,
+                    "rationale": "This node contains the entire technical core of the proof: differentiation under the integral, PDE substitution, the integration-by-parts identity, and the cancellation of boundary terms. It is a concrete, self-contained computation that is directly formalizable and carries the main inferential load of the argument."
+                  },
+                  {
+                    "node_id": "heat_uniqueness",
+                    "priority": 2,
+                    "rationale": "The root theorem is the natural top-level Lean statement. Once energy_dissipation is formalized, the remaining steps\u2014E(0)=0, monotonicity forcing E\u22610, and pointwise vanishing of w\u2014are straightforward and can be verified efficiently, making the full root a good secondary candidate."
+                  }
+                ]
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ],
+          "stop_reason": null,
+          "stop_sequence": null,
+          "stop_details": null,
+          "usage": {
+            "input_tokens": 3,
+            "cache_creation_input_tokens": 2984,
+            "cache_read_input_tokens": 0,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2984
+            },
+            "output_tokens": 1,
+            "service_tier": "standard",
+            "inference_geo": "not_available"
+          },
+          "context_management": null
+        },
+        "parent_tool_use_id": null,
+        "session_id": "fb873c14-f1af-45c6-8f6c-bf6d78c1ea75",
+        "uuid": "986fdd8b-8324-4c5d-923e-2805b8855fbb"
+      }
+    },
+    {
+      "line_number": 6,
+      "raw": "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"content\":\"Output does not match required schema: /nodes: must be array\",\"is_error\":true,\"tool_use_id\":\"toolu_012wnetNN5Kc9VVYGPgMwugk\"}]},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"d9c22974-4ff5-4d6b-97c2-5a0973b84221\",\"timestamp\":\"2026-04-06T06:52:09.027Z\",\"tool_use_result\":\"Error: Output does not match required schema: /nodes: must be array\"}",
+      "event": {
+        "type": "user",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "content": "Output does not match required schema: /nodes: must be array",
+              "is_error": true,
+              "tool_use_id": "toolu_012wnetNN5Kc9VVYGPgMwugk"
+            }
+          ]
+        },
+        "parent_tool_use_id": null,
+        "session_id": "fb873c14-f1af-45c6-8f6c-bf6d78c1ea75",
+        "uuid": "d9c22974-4ff5-4d6b-97c2-5a0973b84221",
+        "timestamp": "2026-04-06T06:52:09.027Z",
+        "tool_use_result": "Error: Output does not match required schema: /nodes: must be array"
+      }
+    },
+    {
+      "line_number": 7,
+      "raw": "{\"type\":\"rate_limit_event\",\"rate_limit_info\":{\"status\":\"allowed_warning\",\"resetsAt\":1776020400,\"rateLimitType\":\"seven_day\",\"utilization\":0.26,\"isUsingOverage\":false},\"uuid\":\"9f719599-c7a6-4874-98fd-d930801122fc\",\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\"}",
+      "event": {
+        "type": "rate_limit_event",
+        "rate_limit_info": {
+          "status": "allowed_warning",
+          "resetsAt": 1776020400,
+          "rateLimitType": "seven_day",
+          "utilization": 0.26,
+          "isUsingOverage": false
+        },
+        "uuid": "9f719599-c7a6-4874-98fd-d930801122fc",
+        "session_id": "fb873c14-f1af-45c6-8f6c-bf6d78c1ea75"
+      }
+    },
+    {
+      "line_number": 8,
+      "raw": "{\"type\":\"assistant\",\"message\":{\"model\":\"claude-sonnet-4-6\",\"id\":\"msg_013ZXgYDbuazrjXZ8RZUGvPy\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Let me fix the JSON format - the nodes parameter needs to be a proper JSON array.\",\"signature\":\"Eo4CClsIDBgCKkAOpfBWMECHaqWmJrrbuzBVK62Ci+mdhaWHQjh2V37ddc+QPEGxBYwdQlCzXoAj0ieJxP8UDQqd98CDIqImFvWQMhFjbGF1ZGUtc29ubmV0LTQtNjgAEgzPoylQQRYgjvBNXGAaDM8+GwlEp71BuuDrWiIw8wuN3xM5QTJE6NnJX6hHSW7DFBaXOEtls9VuNs5FWEyW88ScT62k6FmgSoLLIw5mKmFIf61812bqZH7cwDMLmAtMQsHZgDSpkSluEPN5b9uKqs6bksKgWxubSwBqkPhbh1An8t3henlt1QJOXna1qs6L/R7EB0yuEg3/KPr5KTw+zcP0SxbXG7hQrklVhc3RjbamGAE=\"}],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":1,\"cache_creation_input_tokens\":2560,\"cache_read_input_tokens\":2984,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":2560},\"output_tokens\":10,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"context_management\":null},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"30aaed8c-412b-4e8f-840f-9c724ac052f2\"}",
+      "event": {
+        "type": "assistant",
+        "message": {
+          "model": "claude-sonnet-4-6",
+          "id": "msg_013ZXgYDbuazrjXZ8RZUGvPy",
+          "type": "message",
+          "role": "assistant",
+          "content": [
+            {
+              "type": "thinking",
+              "thinking": "Let me fix the JSON format - the nodes parameter needs to be a proper JSON array.",
+              "signature": "Eo4CClsIDBgCKkAOpfBWMECHaqWmJrrbuzBVK62Ci+mdhaWHQjh2V37ddc+QPEGxBYwdQlCzXoAj0ieJxP8UDQqd98CDIqImFvWQMhFjbGF1ZGUtc29ubmV0LTQtNjgAEgzPoylQQRYgjvBNXGAaDM8+GwlEp71BuuDrWiIw8wuN3xM5QTJE6NnJX6hHSW7DFBaXOEtls9VuNs5FWEyW88ScT62k6FmgSoLLIw5mKmFIf61812bqZH7cwDMLmAtMQsHZgDSpkSluEPN5b9uKqs6bksKgWxubSwBqkPhbh1An8t3henlt1QJOXna1qs6L/R7EB0yuEg3/KPr5KTw+zcP0SxbXG7hQrklVhc3RjbamGAE="
+            }
+          ],
+          "stop_reason": null,
+          "stop_sequence": null,
+          "stop_details": null,
+          "usage": {
+            "input_tokens": 1,
+            "cache_creation_input_tokens": 2560,
+            "cache_read_input_tokens": 2984,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2560
+            },
+            "output_tokens": 10,
+            "service_tier": "standard",
+            "inference_geo": "not_available"
+          },
+          "context_management": null
+        },
+        "parent_tool_use_id": null,
+        "session_id": "fb873c14-f1af-45c6-8f6c-bf6d78c1ea75",
+        "uuid": "30aaed8c-412b-4e8f-840f-9c724ac052f2"
+      }
+    },
+    {
+      "line_number": 9,
+      "raw": "{\"type\":\"assistant\",\"message\":{\"model\":\"claude-sonnet-4-6\",\"id\":\"msg_013ZXgYDbuazrjXZ8RZUGvPy\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_01DT1wooYnUCo5WmC2eE2KY1\",\"name\":\"StructuredOutput\",\"input\":{\"theorem_title\":\"Heat equation uniqueness by the energy method\",\"theorem_statement\":\"Let \\\\(u,v\\\\) be sufficiently regular solutions of the heat equation on \\\\((0,L)\\\\times[0,T]\\\\) satisfying \\\\(u_t=u_{xx}\\\\), \\\\(v_t=v_{xx}\\\\), with the same initial data \\\\(u(x,0)=v(x,0)\\\\) and homogeneous Dirichlet boundary conditions \\\\(u(0,t)=u(L,t)=v(0,t)=v(L,t)=0\\\\). Then \\\\(u=v\\\\) on \\\\([0,L]\\\\times[0,T]\\\\).\",\"root_node_id\":\"heat_uniqueness\",\"nodes\":[{\"id\":\"energy_dissipation\",\"title\":\"Energy is nonincreasing: E'(t) \u2264 0\",\"display_label\":\"\\\\(E'(t) = -\\\\int_0^L |w_x|^2\\\\,dx \\\\le 0\\\\)\",\"informal_statement\":\"Let \\\\(w = u - v\\\\) satisfy \\\\(w_t = w_{xx}\\\\) on \\\\((0,L)\\\\times(0,T)\\\\) with \\\\(w(0,t)=w(L,t)=0\\\\), and define the energy \\\\(E(t) = \\\\tfrac{1}{2}\\\\int_0^L w(x,t)^2\\\\,dx\\\\). Then \\\\(E'(t) = -\\\\int_0^L |w_x(x,t)|^2\\\\,dx \\\\le 0\\\\) for all \\\\(t \\\\in [0,T]\\\\).\",\"informal_proof_text\":\"Differentiating under the integral sign (justified by the assumed regularity of \\\\(w\\\\)):\\n\\\\[\\nE'(t) = \\\\int_0^L w\\\\, w_t\\\\,dx.\\n\\\\]\\nSubstituting the PDE \\\\(w_t = w_{xx}\\\\):\\n\\\\[\\nE'(t) = \\\\int_0^L w\\\\, w_{xx}\\\\,dx.\\n\\\\]\\nIntegrating by parts in \\\\(x\\\\):\\n\\\\[\\n\\\\int_0^L w\\\\, w_{xx}\\\\,dx = \\\\bigl[w\\\\, w_x\\\\bigr]_{0}^{L} - \\\\int_0^L |w_x|^2\\\\,dx.\\n\\\\]\\nThe boundary term vanishes because \\\\(w(0,t) = w(L,t) = 0\\\\), giving\\n\\\\[\\nE'(t) = -\\\\int_0^L |w_x(x,t)|^2\\\\,dx \\\\le 0.\\n\\\\]\"},{\"id\":\"heat_uniqueness\",\"title\":\"Heat equation uniqueness by the energy method\",\"display_label\":\"Heat uniqueness (energy method)\",\"informal_statement\":\"Under the stated hypotheses, \\\\(u = v\\\\) on \\\\([0,L]\\\\times[0,T]\\\\).\",\"informal_proof_text\":\"Set \\\\(w = u - v\\\\). Then \\\\(w\\\\) satisfies \\\\(w_t = w_{xx}\\\\) on \\\\((0,L)\\\\times(0,T)\\\\) with zero initial data \\\\(w(x,0)=0\\\\) and zero Dirichlet boundary conditions \\\\(w(0,t)=w(L,t)=0\\\\).\\n\\nDefine \\\\(E(t) = \\\\tfrac{1}{2}\\\\int_0^L w(x,t)^2\\\\,dx\\\\). By the energy dissipation lemma, \\\\(E'(t) \\\\le 0\\\\), so \\\\(E\\\\) is nonincreasing. At \\\\(t=0\\\\), \\\\(w(x,0)=0\\\\) gives \\\\(E(0) = 0\\\\). Since \\\\(E(t) \\\\ge 0\\\\) by definition and \\\\(E\\\\) is nonincreasing from \\\\(0\\\\), we conclude \\\\(E(t) = 0\\\\) for all \\\\(t \\\\in [0,T]\\\\).\\n\\nHence \\\\(\\\\int_0^L w(x,t)^2\\\\,dx = 0\\\\) for all \\\\(t\\\\), so \\\\(w(x,t) = 0\\\\) for all \\\\((x,t)\\\\), i.e., \\\\(u = v\\\\).\"}],\"edges\":[{\"source_id\":\"energy_dissipation\",\"target_id\":\"heat_uniqueness\",\"label\":\"used by\",\"explanation\":\"The nonincreasing property E'(t) \u2264 0, together with E(0)=0 and E(t)\u22650, forces E(t)=0 for all t \u2014 the key step driving the conclusion u=v.\"}],\"candidates\":[{\"node_id\":\"energy_dissipation\",\"priority\":1,\"rationale\":\"This node contains the entire technical core of the proof: differentiation under the integral, PDE substitution, the integration-by-parts identity \u222bw\u00b7w_xx dx = [w\u00b7w_x]\u2080\u1d38 \u2212 \u222b|w_x|\u00b2 dx, and cancellation of boundary terms. It is a concrete, self-contained computation, directly formalizable, and carries the main inferential load.\"},{\"node_id\":\"heat_uniqueness\",\"priority\":2,\"rationale\":\"The root theorem is the natural top-level Lean statement. Once energy_dissipation is formalized, the remaining steps \u2014 E(0)=0, monotonicity forcing E\u22610, and pointwise vanishing of w \u2014 are straightforward and can be composed efficiently.\"}]},\"caller\":{\"type\":\"direct\"}}],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":1,\"cache_creation_input_tokens\":2560,\"cache_read_input_tokens\":2984,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":2560},\"output_tokens\":10,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"context_management\":null},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"53dc3a6e-e05e-450b-ac6d-6edeaeaff780\"}",
+      "event": {
+        "type": "assistant",
+        "message": {
+          "model": "claude-sonnet-4-6",
+          "id": "msg_013ZXgYDbuazrjXZ8RZUGvPy",
+          "type": "message",
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool_use",
+              "id": "toolu_01DT1wooYnUCo5WmC2eE2KY1",
+              "name": "StructuredOutput",
+              "input": {
+                "theorem_title": "Heat equation uniqueness by the energy method",
+                "theorem_statement": "Let \\(u,v\\) be sufficiently regular solutions of the heat equation on \\((0,L)\\times[0,T]\\) satisfying \\(u_t=u_{xx}\\), \\(v_t=v_{xx}\\), with the same initial data \\(u(x,0)=v(x,0)\\) and homogeneous Dirichlet boundary conditions \\(u(0,t)=u(L,t)=v(0,t)=v(L,t)=0\\). Then \\(u=v\\) on \\([0,L]\\times[0,T]\\).",
+                "root_node_id": "heat_uniqueness",
+                "nodes": [
+                  {
+                    "id": "energy_dissipation",
+                    "title": "Energy is nonincreasing: E'(t) \u2264 0",
+                    "display_label": "\\(E'(t) = -\\int_0^L |w_x|^2\\,dx \\le 0\\)",
+                    "informal_statement": "Let \\(w = u - v\\) satisfy \\(w_t = w_{xx}\\) on \\((0,L)\\times(0,T)\\) with \\(w(0,t)=w(L,t)=0\\), and define the energy \\(E(t) = \\tfrac{1}{2}\\int_0^L w(x,t)^2\\,dx\\). Then \\(E'(t) = -\\int_0^L |w_x(x,t)|^2\\,dx \\le 0\\) for all \\(t \\in [0,T]\\).",
+                    "informal_proof_text": "Differentiating under the integral sign (justified by the assumed regularity of \\(w\\)):\n\\[\nE'(t) = \\int_0^L w\\, w_t\\,dx.\n\\]\nSubstituting the PDE \\(w_t = w_{xx}\\):\n\\[\nE'(t) = \\int_0^L w\\, w_{xx}\\,dx.\n\\]\nIntegrating by parts in \\(x\\):\n\\[\n\\int_0^L w\\, w_{xx}\\,dx = \\bigl[w\\, w_x\\bigr]_{0}^{L} - \\int_0^L |w_x|^2\\,dx.\n\\]\nThe boundary term vanishes because \\(w(0,t) = w(L,t) = 0\\), giving\n\\[\nE'(t) = -\\int_0^L |w_x(x,t)|^2\\,dx \\le 0.\n\\]"
+                  },
+                  {
+                    "id": "heat_uniqueness",
+                    "title": "Heat equation uniqueness by the energy method",
+                    "display_label": "Heat uniqueness (energy method)",
+                    "informal_statement": "Under the stated hypotheses, \\(u = v\\) on \\([0,L]\\times[0,T]\\).",
+                    "informal_proof_text": "Set \\(w = u - v\\). Then \\(w\\) satisfies \\(w_t = w_{xx}\\) on \\((0,L)\\times(0,T)\\) with zero initial data \\(w(x,0)=0\\) and zero Dirichlet boundary conditions \\(w(0,t)=w(L,t)=0\\).\n\nDefine \\(E(t) = \\tfrac{1}{2}\\int_0^L w(x,t)^2\\,dx\\). By the energy dissipation lemma, \\(E'(t) \\le 0\\), so \\(E\\) is nonincreasing. At \\(t=0\\), \\(w(x,0)=0\\) gives \\(E(0) = 0\\). Since \\(E(t) \\ge 0\\) by definition and \\(E\\) is nonincreasing from \\(0\\), we conclude \\(E(t) = 0\\) for all \\(t \\in [0,T]\\).\n\nHence \\(\\int_0^L w(x,t)^2\\,dx = 0\\) for all \\(t\\), so \\(w(x,t) = 0\\) for all \\((x,t)\\), i.e., \\(u = v\\)."
+                  }
+                ],
+                "edges": [
+                  {
+                    "source_id": "energy_dissipation",
+                    "target_id": "heat_uniqueness",
+                    "label": "used by",
+                    "explanation": "The nonincreasing property E'(t) \u2264 0, together with E(0)=0 and E(t)\u22650, forces E(t)=0 for all t \u2014 the key step driving the conclusion u=v."
+                  }
+                ],
+                "candidates": [
+                  {
+                    "node_id": "energy_dissipation",
+                    "priority": 1,
+                    "rationale": "This node contains the entire technical core of the proof: differentiation under the integral, PDE substitution, the integration-by-parts identity \u222bw\u00b7w_xx dx = [w\u00b7w_x]\u2080\u1d38 \u2212 \u222b|w_x|\u00b2 dx, and cancellation of boundary terms. It is a concrete, self-contained computation, directly formalizable, and carries the main inferential load."
+                  },
+                  {
+                    "node_id": "heat_uniqueness",
+                    "priority": 2,
+                    "rationale": "The root theorem is the natural top-level Lean statement. Once energy_dissipation is formalized, the remaining steps \u2014 E(0)=0, monotonicity forcing E\u22610, and pointwise vanishing of w \u2014 are straightforward and can be composed efficiently."
+                  }
+                ]
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ],
+          "stop_reason": null,
+          "stop_sequence": null,
+          "stop_details": null,
+          "usage": {
+            "input_tokens": 1,
+            "cache_creation_input_tokens": 2560,
+            "cache_read_input_tokens": 2984,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 2560
+            },
+            "output_tokens": 10,
+            "service_tier": "standard",
+            "inference_geo": "not_available"
+          },
+          "context_management": null
+        },
+        "parent_tool_use_id": null,
+        "session_id": "fb873c14-f1af-45c6-8f6c-bf6d78c1ea75",
+        "uuid": "53dc3a6e-e05e-450b-ac6d-6edeaeaff780"
+      }
+    },
+    {
+      "line_number": 10,
+      "raw": "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"tool_use_id\":\"toolu_01DT1wooYnUCo5WmC2eE2KY1\",\"type\":\"tool_result\",\"content\":\"Structured output provided successfully\"}]},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"10d7cef1-a2fd-46b7-9ba3-f6a8c06e8e48\",\"timestamp\":\"2026-04-06T06:52:27.093Z\",\"tool_use_result\":\"Structured output provided successfully\"}",
+      "event": {
+        "type": "user",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "tool_use_id": "toolu_01DT1wooYnUCo5WmC2eE2KY1",
+              "type": "tool_result",
+              "content": "Structured output provided successfully"
+            }
+          ]
+        },
+        "parent_tool_use_id": null,
+        "session_id": "fb873c14-f1af-45c6-8f6c-bf6d78c1ea75",
+        "uuid": "10d7cef1-a2fd-46b7-9ba3-f6a8c06e8e48",
+        "timestamp": "2026-04-06T06:52:27.093Z",
+        "tool_use_result": "Structured output provided successfully"
+      }
+    },
+    {
+      "line_number": 11,
+      "raw": "{\"type\":\"rate_limit_event\",\"rate_limit_info\":{\"status\":\"allowed_warning\",\"resetsAt\":1776020400,\"rateLimitType\":\"seven_day\",\"utilization\":0.27,\"isUsingOverage\":false},\"uuid\":\"7819a2b1-6c7b-420b-bbb3-1c2466a38e23\",\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\"}",
+      "event": {
+        "type": "rate_limit_event",
+        "rate_limit_info": {
+          "status": "allowed_warning",
+          "resetsAt": 1776020400,
+          "rateLimitType": "seven_day",
+          "utilization": 0.27,
+          "isUsingOverage": false
+        },
+        "uuid": "7819a2b1-6c7b-420b-bbb3-1c2466a38e23",
+        "session_id": "fb873c14-f1af-45c6-8f6c-bf6d78c1ea75"
+      }
+    },
+    {
+      "line_number": 12,
+      "raw": "{\"type\":\"assistant\",\"message\":{\"model\":\"claude-sonnet-4-6\",\"id\":\"msg_01Wjrs93Sf7WabTrhduyoCd1\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Here is the planned proof graph and candidate ranking:\\n\\n---\\n\\n## Graph Structure (2 nodes, 1 edge)\\n\\n```\\n[energy_dissipation]  \u2500\u2500used by\u2500\u2500\u25b6  [heat_uniqueness]\\n```\\n\\n### Why this shape?\\n\\nThe proof has a clean two-phase structure:\\n\\n1. **Technical core** (`energy_dissipation`): The entire mathematical machinery lives here \u2014 differentiating under the integral, substituting the PDE \\\\(w_t = w_{xx}\\\\), the integration-by-parts identity\\n   \\\\[\\n   \\\\int_0^L w\\\\,w_{xx}\\\\,dx = \\\\bigl[w\\\\,w_x\\\\bigr]_0^L - \\\\int_0^L |w_x|^2\\\\,dx,\\n   \\\\]\\n   and the boundary-term cancellation. This is a non-trivial, concrete, fully self-contained computation.\\n\\n2. **Root conclusion** (`heat_uniqueness`): Once \\\\(E'(t) \\\\le 0\\\\) is in hand, the remainder \u2014 \\\\(E(0)=0\\\\), nonnegativity, monotone forcing \\\\(E \\\\equiv 0\\\\), and pointwise vanishing \u2014 is elementary and quickly discharged.\\n\\n### Candidate Ranking\\n\\n| Priority | Node | Rationale |\\n|----------|------|-----------|\\n| **1** | `energy_dissipation` | The integration-by-parts identity with boundary cancellation is the real technical load-bearer. High formalization yield; reduces the most human proof-checking effort. |\\n| **2** | `heat_uniqueness` | Natural top-level Lean/Mathlib statement; straightforward to compose once the sub-lemma is formalized. |\"}],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":1,\"cache_creation_input_tokens\":1611,\"cache_read_input_tokens\":5544,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":1611},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"context_management\":null},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"25b0d458-73ad-4d0e-9c5b-b38b12c6b382\"}",
+      "event": {
+        "type": "assistant",
+        "message": {
+          "model": "claude-sonnet-4-6",
+          "id": "msg_01Wjrs93Sf7WabTrhduyoCd1",
+          "type": "message",
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Here is the planned proof graph and candidate ranking:\n\n---\n\n## Graph Structure (2 nodes, 1 edge)\n\n```\n[energy_dissipation]  \u2500\u2500used by\u2500\u2500\u25b6  [heat_uniqueness]\n```\n\n### Why this shape?\n\nThe proof has a clean two-phase structure:\n\n1. **Technical core** (`energy_dissipation`): The entire mathematical machinery lives here \u2014 differentiating under the integral, substituting the PDE \\(w_t = w_{xx}\\), the integration-by-parts identity\n   \\[\n   \\int_0^L w\\,w_{xx}\\,dx = \\bigl[w\\,w_x\\bigr]_0^L - \\int_0^L |w_x|^2\\,dx,\n   \\]\n   and the boundary-term cancellation. This is a non-trivial, concrete, fully self-contained computation.\n\n2. **Root conclusion** (`heat_uniqueness`): Once \\(E'(t) \\le 0\\) is in hand, the remainder \u2014 \\(E(0)=0\\), nonnegativity, monotone forcing \\(E \\equiv 0\\), and pointwise vanishing \u2014 is elementary and quickly discharged.\n\n### Candidate Ranking\n\n| Priority | Node | Rationale |\n|----------|------|-----------|\n| **1** | `energy_dissipation` | The integration-by-parts identity with boundary cancellation is the real technical load-bearer. High formalization yield; reduces the most human proof-checking effort. |\n| **2** | `heat_uniqueness` | Natural top-level Lean/Mathlib statement; straightforward to compose once the sub-lemma is formalized. |"
+            }
+          ],
+          "stop_reason": null,
+          "stop_sequence": null,
+          "stop_details": null,
+          "usage": {
+            "input_tokens": 1,
+            "cache_creation_input_tokens": 1611,
+            "cache_read_input_tokens": 5544,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 1611
+            },
+            "output_tokens": 1,
+            "service_tier": "standard",
+            "inference_geo": "not_available"
+          },
+          "context_management": null
+        },
+        "parent_tool_use_id": null,
+        "session_id": "fb873c14-f1af-45c6-8f6c-bf6d78c1ea75",
+        "uuid": "25b0d458-73ad-4d0e-9c5b-b38b12c6b382"
+      }
+    },
+    {
+      "line_number": 13,
+      "raw": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":false,\"duration_ms\":66347,\"duration_api_ms\":66323,\"num_turns\":3,\"result\":\"Here is the planned proof graph and candidate ranking:\\n\\n---\\n\\n## Graph Structure (2 nodes, 1 edge)\\n\\n```\\n[energy_dissipation]  \u2500\u2500used by\u2500\u2500\u25b6  [heat_uniqueness]\\n```\\n\\n### Why this shape?\\n\\nThe proof has a clean two-phase structure:\\n\\n1. **Technical core** (`energy_dissipation`): The entire mathematical machinery lives here \u2014 differentiating under the integral, substituting the PDE \\\\(w_t = w_{xx}\\\\), the integration-by-parts identity\\n   \\\\[\\n   \\\\int_0^L w\\\\,w_{xx}\\\\,dx = \\\\bigl[w\\\\,w_x\\\\bigr]_0^L - \\\\int_0^L |w_x|^2\\\\,dx,\\n   \\\\]\\n   and the boundary-term cancellation. This is a non-trivial, concrete, fully self-contained computation.\\n\\n2. **Root conclusion** (`heat_uniqueness`): Once \\\\(E'(t) \\\\le 0\\\\) is in hand, the remainder \u2014 \\\\(E(0)=0\\\\), nonnegativity, monotone forcing \\\\(E \\\\equiv 0\\\\), and pointwise vanishing \u2014 is elementary and quickly discharged.\\n\\n### Candidate Ranking\\n\\n| Priority | Node | Rationale |\\n|----------|------|-----------|\\n| **1** | `energy_dissipation` | The integration-by-parts identity with boundary cancellation is the real technical load-bearer. High formalization yield; reduces the most human proof-checking effort. |\\n| **2** | `heat_uniqueness` | Natural top-level Lean/Mathlib statement; straightforward to compose once the sub-lemma is formalized. |\",\"stop_reason\":\"end_turn\",\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"total_cost_usd\":0.09718965,\"usage\":{\"input_tokens\":5,\"cache_creation_input_tokens\":7155,\"cache_read_input_tokens\":8528,\"output_tokens\":4519,\"server_tool_use\":{\"web_search_requests\":0,\"web_fetch_requests\":0},\"service_tier\":\"standard\",\"cache_creation\":{\"ephemeral_1h_input_tokens\":7155,\"ephemeral_5m_input_tokens\":0},\"inference_geo\":\"\",\"iterations\":[],\"speed\":\"standard\"},\"modelUsage\":{\"claude-sonnet-4-6\":{\"inputTokens\":5,\"outputTokens\":4519,\"cacheReadInputTokens\":8528,\"cacheCreationInputTokens\":7155,\"webSearchRequests\":0,\"costUSD\":0.09718965,\"contextWindow\":200000,\"maxOutputTokens\":32000}},\"permission_denials\":[],\"structured_output\":{\"theorem_title\":\"Heat equation uniqueness by the energy method\",\"theorem_statement\":\"Let \\\\(u,v\\\\) be sufficiently regular solutions of the heat equation on \\\\((0,L)\\\\times[0,T]\\\\) satisfying \\\\(u_t=u_{xx}\\\\), \\\\(v_t=v_{xx}\\\\), with the same initial data \\\\(u(x,0)=v(x,0)\\\\) and homogeneous Dirichlet boundary conditions \\\\(u(0,t)=u(L,t)=v(0,t)=v(L,t)=0\\\\). Then \\\\(u=v\\\\) on \\\\([0,L]\\\\times[0,T]\\\\).\",\"root_node_id\":\"heat_uniqueness\",\"nodes\":[{\"id\":\"energy_dissipation\",\"title\":\"Energy is nonincreasing: E'(t) \u2264 0\",\"display_label\":\"\\\\(E'(t) = -\\\\int_0^L |w_x|^2\\\\,dx \\\\le 0\\\\)\",\"informal_statement\":\"Let \\\\(w = u - v\\\\) satisfy \\\\(w_t = w_{xx}\\\\) on \\\\((0,L)\\\\times(0,T)\\\\) with \\\\(w(0,t)=w(L,t)=0\\\\), and define the energy \\\\(E(t) = \\\\tfrac{1}{2}\\\\int_0^L w(x,t)^2\\\\,dx\\\\). Then \\\\(E'(t) = -\\\\int_0^L |w_x(x,t)|^2\\\\,dx \\\\le 0\\\\) for all \\\\(t \\\\in [0,T]\\\\).\",\"informal_proof_text\":\"Differentiating under the integral sign (justified by the assumed regularity of \\\\(w\\\\)):\\n\\\\[\\nE'(t) = \\\\int_0^L w\\\\, w_t\\\\,dx.\\n\\\\]\\nSubstituting the PDE \\\\(w_t = w_{xx}\\\\):\\n\\\\[\\nE'(t) = \\\\int_0^L w\\\\, w_{xx}\\\\,dx.\\n\\\\]\\nIntegrating by parts in \\\\(x\\\\):\\n\\\\[\\n\\\\int_0^L w\\\\, w_{xx}\\\\,dx = \\\\bigl[w\\\\, w_x\\\\bigr]_{0}^{L} - \\\\int_0^L |w_x|^2\\\\,dx.\\n\\\\]\\nThe boundary term vanishes because \\\\(w(0,t) = w(L,t) = 0\\\\), giving\\n\\\\[\\nE'(t) = -\\\\int_0^L |w_x(x,t)|^2\\\\,dx \\\\le 0.\\n\\\\]\"},{\"id\":\"heat_uniqueness\",\"title\":\"Heat equation uniqueness by the energy method\",\"display_label\":\"Heat uniqueness (energy method)\",\"informal_statement\":\"Under the stated hypotheses, \\\\(u = v\\\\) on \\\\([0,L]\\\\times[0,T]\\\\).\",\"informal_proof_text\":\"Set \\\\(w = u - v\\\\). Then \\\\(w\\\\) satisfies \\\\(w_t = w_{xx}\\\\) on \\\\((0,L)\\\\times(0,T)\\\\) with zero initial data \\\\(w(x,0)=0\\\\) and zero Dirichlet boundary conditions \\\\(w(0,t)=w(L,t)=0\\\\).\\n\\nDefine \\\\(E(t) = \\\\tfrac{1}{2}\\\\int_0^L w(x,t)^2\\\\,dx\\\\). By the energy dissipation lemma, \\\\(E'(t) \\\\le 0\\\\), so \\\\(E\\\\) is nonincreasing. At \\\\(t=0\\\\), \\\\(w(x,0)=0\\\\) gives \\\\(E(0) = 0\\\\). Since \\\\(E(t) \\\\ge 0\\\\) by definition and \\\\(E\\\\) is nonincreasing from \\\\(0\\\\), we conclude \\\\(E(t) = 0\\\\) for all \\\\(t \\\\in [0,T]\\\\).\\n\\nHence \\\\(\\\\int_0^L w(x,t)^2\\\\,dx = 0\\\\) for all \\\\(t\\\\), so \\\\(w(x,t) = 0\\\\) for all \\\\((x,t)\\\\), i.e., \\\\(u = v\\\\).\"}],\"edges\":[{\"source_id\":\"energy_dissipation\",\"target_id\":\"heat_uniqueness\",\"label\":\"used by\",\"explanation\":\"The nonincreasing property E'(t) \u2264 0, together with E(0)=0 and E(t)\u22650, forces E(t)=0 for all t \u2014 the key step driving the conclusion u=v.\"}],\"candidates\":[{\"node_id\":\"energy_dissipation\",\"priority\":1,\"rationale\":\"This node contains the entire technical core of the proof: differentiation under the integral, PDE substitution, the integration-by-parts identity \u222bw\u00b7w_xx dx = [w\u00b7w_x]\u2080\u1d38 \u2212 \u222b|w_x|\u00b2 dx, and cancellation of boundary terms. It is a concrete, self-contained computation, directly formalizable, and carries the main inferential load.\"},{\"node_id\":\"heat_uniqueness\",\"priority\":2,\"rationale\":\"The root theorem is the natural top-level Lean statement. Once energy_dissipation is formalized, the remaining steps \u2014 E(0)=0, monotonicity forcing E\u22610, and pointwise vanishing of w \u2014 are straightforward and can be composed efficiently.\"}]},\"terminal_reason\":\"completed\",\"fast_mode_state\":\"off\",\"uuid\":\"e8a61258-9ddb-4e52-acec-cd5d140a5ec2\"}",
+      "event": {
+        "type": "result",
+        "subtype": "success",
+        "is_error": false,
+        "duration_ms": 66347,
+        "duration_api_ms": 66323,
+        "num_turns": 3,
+        "result": "Here is the planned proof graph and candidate ranking:\n\n---\n\n## Graph Structure (2 nodes, 1 edge)\n\n```\n[energy_dissipation]  \u2500\u2500used by\u2500\u2500\u25b6  [heat_uniqueness]\n```\n\n### Why this shape?\n\nThe proof has a clean two-phase structure:\n\n1. **Technical core** (`energy_dissipation`): The entire mathematical machinery lives here \u2014 differentiating under the integral, substituting the PDE \\(w_t = w_{xx}\\), the integration-by-parts identity\n   \\[\n   \\int_0^L w\\,w_{xx}\\,dx = \\bigl[w\\,w_x\\bigr]_0^L - \\int_0^L |w_x|^2\\,dx,\n   \\]\n   and the boundary-term cancellation. This is a non-trivial, concrete, fully self-contained computation.\n\n2. **Root conclusion** (`heat_uniqueness`): Once \\(E'(t) \\le 0\\) is in hand, the remainder \u2014 \\(E(0)=0\\), nonnegativity, monotone forcing \\(E \\equiv 0\\), and pointwise vanishing \u2014 is elementary and quickly discharged.\n\n### Candidate Ranking\n\n| Priority | Node | Rationale |\n|----------|------|-----------|\n| **1** | `energy_dissipation` | The integration-by-parts identity with boundary cancellation is the real technical load-bearer. High formalization yield; reduces the most human proof-checking effort. |\n| **2** | `heat_uniqueness` | Natural top-level Lean/Mathlib statement; straightforward to compose once the sub-lemma is formalized. |",
+        "stop_reason": "end_turn",
+        "session_id": "fb873c14-f1af-45c6-8f6c-bf6d78c1ea75",
+        "total_cost_usd": 0.09718965,
+        "usage": {
+          "input_tokens": 5,
+          "cache_creation_input_tokens": 7155,
+          "cache_read_input_tokens": 8528,
+          "output_tokens": 4519,
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 7155,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "",
+          "iterations": [],
+          "speed": "standard"
+        },
+        "modelUsage": {
+          "claude-sonnet-4-6": {
+            "inputTokens": 5,
+            "outputTokens": 4519,
+            "cacheReadInputTokens": 8528,
+            "cacheCreationInputTokens": 7155,
+            "webSearchRequests": 0,
+            "costUSD": 0.09718965,
+            "contextWindow": 200000,
+            "maxOutputTokens": 32000
+          }
+        },
+        "permission_denials": [],
+        "structured_output": {
+          "theorem_title": "Heat equation uniqueness by the energy method",
+          "theorem_statement": "Let \\(u,v\\) be sufficiently regular solutions of the heat equation on \\((0,L)\\times[0,T]\\) satisfying \\(u_t=u_{xx}\\), \\(v_t=v_{xx}\\), with the same initial data \\(u(x,0)=v(x,0)\\) and homogeneous Dirichlet boundary conditions \\(u(0,t)=u(L,t)=v(0,t)=v(L,t)=0\\). Then \\(u=v\\) on \\([0,L]\\times[0,T]\\).",
+          "root_node_id": "heat_uniqueness",
+          "nodes": [
+            {
+              "id": "energy_dissipation",
+              "title": "Energy is nonincreasing: E'(t) \u2264 0",
+              "display_label": "\\(E'(t) = -\\int_0^L |w_x|^2\\,dx \\le 0\\)",
+              "informal_statement": "Let \\(w = u - v\\) satisfy \\(w_t = w_{xx}\\) on \\((0,L)\\times(0,T)\\) with \\(w(0,t)=w(L,t)=0\\), and define the energy \\(E(t) = \\tfrac{1}{2}\\int_0^L w(x,t)^2\\,dx\\). Then \\(E'(t) = -\\int_0^L |w_x(x,t)|^2\\,dx \\le 0\\) for all \\(t \\in [0,T]\\).",
+              "informal_proof_text": "Differentiating under the integral sign (justified by the assumed regularity of \\(w\\)):\n\\[\nE'(t) = \\int_0^L w\\, w_t\\,dx.\n\\]\nSubstituting the PDE \\(w_t = w_{xx}\\):\n\\[\nE'(t) = \\int_0^L w\\, w_{xx}\\,dx.\n\\]\nIntegrating by parts in \\(x\\):\n\\[\n\\int_0^L w\\, w_{xx}\\,dx = \\bigl[w\\, w_x\\bigr]_{0}^{L} - \\int_0^L |w_x|^2\\,dx.\n\\]\nThe boundary term vanishes because \\(w(0,t) = w(L,t) = 0\\), giving\n\\[\nE'(t) = -\\int_0^L |w_x(x,t)|^2\\,dx \\le 0.\n\\]"
+            },
+            {
+              "id": "heat_uniqueness",
+              "title": "Heat equation uniqueness by the energy method",
+              "display_label": "Heat uniqueness (energy method)",
+              "informal_statement": "Under the stated hypotheses, \\(u = v\\) on \\([0,L]\\times[0,T]\\).",
+              "informal_proof_text": "Set \\(w = u - v\\). Then \\(w\\) satisfies \\(w_t = w_{xx}\\) on \\((0,L)\\times(0,T)\\) with zero initial data \\(w(x,0)=0\\) and zero Dirichlet boundary conditions \\(w(0,t)=w(L,t)=0\\).\n\nDefine \\(E(t) = \\tfrac{1}{2}\\int_0^L w(x,t)^2\\,dx\\). By the energy dissipation lemma, \\(E'(t) \\le 0\\), so \\(E\\) is nonincreasing. At \\(t=0\\), \\(w(x,0)=0\\) gives \\(E(0) = 0\\). Since \\(E(t) \\ge 0\\) by definition and \\(E\\) is nonincreasing from \\(0\\), we conclude \\(E(t) = 0\\) for all \\(t \\in [0,T]\\).\n\nHence \\(\\int_0^L w(x,t)^2\\,dx = 0\\) for all \\(t\\), so \\(w(x,t) = 0\\) for all \\((x,t)\\), i.e., \\(u = v\\)."
+            }
+          ],
+          "edges": [
+            {
+              "source_id": "energy_dissipation",
+              "target_id": "heat_uniqueness",
+              "label": "used by",
+              "explanation": "The nonincreasing property E'(t) \u2264 0, together with E(0)=0 and E(t)\u22650, forces E(t)=0 for all t \u2014 the key step driving the conclusion u=v."
+            }
+          ],
+          "candidates": [
+            {
+              "node_id": "energy_dissipation",
+              "priority": 1,
+              "rationale": "This node contains the entire technical core of the proof: differentiation under the integral, PDE substitution, the integration-by-parts identity \u222bw\u00b7w_xx dx = [w\u00b7w_x]\u2080\u1d38 \u2212 \u222b|w_x|\u00b2 dx, and cancellation of boundary terms. It is a concrete, self-contained computation, directly formalizable, and carries the main inferential load."
+            },
+            {
+              "node_id": "heat_uniqueness",
+              "priority": 2,
+              "rationale": "The root theorem is the natural top-level Lean statement. Once energy_dissipation is formalized, the remaining steps \u2014 E(0)=0, monotonicity forcing E\u22610, and pointwise vanishing of w \u2014 are straightforward and can be composed efficiently."
+            }
+          ]
+        },
+        "terminal_reason": "completed",
+        "fast_mode_state": "off",
+        "uuid": "e8a61258-9ddb-4e52-acec-cd5d140a5ec2"
+      }
+    }
+  ],
+  "raw_stdout": "{\"type\":\"system\",\"subtype\":\"hook_started\",\"hook_id\":\"9dcfbde6-7aa4-41ee-815c-2de42a154dd5\",\"hook_name\":\"SessionStart:startup\",\"hook_event\":\"SessionStart\",\"uuid\":\"2e67864c-f310-43a0-b860-ec14cec52d81\",\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\"}\n{\"type\":\"system\",\"subtype\":\"hook_response\",\"hook_id\":\"9dcfbde6-7aa4-41ee-815c-2de42a154dd5\",\"hook_name\":\"SessionStart:startup\",\"hook_event\":\"SessionStart\",\"output\":\"Lean4 v4 ready: PLUGIN_ROOT=/Users/adihaya/.claude/plugins/marketplaces/lean4-skills/plugins/lean4\\n\",\"stdout\":\"Lean4 v4 ready: PLUGIN_ROOT=/Users/adihaya/.claude/plugins/marketplaces/lean4-skills/plugins/lean4\\n\",\"stderr\":\"\",\"exit_code\":0,\"outcome\":\"success\",\"uuid\":\"b6ab2acd-82c8-4059-b671-41e7430ac38f\",\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\"}\n{\"type\":\"system\",\"subtype\":\"init\",\"cwd\":\"/Users/adihaya/GitHub/formal-islands\",\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"tools\":[\"StructuredOutput\"],\"mcp_servers\":[],\"model\":\"claude-sonnet-4-6\",\"permissionMode\":\"default\",\"slash_commands\":[\"update-config\",\"debug\",\"simplify\",\"batch\",\"loop\",\"schedule\",\"claude-api\",\"lean4:autoformalize\",\"lean4:autoprove\",\"lean4:learn\",\"lean4:prove\",\"lean4:draft\",\"lean4:checkpoint\",\"lean4:review\",\"lean4:doctor\",\"lean4:refactor\",\"lean4:formalize\",\"lean4:golf\",\"lean4:lean4\",\"compact\",\"context\",\"cost\",\"heapdump\",\"init\",\"review\",\"security-review\",\"extra-usage\",\"insights\"],\"apiKeySource\":\"none\",\"claude_code_version\":\"2.1.92\",\"output_style\":\"default\",\"agents\":[\"general-purpose\",\"statusline-setup\",\"Explore\",\"Plan\",\"lean4:proof-repair\",\"lean4:axiom-eliminator\",\"lean4:sorry-filler-deep\",\"lean4:proof-golfer\"],\"skills\":[\"update-config\",\"debug\",\"simplify\",\"batch\",\"loop\",\"schedule\",\"claude-api\",\"lean4:lean4\"],\"plugins\":[{\"name\":\"lean4\",\"path\":\"/Users/adihaya/.claude/plugins/marketplaces/lean4-skills/plugins/lean4\",\"source\":\"lean4@lean4-skills\"}],\"uuid\":\"1d79b455-dcea-4606-8ff7-855e79699a98\",\"fast_mode_state\":\"off\"}\n{\"type\":\"assistant\",\"message\":{\"model\":\"claude-sonnet-4-6\",\"id\":\"msg_01FCET6CAacr76vkwLJwXc2U\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Let me plan a compact proof graph for the heat equation uniqueness theorem using the energy method.\\n\\nThe proof structure is:\\n1. Set w = u - v, which satisfies the heat equation with zero IC and BCs\\n2. Define E(t) = \u00bd\u222b\u2080\u1d38 w\u00b2dx\\n3. Show E'(t) \u2264 0 (via differentiation, substitution of PDE, integration by parts)\\n4. Show E(0) = 0\\n5. Conclude E(t) = 0 for all t, hence w = 0, hence u = v\\n\\n\\nThe key technical step is the integration by parts calculation that yields E'(t) = -\u222b|w_x|\u00b2 dx, which immediately gives us the monotonicity we need. Since E starts at zero and can only decrease, it must remain zero throughout, forcing the difference between solutions to vanish.\\n\\nFor the proof graph, I should structure this as a root node for the main uniqueness result with a child node handling the energy monotonicity lemma\u2014that's where the real formalization work happens with the boundary term analysis and the integration by parts identity. The proof really breaks down into five steps, but most of them are straightforward consequences. Steps 3, 4, and 5 follow almost immediately once I establish that energy dissipates\u2014the hard part is actually computing E'(t) and showing it's nonpositive through integration by parts. So I'll structure the graph with just two nodes: the full uniqueness theorem as the root, and the energy dissipation calculation as the key technical subnode that does all the real work.\\n\\nNow I'm deciding which pieces to formalize first. The energy dissipation step is where the actual mathematics lives\u2014it's concrete, it's the bottleneck, and it's the kind of calculation that benefits from formal verification. The uniqueness theorem itself is important but mostly just assembles the pieces, so I'll prioritize getting the energy dissipation node solid first.\",\"signature\":\"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\"}],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":3,\"cache_creation_input_tokens\":2984,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":2984},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"context_management\":null},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"ad4c46bf-42a2-4101-a70b-bab26d21c8fa\"}\n{\"type\":\"assistant\",\"message\":{\"model\":\"claude-sonnet-4-6\",\"id\":\"msg_01FCET6CAacr76vkwLJwXc2U\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_012wnetNN5Kc9VVYGPgMwugk\",\"name\":\"StructuredOutput\",\"input\":{\"theorem_title\":\"Heat equation uniqueness by the energy method\",\"theorem_statement\":\"Let \\\\(u,v\\\\) be sufficiently regular solutions of the heat equation on \\\\((0,L)\\\\times[0,T]\\\\) satisfying \\\\(u_t=u_{xx}\\\\), \\\\(v_t=v_{xx}\\\\), with the same initial data \\\\(u(x,0)=v(x,0)\\\\) and homogeneous Dirichlet boundary conditions \\\\(u(0,t)=u(L,t)=v(0,t)=v(L,t)=0\\\\). Then \\\\(u=v\\\\) on \\\\([0,L]\\\\times[0,T]\\\\).\",\"root_node_id\":\"heat_uniqueness\",\"nodes\":\"[\\n  {\\n    \\\"id\\\": \\\"energy_dissipation\\\",\\n    \\\"title\\\": \\\"Energy is nonincreasing: \\\\(E'(t) \\\\le 0\\\\)\\\",\\n    \\\"informal_statement\\\": \\\"Let \\\\(w = u - v\\\\) satisfy \\\\(w_t = w_{xx}\\\\) on \\\\((0,L)\\\\times(0,T)\\\\) with \\\\(w(0,t)=w(L,t)=0\\\\), and define the energy \\\\(E(t) = \\\\tfrac{1}{2}\\\\int_0^L w(x,t)^2\\\\,dx\\\\). Then \\\\(E'(t) = -\\\\int_0^L |w_x(x,t)|^2\\\\,dx \\\\le 0\\\\) for all \\\\(t \\\\in [0,T]\\\\).\\\",\\n    \\\"informal_proof_text\\\": \\\"Differentiating under the integral sign (justified by the assumed regularity of \\\\(w\\\\)):\\\\n\\\\\\\\[\\\\nE'(t) = \\\\\\\\int_0^L w\\\\\\\\, w_t\\\\\\\\,dx.\\\\n\\\\\\\\]\\\\nSubstituting the PDE \\\\(w_t = w_{xx}\\\\\\\\):\\\\n\\\\\\\\[\\\\nE'(t) = \\\\\\\\int_0^L w\\\\\\\\, w_{xx}\\\\\\\\,dx.\\\\n\\\\\\\\]\\\\nIntegrating by parts in \\\\(x\\\\\\\\):\\\\n\\\\\\\\[\\\\n\\\\\\\\int_0^L w\\\\\\\\, w_{xx}\\\\\\\\,dx = \\\\\\\\bigl[w\\\\\\\\, w_x\\\\\\\\bigr]_{0}^{L} - \\\\\\\\int_0^L |w_x|^2\\\\\\\\,dx.\\\\n\\\\\\\\]\\\\nThe boundary term vanishes because \\\\(w(0,t) = w(L,t) = 0\\\\\\\\), so\\\\n\\\\\\\\[\\\\nE'(t) = -\\\\\\\\int_0^L |w_x(x,t)|^2\\\\\\\\,dx \\\\\\\\le 0.\\\\n\\\\\\\\]\\\",\\n    \\\"display_label\\\": \\\"\\\\(E'(t) = -\\\\\\\\int_0^L |w_x|^2\\\\\\\\,dx \\\\\\\\le 0\\\\)\\\"\\n  },\\n  {\\n    \\\"id\\\": \\\"heat_uniqueness\\\",\\n    \\\"title\\\": \\\"Heat equation uniqueness by the energy method\\\",\\n    \\\"informal_statement\\\": \\\"Under the stated hypotheses, \\\\(u = v\\\\) on \\\\([0,L]\\\\\\\\times[0,T]\\\\\\\\).\\\",\\n    \\\"informal_proof_text\\\": \\\"Set \\\\(w = u - v\\\\\\\\). Then \\\\(w\\\\\\\\) satisfies \\\\(w_t = w_{xx}\\\\\\\\) on \\\\((0,L)\\\\\\\\times(0,T)\\\\\\\\) with zero initial data \\\\(w(x,0)=0\\\\\\\\) and zero Dirichlet boundary conditions \\\\(w(0,t)=w(L,t)=0\\\\\\\\).\\\\n\\\\nDefine \\\\(E(t) = \\\\\\\\tfrac{1}{2}\\\\\\\\int_0^L w(x,t)^2\\\\\\\\,dx\\\\\\\\). By the energy dissipation lemma, \\\\(E'(t) \\\\\\\\le 0\\\\\\\\), so \\\\(E\\\\\\\\) is nonincreasing. At \\\\(t=0\\\\\\\\), \\\\(w(x,0)=0\\\\\\\\) gives \\\\(E(0) = 0\\\\\\\\). Since \\\\(E(t) \\\\\\\\ge 0\\\\\\\\) by definition and \\\\(E\\\\\\\\) is nonincreasing from \\\\(0\\\\\\\\), we conclude \\\\(E(t) = 0\\\\\\\\) for all \\\\(t \\\\\\\\in [0,T]\\\\\\\\).\\\\n\\\\nHence \\\\(\\\\\\\\int_0^L w(x,t)^2\\\\\\\\,dx = 0\\\\\\\\) for all \\\\(t\\\\\\\\), so \\\\(w(x,t) = 0\\\\\\\\) for all \\\\((x,t)\\\\\\\\), i.e., \\\\(u = v\\\\\\\\).\\\",\\n    \\\"display_label\\\": \\\"Heat uniqueness (energy method)\\\"\\n  }\\n]\",\"edges\":[{\"source_id\":\"energy_dissipation\",\"target_id\":\"heat_uniqueness\",\"label\":\"used by\",\"explanation\":\"The nonincreasing property E'(t) \u2264 0 together with E(0)=0 and E(t)\u22650 forces E(t)=0 for all t, which is the key step in the root proof.\"}],\"candidates\":[{\"node_id\":\"energy_dissipation\",\"priority\":1,\"rationale\":\"This node contains the entire technical core of the proof: differentiation under the integral, PDE substitution, the integration-by-parts identity, and the cancellation of boundary terms. It is a concrete, self-contained computation that is directly formalizable and carries the main inferential load of the argument.\"},{\"node_id\":\"heat_uniqueness\",\"priority\":2,\"rationale\":\"The root theorem is the natural top-level Lean statement. Once energy_dissipation is formalized, the remaining steps\u2014E(0)=0, monotonicity forcing E\u22610, and pointwise vanishing of w\u2014are straightforward and can be verified efficiently, making the full root a good secondary candidate.\"}]},\"caller\":{\"type\":\"direct\"}}],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":3,\"cache_creation_input_tokens\":2984,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":2984},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"context_management\":null},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"986fdd8b-8324-4c5d-923e-2805b8855fbb\"}\n{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"content\":\"Output does not match required schema: /nodes: must be array\",\"is_error\":true,\"tool_use_id\":\"toolu_012wnetNN5Kc9VVYGPgMwugk\"}]},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"d9c22974-4ff5-4d6b-97c2-5a0973b84221\",\"timestamp\":\"2026-04-06T06:52:09.027Z\",\"tool_use_result\":\"Error: Output does not match required schema: /nodes: must be array\"}\n{\"type\":\"rate_limit_event\",\"rate_limit_info\":{\"status\":\"allowed_warning\",\"resetsAt\":1776020400,\"rateLimitType\":\"seven_day\",\"utilization\":0.26,\"isUsingOverage\":false},\"uuid\":\"9f719599-c7a6-4874-98fd-d930801122fc\",\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\"}\n{\"type\":\"assistant\",\"message\":{\"model\":\"claude-sonnet-4-6\",\"id\":\"msg_013ZXgYDbuazrjXZ8RZUGvPy\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Let me fix the JSON format - the nodes parameter needs to be a proper JSON array.\",\"signature\":\"Eo4CClsIDBgCKkAOpfBWMECHaqWmJrrbuzBVK62Ci+mdhaWHQjh2V37ddc+QPEGxBYwdQlCzXoAj0ieJxP8UDQqd98CDIqImFvWQMhFjbGF1ZGUtc29ubmV0LTQtNjgAEgzPoylQQRYgjvBNXGAaDM8+GwlEp71BuuDrWiIw8wuN3xM5QTJE6NnJX6hHSW7DFBaXOEtls9VuNs5FWEyW88ScT62k6FmgSoLLIw5mKmFIf61812bqZH7cwDMLmAtMQsHZgDSpkSluEPN5b9uKqs6bksKgWxubSwBqkPhbh1An8t3henlt1QJOXna1qs6L/R7EB0yuEg3/KPr5KTw+zcP0SxbXG7hQrklVhc3RjbamGAE=\"}],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":1,\"cache_creation_input_tokens\":2560,\"cache_read_input_tokens\":2984,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":2560},\"output_tokens\":10,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"context_management\":null},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"30aaed8c-412b-4e8f-840f-9c724ac052f2\"}\n{\"type\":\"assistant\",\"message\":{\"model\":\"claude-sonnet-4-6\",\"id\":\"msg_013ZXgYDbuazrjXZ8RZUGvPy\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_01DT1wooYnUCo5WmC2eE2KY1\",\"name\":\"StructuredOutput\",\"input\":{\"theorem_title\":\"Heat equation uniqueness by the energy method\",\"theorem_statement\":\"Let \\\\(u,v\\\\) be sufficiently regular solutions of the heat equation on \\\\((0,L)\\\\times[0,T]\\\\) satisfying \\\\(u_t=u_{xx}\\\\), \\\\(v_t=v_{xx}\\\\), with the same initial data \\\\(u(x,0)=v(x,0)\\\\) and homogeneous Dirichlet boundary conditions \\\\(u(0,t)=u(L,t)=v(0,t)=v(L,t)=0\\\\). Then \\\\(u=v\\\\) on \\\\([0,L]\\\\times[0,T]\\\\).\",\"root_node_id\":\"heat_uniqueness\",\"nodes\":[{\"id\":\"energy_dissipation\",\"title\":\"Energy is nonincreasing: E'(t) \u2264 0\",\"display_label\":\"\\\\(E'(t) = -\\\\int_0^L |w_x|^2\\\\,dx \\\\le 0\\\\)\",\"informal_statement\":\"Let \\\\(w = u - v\\\\) satisfy \\\\(w_t = w_{xx}\\\\) on \\\\((0,L)\\\\times(0,T)\\\\) with \\\\(w(0,t)=w(L,t)=0\\\\), and define the energy \\\\(E(t) = \\\\tfrac{1}{2}\\\\int_0^L w(x,t)^2\\\\,dx\\\\). Then \\\\(E'(t) = -\\\\int_0^L |w_x(x,t)|^2\\\\,dx \\\\le 0\\\\) for all \\\\(t \\\\in [0,T]\\\\).\",\"informal_proof_text\":\"Differentiating under the integral sign (justified by the assumed regularity of \\\\(w\\\\)):\\n\\\\[\\nE'(t) = \\\\int_0^L w\\\\, w_t\\\\,dx.\\n\\\\]\\nSubstituting the PDE \\\\(w_t = w_{xx}\\\\):\\n\\\\[\\nE'(t) = \\\\int_0^L w\\\\, w_{xx}\\\\,dx.\\n\\\\]\\nIntegrating by parts in \\\\(x\\\\):\\n\\\\[\\n\\\\int_0^L w\\\\, w_{xx}\\\\,dx = \\\\bigl[w\\\\, w_x\\\\bigr]_{0}^{L} - \\\\int_0^L |w_x|^2\\\\,dx.\\n\\\\]\\nThe boundary term vanishes because \\\\(w(0,t) = w(L,t) = 0\\\\), giving\\n\\\\[\\nE'(t) = -\\\\int_0^L |w_x(x,t)|^2\\\\,dx \\\\le 0.\\n\\\\]\"},{\"id\":\"heat_uniqueness\",\"title\":\"Heat equation uniqueness by the energy method\",\"display_label\":\"Heat uniqueness (energy method)\",\"informal_statement\":\"Under the stated hypotheses, \\\\(u = v\\\\) on \\\\([0,L]\\\\times[0,T]\\\\).\",\"informal_proof_text\":\"Set \\\\(w = u - v\\\\). Then \\\\(w\\\\) satisfies \\\\(w_t = w_{xx}\\\\) on \\\\((0,L)\\\\times(0,T)\\\\) with zero initial data \\\\(w(x,0)=0\\\\) and zero Dirichlet boundary conditions \\\\(w(0,t)=w(L,t)=0\\\\).\\n\\nDefine \\\\(E(t) = \\\\tfrac{1}{2}\\\\int_0^L w(x,t)^2\\\\,dx\\\\). By the energy dissipation lemma, \\\\(E'(t) \\\\le 0\\\\), so \\\\(E\\\\) is nonincreasing. At \\\\(t=0\\\\), \\\\(w(x,0)=0\\\\) gives \\\\(E(0) = 0\\\\). Since \\\\(E(t) \\\\ge 0\\\\) by definition and \\\\(E\\\\) is nonincreasing from \\\\(0\\\\), we conclude \\\\(E(t) = 0\\\\) for all \\\\(t \\\\in [0,T]\\\\).\\n\\nHence \\\\(\\\\int_0^L w(x,t)^2\\\\,dx = 0\\\\) for all \\\\(t\\\\), so \\\\(w(x,t) = 0\\\\) for all \\\\((x,t)\\\\), i.e., \\\\(u = v\\\\).\"}],\"edges\":[{\"source_id\":\"energy_dissipation\",\"target_id\":\"heat_uniqueness\",\"label\":\"used by\",\"explanation\":\"The nonincreasing property E'(t) \u2264 0, together with E(0)=0 and E(t)\u22650, forces E(t)=0 for all t \u2014 the key step driving the conclusion u=v.\"}],\"candidates\":[{\"node_id\":\"energy_dissipation\",\"priority\":1,\"rationale\":\"This node contains the entire technical core of the proof: differentiation under the integral, PDE substitution, the integration-by-parts identity \u222bw\u00b7w_xx dx = [w\u00b7w_x]\u2080\u1d38 \u2212 \u222b|w_x|\u00b2 dx, and cancellation of boundary terms. It is a concrete, self-contained computation, directly formalizable, and carries the main inferential load.\"},{\"node_id\":\"heat_uniqueness\",\"priority\":2,\"rationale\":\"The root theorem is the natural top-level Lean statement. Once energy_dissipation is formalized, the remaining steps \u2014 E(0)=0, monotonicity forcing E\u22610, and pointwise vanishing of w \u2014 are straightforward and can be composed efficiently.\"}]},\"caller\":{\"type\":\"direct\"}}],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":1,\"cache_creation_input_tokens\":2560,\"cache_read_input_tokens\":2984,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":2560},\"output_tokens\":10,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"context_management\":null},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"53dc3a6e-e05e-450b-ac6d-6edeaeaff780\"}\n{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"tool_use_id\":\"toolu_01DT1wooYnUCo5WmC2eE2KY1\",\"type\":\"tool_result\",\"content\":\"Structured output provided successfully\"}]},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"10d7cef1-a2fd-46b7-9ba3-f6a8c06e8e48\",\"timestamp\":\"2026-04-06T06:52:27.093Z\",\"tool_use_result\":\"Structured output provided successfully\"}\n{\"type\":\"rate_limit_event\",\"rate_limit_info\":{\"status\":\"allowed_warning\",\"resetsAt\":1776020400,\"rateLimitType\":\"seven_day\",\"utilization\":0.27,\"isUsingOverage\":false},\"uuid\":\"7819a2b1-6c7b-420b-bbb3-1c2466a38e23\",\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\"}\n{\"type\":\"assistant\",\"message\":{\"model\":\"claude-sonnet-4-6\",\"id\":\"msg_01Wjrs93Sf7WabTrhduyoCd1\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Here is the planned proof graph and candidate ranking:\\n\\n---\\n\\n## Graph Structure (2 nodes, 1 edge)\\n\\n```\\n[energy_dissipation]  \u2500\u2500used by\u2500\u2500\u25b6  [heat_uniqueness]\\n```\\n\\n### Why this shape?\\n\\nThe proof has a clean two-phase structure:\\n\\n1. **Technical core** (`energy_dissipation`): The entire mathematical machinery lives here \u2014 differentiating under the integral, substituting the PDE \\\\(w_t = w_{xx}\\\\), the integration-by-parts identity\\n   \\\\[\\n   \\\\int_0^L w\\\\,w_{xx}\\\\,dx = \\\\bigl[w\\\\,w_x\\\\bigr]_0^L - \\\\int_0^L |w_x|^2\\\\,dx,\\n   \\\\]\\n   and the boundary-term cancellation. This is a non-trivial, concrete, fully self-contained computation.\\n\\n2. **Root conclusion** (`heat_uniqueness`): Once \\\\(E'(t) \\\\le 0\\\\) is in hand, the remainder \u2014 \\\\(E(0)=0\\\\), nonnegativity, monotone forcing \\\\(E \\\\equiv 0\\\\), and pointwise vanishing \u2014 is elementary and quickly discharged.\\n\\n### Candidate Ranking\\n\\n| Priority | Node | Rationale |\\n|----------|------|-----------|\\n| **1** | `energy_dissipation` | The integration-by-parts identity with boundary cancellation is the real technical load-bearer. High formalization yield; reduces the most human proof-checking effort. |\\n| **2** | `heat_uniqueness` | Natural top-level Lean/Mathlib statement; straightforward to compose once the sub-lemma is formalized. |\"}],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":1,\"cache_creation_input_tokens\":1611,\"cache_read_input_tokens\":5544,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":1611},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"context_management\":null},\"parent_tool_use_id\":null,\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"uuid\":\"25b0d458-73ad-4d0e-9c5b-b38b12c6b382\"}\n{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":false,\"duration_ms\":66347,\"duration_api_ms\":66323,\"num_turns\":3,\"result\":\"Here is the planned proof graph and candidate ranking:\\n\\n---\\n\\n## Graph Structure (2 nodes, 1 edge)\\n\\n```\\n[energy_dissipation]  \u2500\u2500used by\u2500\u2500\u25b6  [heat_uniqueness]\\n```\\n\\n### Why this shape?\\n\\nThe proof has a clean two-phase structure:\\n\\n1. **Technical core** (`energy_dissipation`): The entire mathematical machinery lives here \u2014 differentiating under the integral, substituting the PDE \\\\(w_t = w_{xx}\\\\), the integration-by-parts identity\\n   \\\\[\\n   \\\\int_0^L w\\\\,w_{xx}\\\\,dx = \\\\bigl[w\\\\,w_x\\\\bigr]_0^L - \\\\int_0^L |w_x|^2\\\\,dx,\\n   \\\\]\\n   and the boundary-term cancellation. This is a non-trivial, concrete, fully self-contained computation.\\n\\n2. **Root conclusion** (`heat_uniqueness`): Once \\\\(E'(t) \\\\le 0\\\\) is in hand, the remainder \u2014 \\\\(E(0)=0\\\\), nonnegativity, monotone forcing \\\\(E \\\\equiv 0\\\\), and pointwise vanishing \u2014 is elementary and quickly discharged.\\n\\n### Candidate Ranking\\n\\n| Priority | Node | Rationale |\\n|----------|------|-----------|\\n| **1** | `energy_dissipation` | The integration-by-parts identity with boundary cancellation is the real technical load-bearer. High formalization yield; reduces the most human proof-checking effort. |\\n| **2** | `heat_uniqueness` | Natural top-level Lean/Mathlib statement; straightforward to compose once the sub-lemma is formalized. |\",\"stop_reason\":\"end_turn\",\"session_id\":\"fb873c14-f1af-45c6-8f6c-bf6d78c1ea75\",\"total_cost_usd\":0.09718965,\"usage\":{\"input_tokens\":5,\"cache_creation_input_tokens\":7155,\"cache_read_input_tokens\":8528,\"output_tokens\":4519,\"server_tool_use\":{\"web_search_requests\":0,\"web_fetch_requests\":0},\"service_tier\":\"standard\",\"cache_creation\":{\"ephemeral_1h_input_tokens\":7155,\"ephemeral_5m_input_tokens\":0},\"inference_geo\":\"\",\"iterations\":[],\"speed\":\"standard\"},\"modelUsage\":{\"claude-sonnet-4-6\":{\"inputTokens\":5,\"outputTokens\":4519,\"cacheReadInputTokens\":8528,\"cacheCreationInputTokens\":7155,\"webSearchRequests\":0,\"costUSD\":0.09718965,\"contextWindow\":200000,\"maxOutputTokens\":32000}},\"permission_denials\":[],\"structured_output\":{\"theorem_title\":\"Heat equation uniqueness by the energy method\",\"theorem_statement\":\"Let \\\\(u,v\\\\) be sufficiently regular solutions of the heat equation on \\\\((0,L)\\\\times[0,T]\\\\) satisfying \\\\(u_t=u_{xx}\\\\), \\\\(v_t=v_{xx}\\\\), with the same initial data \\\\(u(x,0)=v(x,0)\\\\) and homogeneous Dirichlet boundary conditions \\\\(u(0,t)=u(L,t)=v(0,t)=v(L,t)=0\\\\). Then \\\\(u=v\\\\) on \\\\([0,L]\\\\times[0,T]\\\\).\",\"root_node_id\":\"heat_uniqueness\",\"nodes\":[{\"id\":\"energy_dissipation\",\"title\":\"Energy is nonincreasing: E'(t) \u2264 0\",\"display_label\":\"\\\\(E'(t) = -\\\\int_0^L |w_x|^2\\\\,dx \\\\le 0\\\\)\",\"informal_statement\":\"Let \\\\(w = u - v\\\\) satisfy \\\\(w_t = w_{xx}\\\\) on \\\\((0,L)\\\\times(0,T)\\\\) with \\\\(w(0,t)=w(L,t)=0\\\\), and define the energy \\\\(E(t) = \\\\tfrac{1}{2}\\\\int_0^L w(x,t)^2\\\\,dx\\\\). Then \\\\(E'(t) = -\\\\int_0^L |w_x(x,t)|^2\\\\,dx \\\\le 0\\\\) for all \\\\(t \\\\in [0,T]\\\\).\",\"informal_proof_text\":\"Differentiating under the integral sign (justified by the assumed regularity of \\\\(w\\\\)):\\n\\\\[\\nE'(t) = \\\\int_0^L w\\\\, w_t\\\\,dx.\\n\\\\]\\nSubstituting the PDE \\\\(w_t = w_{xx}\\\\):\\n\\\\[\\nE'(t) = \\\\int_0^L w\\\\, w_{xx}\\\\,dx.\\n\\\\]\\nIntegrating by parts in \\\\(x\\\\):\\n\\\\[\\n\\\\int_0^L w\\\\, w_{xx}\\\\,dx = \\\\bigl[w\\\\, w_x\\\\bigr]_{0}^{L} - \\\\int_0^L |w_x|^2\\\\,dx.\\n\\\\]\\nThe boundary term vanishes because \\\\(w(0,t) = w(L,t) = 0\\\\), giving\\n\\\\[\\nE'(t) = -\\\\int_0^L |w_x(x,t)|^2\\\\,dx \\\\le 0.\\n\\\\]\"},{\"id\":\"heat_uniqueness\",\"title\":\"Heat equation uniqueness by the energy method\",\"display_label\":\"Heat uniqueness (energy method)\",\"informal_statement\":\"Under the stated hypotheses, \\\\(u = v\\\\) on \\\\([0,L]\\\\times[0,T]\\\\).\",\"informal_proof_text\":\"Set \\\\(w = u - v\\\\). Then \\\\(w\\\\) satisfies \\\\(w_t = w_{xx}\\\\) on \\\\((0,L)\\\\times(0,T)\\\\) with zero initial data \\\\(w(x,0)=0\\\\) and zero Dirichlet boundary conditions \\\\(w(0,t)=w(L,t)=0\\\\).\\n\\nDefine \\\\(E(t) = \\\\tfrac{1}{2}\\\\int_0^L w(x,t)^2\\\\,dx\\\\). By the energy dissipation lemma, \\\\(E'(t) \\\\le 0\\\\), so \\\\(E\\\\) is nonincreasing. At \\\\(t=0\\\\), \\\\(w(x,0)=0\\\\) gives \\\\(E(0) = 0\\\\). Since \\\\(E(t) \\\\ge 0\\\\) by definition and \\\\(E\\\\) is nonincreasing from \\\\(0\\\\), we conclude \\\\(E(t) = 0\\\\) for all \\\\(t \\\\in [0,T]\\\\).\\n\\nHence \\\\(\\\\int_0^L w(x,t)^2\\\\,dx = 0\\\\) for all \\\\(t\\\\), so \\\\(w(x,t) = 0\\\\) for all \\\\((x,t)\\\\), i.e., \\\\(u = v\\\\).\"}],\"edges\":[{\"source_id\":\"energy_dissipation\",\"target_id\":\"heat_uniqueness\",\"label\":\"used by\",\"explanation\":\"The nonincreasing property E'(t) \u2264 0, together with E(0)=0 and E(t)\u22650, forces E(t)=0 for all t \u2014 the key step driving the conclusion u=v.\"}],\"candidates\":[{\"node_id\":\"energy_dissipation\",\"priority\":1,\"rationale\":\"This node contains the entire technical core of the proof: differentiation under the integral, PDE substitution, the integration-by-parts identity \u222bw\u00b7w_xx dx = [w\u00b7w_x]\u2080\u1d38 \u2212 \u222b|w_x|\u00b2 dx, and cancellation of boundary terms. It is a concrete, self-contained computation, directly formalizable, and carries the main inferential load.\"},{\"node_id\":\"heat_uniqueness\",\"priority\":2,\"rationale\":\"The root theorem is the natural top-level Lean statement. Once energy_dissipation is formalized, the remaining steps \u2014 E(0)=0, monotonicity forcing E\u22610, and pointwise vanishing of w \u2014 are straightforward and can be composed efficiently.\"}]},\"terminal_reason\":\"completed\",\"fast_mode_state\":\"off\",\"uuid\":\"e8a61258-9ddb-4e52-acec-cd5d140a5ec2\"}\n",
+  "raw_stderr": "",
+  "payload": {
+    "theorem_title": "Heat equation uniqueness by the energy method",
+    "theorem_statement": "Let \\(u,v\\) be sufficiently regular solutions of the heat equation on \\((0,L)\\times[0,T]\\) satisfying \\(u_t=u_{xx}\\), \\(v_t=v_{xx}\\), with the same initial data \\(u(x,0)=v(x,0)\\) and homogeneous Dirichlet boundary conditions \\(u(0,t)=u(L,t)=v(0,t)=v(L,t)=0\\). Then \\(u=v\\) on \\([0,L]\\times[0,T]\\).",
+    "root_node_id": "heat_uniqueness",
+    "nodes": [
+      {
+        "id": "energy_dissipation",
+        "title": "Energy is nonincreasing: E'(t) \u2264 0",
+        "display_label": "\\(E'(t) = -\\int_0^L |w_x|^2\\,dx \\le 0\\)",
+        "informal_statement": "Let \\(w = u - v\\) satisfy \\(w_t = w_{xx}\\) on \\((0,L)\\times(0,T)\\) with \\(w(0,t)=w(L,t)=0\\), and define the energy \\(E(t) = \\tfrac{1}{2}\\int_0^L w(x,t)^2\\,dx\\). Then \\(E'(t) = -\\int_0^L |w_x(x,t)|^2\\,dx \\le 0\\) for all \\(t \\in [0,T]\\).",
+        "informal_proof_text": "Differentiating under the integral sign (justified by the assumed regularity of \\(w\\)):\n\\[\nE'(t) = \\int_0^L w\\, w_t\\,dx.\n\\]\nSubstituting the PDE \\(w_t = w_{xx}\\):\n\\[\nE'(t) = \\int_0^L w\\, w_{xx}\\,dx.\n\\]\nIntegrating by parts in \\(x\\):\n\\[\n\\int_0^L w\\, w_{xx}\\,dx = \\bigl[w\\, w_x\\bigr]_{0}^{L} - \\int_0^L |w_x|^2\\,dx.\n\\]\nThe boundary term vanishes because \\(w(0,t) = w(L,t) = 0\\), giving\n\\[\nE'(t) = -\\int_0^L |w_x(x,t)|^2\\,dx \\le 0.\n\\]"
+      },
+      {
+        "id": "heat_uniqueness",
+        "title": "Heat equation uniqueness by the energy method",
+        "display_label": "Heat uniqueness (energy method)",
+        "informal_statement": "Under the stated hypotheses, \\(u = v\\) on \\([0,L]\\times[0,T]\\).",
+        "informal_proof_text": "Set \\(w = u - v\\). Then \\(w\\) satisfies \\(w_t = w_{xx}\\) on \\((0,L)\\times(0,T)\\) with zero initial data \\(w(x,0)=0\\) and zero Dirichlet boundary conditions \\(w(0,t)=w(L,t)=0\\).\n\nDefine \\(E(t) = \\tfrac{1}{2}\\int_0^L w(x,t)^2\\,dx\\). By the energy dissipation lemma, \\(E'(t) \\le 0\\), so \\(E\\) is nonincreasing. At \\(t=0\\), \\(w(x,0)=0\\) gives \\(E(0) = 0\\). Since \\(E(t) \\ge 0\\) by definition and \\(E\\) is nonincreasing from \\(0\\), we conclude \\(E(t) = 0\\) for all \\(t \\in [0,T]\\).\n\nHence \\(\\int_0^L w(x,t)^2\\,dx = 0\\) for all \\(t\\), so \\(w(x,t) = 0\\) for all \\((x,t)\\), i.e., \\(u = v\\)."
+      }
+    ],
+    "edges": [
+      {
+        "source_id": "energy_dissipation",
+        "target_id": "heat_uniqueness",
+        "label": "used by",
+        "explanation": "The nonincreasing property E'(t) \u2264 0, together with E(0)=0 and E(t)\u22650, forces E(t)=0 for all t \u2014 the key step driving the conclusion u=v."
+      }
+    ],
+    "candidates": [
+      {
+        "node_id": "energy_dissipation",
+        "priority": 1,
+        "rationale": "This node contains the entire technical core of the proof: differentiation under the integral, PDE substitution, the integration-by-parts identity \u222bw\u00b7w_xx dx = [w\u00b7w_x]\u2080\u1d38 \u2212 \u222b|w_x|\u00b2 dx, and cancellation of boundary terms. It is a concrete, self-contained computation, directly formalizable, and carries the main inferential load."
+      },
+      {
+        "node_id": "heat_uniqueness",
+        "priority": 2,
+        "rationale": "The root theorem is the natural top-level Lean statement. Once energy_dissipation is formalized, the remaining steps \u2014 E(0)=0, monotonicity forcing E\u22610, and pointwise vanishing of w \u2014 are straightforward and can be composed efficiently."
+      }
+    ]
+  }
+}

@@ -9,6 +9,7 @@ from typing import Any
 
 from formal_islands.backends import (
     BackendError,
+    AristotleBackend,
     ClaudeCodeBackend,
     CodexCLIBackend,
     GeminiCLIBackend,
@@ -29,6 +30,7 @@ from formal_islands.formalization import (
 from formal_islands.models import FormalArtifact, ProofGraph, VerificationResult
 from formal_islands.report import export_report_bundle, render_html_report
 from formal_islands.review import derive_review_obligations
+from formal_islands.progress import progress, use_progress_log
 
 
 DEFAULT_EXAMPLE_INPUT = {
@@ -39,6 +41,7 @@ DEFAULT_EXAMPLE_INPUT = {
 
 DEFAULT_BACKEND_TIMEOUT_SECONDS = 180.0
 FORMALIZATION_BACKEND_TIMEOUT_SECONDS = 420.0
+PROGRESS_LOG_FILENAME = "_progress.log"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -204,13 +207,38 @@ def add_backend_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--backend",
         choices=["codex", "claude", "gemini"],
-        default="codex",
-        help="Structured backend to use.",
+        default=None,
+        help=(
+            "Legacy shorthand for the planning backend, and for the formalization backend when the "
+            "split backend flags are not supplied."
+        ),
     )
     parser.add_argument(
         "--model",
         default=None,
-        help="Optional model override passed through to the selected backend CLI.",
+        help="Legacy shorthand for both planning and formalization model overrides.",
+    )
+    parser.add_argument(
+        "--planning-backend",
+        choices=["codex", "claude", "gemini"],
+        default=None,
+        help="Backend to use for planning / extraction stages.",
+    )
+    parser.add_argument(
+        "--planning-model",
+        default=None,
+        help="Optional model override for the planning backend.",
+    )
+    parser.add_argument(
+        "--formalization-backend",
+        choices=["codex", "claude", "gemini", "aristotle"],
+        default=None,
+        help="Backend to use for formalization stages. Aristotle is supported here only.",
+    )
+    parser.add_argument(
+        "--formalization-model",
+        default=None,
+        help="Optional model override for the formalization backend when supported.",
     )
 
 
@@ -242,10 +270,10 @@ def add_formalization_timeout_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--formalization-timeout-seconds",
         type=float,
-        default=FORMALIZATION_BACKEND_TIMEOUT_SECONDS,
+        default=None,
         help=(
-            "Timeout for the formalization backend worker in seconds. "
-            "Default: 420."
+            "Optional timeout override for the formalization backend worker in seconds. "
+            "Leave unset to use the backend default (Aristotle defaults to no timeout)."
         ),
     )
 
@@ -253,204 +281,245 @@ def add_formalization_timeout_arg(parser: argparse.ArgumentParser) -> None:
 def cmd_extract(args: argparse.Namespace) -> int:
     input_payload = load_input_payload(Path(args.input))
     output_dir = ensure_output_dir(Path(args.output_dir))
-    backend = build_backend(
-        args.backend,
-        args.model,
-        output_dir / "_backend_logs",
-        timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
-    )
-    graph = extract_proof_graph(
-        backend=backend,
-        theorem_statement=input_payload["theorem_statement"],
-        raw_proof_text=input_payload["raw_proof_text"],
-        theorem_title_hint=input_payload["theorem_title"],
-    )
-    path = output_dir / "01_extracted_graph.json"
-    write_graph(graph, path)
-    print(path)
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+        progress("extract stage starting")
+        backend = build_backend(
+            resolve_backend_name(args, formalization=False),
+            resolve_backend_model(args, formalization=False),
+            output_dir / "_backend_logs",
+            timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
+        )
+        graph = extract_proof_graph(
+            backend=backend,
+            theorem_statement=input_payload["theorem_statement"],
+            raw_proof_text=input_payload["raw_proof_text"],
+            theorem_title_hint=input_payload["theorem_title"],
+        )
+        path = output_dir / "01_extracted_graph.json"
+        write_graph(graph, path)
+        print(path)
     return 0
 
 
 def cmd_plan(args: argparse.Namespace) -> int:
     input_payload = load_input_payload(Path(args.input))
     output_dir = ensure_output_dir(Path(args.output_dir))
-    backend = build_backend(
-        args.backend,
-        args.model,
-        output_dir / "_backend_logs",
-        timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
-    )
-    artifacts = plan_proof_graph(
-        backend=backend,
-        theorem_statement=input_payload["theorem_statement"],
-        raw_proof_text=input_payload["raw_proof_text"],
-        theorem_title_hint=input_payload["theorem_title"],
-    )
-    extracted_path = output_dir / "01_extracted_graph.json"
-    candidate_path = output_dir / "02_candidate_graph.json"
-    write_graph(artifacts.extracted_graph, extracted_path)
-    write_graph(artifacts.candidate_graph, candidate_path)
-    print(extracted_path)
-    print(candidate_path)
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+        progress("plan stage starting")
+        backend = build_backend(
+            resolve_backend_name(args, formalization=False),
+            resolve_backend_model(args, formalization=False),
+            output_dir / "_backend_logs",
+            timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
+        )
+        artifacts = plan_proof_graph(
+            backend=backend,
+            theorem_statement=input_payload["theorem_statement"],
+            raw_proof_text=input_payload["raw_proof_text"],
+            theorem_title_hint=input_payload["theorem_title"],
+        )
+        extracted_path = output_dir / "01_extracted_graph.json"
+        candidate_path = output_dir / "02_candidate_graph.json"
+        write_graph(artifacts.extracted_graph, extracted_path)
+        write_graph(artifacts.candidate_graph, candidate_path)
+        print(extracted_path)
+        print(candidate_path)
     return 0
 
 
 def cmd_select_candidates(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
-    backend = build_backend(
-        args.backend,
-        args.model,
-        output_dir / "_backend_logs",
-        timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
-    )
-    graph = load_graph(Path(args.graph))
-    updated_graph = select_formalization_candidates(backend=backend, graph=graph)
-    path = output_dir / "02_candidate_graph.json"
-    write_graph(updated_graph, path)
-    print(path)
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+        progress("candidate selection stage starting")
+        backend = build_backend(
+            resolve_backend_name(args, formalization=False),
+            resolve_backend_model(args, formalization=False),
+            output_dir / "_backend_logs",
+            timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
+        )
+        graph = load_graph(Path(args.graph))
+        updated_graph = select_formalization_candidates(backend=backend, graph=graph)
+        path = output_dir / "02_candidate_graph.json"
+        write_graph(updated_graph, path)
+        print(path)
     return 0
 
 
 def cmd_formalize_one(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
-    backend = build_backend(
-        args.backend,
-        args.model,
-        output_dir / "_backend_logs",
-        timeout_seconds=getattr(
-            args, "formalization_timeout_seconds", FORMALIZATION_BACKEND_TIMEOUT_SECONDS
-        ),
-    )
-    graph = load_graph(Path(args.graph))
-    node_id = select_candidate_node_id(graph, requested_node_id=args.node_id)
-    verifier = LeanVerifier(workspace=LeanWorkspace(root=Path(args.workspace)))
-    graph_path = output_dir / "03_formalized_graph.json"
-    summary_path = output_dir / "03_formalization_summary.json"
-
-    def write_progress(outcome) -> None:
-        write_graph(outcome.graph, graph_path)
-        _write_formalization_summary(summary_path, outcome)
-
-    try:
-        outcome = formalize_candidate_node(
-            backend=backend,
-            verifier=verifier,
-            graph=graph,
-            node_id=node_id,
-            max_attempts=args.max_attempts,
-            on_update=write_progress,
-            mode=args.formalization_mode,
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+        progress("formalization stage starting")
+        planning_backend_name = resolve_backend_name(args, formalization=False)
+        planning_backend = build_backend(
+            planning_backend_name,
+            resolve_backend_model(args, formalization=False),
+            output_dir / "_backend_logs",
+            timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
         )
-    except BackendError as exc:
-        failure_outcome = _backend_failure_outcome(graph=graph, node_id=node_id, error=exc)
-        write_progress(failure_outcome)
+        formalization_backend_name = resolve_backend_name(args, formalization=True)
+        backend = build_backend(
+            formalization_backend_name,
+            resolve_backend_model(args, formalization=True),
+            output_dir / "_backend_logs",
+            timeout_seconds=resolve_formalization_timeout(args, formalization_backend_name),
+            formalization=True,
+        )
+        graph = load_graph(Path(args.graph))
+        node_id = select_candidate_node_id(graph, requested_node_id=args.node_id)
+        verifier = LeanVerifier(workspace=LeanWorkspace(root=Path(args.workspace)))
+        graph_path = output_dir / "03_formalized_graph.json"
+        summary_path = output_dir / "03_formalization_summary.json"
+
+        def write_progress(outcome) -> None:
+            write_graph(outcome.graph, graph_path)
+            _write_formalization_summary(summary_path, outcome)
+
+        try:
+            outcome = formalize_candidate_node(
+                backend=backend,
+                planning_backend=planning_backend,
+                verifier=verifier,
+                graph=graph,
+                node_id=node_id,
+                max_attempts=args.max_attempts,
+                on_update=write_progress,
+                mode=args.formalization_mode,
+            )
+        except BackendError as exc:
+            failure_outcome = _backend_failure_outcome(graph=graph, node_id=node_id, error=exc)
+            write_progress(failure_outcome)
+            print(graph_path)
+            print(summary_path)
+            return 0
+
+        write_progress(outcome)
         print(graph_path)
         print(summary_path)
-        return 0
-
-    write_progress(outcome)
-    print(graph_path)
-    print(summary_path)
     return 0
 
 
 def cmd_formalize_all_candidates(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
-    backend = build_backend(
-        args.backend,
-        args.model,
-        output_dir / "_backend_logs",
-        timeout_seconds=getattr(
-            args, "formalization_timeout_seconds", FORMALIZATION_BACKEND_TIMEOUT_SECONDS
-        ),
-    )
-    graph = load_graph(Path(args.graph))
-    verifier = LeanVerifier(workspace=LeanWorkspace(root=Path(args.workspace)))
-    graph_path = output_dir / "03_formalized_graph.json"
-    summary_path = output_dir / "03_formalization_summaries.json"
-
-    summaries: list[dict[str, Any]] = []
-
-    def write_progress(outcome) -> None:
-        write_graph(outcome.graph, graph_path)
-
-    outcomes = formalize_candidate_nodes(
-        backend=backend,
-        verifier=verifier,
-        graph=graph,
-        max_attempts=args.max_attempts,
-        on_update=write_progress,
-        mode=args.formalization_mode,
-    )
-
-    write_graph(outcomes.graph, graph_path)
-    for outcome in outcomes.outcomes:
-        summaries.append(
-            {
-                "node_id": outcome.node_id,
-                "status": outcome.artifact.verification.status,
-                "artifact_path": outcome.artifact.verification.artifact_path,
-                "attempt_count": outcome.artifact.verification.attempt_count,
-                "stderr": outcome.artifact.verification.stderr,
-                "faithfulness_classification": outcome.artifact.faithfulness_classification,
-                "lean_theorem_name": outcome.artifact.lean_theorem_name,
-            }
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+        progress("formalization stage starting")
+        planning_backend_name = resolve_backend_name(args, formalization=False)
+        planning_backend = build_backend(
+            planning_backend_name,
+            resolve_backend_model(args, formalization=False),
+            output_dir / "_backend_logs",
+            timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
         )
-    summary_path.write_text(json.dumps(summaries, indent=2) + "\n", encoding="utf-8")
-    print(graph_path)
-    print(summary_path)
+        formalization_backend_name = resolve_backend_name(args, formalization=True)
+        backend = build_backend(
+            formalization_backend_name,
+            resolve_backend_model(args, formalization=True),
+            output_dir / "_backend_logs",
+            timeout_seconds=resolve_formalization_timeout(args, formalization_backend_name),
+            formalization=True,
+        )
+        graph = load_graph(Path(args.graph))
+        verifier = LeanVerifier(workspace=LeanWorkspace(root=Path(args.workspace)))
+        graph_path = output_dir / "03_formalized_graph.json"
+        summary_path = output_dir / "03_formalization_summaries.json"
+
+        summaries: list[dict[str, Any]] = []
+
+        def write_progress(outcome) -> None:
+            write_graph(outcome.graph, graph_path)
+
+        outcomes = formalize_candidate_nodes(
+            backend=backend,
+            planning_backend=planning_backend,
+            verifier=verifier,
+            graph=graph,
+            max_attempts=args.max_attempts,
+            on_update=write_progress,
+            mode=args.formalization_mode,
+        )
+
+        write_graph(outcomes.graph, graph_path)
+        for outcome in outcomes.outcomes:
+            summaries.append(
+                {
+                    "node_id": outcome.node_id,
+                    "status": outcome.artifact.verification.status,
+                    "artifact_path": outcome.artifact.verification.artifact_path,
+                    "attempt_count": outcome.artifact.verification.attempt_count,
+                    "stderr": outcome.artifact.verification.stderr,
+                    "faithfulness_classification": outcome.artifact.faithfulness_classification,
+                    "lean_theorem_name": outcome.artifact.lean_theorem_name,
+                }
+            )
+        summary_path.write_text(json.dumps(summaries, indent=2) + "\n", encoding="utf-8")
+        print(graph_path)
+        print(summary_path)
     return 0
 
 
 def cmd_report(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
-    graph = load_graph(Path(args.graph))
-    obligations = derive_review_obligations(graph)
-    bundle = export_report_bundle(graph, obligations)
-    html = render_html_report(graph, obligations)
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+        progress("report stage starting")
+        graph = load_graph(Path(args.graph))
+        obligations = derive_review_obligations(graph)
+        bundle = export_report_bundle(graph, obligations)
+        html = render_html_report(graph, obligations)
 
-    bundle_path = output_dir / "04_report_bundle.json"
-    html_path = output_dir / "04_report.html"
-    bundle_path.write_text(json.dumps(bundle, indent=2) + "\n", encoding="utf-8")
-    html_path.write_text(html, encoding="utf-8")
-    print(bundle_path)
-    print(html_path)
+        bundle_path = output_dir / "04_report_bundle.json"
+        html_path = output_dir / "04_report.html"
+        bundle_path.write_text(json.dumps(bundle, indent=2) + "\n", encoding="utf-8")
+        html_path.write_text(html, encoding="utf-8")
+        print(bundle_path)
+        print(html_path)
     return 0
 
 
 def cmd_run_example(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
-    cmd_plan(
-        argparse.Namespace(
-            backend=args.backend,
-            model=args.model,
-            input=args.input,
-            output_dir=str(output_dir),
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+        progress("running example end-to-end")
+        formalization_backend_name = resolve_backend_name(args, formalization=True)
+        formalization_timeout = resolve_formalization_timeout(args, formalization_backend_name)
+        progress("example planning stage starting")
+        cmd_plan(
+            argparse.Namespace(
+                backend=getattr(args, "backend", None),
+                model=getattr(args, "model", None),
+                planning_backend=getattr(args, "planning_backend", None),
+                planning_model=getattr(args, "planning_model", None),
+                formalization_backend=getattr(args, "formalization_backend", None),
+                formalization_model=getattr(args, "formalization_model", None),
+                input=args.input,
+                output_dir=str(output_dir),
+            )
         )
-    )
-    candidate_graph_path = output_dir / "02_candidate_graph.json"
-    cmd_formalize_one(
-        argparse.Namespace(
-            backend=args.backend,
-            model=args.model,
-            graph=str(candidate_graph_path),
-            output_dir=str(output_dir),
-            workspace=args.workspace,
-            node_id="auto",
-            max_attempts=args.max_attempts,
-            formalization_mode=args.formalization_mode,
-            formalization_timeout_seconds=getattr(
-                args, "formalization_timeout_seconds", FORMALIZATION_BACKEND_TIMEOUT_SECONDS
-            ),
+        candidate_graph_path = output_dir / "02_candidate_graph.json"
+        progress("example formalization stage starting")
+        cmd_formalize_one(
+            argparse.Namespace(
+                backend=getattr(args, "backend", None),
+                model=getattr(args, "model", None),
+                planning_backend=getattr(args, "planning_backend", None),
+                planning_model=getattr(args, "planning_model", None),
+                formalization_backend=getattr(args, "formalization_backend", None),
+                formalization_model=getattr(args, "formalization_model", None),
+                graph=str(candidate_graph_path),
+                output_dir=str(output_dir),
+                workspace=args.workspace,
+                node_id="auto",
+                max_attempts=args.max_attempts,
+                formalization_mode=args.formalization_mode,
+                formalization_timeout_seconds=formalization_timeout,
+            )
         )
-    )
-    formalized_graph_path = output_dir / "03_formalized_graph.json"
-    cmd_report(
-        argparse.Namespace(
-            graph=str(formalized_graph_path),
-            output_dir=str(output_dir),
+        formalized_graph_path = output_dir / "03_formalized_graph.json"
+        progress("example report stage starting")
+        cmd_report(
+            argparse.Namespace(
+                graph=str(formalized_graph_path),
+                output_dir=str(output_dir),
+            )
         )
-    )
     return 0
 
 
@@ -459,41 +528,53 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(
         Path(args.output_dir) if args.output_dir is not None else default_output_dir_for_input(input_path)
     )
-    cmd_plan(
-        argparse.Namespace(
-            backend=args.backend,
-            model=args.model,
-            input=str(input_path),
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+        progress("running benchmark end-to-end")
+        progress("benchmark planning stage starting")
+        cmd_plan(
+            argparse.Namespace(
+                backend=getattr(args, "backend", None),
+                model=getattr(args, "model", None),
+                planning_backend=getattr(args, "planning_backend", None),
+                planning_model=getattr(args, "planning_model", None),
+                formalization_backend=getattr(args, "formalization_backend", None),
+                formalization_model=getattr(args, "formalization_model", None),
+                input=str(input_path),
+                output_dir=str(output_dir),
+            )
+        )
+        candidate_graph_path = output_dir / "02_candidate_graph.json"
+        formalization_backend_name = resolve_backend_name(args, formalization=True)
+        formalization_timeout = resolve_formalization_timeout(args, formalization_backend_name)
+        common = argparse.Namespace(
+            backend=getattr(args, "backend", None),
+            model=getattr(args, "model", None),
+            planning_backend=getattr(args, "planning_backend", None),
+            planning_model=getattr(args, "planning_model", None),
+            formalization_backend=getattr(args, "formalization_backend", None),
+            formalization_model=getattr(args, "formalization_model", None),
+            graph=str(candidate_graph_path),
             output_dir=str(output_dir),
+            workspace=args.workspace,
+            max_attempts=args.max_attempts,
+            formalization_mode=args.formalization_mode,
+            formalization_timeout_seconds=formalization_timeout,
         )
-    )
-    candidate_graph_path = output_dir / "02_candidate_graph.json"
-    formalization_timeout = getattr(
-        args, "formalization_timeout_seconds", FORMALIZATION_BACKEND_TIMEOUT_SECONDS
-    )
-    common = argparse.Namespace(
-        backend=args.backend,
-        model=args.model,
-        graph=str(candidate_graph_path),
-        output_dir=str(output_dir),
-        workspace=args.workspace,
-        max_attempts=args.max_attempts,
-        formalization_mode=args.formalization_mode,
-        formalization_timeout_seconds=formalization_timeout,
-    )
-    if args.node_id == "auto":
-        cmd_formalize_all_candidates(common)
-    else:
-        cmd_formalize_one(
-            argparse.Namespace(**vars(common), node_id=args.node_id)
+        progress("benchmark formalization stage starting")
+        if args.node_id == "auto":
+            cmd_formalize_all_candidates(common)
+        else:
+            cmd_formalize_one(
+                argparse.Namespace(**vars(common), node_id=args.node_id)
+            )
+        formalized_graph_path = output_dir / "03_formalized_graph.json"
+        progress("benchmark report stage starting")
+        cmd_report(
+            argparse.Namespace(
+                graph=str(formalized_graph_path),
+                output_dir=str(output_dir),
+            )
         )
-    formalized_graph_path = output_dir / "03_formalized_graph.json"
-    cmd_report(
-        argparse.Namespace(
-            graph=str(formalized_graph_path),
-            output_dir=str(output_dir),
-        )
-    )
     return 0
 
 
@@ -501,17 +582,63 @@ def build_backend(
     name: str,
     model: str | None,
     log_dir: Path | None = None,
-    timeout_seconds: float = DEFAULT_BACKEND_TIMEOUT_SECONDS,
-) -> StructuredBackend:
+    timeout_seconds: float | None = None,
+    formalization: bool = False,
+) -> StructuredBackend | AristotleBackend:
     """Create a backend instance for the smoke CLI."""
 
     if name == "codex":
+        timeout_seconds = DEFAULT_BACKEND_TIMEOUT_SECONDS if timeout_seconds is None else timeout_seconds
         return CodexCLIBackend(model=model, log_dir=log_dir, timeout_seconds=timeout_seconds)
     if name == "claude":
+        timeout_seconds = DEFAULT_BACKEND_TIMEOUT_SECONDS if timeout_seconds is None else timeout_seconds
         return ClaudeCodeBackend(model=model, log_dir=log_dir, timeout_seconds=timeout_seconds)
     if name == "gemini":
+        timeout_seconds = DEFAULT_BACKEND_TIMEOUT_SECONDS if timeout_seconds is None else timeout_seconds
         return GeminiCLIBackend(model=model, log_dir=log_dir, timeout_seconds=timeout_seconds)
+    if name == "aristotle":
+        if not formalization:
+            raise ValueError("aristotle is only supported for formalization backends")
+        timeout_seconds = None if timeout_seconds is None else timeout_seconds
+        return AristotleBackend(log_dir=log_dir, timeout_seconds=timeout_seconds)
     raise ValueError(f"unsupported backend: {name}")
+
+
+def resolve_backend_name(args: argparse.Namespace, *, formalization: bool) -> str:
+    explicit_name = getattr(
+        args,
+        "formalization_backend" if formalization else "planning_backend",
+        None,
+    )
+    if explicit_name is not None:
+        return explicit_name
+
+    legacy_name = getattr(args, "backend", None)
+    if legacy_name is not None:
+        return legacy_name
+
+    return "codex"
+
+
+def resolve_backend_model(args: argparse.Namespace, *, formalization: bool) -> str | None:
+    explicit_model = getattr(
+        args,
+        "formalization_model" if formalization else "planning_model",
+        None,
+    )
+    if explicit_model is not None:
+        return explicit_model
+
+    return getattr(args, "model", None)
+
+
+def resolve_formalization_timeout(args: argparse.Namespace, backend_name: str) -> float | None:
+    explicit_timeout = getattr(args, "formalization_timeout_seconds", None)
+    if explicit_timeout is not None:
+        return explicit_timeout
+    if backend_name == "aristotle":
+        return None
+    return FORMALIZATION_BACKEND_TIMEOUT_SECONDS
 
 
 def _write_formalization_summary(path: Path, outcome) -> None:

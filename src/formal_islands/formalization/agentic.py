@@ -16,6 +16,8 @@ from formal_islands.formalization.pipeline import (
     FormalizationFaithfulnessError,
     enforce_formalization_faithfulness,
     build_node_coverage_sketch,
+    build_local_proof_context,
+    format_local_proof_context,
 )
 from formal_islands.formalization.schemas import AgenticFormalizationResult
 from formal_islands.models import FormalArtifact, ProofGraph, VerificationResult
@@ -80,6 +82,7 @@ def build_agentic_formalization_request(
         for child in graph.nodes
         if child.id in children and child.formal_artifact is not None
     ][:1]
+    local_context = build_local_proof_context(graph, node_id)
 
     prompt_parts = [
         f"Theorem title: {graph.theorem_title}",
@@ -98,6 +101,8 @@ def build_agentic_formalization_request(
         ),
         "Coverage sketch:",
         json.dumps(asdict(build_node_coverage_sketch(node)), indent=2),
+        "Local proof neighborhood:",
+        format_local_proof_context(local_context),
         (
             "Mathlib lives under the workspace's `.lake/packages/mathlib/Mathlib` directory. "
             "Do not assume a `lean_project/mathlib/Mathlib` path. If you need to inspect Mathlib source, "
@@ -199,6 +204,11 @@ def build_agentic_formalization_request(
             "Use the coverage sketch to decide what the theorem is supposed to cover. If you only prove one "
             "component of the sketch, keep the plan and Lean file honest about that partial coverage rather than "
             "pretending to certify the whole node."
+        ),
+        (
+            "If the local proof neighborhood lists verified supporting lemmas, you may rely on those statements "
+            "as established facts for this job. Context-only sibling ingredients are only orientation, not "
+            "assumptions."
         ),
         (
             "Do not replace a concrete statement with a generic measure-space or arbitrary ambient-type theorem "

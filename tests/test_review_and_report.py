@@ -53,6 +53,7 @@ def test_render_html_report_includes_core_sections() -> None:
     assert 'id="MathJax-script"' in html
     assert "width: min(100%, 460px);" in html
     assert "Nodes without attached Lean artifacts use dashed amber outlines." in html
+    assert "Dashed gray edges show provenance or refinement links" in html
     assert "language-lean" in html
     assert 'class="tok-keyword"' in html or 'class="tok-type"' in html
     assert 'preserveAspectRatio="xMidYMin meet"' in html
@@ -136,6 +137,22 @@ def test_render_html_report_highlights_lean_tokens_locally() -> None:
 
     assert "tok-keyword" in html
     assert "tok-tactic" in html
+
+
+def test_render_html_report_marks_refinement_edges_as_provenance() -> None:
+    graph = build_example_graph().model_copy(
+        update={
+            "edges": [
+                ProofEdge(source_id="n1", target_id="n2", label="refined_from"),
+            ]
+        }
+    )
+    obligations = derive_review_obligations(graph)
+
+    html = render_html_report(graph, obligations)
+
+    assert "edge-provenance" in html
+    assert "provenance or refinement links" in html
 
 
 def test_compute_graph_layout_height_covers_all_nodes() -> None:

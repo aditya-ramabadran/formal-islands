@@ -1,0 +1,29 @@
+[
+  {
+    "node_id": "scalar_ineq_refined_local_claim",
+    "status": "verified",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/scalar_ineq_refined_local_claim_worker_20260405-222929_a25f39e7.lean",
+    "attempt_count": 1,
+    "stderr": "",
+    "faithfulness_classification": "full_node",
+    "lean_theorem_name": "scalar_ineq_refined_local_claim_aristotle"
+  },
+  {
+    "node_id": "G_convex",
+    "status": "verified",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/G_convex_worker_20260405-222929_00a14924.lean",
+    "attempt_count": 1,
+    "stderr": "",
+    "faithfulness_classification": "concrete_sublemma",
+    "lean_theorem_name": "G_convex_aristotle"
+  },
+  {
+    "node_id": "scalar_ineq",
+    "status": "verified",
+    "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/scalar_ineq_worker_20260405-225902_5c3a0627.lean",
+    "attempt_count": 1,
+    "stderr": "",
+    "faithfulness_classification": "concrete_sublemma",
+    "lean_theorem_name": "scalar_ineq_aristotle"
+  }
+]

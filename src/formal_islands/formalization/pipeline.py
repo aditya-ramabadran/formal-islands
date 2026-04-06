@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections import defaultdict, deque
 from dataclasses import asdict, dataclass
 
 from formal_islands.backends import StructuredBackend, StructuredBackendRequest
@@ -56,6 +57,14 @@ class ConcreteSublemmaSummary:
 
 
 @dataclass(frozen=True)
+class CoverageExpansionAssessment:
+    """Planning-backend judgment about whether a concrete sublemma still needs expansion."""
+
+    already_matches_target: bool
+    reason: str
+
+
+@dataclass(frozen=True)
 class CoverageComponent:
     """A small local piece of a node's proof burden."""
 
@@ -69,6 +78,14 @@ class CoverageSketch:
 
     summary: str
     components: list[CoverageComponent]
+
+
+@dataclass(frozen=True)
+class LocalProofContext:
+    """Nearby nodes split into verified supporting lemmas and context-only siblings."""
+
+    verified_supporting_nodes: list[ProofNode]
+    context_only_nodes: list[ProofNode]
 
 
 def build_node_coverage_sketch(node, *, max_components: int = 4) -> CoverageSketch:
@@ -91,6 +108,101 @@ def build_node_coverage_sketch(node, *, max_components: int = 4) -> CoverageSket
         summary=_normalize_coverage_text(node.informal_statement),
         components=components,
     )
+
+
+def build_local_proof_context(
+    graph: ProofGraph,
+    node_id: str,
+    *,
+    max_verified: int = 5,
+    max_context: int = 5,
+) -> LocalProofContext:
+    """Collect nearby nodes and split them into verified support versus context only."""
+
+    node_by_id = {node.id: node for node in graph.nodes}
+    if node_id not in node_by_id:
+        raise ValueError(f"node '{node_id}' was not found in the graph")
+
+    adjacency: dict[str, set[str]] = defaultdict(set)
+    for edge in graph.edges:
+        adjacency[edge.source_id].add(edge.target_id)
+        adjacency[edge.target_id].add(edge.source_id)
+
+    distances = {node_id: 0}
+    queue = deque([node_id])
+    while queue:
+        current_id = queue.popleft()
+        current_distance = distances[current_id]
+        for adjacent_id in adjacency.get(current_id, set()):
+            if adjacent_id in distances:
+                continue
+            distances[adjacent_id] = current_distance + 1
+            queue.append(adjacent_id)
+
+    neighborhood = [
+        node
+        for node in graph.nodes
+        if node.id != node_id and node.id in distances
+    ]
+    ordered = sorted(neighborhood, key=lambda node: (distances[node.id], node.id))
+
+    verified = [node for node in ordered if node.status == "formal_verified"][:max_verified]
+    context = [node for node in ordered if node.status != "formal_verified"][:max_context]
+    return LocalProofContext(verified_supporting_nodes=verified, context_only_nodes=context)
+
+
+def format_local_proof_context(context: LocalProofContext) -> str:
+    """Render local proof context as plain text for prompt injection."""
+
+    sections: list[str] = []
+    lines = [
+        "Verified supporting lemmas already certified in this run:",
+        (
+            "You may rely on these statements as already established for proof planning. "
+            "Do not treat unrelated context-only nodes as hypotheses."
+        ),
+    ]
+    if context.verified_supporting_nodes:
+        for node in context.verified_supporting_nodes:
+            theorem_name = node.formal_artifact.lean_theorem_name if node.formal_artifact else "(no theorem name)"
+            lean_statement = node.formal_artifact.lean_statement if node.formal_artifact else ""
+            lines.extend(
+                [
+                    f"- id: {node.id}",
+                    f"  title: {node.title}",
+                    f"  Lean theorem: {theorem_name}",
+                    f"  Lean statement: {lean_statement}",
+                ]
+            )
+    else:
+        lines.append("  - none listed")
+    sections.append("\n".join(lines))
+
+    lines = [
+        "Context-only sibling ingredients in the same proof neighborhood:",
+        (
+            "These nodes are only there to orient the proof. Do not assume their statements "
+            "unless they are separately listed above as verified supporting lemmas."
+        ),
+    ]
+    if context.context_only_nodes:
+        for node in context.context_only_nodes:
+            lines.extend(
+                [
+                    f"- id: {node.id}",
+                    f"  title: {node.title}",
+                    f"  informal statement: {node.informal_statement}",
+                ]
+            )
+    else:
+        lines.append("  - none listed")
+    sections.append("\n".join(lines))
+
+    sections.append(
+        "Provenance note: a refinement edge means a local claim was carved out from a broader sibling; "
+        "it is not a proof dependency unless the prompt explicitly marks it as one."
+    )
+    return "\n\n".join(sections)
 
 
 def _split_coverage_clauses(text: str) -> list[str]:
@@ -162,6 +274,7 @@ def build_formalization_request(
         for child in graph.nodes
         if child.id in children and child.formal_artifact is not None
     ][:1]
+    local_context = build_local_proof_context(graph, node_id)
 
     prompt_parts = [
             f"Theorem title: {graph.theorem_title}",
@@ -180,6 +293,8 @@ def build_formalization_request(
             ),
             "Coverage sketch:",
             json.dumps(asdict(build_node_coverage_sketch(node)), indent=2),
+            "Local proof neighborhood:",
+            format_local_proof_context(local_context),
             (
                 "Immediate parent summary:\n" + json.dumps(parent_summaries[0], indent=2)
                 if parent_summaries
@@ -229,6 +344,11 @@ def build_formalization_request(
             (
                 "Use the coverage sketch to decide what the theorem is supposed to cover. If you only prove one "
                 "component of the sketch, keep the result honest and avoid pretending to certify the whole node."
+            ),
+            (
+                "If local context lists verified supporting lemmas, you may rely on their statements as established "
+                "facts for this job. Context-only sibling ingredients are for orientation only and should not be "
+                "turned into assumptions."
             ),
             (
                 "If the node mixes a reusable source estimate with a more concrete downstream application, "
@@ -383,6 +503,83 @@ def request_concrete_sublemma_summary(
         informal_proof_text=_normalize_concrete_sublemma_summary_text(
             str(payload["informal_proof_text"]).strip()
         ),
+    )
+
+
+def build_coverage_expansion_assessment_request(
+    *,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+) -> StructuredBackendRequest:
+    node = next(node for node in graph.nodes if node.id == node_id)
+    prompt = "\n\n".join(
+        [
+            f"Theorem title: {graph.theorem_title}",
+            (
+                "Target node (this is the theorem we are trying to cover):\n"
+                f"- id: {node.id}\n"
+                f"- title: {node.title}\n"
+                f"- informal statement: {node.informal_statement}\n"
+                f"- informal proof text: {node.informal_proof_text}\n"
+                f"- formalization rationale: {node.formalization_rationale or '(no rationale recorded)'}"
+            ),
+            (
+                "Verified Lean theorem to compare against the target node:\n"
+                f"- theorem name: {artifact.lean_theorem_name}\n"
+                f"- Lean statement: {artifact.lean_statement}"
+            ),
+            (
+                "Question: is the verified Lean theorem already essentially the same theorem as the target node, "
+                "so that no coverage-expansion follow-up is needed?\n"
+                "Return already_matches_target = true only if the theorem already matches the target node closely "
+                "enough that growing it further would be redundant.\n"
+                "Return already_matches_target = false if the theorem is genuinely narrower than the target node, "
+                "misses a major step, or you are uncertain.\n"
+                "Be conservative: if in doubt, answer false and explain why."
+            ),
+            (
+                "Return a JSON object with keys already_matches_target and reason."
+            ),
+        ]
+    )
+    return StructuredBackendRequest(
+        prompt=prompt,
+        system_prompt=(
+            "You are checking whether a verified Lean theorem is already the full intended theorem for the target "
+            "node. Return only JSON matching the schema."
+        ),
+        json_schema={
+            "type": "object",
+            "properties": {
+                "already_matches_target": {"type": "boolean"},
+                "reason": {"type": "string", "minLength": 1},
+            },
+            "required": ["already_matches_target", "reason"],
+            "additionalProperties": False,
+        },
+        task_name="assess_coverage_expansion",
+    )
+
+
+def request_coverage_expansion_assessment(
+    *,
+    backend: StructuredBackend,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+) -> CoverageExpansionAssessment:
+    response = backend.run_structured(
+        build_coverage_expansion_assessment_request(
+            graph=graph,
+            node_id=node_id,
+            artifact=artifact,
+        )
+    )
+    payload = response.payload
+    return CoverageExpansionAssessment(
+        already_matches_target=bool(payload["already_matches_target"]),
+        reason=str(payload["reason"]).strip(),
     )
 
 

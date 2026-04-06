@@ -10,6 +10,7 @@ from formal_islands.backends.base import (
     StructuredBackendRequest,
     StructuredBackendResponse,
 )
+from formal_islands.backends.aristotle import AristotleBackend
 from formal_islands.backends.claude_code import ClaudeCodeBackend
 from formal_islands.backends.codex_cli import CodexCLIBackend
 from formal_islands.backends.gemini_cli import GeminiCLIBackend
@@ -20,6 +21,7 @@ __all__ = [
     "BackendInvocationError",
     "BackendOutputError",
     "BackendUnavailableError",
+    "AristotleBackend",
     "ClaudeCodeBackend",
     "CodexCLIBackend",
     "GeminiCLIBackend",

@@ -93,7 +93,7 @@ class LeanVerifier:
     """Deterministic local wrapper around `lake env lean`."""
 
     workspace: LeanWorkspace
-    timeout_seconds: float | None = 120.0
+    timeout_seconds: float | None = 240.0
     command_runner: CommandRunner = subprocess.run
 
     @staticmethod

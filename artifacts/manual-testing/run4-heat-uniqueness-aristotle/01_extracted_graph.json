@@ -1,0 +1,37 @@
+{
+  "theorem_title": "Heat equation uniqueness by the energy method",
+  "theorem_statement": "Uniqueness for the heat equation by the energy method.\n\nLet \\(u,v\\) be sufficiently regular solutions of the heat equation on the interval \\((0,L)\\) for times \\(t \\in [0,T]\\):\n\\[\nu_t = u_{xx}, \\qquad v_t = v_{xx},\n\\]\nwith the same initial data\n\\[\nu(x,0)=v(x,0),\n\\]\nand the same homogeneous Dirichlet boundary conditions\n\\[\nu(0,t)=u(L,t)=v(0,t)=v(L,t)=0.\n\\]\nThen \\(u=v\\) on \\([0,L]\\times[0,T]\\).",
+  "root_node_id": "heat_uniqueness",
+  "nodes": [
+    {
+      "id": "energy_dissipation",
+      "title": "Energy is nonincreasing: E'(t) \u2264 0",
+      "informal_statement": "Let \\(w = u - v\\) satisfy \\(w_t = w_{xx}\\) on \\((0,L)\\times(0,T)\\) with \\(w(0,t)=w(L,t)=0\\), and define the energy \\(E(t) = \\tfrac{1}{2}\\int_0^L w(x,t)^2\\,dx\\). Then \\(E'(t) = -\\int_0^L |w_x(x,t)|^2\\,dx \\le 0\\) for all \\(t \\in [0,T]\\).",
+      "informal_proof_text": "Differentiating under the integral sign (justified by the assumed regularity of \\(w\\)):\n\\[\nE'(t) = \\int_0^L w\\, w_t\\,dx.\n\\]\nSubstituting the PDE \\(w_t = w_{xx}\\):\n\\[\nE'(t) = \\int_0^L w\\, w_{xx}\\,dx.\n\\]\nIntegrating by parts in \\(x\\):\n\\[\n\\int_0^L w\\, w_{xx}\\,dx = \\bigl[w\\, w_x\\bigr]_{0}^{L} - \\int_0^L |w_x|^2\\,dx.\n\\]\nThe boundary term vanishes because \\(w(0,t) = w(L,t) = 0\\), giving\n\\[\nE'(t) = -\\int_0^L |w_x(x,t)|^2\\,dx \\le 0.\n\\]",
+      "status": "informal",
+      "display_label": "\\(E'(t) = -\\int_0^L |w_x|^2\\,dx \\le 0\\)",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "heat_uniqueness",
+      "title": "Heat equation uniqueness by the energy method",
+      "informal_statement": "Under the stated hypotheses, \\(u = v\\) on \\([0,L]\\times[0,T]\\).",
+      "informal_proof_text": "Set \\(w = u - v\\). Then \\(w\\) satisfies \\(w_t = w_{xx}\\) on \\((0,L)\\times(0,T)\\) with zero initial data \\(w(x,0)=0\\) and zero Dirichlet boundary conditions \\(w(0,t)=w(L,t)=0\\).\n\nDefine \\(E(t) = \\tfrac{1}{2}\\int_0^L w(x,t)^2\\,dx\\). By the energy dissipation lemma, \\(E'(t) \\le 0\\), so \\(E\\) is nonincreasing. At \\(t=0\\), \\(w(x,0)=0\\) gives \\(E(0) = 0\\). Since \\(E(t) \\ge 0\\) by definition and \\(E\\) is nonincreasing from \\(0\\), we conclude \\(E(t) = 0\\) for all \\(t \\in [0,T]\\).\n\nHence \\(\\int_0^L w(x,t)^2\\,dx = 0\\) for all \\(t\\), so \\(w(x,t) = 0\\) for all \\((x,t)\\), i.e., \\(u = v\\).",
+      "status": "informal",
+      "display_label": "Heat uniqueness (energy method)",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "energy_dissipation",
+      "target_id": "heat_uniqueness",
+      "label": "used by",
+      "explanation": "The nonincreasing property E'(t) \u2264 0, together with E(0)=0 and E(t)\u22650, forces E(t)=0 for all t \u2014 the key step driving the conclusion u=v."
+    }
+  ]
+}

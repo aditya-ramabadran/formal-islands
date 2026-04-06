@@ -1,0 +1,54 @@
+{
+  "theorem_title": "Full Glassey blow-up proof",
+  "theorem_statement": "Glassey blow-up argument for the focusing mass-critical nonlinear Schrodinger equation.\n\nConsider a sufficiently regular solution \\(u(t,x)\\) to the focusing mass-critical NLS on \\(\\mathbb{R}^d\\):\n\n\\[\ni\\partial_t u+\\Delta u=-|u|^{4/d}u.\n\\]\n\nAssume:\n\n- \\(u_0\\in H^1(\\mathbb{R}^d)\\),\n\n- \\(|x|u_0\\in L^2(\\mathbb{R}^d)\\),\n\n- the energy \\(E(u_0)\\) is negative, where\n\n\\[\nE(u)=\\frac12\\int_{\\mathbb{R}^d}|\\nabla u|^2\\,dx\n-\\frac{1}{2+4/d}\\int_{\\mathbb{R}^d}|u|^{2+4/d}\\,dx.\n\\]\n\nThen the maximal forward existence time \\(T\\) is finite and\n\n\\[\n\\|u(t)\\|_{H^1(\\mathbb{R}^d)}\\to\\infty\n\\quad\\text{as }t\\uparrow T.\n\\]",
+  "root_node_id": "root",
+  "nodes": [
+    {
+      "id": "root",
+      "title": "Full Glassey Blow-up Theorem",
+      "informal_statement": "Under the hypotheses \\(u_0\\in H^1\\), \\(|x|u_0\\in L^2\\), and \\(E(u_0)<0\\), the focusing mass-critical NLS solution blows up in finite forward time with \\(\\|u(t)\\|_{H^1}\\to\\infty\\) as \\(t\\uparrow T<\\infty\\).",
+      "informal_proof_text": "Define the variance \\(V(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\ge 0\\). By the virial identity (virial_identity), \\(V''(t)=16E(u_0)<0\\). Hence \\(V\\) is a strictly concave quadratic in \\(t\\) with negative leading coefficient; since \\(V\\ge 0\\), there exists a finite \\(T>0\\) at which \\(V(T)=0\\) and \\(V(t)\\to 0\\) as \\(t\\uparrow T\\). By the weighted \\(L^2\\) inequality (weighted_l2_ineq) applied to \\(f=u(t)\\) together with mass conservation \\(\\|u(t)\\|_{L^2}=M\\), we have \\(M^2\\le\\frac{2}{d}\\sqrt{V(t)}\\,\\|\\nabla u(t)\\|_{L^2}\\). As \\(\\sqrt{V(t)}\\to 0\\) while \\(M>0\\) is fixed, it follows that \\(\\|\\nabla u(t)\\|_{L^2}\\to\\infty\\). Since \\(\\|u(t)\\|_{L^2}=M\\) is conserved, \\(\\|u(t)\\|_{H^1}^2=M^2+\\|\\nabla u(t)\\|_{L^2}^2\\to\\infty\\).",
+      "status": "informal",
+      "display_label": "Glassey Blow-up",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "virial_identity",
+      "title": "Virial Identity",
+      "informal_statement": "For any sufficiently regular solution of the focusing mass-critical NLS, the variance \\(V(t)=\\int_{\\mathbb{R}^d}|x|^2|u(t,x)|^2\\,dx\\) satisfies \\(V''(t)=8\\int|\\nabla u|^2\\,dx-\\frac{16}{2+4/d}\\int|u|^{2+4/d}\\,dx=16E(u(t))\\).",
+      "informal_proof_text": "Differentiating \\(V(t)\\) once using \\(u_t=i\\Delta u+i|u|^{4/d}u\\): the nonlinear term drops out (it is real, multiplied by \\(i\\)), giving \\(V'(t)=4\\operatorname{Im}\\int_{\\mathbb{R}^d}x\\cdot\\nabla u\\,\\overline{u}\\,dx\\). Differentiating again and substituting \\(u_t\\) and \\(\\overline{u_t}\\), decompose into linear and nonlinear contributions. Linear part: a two-step integration by parts yields \\(4\\operatorname{Re}\\int x\\cdot\\nabla\\Delta u\\,\\overline{u}\\,dx-4\\operatorname{Re}\\int x\\cdot\\nabla u\\,\\Delta\\overline{u}\\,dx=8\\int|\\nabla u|^2\\,dx\\). Nonlinear part: writing \\(\\nabla(|u|^{4/d}u)\\,\\overline{u}=\\nabla(\\tfrac{d}{2d+4}|u|^{2+4/d})+|u|^{4/d}\\nabla u\\,\\overline{u}\\), the two nonlinear terms combine to \\(4\\int x\\cdot\\nabla(\\tfrac{d}{2d+4}|u|^{2+4/d})\\,dx\\). Integrating by parts with \\(\\operatorname{div}(x)=d\\) yields \\(-\\tfrac{16}{2+4/d}\\int|u|^{2+4/d}\\,dx\\). Hence \\(V''(t)=8\\int|\\nabla u|^2\\,dx-\\frac{16}{2+4/d}\\int|u|^{2+4/d}\\,dx=16E(u(t))\\). By energy conservation, \\(E(u(t))=E(u_0)\\) for all \\(t\\).",
+      "status": "informal",
+      "display_label": "Virial Identity \\(V''=16E\\)",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "weighted_l2_ineq",
+      "title": "Weighted L2 Inequality",
+      "informal_statement": "For sufficiently regular \\(f:\\mathbb{R}^d\\to\\mathbb{C}\\), \\(\\|f\\|_{L^2(\\mathbb{R}^d)}^2\\le\\frac{2}{d}\\,\\|xf\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}\\).",
+      "informal_proof_text": "Write \\(\\|f\\|_{L^2}^2=\\int|f|^2\\,dx=\\frac{1}{d}\\int(\\operatorname{div}x)|f|^2\\,dx=-\\frac{1}{d}\\int x\\cdot\\nabla(|f|^2)\\,dx=-\\frac{2}{d}\\operatorname{Re}\\int x\\cdot\\nabla f\\,\\overline{f}\\,dx\\). Applying \\(|\\operatorname{Re}z|\\le|z|\\) and Cauchy-Schwarz: \\(\\|f\\|_{L^2}^2\\le\\frac{2}{d}\\left|\\int x\\cdot\\nabla f\\,\\overline{f}\\,dx\\right|\\le\\frac{2}{d}\\,\\|xf\\|_{L^2}\\,\\|\\nabla f\\|_{L^2}\\).",
+      "status": "informal",
+      "display_label": "Weighted \\(L^2\\) Inequality",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "virial_identity",
+      "target_id": "root",
+      "label": "provides \\(V''(t)=16E(u_0)<0\\)",
+      "explanation": "The virial identity gives the key ODE for V; negativity of energy forces V to reach zero in finite time."
+    },
+    {
+      "source_id": "weighted_l2_ineq",
+      "target_id": "root",
+      "label": "forces \\(\\|\\nabla u\\|\\to\\infty\\) as \\(V\\to 0\\)",
+      "explanation": "Applied with f=u(t) and mass conservation, the weighted inequality turns V(t)->0 into gradient blow-up."
+    }
+  ]
+}

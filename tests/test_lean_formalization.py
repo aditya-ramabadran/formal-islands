@@ -12,9 +12,10 @@ from formal_islands.formalization.agentic import (
     build_agentic_formalization_request,
     recover_agentic_artifact_from_scratch_file,
 )
+from formal_islands.formalization.aristotle import build_aristotle_formalization_prompt
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
-from formal_islands.formalization.loop import formalize_candidate_node
-from formal_islands.models import ProofEdge, ProofGraph, ProofNode
+from formal_islands.formalization.loop import _attempt_agentic_coverage_expansion, formalize_candidate_node
+from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode, VerificationResult
 
 
 def extract_agentic_paths(prompt: str) -> tuple[Path, Path]:
@@ -80,6 +81,13 @@ def test_lean_workspace_prepares_agentic_worker_file(tmp_path: Path) -> None:
     assert "agentic formalization worker" in scratch_path.read_text(encoding="utf-8")
 
 
+def test_lean_verifier_defaults_to_240_second_timeout(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+    verifier = LeanVerifier(workspace=workspace)
+
+    assert verifier.timeout_seconds == 240.0
+
+
 def test_build_agentic_formalization_request_includes_concrete_setting_guidance(tmp_path: Path) -> None:
     workspace = create_workspace(tmp_path)
     scratch_path = workspace.prepare_worker_file("n2")
@@ -112,8 +120,40 @@ def test_build_agentic_formalization_request_includes_concrete_setting_guidance(
     assert "helper lemmas" in request.prompt.lower()
     assert "must correspond to that single main theorem" in request.prompt.lower()
     assert "coverage sketch" in request.prompt.lower()
+    assert "local proof neighborhood" in request.prompt.lower()
+    assert "verified supporting lemmas already certified in this run" in request.prompt.lower()
+    assert "context-only sibling ingredients" in request.prompt.lower()
+    assert "provenance note" in request.prompt.lower()
     assert "component of the sketch" in request.prompt.lower()
     assert "formal-islands-search" in request.prompt.lower()
+
+
+def test_build_aristotle_formalization_prompt_marks_ambient_theorem_as_context_only(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+    scratch_path = workspace.prepare_worker_file("n2")
+    graph = build_graph()
+    node = next(node for node in graph.nodes if node.id == "n2")
+
+    prompt = build_aristotle_formalization_prompt(
+        graph=graph,
+        node=node,
+        desired_theorem_name="n2_aristotle",
+        relative_scratch_path=scratch_path.relative_to(workspace.root),
+    )
+
+    assert "ambient theorem statement (context only" in prompt.lower()
+    assert "primary formalization target" in prompt.lower()
+    assert "do not try to prove the ambient theorem statement itself" in prompt.lower()
+    assert "informal statement:" in prompt.lower()
+    assert "informal proof text:" in prompt.lower()
+    assert "local proof neighborhood" in prompt.lower()
+    assert "verified supporting lemmas already certified in this run" in prompt.lower()
+    assert "context-only sibling ingredients" in prompt.lower()
+    assert "provenance note" in prompt.lower()
+    assert "do not convert a difficult intermediate identity" in prompt.lower()
+    assert "do not make a major shrink" in prompt.lower()
+    assert "genuinely nontrivial" in prompt.lower()
+    assert "fail rather than returning a trivial or over-shrunk theorem" in prompt.lower()
 
 
 def test_recover_agentic_artifact_prefers_expected_main_theorem(tmp_path: Path) -> None:
@@ -564,6 +604,65 @@ def test_formalize_candidate_node_promotes_concrete_sublemma_to_child_node(
     assert "verified supporting sublemma extracted from the formalization of parent node 'n2'." in child.informal_proof_text
     assert backend.summary_calls == 1
     assert support_edge.label == "formal_sublemma_for"
+
+
+def test_agentic_coverage_expansion_is_skipped_when_planning_backend_says_theorem_already_matches(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+    scratch_path = workspace.prepare_worker_file("n2")
+    scratch_path.write_text(
+        "theorem sum_nonneg (a b : ℝ) : 0 ≤ a + b := by\n  nlinarith\n",
+        encoding="utf-8",
+    )
+
+    graph = build_graph()
+    artifact = FormalArtifact(
+        lean_theorem_name="sum_nonneg",
+        lean_statement="theorem sum_nonneg (a b : ℝ) : 0 ≤ a + b",
+        lean_code=scratch_path.read_text(encoding="utf-8"),
+        verification=VerificationResult(
+            status="verified",
+            command="lake env lean",
+            exit_code=0,
+            stdout="",
+            stderr="",
+            attempt_count=1,
+            artifact_path=str(scratch_path),
+        ),
+        faithfulness_classification="concrete_sublemma",
+    )
+
+    class NeverCalledAgenticBackend:
+        timeout_seconds = 420.0
+
+        def run_agentic_structured(self, request, *, timeout_seconds=None):
+            raise AssertionError("coverage expansion should have been skipped")
+
+    planning_backend = MockBackend(
+        queued_payloads=[
+            {
+                "already_matches_target": True,
+                "reason": "The verified theorem already states the target inequality on [0, 2].",
+            }
+        ]
+    )
+    verifier = LeanVerifier(workspace=workspace, command_runner=lambda *args, **kwargs: None)
+
+    upgraded = _attempt_agentic_coverage_expansion(
+        backend=NeverCalledAgenticBackend(),
+        planning_backend=planning_backend,
+        verifier=verifier,
+        graph=graph,
+        node_id="n2",
+        artifact=artifact,
+        scratch_path=scratch_path,
+        attempt_history=[],
+    )
+
+    assert upgraded is not None
+    assert upgraded.faithfulness_classification == "full_node"
+    assert planning_backend.requests
 
 
 def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failure(

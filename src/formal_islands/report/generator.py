@@ -16,6 +16,7 @@ ROW_GAP = 52
 COL_GAP = 36
 MARGIN_X = 24
 MARGIN_Y = 20
+PROVENANCE_EDGE_LABELS = {"refined_from"}
 
 
 def export_report_bundle(graph: ProofGraph, obligations: list[ReviewObligation]) -> dict:
@@ -205,6 +206,10 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       stroke-width: 2.8;
       fill: none;
       transition: stroke 140ms ease, stroke-width 140ms ease;
+    }}
+    .graph-edge.edge-provenance {{
+      stroke-dasharray: 7 5;
+      opacity: 0.66;
     }}
     .graph-node-link {{
       cursor: pointer;
@@ -446,6 +451,9 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       </p>
       <p class="graph-caption">
         Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
+      </p>
+      <p class="graph-caption">
+        Dashed gray edges show provenance or refinement links between nearby nodes. They are not proof dependencies unless the edge is part of the main dependency layout.
       </p>
     </section>
     <section>
@@ -722,8 +730,9 @@ def _render_edge(edge: ProofEdge, layout: dict) -> str:
     start_y = y1 + NODE_HEIGHT / 2 - 3
     end_y = y2 - NODE_HEIGHT / 2 + 3
     edge_class = _edge_class(edge.source_id, edge.target_id)
+    provenance_class = " edge-provenance" if edge.label in PROVENANCE_EDGE_LABELS else ""
     return (
-        f'<line class="graph-edge {edge_class}" x1="{x1}" y1="{start_y}" x2="{x2}" y2="{end_y}" '
+        f'<line class="graph-edge {edge_class}{provenance_class}" x1="{x1}" y1="{start_y}" x2="{x2}" y2="{end_y}" '
         f'marker-end="url(#graph-arrow)"></line>'
     )
 
@@ -754,6 +763,8 @@ def _render_node(node: ProofNode, layout: dict) -> str:
 def _compute_graph_layout(graph: ProofGraph) -> dict:
     children_by_source: dict[str, list[str]] = defaultdict(list)
     for edge in graph.edges:
+        if edge.label in PROVENANCE_EDGE_LABELS:
+            continue
         children_by_source[edge.source_id].append(edge.target_id)
 
     depths = {graph.root_node_id: 0}
@@ -958,6 +969,8 @@ def _render_interaction_styles(graph: ProofGraph, obligations: list[ReviewObliga
 def _incident_edge_classes(graph: ProofGraph) -> dict[str, set[str]]:
     mapping: dict[str, set[str]] = defaultdict(set)
     for edge in graph.edges:
+        if edge.label in PROVENANCE_EDGE_LABELS:
+            continue
         edge_class = _edge_class(edge.source_id, edge.target_id)
         mapping[edge.source_id].add(edge_class)
         mapping[edge.target_id].add(edge_class)

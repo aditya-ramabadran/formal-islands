@@ -1,0 +1,71 @@
+{
+  "theorem_title": "Two-point logarithmic Sobolev inequality",
+  "theorem_statement": "Two-point logarithmic Sobolev inequality.\n\nLet \\(\\mu\\) be the uniform probability measure on the two-point space \\(\\{-1,1\\}\\). For a function \\(f : \\{-1,1\\} \\to \\mathbb{R}\\), define the entropy of \\(f^2\\) by\n\\[\n\\operatorname{Ent}_{\\mu}(f^2)\n:=\n\\mathbb{E}_{\\mu}[f^2 \\log f^2]\n-\n\\mathbb{E}_{\\mu}[f^2] \\log \\bigl(\\mathbb{E}_{\\mu}[f^2]\\bigr),\n\\]\nwith the convention \\(0\\log 0 := 0\\). Then\n\\[\n\\operatorname{Ent}_{\\mu}(f^2)\n\\le\n\\frac{1}{2}\\bigl(f(1)-f(-1)\\bigr)^2.\n\\]\nEquivalently, if \\(a=f(1)\\) and \\(b=f(-1)\\), then\n\\[\na^2 \\log(a^2) + b^2 \\log(b^2)\n-\n(a^2+b^2)\\log\\!\\left(\\frac{a^2+b^2}{2}\\right)\n\\le\n(a-b)^2.\n\\]\nThis is the logarithmic Sobolev inequality on the two-point Bernoulli space, and it is the basic finite-state model underlying tensorization arguments toward the Gaussian logarithmic Sobolev inequality.",
+  "root_node_id": "root",
+  "nodes": [
+    {
+      "id": "root",
+      "title": "Two-point logarithmic Sobolev inequality",
+      "informal_statement": "Let \\(a=f(1)\\), \\(b=f(-1)\\). Then \\(\\operatorname{Ent}_{\\mu}(f^2)=\\frac{1}{2}\\bigl(a^2\\log(a^2)+b^2\\log(b^2)-(a^2+b^2)\\log\\tfrac{a^2+b^2}{2}\\bigr)\\le\\frac{(a-b)^2}{2}\\).",
+      "informal_proof_text": "Since \\(\\mu\\) is uniform, \\(\\mathbb{E}_\\mu[f^2]=(a^2+b^2)/2\\) and \\(\\mathbb{E}_\\mu[f^2\\log f^2]=(a^2\\log(a^2)+b^2\\log(b^2))/2\\). Multiplying through by \\(2\\), the entropy inequality is equivalent to the scalar two-variable inequality \\(a^2\\log(a^2)+b^2\\log(b^2)-(a^2+b^2)\\log\\tfrac{a^2+b^2}{2}\\le(a-b)^2\\). This follows from the normalized one-variable inequality (node scalar_ineq) via: (i) sign reduction \u2014 the left side depends only on \\(a^2,b^2\\), so replacing \\((a,b)\\) by \\((|a|,|b|)\\) leaves it unchanged while \\((|a|-|b|)^2\\le(a-b)^2\\); (ii) homogeneity \u2014 both sides scale as \\(c^2\\) under \\((a,b)\\mapsto(ca,cb)\\) (the \\(\\log(c^2)\\) terms cancel on the left), so we may normalize \\(a^2+b^2=2\\); (iii) substituting \\(u=a^2\\in[0,2]\\) and applying the normalized inequality.",
+      "status": "informal",
+      "display_label": "Main theorem",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "scalar_ineq",
+      "title": "Normalized one-variable inequality \\(G(u)\\ge 0\\)",
+      "informal_statement": "Define, for \\(u\\in[0,2]\\), \\[G(u):=\\bigl(\\sqrt{u}-\\sqrt{2-u}\\bigr)^2-u\\log u-(2-u)\\log(2-u)\\] (with \\(0\\log 0:=0\\)). Then \\(G(u)\\ge 0\\) for all \\(u\\in[0,2]\\).",
+      "informal_proof_text": "\\(G\\) is continuous on \\([0,2]\\), smooth on \\((0,2)\\), and symmetric under \\(u\\mapsto 2-u\\). At the center, \\(G(1)=0\\). By the convexity lemma (node G_convex), \\(G''(u)\\ge 0\\) on \\((0,2)\\), so \\(G\\) is convex on \\([0,2]\\). One checks \\(G'(1)=2(1-1)/\\sqrt{1\\cdot 1}-\\log(1/1)=0\\). A convex function whose derivative vanishes at an interior point attains its global minimum there. Hence \\(G(u)\\ge G(1)=0\\) for all \\(u\\in[0,2]\\).",
+      "status": "informal",
+      "display_label": "\\(G(u)\\ge 0\\) on \\([0,2]\\)",
+      "formalization_priority": null,
+      "formalization_rationale": null,
+      "formal_artifact": null
+    },
+    {
+      "id": "G_convex",
+      "title": "Convexity: \\(G''(u)\\ge 0\\) on \\((0,2)\\)",
+      "informal_statement": "For \\(u\\in(0,2)\\), the second derivative of \\(G\\) satisfies \\[G''(u)=\\frac{2\\bigl(1-\\sqrt{u(2-u)}\\bigr)}{\\bigl(u(2-u)\\bigr)^{3/2}}\\ge 0.\\]",
+      "informal_proof_text": "Using \\((\\sqrt{u}-\\sqrt{2-u})^2=2-2\\sqrt{u(2-u)}\\), one computes \\(\\frac{d}{du}(\\sqrt{u}-\\sqrt{2-u})^2=\\frac{2(u-1)}{\\sqrt{u(2-u)}}\\) and \\(\\frac{d}{du}(u\\log u+(2-u)\\log(2-u))=\\log\\frac{u}{2-u}\\), giving \\(G'(u)=\\frac{2(u-1)}{\\sqrt{u(2-u)}}-\\log\\frac{u}{2-u}\\). Differentiating again: \\(\\frac{d}{du}\\frac{2(u-1)}{\\sqrt{u(2-u)}}=\\frac{2}{(u(2-u))^{3/2}}\\) and \\(\\frac{d}{du}\\log\\frac{u}{2-u}=\\frac{1}{u}+\\frac{1}{2-u}=\\frac{2}{u(2-u)}\\). Hence \\(G''(u)=\\frac{2}{(u(2-u))^{3/2}}-\\frac{2}{u(2-u)}=\\frac{2(1-\\sqrt{u(2-u)})}{(u(2-u))^{3/2}}\\). Since \\(u(2-u)=1-(u-1)^2\\le 1\\) for \\(u\\in[0,2]\\), we have \\(\\sqrt{u(2-u)}\\le 1\\), so \\(G''(u)\\ge 0\\).",
+      "status": "candidate_formal",
+      "display_label": "\\(G''(u)\\ge 0\\)",
+      "formalization_priority": 2,
+      "formalization_rationale": "The explicit second derivative computation G''(u) = 2(1 - sqrt(u(2-u)))/(u(2-u))^(3/2) >= 0 is the technically nontrivial step, requiring careful calculus and the bound u(2-u) <= 1, making it a high-value formal verification target.",
+      "formal_artifact": null
+    },
+    {
+      "id": "scalar_ineq_refined_local_claim",
+      "title": "Critical point of \\(G\\) at \\(u=1\\): \\(G'(1)=0\\)",
+      "informal_statement": "The derivative of \\(G\\) at \\(u=1\\) vanishes: \\[G'(1)=\\frac{2(1-1)}{\\sqrt{1\\cdot 1}}-\\log\\frac{1}{1}=0.\\] Equivalently, \\(u=1\\) is a critical point of \\(G\\) on \\((0,2)\\).",
+      "informal_proof_text": "From the computation of \\(G'\\) (carried out in node G_convex), one has \\(G'(u)=\\frac{2(u-1)}{\\sqrt{u(2-u)}}-\\log\\frac{u}{2-u}\\) for \\(u\\in(0,2)\\). Substituting \\(u=1\\): the first term is \\(\\frac{2\\cdot 0}{\\sqrt{1}}=0\\) and the second is \\(\\log 1=0\\). Hence \\(G'(1)=0\\).",
+      "status": "candidate_formal",
+      "display_label": "G_crit",
+      "formalization_priority": 1,
+      "formalization_rationale": "This is a single, concrete and verifiable substitution that is strictly narrower than the full \\(G\\ge 0\\) result. It carries real inferential load because, together with the convexity of \\(G\\) (node G_convex), it is exactly what allows one to conclude \\(u=1\\) is the global minimizer and hence \\(G\\ge G(1)\\). It is neither trivial nor over-abstract.",
+      "formal_artifact": null
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "G_convex",
+      "target_id": "scalar_ineq_refined_local_claim",
+      "label": "depends on",
+      "explanation": "Parent proof uses a more concrete downstream consequence extracted from its local argument."
+    },
+    {
+      "source_id": "scalar_ineq",
+      "target_id": "root",
+      "label": "normalized scalar inequality implies main bound",
+      "explanation": "After sign reduction and homogeneity normalization, the entropy inequality reduces to G(u) >= 0."
+    },
+    {
+      "source_id": "scalar_ineq_refined_local_claim",
+      "target_id": "scalar_ineq",
+      "label": "uses",
+      "explanation": "This refined local claim depends on the broader supporting node it was carved out from."
+    }
+  ]
+}

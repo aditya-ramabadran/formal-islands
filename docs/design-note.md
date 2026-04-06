@@ -223,6 +223,13 @@ Current default is:
 
 - `agentic`
 
+The CLI also now splits backend selection into two independent knobs:
+
+- `--planning-backend` for extraction / planning
+- `--formalization-backend` for formalization
+
+The legacy `--backend` flag still acts as a shared default when the split flags are omitted.
+
 The agentic mode is the important one now.
 
 It uses one one-shot backend worker run that can:
@@ -239,6 +246,31 @@ It is still bounded:
 - no persistent session memory
 - one local file-editing session
 - 7 minute timeout by default for formalization calls
+
+Aristotle is a separate formalization-only backend:
+
+- it uses Harmonic's Python SDK instead of the prompt/JSON worker contract
+- it is only available for formalization, not planning
+- it reads `ARISTOTLE_API_KEY` from the environment
+- it defaults to no timeout unless the caller explicitly overrides one
+- it logs project submission and completion metadata into the same backend log folder
+- it sends a pruned Lean snapshot, not the entire workspace tree
+
+The Aristotle prompt is intentionally plain text rather than a JSON payload of generated Lean code.
+It contains:
+
+- the ambient theorem statement as context only
+- the target node's informal statement and informal proof text
+- a local proof neighborhood split into:
+  - verified supporting lemmas already certified in this run
+  - context-only sibling ingredients in the same proof neighborhood
+
+Verified supporting lemmas are included as text context with their theorem names and Lean statements when available.
+They may be relied on as established facts for proof planning, but they are not auto-imported as generated Lean source files in the Aristotle snapshot.
+
+When `formalize-all-candidates` uses Aristotle, the jobs are submitted in parallel batches. Newly promoted parents from a verified concrete sublemma are picked up by the next batch rather than waiting for a fully sequential pass.
+
+This backend is intended for theorem-statement formalization runs where the host pipeline already knows the target node and wants project-level Lean proof completion rather than a chat-style JSON response.
 
 ### 5.3 Faithfulness classification
 
@@ -286,6 +318,7 @@ Outputs:
 
 - `04_report_bundle.json`
 - `04_report.html`
+- `_progress.log`
 
 The report now supports:
 
@@ -295,6 +328,7 @@ The report now supports:
 - inline code rendering in math-ish text
 - automatic dark mode
 - better honesty for certified local core nodes
+- dashed gray provenance / refinement edges that are shown as provenance, not proof dependencies
 
 ## 6. CLI Entry Point
 
@@ -321,7 +355,7 @@ Current practical default flow for a benchmark is usually:
 Important current behavior:
 
 - `formalize-one` formalizes one chosen candidate node
-- `formalize-all-candidates` runs candidates sequentially through the updated graph
+- `formalize-all-candidates` runs candidates through the updated graph, and with Aristotle it submits each batch in parallel before merging the results back into the shared graph
 - `run-benchmark` is the one-command smoke path and, when `--node-id auto`, it now keeps walking the graph in priority order instead of stopping after the first success
 - `--formalization-timeout-seconds` controls the agentic backend timeout for the formalization step
 
@@ -472,6 +506,37 @@ The important policy is:
 - the formalization prompts mention the helper, but the host pipeline does not precompute and inject search bundles by default
 - if more search is truly needed, keep it to at most 2 targeted helper queries
 - prefer one exact Loogle-shaped query and one LeanSearch natural-language query
+
+The formalization prompts also carry an explicit proof-neighborhood split:
+
+- verified supporting lemmas may be relied on as established facts
+- context-only sibling ingredients are only orientation and should not be assumed
+- provenance edges in the graph are not proof dependencies by default
+
+Aristotle-specific upload pruning:
+
+- include the Lean project skeleton and the active scratch file
+- exclude `.lake` build artifacts
+- exclude the `FormalIslands/Generated` backlog except for the active scratch file
+- exclude `test_*.lean` files at the workspace root
+
+## 8.2 Split planning and formalization backends
+
+The runtime now lets planning and formalization use different backends.
+
+That matters because:
+
+- planning wants extraction-quality graph and candidate ranking
+- formalization wants a proof worker optimized for Lean file generation and repair
+
+The new CLI shape is:
+
+- `--planning-backend` for planning / graph extraction
+- `--formalization-backend` for formalization
+
+This makes combinations like `claude` for planning and `aristotle` for formalization possible without changing the planning stage.
+
+The planning backend is also still used when a verified result is only a concrete supporting sublemma, so the prose summary for that certified local core can be written by the planning model while Aristotle focuses on Lean proof production.
 
 ## 9. Evolution of the Architecture
 
@@ -1029,7 +1094,7 @@ It is weaker when:
 
 ### 15.4 Backend parity is newer for Claude
 
-Claude backend implementation is now largely ready, and Gemini backend support is also in place. The remaining question is not backend availability, but how well each worker commits to a good theorem shape once it has enough local context and, if needed, a couple of tightly targeted search results from the helper.
+Claude backend implementation is now largely ready, Gemini backend support is also in place, and Aristotle is available as an optional formalization-only backend. The remaining question is not backend availability, but how well each worker commits to a good theorem shape once it has enough local context and, if needed, a couple of tightly targeted search results from the helper.
 
 ## 16. Practical Commands for Future Sessions
 
@@ -1046,6 +1111,15 @@ For Claude:
 ```bash
 ./.venv/bin/formal-islands-smoke run-benchmark \
   --backend claude \
+  --input /Users/adihaya/GitHub/formal-islands/examples/manual-testing/run11_two_point_log_sobolev.json
+```
+
+For split planning/formalization, including Aristotle:
+
+```bash
+./.venv/bin/formal-islands-smoke run-benchmark \
+  --planning-backend claude \
+  --formalization-backend aristotle \
   --input /Users/adihaya/GitHub/formal-islands/examples/manual-testing/run11_two_point_log_sobolev.json
 ```
 
@@ -1070,7 +1144,7 @@ For Claude:
   --formalization-mode agentic
 ```
 
-### Formalize all candidates sequentially
+### Formalize all candidates
 
 ```bash
 ./.venv/bin/formal-islands-smoke formalize-all-candidates \

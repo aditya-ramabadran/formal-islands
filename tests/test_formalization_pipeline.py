@@ -5,11 +5,13 @@ from formal_islands.backends import MockBackend
 from formal_islands.formalization.pipeline import (
     FaithfulnessClassification,
     FormalizationFaithfulnessError,
+    build_coverage_expansion_assessment_request,
     _normalize_concrete_sublemma_summary_text,
     assess_formalization_faithfulness,
     build_concrete_sublemma_summary_request,
     build_formalization_request,
     request_concrete_sublemma_summary,
+    request_coverage_expansion_assessment,
     request_node_formalization,
 )
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode
@@ -81,6 +83,10 @@ def test_build_formalization_request_includes_local_context() -> None:
     assert "Immediate parent summary" in request.prompt
     assert "Coverage sketch" in request.prompt
     assert "Arithmetic lemma" in request.prompt
+    assert "local proof neighborhood" in request.prompt.lower()
+    assert "verified supporting lemmas already certified in this run" in request.prompt.lower()
+    assert "context-only sibling ingredients" in request.prompt.lower()
+    assert "provenance note" in request.prompt.lower()
     assert "arbitrary index types" in request.prompt.lower()
     assert "easy side consequence" in request.prompt.lower()
     assert "do not default to `import mathlib`" in request.prompt.lower()
@@ -150,6 +156,53 @@ def test_build_concrete_sublemma_summary_request_mentions_parent_and_lean_theore
     assert "narrower than the parent node" in request.prompt.lower()
     assert "use latex math delimiters" in request.prompt.lower()
     assert "do not put latex commands" in request.prompt.lower()
+
+
+def test_build_coverage_expansion_assessment_request_mentions_target_and_verified_theorem() -> None:
+    graph = build_graph()
+    artifact = FormalArtifact(
+        lean_theorem_name="sum_nonneg",
+        lean_statement="theorem sum_nonneg (a b : ℝ) : 0 <= a + b",
+        lean_code="theorem sum_nonneg (a b : ℝ) : 0 <= a + b := by\n  nlinarith",
+    )
+
+    request = build_coverage_expansion_assessment_request(
+        graph=graph,
+        node_id="n2",
+        artifact=artifact,
+    )
+
+    assert request.task_name == "assess_coverage_expansion"
+    assert "already_matches_target" in request.prompt
+    assert "verified lean theorem to compare against the target node" in request.prompt.lower()
+    assert "return already_matches_target = true only if" in request.prompt.lower()
+
+
+def test_request_coverage_expansion_assessment_returns_boolean_gate() -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "already_matches_target": True,
+                "reason": "The theorem already states the target inequality on the same domain.",
+            }
+        ]
+    )
+    graph = build_graph()
+    artifact = FormalArtifact(
+        lean_theorem_name="sum_nonneg",
+        lean_statement="theorem sum_nonneg (a b : ℝ) : 0 <= a + b",
+        lean_code="theorem sum_nonneg (a b : ℝ) : 0 <= a + b := by\n  nlinarith",
+    )
+
+    assessment = request_coverage_expansion_assessment(
+        backend=backend,
+        graph=graph,
+        node_id="n2",
+        artifact=artifact,
+    )
+
+    assert assessment.already_matches_target is True
+    assert "target inequality" in assessment.reason.lower()
 
 
 def test_request_concrete_sublemma_summary_returns_generated_text() -> None:

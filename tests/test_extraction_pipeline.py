@@ -582,6 +582,7 @@ def test_refine_candidate_nodes_adds_generic_local_consequence() -> None:
     assert refined_node.title == "Local estimate"
     assert refined_node.display_label == "Refined estimate"
     assert any(edge.source_id == "n0" and edge.target_id == refined_node.id for edge in refined.edges)
+    assert any(edge.label == "refined_from" and edge.source_id == "n0" and edge.target_id == refined_node.id for edge in refined.edges)
     assert any(edge.source_id == refined_node.id and edge.target_id == "n2" for edge in refined.edges)
     original_candidate = next(node for node in refined.nodes if node.id == "n2")
     assert original_candidate.status == "informal"

@@ -1,0 +1,47 @@
+{
+  "theorem_title": "Weighted L2 inequality",
+  "theorem_statement": "Weighted \\(L^2\\) inequality on \\(\\mathbb{R}^d\\).\n\nLet \\(d \\ge 1\\) and let \\(f : \\mathbb{R}^d \\to \\mathbb{C}\\) be sufficiently regular and sufficiently decaying at infinity so that the integrations by parts below are justified, with \\(f \\in H^1(\\mathbb{R}^d)\\) and \\(x f \\in L^2(\\mathbb{R}^d)\\). Then\n\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2 \\le \\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
+  "root_node_id": "n1",
+  "nodes": [
+    {
+      "id": "n1",
+      "title": "Weighted \\(L^2\\) inequality on \\(\\mathbb{R}^d\\)",
+      "informal_statement": "Under the stated regularity and decay assumptions, one has\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2 \\le \\frac{2}{d}\\,\\|x f\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]",
+      "informal_proof_text": "Start from\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2=\\int_{\\mathbb{R}^d}|f(x)|^2\\,dx=\\frac{1}{d}\\int_{\\mathbb{R}^d}(\\operatorname{div}x)|f(x)|^2\\,dx,\n\\]\nusing \\(\\operatorname{div}(x)=d\\). Integrating by parts and discarding the boundary term by the decay assumptions gives\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2=-\\frac{1}{d}\\int_{\\mathbb{R}^d}x\\cdot \\nabla(|f(x)|^2)\\,dx.\n\\]\nNow\n\\[\n\\nabla(|f|^2)=\\nabla(f\\overline f)=(\\nabla f)\\overline f+f\\nabla\\overline f,\n\\]\nso\n\\[\nx\\cdot \\nabla(|f|^2)=2\\,\\operatorname{Re}(x\\cdot \\nabla f\\,\\overline f).\n\\]\nHence\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2=-\\frac{2}{d}\\operatorname{Re}\\int_{\\mathbb{R}^d}x\\cdot \\nabla f(x)\\,\\overline{f(x)}\\,dx.\n\\]\nTaking absolute values and using \\(|\\operatorname{Re}z|\\le |z|\\),\n\\[\n\\|f\\|_{L^2(\\mathbb{R}^d)}^2\\le \\frac{2}{d}\\int_{\\mathbb{R}^d}|x|\\,|\\nabla f(x)|\\,|f(x)|\\,dx.\n\\]\nApply Cauchy--Schwarz to \\(|x||f(x)|\\) and \\(|\\nabla f(x)|\\):\n\\[\n\\int_{\\mathbb{R}^d}|x|\\,|\\nabla f(x)|\\,|f(x)|\\,dx\n\\le\n\\left(\\int_{\\mathbb{R}^d}|x|^2|f(x)|^2\\,dx\\right)^{1/2}\n\\left(\\int_{\\mathbb{R}^d}|\\nabla f(x)|^2\\,dx\\right)^{1/2}\n=\\|xf\\|_{L^2(\\mathbb{R}^d)}\\,\\|\\nabla f\\|_{L^2(\\mathbb{R}^d)}.\n\\]\nCombining the two displays yields the claim.",
+      "status": "formal_failed",
+      "display_label": "Weighted \\(L^2\\) inequality",
+      "formalization_priority": 1,
+      "formalization_rationale": "Only substantive node in the graph. It is a self-contained inequality with a short proof using divergence of the identity vector field, integration by parts, the product rule for |f|^2, and Cauchy-Schwarz, so it is the clearest local first formalization target.",
+      "formal_artifact": {
+        "lean_theorem_name": "n1_backend_failure",
+        "lean_statement": "-- backend did not return a Lean statement",
+        "lean_code": "-- backend did not return Lean code",
+        "faithfulness_classification": "full_node",
+        "faithfulness_notes": null,
+        "verification": {
+          "status": "failed",
+          "command": "backend_request",
+          "exit_code": null,
+          "stdout": "",
+          "stderr": "Aristotle project timed out after 180.0 seconds.",
+          "elapsed_seconds": 0.0,
+          "attempt_count": 1,
+          "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_worker_20260405-212946_4eb3f9b0.lean"
+        },
+        "attempt_history": [
+          {
+            "status": "failed",
+            "command": "backend_request",
+            "exit_code": null,
+            "stdout": "",
+            "stderr": "Aristotle project timed out after 180.0 seconds.",
+            "elapsed_seconds": 0.0,
+            "attempt_count": 1,
+            "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_worker_20260405-212946_4eb3f9b0.lean"
+          }
+        ]
+      }
+    }
+  ],
+  "edges": []
+}
