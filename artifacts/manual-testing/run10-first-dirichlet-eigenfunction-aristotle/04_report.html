@@ -152,7 +152,7 @@
       overflow-y: visible;
     }
     .graph-frame {
-      width: min(100%, 460px);
+      width: min(100%, 720px);
       margin: 0 auto;
     }
     .graph-widget {
@@ -514,8 +514,7 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-attainment:checked) .edge-attainment-root,
-.report-root:has(#obligation-check-informal-proof-attainment:checked) .edge-attainment__formal_core-attainment {
+                .report-root:has(#obligation-check-informal-proof-attainment:checked) .edge-attainment-root {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
@@ -552,8 +551,7 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-weak_eq:checked) .edge-weak_eq-root,
-.report-root:has(#obligation-check-informal-proof-weak_eq:checked) .edge-weak_eq_refined_local_claim-weak_eq {
+                .report-root:has(#obligation-check-informal-proof-weak_eq:checked) .edge-weak_eq-root {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
@@ -590,12 +588,6 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-weak_eq_refined_local_claim:checked) .edge-weak_eq_refined_local_claim-weak_eq {
-                  stroke: var(--checked);
-                  stroke-width: 4.5;
-                }
-                
-
             .report-root:has(.obligation-informal-proof-weak_eq_refined_local_claim:hover) .obligation-informal-proof-weak_eq_refined_local_claim {
               border-color: var(--highlight);
               background: var(--preview-soft);
@@ -624,12 +616,6 @@
                   stroke-width: 2.9;
                   background: var(--checked-soft);
                   fill: var(--checked-soft);
-                }
-                
-
-                .report-root:has(#obligation-check-semantic-match-attainment__formal_core:checked) .edge-attainment__formal_core-attainment {
-                  stroke: var(--checked);
-                  stroke-width: 4.5;
                 }
                 
 
@@ -668,8 +654,7 @@
                 }
                 
 
-                .report-root:has(#obligation-check-boundary-attainment__formal_core-attainment:checked) .edge-attainment-root,
-.report-root:has(#obligation-check-boundary-attainment__formal_core-attainment:checked) .edge-attainment__formal_core-attainment {
+                .report-root:has(#obligation-check-boundary-attainment__formal_core-attainment:checked) .edge-attainment-root {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
@@ -736,17 +721,17 @@ Moreover, \(u_1\) satisfies the weak eigenvalue equation
       <div class="graph-shell">
         
     <div class="graph-frame">
-      <svg class="graph-widget" viewBox="0 0 420 578" width="420" height="578" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+      <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
         <defs>
           <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
             <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
           </marker>
         </defs>
-        <g><line class="graph-edge edge-attainment-root" x1="210.0" y1="201.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-weak_eq-root" x1="210.0" y1="319.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-attainment-weak_eq_refined_local_claim edge-provenance" x1="210.0" y1="201.0" x2="210.0" y2="377.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-weak_eq_refined_local_claim-weak_eq" x1="210.0" y1="437.0" x2="210.0" y2="259.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-attainment__formal_core-attainment" x1="210.0" y1="555.0" x2="210.0" y2="141.0" marker-end="url(#graph-arrow)"></line></g>
+        <g><path class="graph-edge edge-attainment-root" d="M 126.0 201.0 C 126.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-weak_eq-root" d="M 294.0 201.0 C 294.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-attainment-weak_eq_refined_local_claim edge-provenance" d="M 126.0 201.0 C 126.0 224.2, 294.0 235.8, 294.0 259.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-weak_eq_refined_local_claim-weak_eq edge-provenance" d="M 294.0 319.0 C 294.0 247.8, 294.0 212.2, 294.0 141.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-attainment__formal_core-attainment edge-provenance" d="M 126.0 319.0 C 126.0 247.8, 126.0 212.2, 126.0 141.0" marker-end="url(#graph-arrow)"></path></g>
         <g>
     <a class="graph-node-link node-root status-informal" href="#node-root">
       <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
@@ -758,36 +743,36 @@ Moreover, \(u_1\) satisfies the weak eigenvalue equation
     
 
     <a class="graph-node-link node-attainment status-informal" href="#node-attainment">
-      <rect class="graph-node-box status-informal" x="144.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-informal" cx="262.0" cy="150" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="160">Lemma:</tspan>
-<tspan x="210.0" y="172">Attainment (wea…</tspan></text>
-      <text class="graph-node-id" x="210.0" y="186">attainment</text>
+      <rect class="graph-node-box status-informal" x="60.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="178.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="126.0" y="160">Lemma:</tspan>
+<tspan x="126.0" y="172">Attainment (wea…</tspan></text>
+      <text class="graph-node-id" x="126.0" y="186">attainment</text>
     </a>
     
 
     <a class="graph-node-link node-weak_eq status-informal" href="#node-weak_eq">
-      <rect class="graph-node-box status-informal" x="144.0" y="256" rx="14" ry="14" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-informal" cx="262.0" cy="268" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="278">Lemma:</tspan>
-<tspan x="210.0" y="290">Euler–Lagrange…</tspan></text>
-      <text class="graph-node-id" x="210.0" y="304">weak_eq</text>
+      <rect class="graph-node-box status-informal" x="228.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="346.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="294.0" y="160">Lemma:</tspan>
+<tspan x="294.0" y="172">Euler–Lagrange…</tspan></text>
+      <text class="graph-node-id" x="294.0" y="186">weak_eq</text>
     </a>
     
 
     <a class="graph-node-link node-weak_eq_refined_local_claim status-formal-failed" href="#node-weak_eq_refined_local_claim">
-      <rect class="graph-node-box status-formal-failed" x="144.0" y="374" rx="10" ry="10" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="386" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="401">multiplier_identification</tspan></text>
-      <text class="graph-node-id" x="210.0" y="422">weak_eq_refined_local_claim</text>
+      <rect class="graph-node-box status-formal-failed" x="228.0" y="256" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="346.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="294.0" y="283">multiplier_identification</tspan></text>
+      <text class="graph-node-id" x="294.0" y="304">weak_eq_refined_local_claim</text>
     </a>
     
 
     <a class="graph-node-link node-attainment__formal_core status-formal-verified" href="#node-attainment__formal_core">
-      <rect class="graph-node-box status-formal-verified" x="144.0" y="492" rx="28" ry="28" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="504" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="519">Certified core</tspan></text>
-      <text class="graph-node-id" x="210.0" y="540">attainment__formal_core</text>
+      <rect class="graph-node-box status-formal-verified" x="60.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="178.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="126.0" y="283">Certified core</tspan></text>
+      <text class="graph-node-id" x="126.0" y="304">attainment__formal_core</text>
     </a>
     </g>
       </svg>
@@ -900,6 +885,7 @@ Moreover, \(u_1\) satisfies the weak eigenvalue equation
     <article class="node-card node-root" id="node-root" data-node-id="root">
       <h3>First Dirichlet eigenfunction via the Rayleigh quotient</h3>
       <p class="meta">Node id: root | Status: informal</p>
+      <p class="meta">Dependency nodes: <a class="node-jump" href="#node-attainment">attainment</a>, <a class="node-jump" href="#node-weak_eq">weak_eq</a></p>
       <p class="meta">Display label: Theorem: First Dirichlet Eigenfunction</p>
       
       <p><strong>Informal statement:</strong></p>
@@ -913,6 +899,7 @@ Moreover, \(u_1\) satisfies the weak eigenvalue equation
     <article class="node-card node-attainment" id="node-attainment" data-node-id="attainment">
       <h3>Attainment of the Rayleigh-quotient infimum</h3>
       <p class="meta">Node id: attainment | Status: informal</p>
+      <p class="meta">Parent nodes: <a class="node-jump" href="#node-root">root</a>, <a class="node-jump" href="#node-weak_eq_refined_local_claim">weak_eq_refined_local_claim</a> &nbsp;|&nbsp; Dependency nodes: <a class="node-jump" href="#node-attainment__formal_core">attainment__formal_core</a></p>
       <p class="meta">Display label: Lemma: Attainment (weak compactness + compact embedding + wlsc)</p>
       
       <p><strong>Informal statement:</strong></p>
@@ -926,6 +913,7 @@ Moreover, \(u_1\) satisfies the weak eigenvalue equation
     <article class="node-card node-weak_eq" id="node-weak_eq" data-node-id="weak_eq">
       <h3>Minimizer satisfies weak eigenvalue equation with multiplier $\lambda_1$</h3>
       <p class="meta">Node id: weak_eq | Status: informal</p>
+      <p class="meta">Parent nodes: <a class="node-jump" href="#node-root">root</a> &nbsp;|&nbsp; Dependency nodes: <a class="node-jump" href="#node-weak_eq_refined_local_claim">weak_eq_refined_local_claim</a></p>
       <p class="meta">Display label: Lemma: Euler–Lagrange equation (multiplier = $\lambda_1$)</p>
       
       <p><strong>Informal statement:</strong></p>
@@ -939,6 +927,7 @@ Moreover, \(u_1\) satisfies the weak eigenvalue equation
     <article class="node-card node-weak_eq_refined_local_claim" id="node-weak_eq_refined_local_claim" data-node-id="weak_eq_refined_local_claim">
       <h3>Identification of the Lagrange multiplier as λ₁</h3>
       <p class="meta">Node id: weak_eq_refined_local_claim | Status: formal_failed</p>
+      <p class="meta">Parent nodes: <a class="node-jump" href="#node-weak_eq">weak_eq</a> &nbsp;|&nbsp; Dependency nodes: <a class="node-jump" href="#node-attainment">attainment</a></p>
       <p class="meta">Display label: multiplier_identification</p>
       <p class="meta">Formalization priority: 1. Rationale: This is the key algebraic pinning step: once the Lagrange multiplier existence is granted, the exact value of the multiplier is determined by a single substitution and two scalar equalities. It is a self-contained, finitely checkable identity with no abstract machinery remaining, making it an ideal formal island.</p>
       <p><strong>Informal statement:</strong></p>
@@ -1041,6 +1030,7 @@ stderr:
     <article class="node-card node-attainment__formal_core" id="node-attainment__formal_core" data-node-id="attainment__formal_core">
       <h3>Certified local core for Attainment of the Rayleigh-quotient infimum</h3>
       <p class="meta">Node id: attainment__formal_core | Status: formal_verified</p>
+      <p class="meta">Parent nodes: <a class="node-jump" href="#node-attainment">attainment</a></p>
       <p class="meta">Display label: Certified core</p>
       
       <p><strong>Informal statement:</strong></p>

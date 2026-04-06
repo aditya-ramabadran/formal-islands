@@ -152,7 +152,7 @@
       overflow-y: visible;
     }
     .graph-frame {
-      width: min(100%, 460px);
+      width: min(100%, 720px);
       margin: 0 auto;
     }
     .graph-widget {
@@ -551,8 +551,7 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-bernoulli_ineq:checked) .edge-bernoulli_ineq-root,
-.report-root:has(#obligation-check-informal-proof-bernoulli_ineq:checked) .edge-bernoulli_ineq_refined_local_claim-bernoulli_ineq {
+                .report-root:has(#obligation-check-informal-proof-bernoulli_ineq:checked) .edge-bernoulli_ineq-root {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
@@ -620,12 +619,6 @@
                 }
                 
 
-                .report-root:has(#obligation-check-semantic-match-bernoulli_ineq_refined_local_claim:checked) .edge-bernoulli_ineq_refined_local_claim-bernoulli_ineq {
-                  stroke: var(--checked);
-                  stroke-width: 4.5;
-                }
-                
-
             .report-root:has(.obligation-semantic-match-bernoulli_ineq_refined_local_claim:hover) .obligation-semantic-match-bernoulli_ineq_refined_local_claim {
               border-color: var(--highlight);
               background: var(--preview-soft);
@@ -658,12 +651,6 @@
                   stroke-width: 2.9;
                   background: var(--checked-soft);
                   fill: var(--checked-soft);
-                }
-                
-
-                .report-root:has(#obligation-check-boundary-fq_convex-bernoulli_ineq_refined_local_claim:checked) .edge-bernoulli_ineq_refined_local_claim-bernoulli_ineq {
-                  stroke: var(--checked);
-                  stroke-width: 4.5;
                 }
                 
 
@@ -730,16 +717,16 @@ which appears after collapsing the general measures to a two-point partition.</d
       <div class="graph-shell">
         
     <div class="graph-frame">
-      <svg class="graph-widget" viewBox="0 0 420 578" width="420" height="578" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+      <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
         <defs>
           <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
             <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
           </marker>
         </defs>
-        <g><line class="graph-edge edge-dpi-root" x1="210.0" y1="201.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-bernoulli_ineq-root" x1="210.0" y1="319.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-fq_convex-bernoulli_ineq_refined_local_claim edge-provenance" x1="210.0" y1="437.0" x2="210.0" y2="495.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-bernoulli_ineq_refined_local_claim-bernoulli_ineq" x1="210.0" y1="555.0" x2="210.0" y2="259.0" marker-end="url(#graph-arrow)"></line></g>
+        <g><path class="graph-edge edge-dpi-root" d="M 294.0 201.0 C 294.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-bernoulli_ineq-root" d="M 126.0 201.0 C 126.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-fq_convex-bernoulli_ineq_refined_local_claim edge-provenance" d="M 294.0 319.0 C 294.0 295.0, 126.0 283.0, 126.0 259.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-bernoulli_ineq_refined_local_claim-bernoulli_ineq edge-provenance" d="M 126.0 319.0 C 126.0 247.8, 126.0 212.2, 126.0 141.0" marker-end="url(#graph-arrow)"></path></g>
         <g>
     <a class="graph-node-link node-root status-informal" href="#node-root">
       <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
@@ -751,37 +738,37 @@ which appears after collapsing the general measures to a two-point partition.</d
     
 
     <a class="graph-node-link node-dpi status-informal" href="#node-dpi">
-      <rect class="graph-node-box status-informal" x="144.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-informal" cx="262.0" cy="150" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="160">DPI:</tspan>
-<tspan x="210.0" y="172">$D_{\mathrm{KL}…</tspan></text>
-      <text class="graph-node-id" x="210.0" y="186">dpi</text>
+      <rect class="graph-node-box status-informal" x="228.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="346.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="294.0" y="160">DPI:</tspan>
+<tspan x="294.0" y="172">$D_{\mathrm{KL}…</tspan></text>
+      <text class="graph-node-id" x="294.0" y="186">dpi</text>
     </a>
     
 
     <a class="graph-node-link node-bernoulli_ineq status-formal-failed" href="#node-bernoulli_ineq">
-      <rect class="graph-node-box status-formal-failed" x="144.0" y="256" rx="10" ry="10" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="268" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="278">Bernoulli:</tspan>
-<tspan x="210.0" y="290">$p\log\tfrac{p}…</tspan></text>
-      <text class="graph-node-id" x="210.0" y="304">bernoulli_ineq</text>
+      <rect class="graph-node-box status-formal-failed" x="60.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="178.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="126.0" y="160">Bernoulli:</tspan>
+<tspan x="126.0" y="172">$p\log\tfrac{p}…</tspan></text>
+      <text class="graph-node-id" x="126.0" y="186">bernoulli_ineq</text>
     </a>
     
 
     <a class="graph-node-link node-fq_convex status-formal-failed" href="#node-fq_convex">
-      <rect class="graph-node-box status-formal-failed" x="144.0" y="374" rx="10" ry="10" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="386" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="396">$F_q&#x27;&#x27;(p)=\tfrac{1}{p(1-p)}-4\ge</tspan>
-<tspan x="210.0" y="408">0$</tspan></text>
-      <text class="graph-node-id" x="210.0" y="422">fq_convex</text>
+      <rect class="graph-node-box status-formal-failed" x="228.0" y="256" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="346.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="294.0" y="278">$F_q&#x27;&#x27;(p)=\tfrac{1}{p(1-p)}-4\ge</tspan>
+<tspan x="294.0" y="290">0$</tspan></text>
+      <text class="graph-node-id" x="294.0" y="304">fq_convex</text>
     </a>
     
 
     <a class="graph-node-link node-bernoulli_ineq_refined_local_claim status-formal-verified" href="#node-bernoulli_ineq_refined_local_claim">
-      <rect class="graph-node-box status-formal-verified" x="144.0" y="492" rx="28" ry="28" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="504" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="519">convex_nonneg_from_critical</tspan></text>
-      <text class="graph-node-id" x="210.0" y="540">bernoulli_ineq_refined_local_claim</text>
+      <rect class="graph-node-box status-formal-verified" x="60.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="178.0" cy="268" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="126.0" y="283">convex_nonneg_from_critical</tspan></text>
+      <text class="graph-node-id" x="126.0" y="304">bernoulli_ineq_refined_local_claim</text>
     </a>
     </g>
       </svg>
@@ -904,6 +891,7 @@ which appears after collapsing the general measures to a two-point partition.</d
     <article class="node-card node-root" id="node-root" data-node-id="root">
       <h3>Pinsker&#x27;s inequality</h3>
       <p class="meta">Node id: root | Status: informal</p>
+      <p class="meta">Dependency nodes: <a class="node-jump" href="#node-dpi">dpi</a>, <a class="node-jump" href="#node-bernoulli_ineq">bernoulli_ineq</a></p>
       <p class="meta">Display label: Pinsker: $D_{\mathrm{KL}}(P\|Q)\ge 2\|P-Q\|_{\mathrm{TV}}^2$</p>
       
       <p><strong>Informal statement:</strong></p>
@@ -917,6 +905,7 @@ which appears after collapsing the general measures to a two-point partition.</d
     <article class="node-card node-dpi" id="node-dpi" data-node-id="dpi">
       <h3>Data-processing inequality for KL divergence</h3>
       <p class="meta">Node id: dpi | Status: informal</p>
+      <p class="meta">Parent nodes: <a class="node-jump" href="#node-root">root</a></p>
       <p class="meta">Display label: DPI: $D_{\mathrm{KL}}(P\|Q)\ge D_{\mathrm{KL}}(T_\#P\|T_\#Q)$</p>
       
       <p><strong>Informal statement:</strong></p>
@@ -930,6 +919,7 @@ which appears after collapsing the general measures to a two-point partition.</d
     <article class="node-card node-bernoulli_ineq" id="node-bernoulli_ineq" data-node-id="bernoulli_ineq">
       <h3>Bernoulli/binary KL scalar inequality</h3>
       <p class="meta">Node id: bernoulli_ineq | Status: formal_failed</p>
+      <p class="meta">Parent nodes: <a class="node-jump" href="#node-root">root</a> &nbsp;|&nbsp; Dependency nodes: <a class="node-jump" href="#node-bernoulli_ineq_refined_local_claim">bernoulli_ineq_refined_local_claim</a></p>
       <p class="meta">Display label: Bernoulli: $p\log\tfrac{p}{q}+(1-p)\log\tfrac{1-p}{1-q}\ge 2(p-q)^2$</p>
       <p class="meta">Formalization priority: 3. Rationale: Promoted after verified child &#x27;bernoulli_ineq_refined_local_claim&#x27; certified a local core; attempting broader parent coverage.</p>
       <p><strong>Informal statement:</strong></p>
@@ -1089,6 +1079,7 @@ stderr:
     <article class="node-card node-fq_convex" id="node-fq_convex" data-node-id="fq_convex">
       <h3>Convexity of $F_q$ via second-derivative bound</h3>
       <p class="meta">Node id: fq_convex | Status: formal_failed</p>
+      <p class="meta">Parent nodes: <a class="node-jump" href="#node-bernoulli_ineq_refined_local_claim">bernoulli_ineq_refined_local_claim</a></p>
       <p class="meta">Display label: $F_q&#x27;&#x27;(p)=\tfrac{1}{p(1-p)}-4\ge 0$</p>
       <p class="meta">Formalization priority: 2. Rationale: The second-derivative bound F_q&#x27;&#x27;(p) = 1/(p(1-p)) - 4 &gt;= 0 is a fully explicit, term-by-term calculus computation and a natural target for nlinarith or norm_num in Lean. Formalizing this node essentially proves bernoulli_ineq.</p>
       <p><strong>Informal statement:</strong></p>
@@ -1237,6 +1228,7 @@ stderr:
     <article class="node-card node-bernoulli_ineq_refined_local_claim" id="node-bernoulli_ineq_refined_local_claim" data-node-id="bernoulli_ineq_refined_local_claim">
       <h3>Convex function on (0,1) with a zero critical point is nonnegative</h3>
       <p class="meta">Node id: bernoulli_ineq_refined_local_claim | Status: formal_verified</p>
+      <p class="meta">Parent nodes: <a class="node-jump" href="#node-bernoulli_ineq">bernoulli_ineq</a> &nbsp;|&nbsp; Dependency nodes: <a class="node-jump" href="#node-fq_convex">fq_convex</a></p>
       <p class="meta">Display label: convex_nonneg_from_critical</p>
       <p class="meta">Formalization priority: 1. Rationale: This is the concluding inferential step that transforms the convexity lemma (parent node) and the critical-point calculation (first proposal) into the desired inequality. It is strictly narrower than the full Bernoulli inequality claim because it factors out the analytic content into a clean, reusable lemma about convex functions, making the formal proof obligation precise and minimal.</p>
       <p><strong>Informal statement:</strong></p>

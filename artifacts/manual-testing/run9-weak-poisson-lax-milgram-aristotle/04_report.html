@@ -152,7 +152,7 @@
       overflow-y: visible;
     }
     .graph-frame {
-      width: min(100%, 460px);
+      width: min(100%, 720px);
       margin: 0 auto;
     }
     .graph-widget {
@@ -575,30 +575,30 @@ Moreover,
       <div class="graph-shell">
         
     <div class="graph-frame">
-      <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+      <svg class="graph-widget" viewBox="0 0 420 224" width="420" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
         <defs>
           <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
             <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
           </marker>
         </defs>
-        <g><line class="graph-edge edge-node_bounded_a-node_root" x1="210.0" y1="201.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-node_cont_ell-node_root" x1="210.0" y1="319.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line></g>
+        <g><path class="graph-edge edge-node_bounded_a-node_root" d="M 126.0 201.0 C 126.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-node_cont_ell-node_root" d="M 294.0 201.0 C 294.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path></g>
         <g>
     <a class="graph-node-link node-node_bounded_a status-formal-failed" href="#node-node_bounded_a">
-      <rect class="graph-node-box status-formal-failed" x="144.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="150" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="160">Boundedness:</tspan>
-<tspan x="210.0" y="172">$|a(u,v)| \le \…</tspan></text>
-      <text class="graph-node-id" x="210.0" y="186">node_bounded_a</text>
+      <rect class="graph-node-box status-formal-failed" x="60.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="178.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="126.0" y="160">Boundedness:</tspan>
+<tspan x="126.0" y="172">$|a(u,v)| \le \…</tspan></text>
+      <text class="graph-node-id" x="126.0" y="186">node_bounded_a</text>
     </a>
     
 
     <a class="graph-node-link node-node_cont_ell status-formal-failed" href="#node-node_cont_ell">
-      <rect class="graph-node-box status-formal-failed" x="144.0" y="256" rx="10" ry="10" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="268" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="278">Continuity:</tspan>
-<tspan x="210.0" y="290">$|\ell(v)| \le…</tspan></text>
-      <text class="graph-node-id" x="210.0" y="304">node_cont_ell</text>
+      <rect class="graph-node-box status-formal-failed" x="228.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="346.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="294.0" y="160">Continuity:</tspan>
+<tspan x="294.0" y="172">$|\ell(v)| \le…</tspan></text>
+      <text class="graph-node-id" x="294.0" y="186">node_cont_ell</text>
     </a>
     
 
@@ -675,6 +675,7 @@ Moreover,
     <article class="node-card node-node_bounded_a" id="node-node_bounded_a" data-node-id="node_bounded_a">
       <h3>Boundedness of the bilinear form $a$</h3>
       <p class="meta">Node id: node_bounded_a | Status: formal_failed</p>
+      <p class="meta">Parent nodes: <a class="node-jump" href="#node-node_root">node_root</a></p>
       <p class="meta">Display label: Boundedness: $|a(u,v)| \le \|u\|_{H_0^1}\|v\|_{H_0^1}$</p>
       <p class="meta">Formalization priority: 2. Rationale: The Cauchy–Schwarz bound on $a$ is concrete and important, but more routine: it is a single application of the $L^2$ inner product Cauchy–Schwarz inequality followed by the identification of the $H_0^1$ norm with the gradient $L^2$ norm. Formalizable with moderate effort and a clear Mathlib path.</p>
       <p><strong>Informal statement:</strong></p>
@@ -972,6 +973,7 @@ stderr:
     <article class="node-card node-node_cont_ell" id="node-node_cont_ell" data-node-id="node_cont_ell">
       <h3>Continuity of the linear functional $\ell$ via Poincaré</h3>
       <p class="meta">Node id: node_cont_ell | Status: formal_failed</p>
+      <p class="meta">Parent nodes: <a class="node-jump" href="#node-node_root">node_root</a></p>
       <p class="meta">Display label: Continuity: $|\ell(v)| \le C_P\|f\|_{L^2}\|v\|_{H_0^1}$</p>
       <p class="meta">Formalization priority: 1. Rationale: This node chains two distinct analytic tools—Cauchy–Schwarz and the Poincaré inequality on $H_0^1(\Omega)$—into a concrete norm estimate. Both tools have Mathlib counterparts (`inner_mul_le_norm_mul_norm`, `Poincare_inequality` or `SobolevInequality`), but composing them correctly under the $H_0^1$ seminorm requires careful norm unfolding. It is the most technically delicate subclaim and the one most likely to surface definitional issues in a formal assistant.</p>
       <p><strong>Informal statement:</strong></p>
@@ -1067,6 +1069,7 @@ Formalization drifted too far from the target node. Avoid introducing arbitrary 
     <article class="node-card node-node_root" id="node-node_root" data-node-id="node_root">
       <h3>Weak formulation of the Poisson problem via Lax–Milgram</h3>
       <p class="meta">Node id: node_root | Status: informal</p>
+      <p class="meta">Dependency nodes: <a class="node-jump" href="#node-node_bounded_a">node_bounded_a</a>, <a class="node-jump" href="#node-node_cont_ell">node_cont_ell</a></p>
       <p class="meta">Display label: Main theorem (Lax–Milgram application)</p>
       
       <p><strong>Informal statement:</strong></p>

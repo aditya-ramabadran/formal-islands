@@ -152,7 +152,7 @@
       overflow-y: visible;
     }
     .graph-frame {
-      width: min(100%, 460px);
+      width: min(100%, 720px);
       margin: 0 auto;
     }
     .graph-widget {
@@ -477,12 +477,6 @@
                 }
                 
 
-                .report-root:has(#obligation-check-semantic-match-heat_uniqueness:checked) .edge-heat_uniqueness_refined_local_claim-heat_uniqueness {
-                  stroke: var(--checked);
-                  stroke-width: 4.5;
-                }
-                
-
             .report-root:has(.obligation-semantic-match-heat_uniqueness:hover) .obligation-semantic-match-heat_uniqueness {
               border-color: var(--highlight);
               background: var(--preview-soft);
@@ -511,12 +505,6 @@
                   stroke-width: 2.9;
                   background: var(--checked-soft);
                   fill: var(--checked-soft);
-                }
-                
-
-                .report-root:has(#obligation-check-semantic-match-heat_uniqueness_refined_local_claim:checked) .edge-heat_uniqueness_refined_local_claim-heat_uniqueness {
-                  stroke: var(--checked);
-                  stroke-width: 4.5;
                 }
                 
 
@@ -552,12 +540,6 @@
                   stroke-width: 2.9;
                   background: var(--checked-soft);
                   fill: var(--checked-soft);
-                }
-                
-
-                .report-root:has(#obligation-check-boundary-energy_dissipation-heat_uniqueness_refined_local_claim:checked) .edge-heat_uniqueness_refined_local_claim-heat_uniqueness {
-                  stroke: var(--checked);
-                  stroke-width: 4.5;
                 }
                 
 
@@ -611,21 +593,21 @@ Then \(u=v\) on \([0,L]\times[0,T]\).</div>
       <div class="graph-shell">
         
     <div class="graph-frame">
-      <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+      <svg class="graph-widget" viewBox="0 0 420 224" width="420" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
         <defs>
           <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
             <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
           </marker>
         </defs>
-        <g><line class="graph-edge edge-energy_dissipation-heat_uniqueness_refined_local_claim edge-provenance" x1="210.0" y1="201.0" x2="210.0" y2="259.0" marker-end="url(#graph-arrow)"></line>
-<line class="graph-edge edge-heat_uniqueness_refined_local_claim-heat_uniqueness" x1="210.0" y1="319.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line></g>
+        <g><path class="graph-edge edge-energy_dissipation-heat_uniqueness_refined_local_claim edge-provenance" d="M 126.0 201.0 C 126.0 177.0, 294.0 165.0, 294.0 141.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-heat_uniqueness_refined_local_claim-heat_uniqueness edge-provenance" d="M 294.0 201.0 C 294.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path></g>
         <g>
     <a class="graph-node-link node-energy_dissipation status-formal-failed" href="#node-energy_dissipation">
-      <rect class="graph-node-box status-formal-failed" x="144.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-failed" cx="262.0" cy="150" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="160">\(E&#x27;(t) =</tspan>
-<tspan x="210.0" y="172">-\int_0^L |w_x|…</tspan></text>
-      <text class="graph-node-id" x="210.0" y="186">energy_dissipation</text>
+      <rect class="graph-node-box status-formal-failed" x="60.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-failed" cx="178.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="126.0" y="160">\(E&#x27;(t) =</tspan>
+<tspan x="126.0" y="172">-\int_0^L |w_x|…</tspan></text>
+      <text class="graph-node-id" x="126.0" y="186">energy_dissipation</text>
     </a>
     
 
@@ -639,11 +621,11 @@ Then \(u=v\) on \([0,L]\times[0,T]\).</div>
     
 
     <a class="graph-node-link node-heat_uniqueness_refined_local_claim status-formal-verified" href="#node-heat_uniqueness_refined_local_claim">
-      <rect class="graph-node-box status-formal-verified" x="144.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="268" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="278">E ≡ 0 by</tspan>
-<tspan x="210.0" y="290">monotone squeeze</tspan></text>
-      <text class="graph-node-id" x="210.0" y="304">heat_uniqueness_refined_local_claim</text>
+      <rect class="graph-node-box status-formal-verified" x="228.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="346.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="294.0" y="160">E ≡ 0 by</tspan>
+<tspan x="294.0" y="172">monotone squeeze</tspan></text>
+      <text class="graph-node-id" x="294.0" y="186">heat_uniqueness_refined_local_claim</text>
     </a>
     </g>
       </svg>
@@ -772,6 +754,7 @@ Then \(u=v\) on \([0,L]\times[0,T]\).</div>
     <article class="node-card node-energy_dissipation" id="node-energy_dissipation" data-node-id="energy_dissipation">
       <h3>Energy is nonincreasing: E&#x27;(t) ≤ 0</h3>
       <p class="meta">Node id: energy_dissipation | Status: formal_failed</p>
+      <p class="meta">Parent nodes: <a class="node-jump" href="#node-heat_uniqueness_refined_local_claim">heat_uniqueness_refined_local_claim</a></p>
       <p class="meta">Display label: \(E&#x27;(t) = -\int_0^L |w_x|^2\,dx \le 0\)</p>
       <p class="meta">Formalization priority: 1. Rationale: This node contains the entire technical core of the proof: differentiation under the integral, PDE substitution, the integration-by-parts identity ∫w·w_xx dx = [w·w_x]₀ᴸ − ∫|w_x|² dx, and cancellation of boundary terms. It is a concrete, self-contained computation, directly formalizable, and carries the main inferential load.</p>
       <p><strong>Informal statement:</strong></p>
@@ -901,6 +884,7 @@ Formalization drifted too far from the target node. Avoid replacing the node wit
     <article class="node-card node-heat_uniqueness" id="node-heat_uniqueness" data-node-id="heat_uniqueness">
       <h3>Heat equation uniqueness by the energy method</h3>
       <p class="meta">Node id: heat_uniqueness | Status: formal_verified</p>
+      <p class="meta">Dependency nodes: <a class="node-jump" href="#node-heat_uniqueness_refined_local_claim">heat_uniqueness_refined_local_claim</a></p>
       <p class="meta">Display label: Heat uniqueness (energy method)</p>
       <p class="meta">Formalization priority: 3. Rationale: Promoted after verified child &#x27;heat_uniqueness_refined_local_claim&#x27; certified a local core; attempting broader parent coverage.</p>
       <p><strong>Informal statement:</strong></p>
@@ -1109,6 +1093,7 @@ stderr:
     <article class="node-card node-heat_uniqueness_refined_local_claim" id="node-heat_uniqueness_refined_local_claim" data-node-id="heat_uniqueness_refined_local_claim">
       <h3>Nonincreasing nonneg energy vanishing from zero: E(t) = 0 for all t</h3>
       <p class="meta">Node id: heat_uniqueness_refined_local_claim | Status: formal_verified</p>
+      <p class="meta">Parent nodes: <a class="node-jump" href="#node-heat_uniqueness">heat_uniqueness</a> &nbsp;|&nbsp; Dependency nodes: <a class="node-jump" href="#node-energy_dissipation">energy_dissipation</a></p>
       <p class="meta">Display label: E ≡ 0 by monotone squeeze</p>
       <p class="meta">Formalization priority: 1. Rationale: This is the key analytic hinge of the uniqueness argument: it converts the energy-dissipation inequality (supplied by the parent node) and the zero-initial-data condition into the conclusion E ≡ 0. It is strictly narrower than the full uniqueness theorem (it makes no reference to the PDE, w, or u/v), is self-contained as a real-analysis lemma, and carries the primary inferential load that bridges the energy estimate to w = 0.</p>
       <p><strong>Informal statement:</strong></p>

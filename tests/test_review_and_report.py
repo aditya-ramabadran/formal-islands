@@ -51,7 +51,7 @@ def test_render_html_report_includes_core_sections() -> None:
     assert 'class="graph-node-link node-n1 status-informal"' in html
     assert 'data-obligation-id="informal-proof-n1"' in html
     assert 'id="MathJax-script"' in html
-    assert "width: min(100%, 460px);" in html
+    assert "width: min(100%, 720px);" in html
     assert "Nodes without attached Lean artifacts use dashed amber outlines." in html
     assert "Dashed gray edges show provenance or refinement links" in html
     assert "language-lean" in html

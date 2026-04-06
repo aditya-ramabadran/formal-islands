@@ -152,7 +152,7 @@
       overflow-y: visible;
     }
     .graph-frame {
-      width: min(100%, 460px);
+      width: min(100%, 720px);
       margin: 0 auto;
     }
     .graph-widget {
@@ -536,7 +536,7 @@ Moreover,
             <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
           </marker>
         </defs>
-        <g><line class="graph-edge edge-energy_pythagorean-root" x1="210.0" y1="201.0" x2="210.0" y2="23.0" marker-end="url(#graph-arrow)"></line></g>
+        <g><path class="graph-edge edge-energy_pythagorean-root" d="M 210.0 201.0 C 210.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path></g>
         <g>
     <a class="graph-node-link node-energy_pythagorean status-formal-failed" href="#node-energy_pythagorean">
       <rect class="graph-node-box status-formal-failed" x="144.0" y="138" rx="10" ry="10" width="132" height="66"></rect>
@@ -607,6 +607,7 @@ Moreover,
     <article class="node-card node-energy_pythagorean" id="node-energy_pythagorean" data-node-id="energy_pythagorean">
       <h3>Dirichlet energy Pythagorean identity via weak harmonicity</h3>
       <p class="meta">Node id: energy_pythagorean | Status: formal_failed</p>
+      <p class="meta">Parent nodes: <a class="node-jump" href="#node-root">root</a></p>
       <p class="meta">Display label: Energy Pythagorean identity</p>
       <p class="meta">Formalization priority: 1. Rationale: This node captures the entire inferential content: the pointwise expansion \(|\nabla u + \nabla w|^2 = |\nabla u|^2 + 2\,\nabla u \cdot \nabla w + |\nabla w|^2\), integration linearity, and the key application of weak harmonicity with \(\varphi = w \in H_0^1(\Omega)\) to annihilate the cross term. These are the steps most likely to require real Lean 4 / Mathlib effort (Sobolev membership, weak formulation instantiation) and form the highest-yield formalization target.</p>
       <p><strong>Informal statement:</strong></p>
@@ -717,6 +718,7 @@ stderr:
     <article class="node-card node-root" id="node-root" data-node-id="root">
       <h3>Harmonic functions minimize Dirichlet energy among competitors with the same boundary values</h3>
       <p class="meta">Node id: root | Status: formal_failed</p>
+      <p class="meta">Dependency nodes: <a class="node-jump" href="#node-energy_pythagorean">energy_pythagorean</a></p>
       <p class="meta">Display label: Main theorem: Dirichlet energy minimality</p>
       <p class="meta">Formalization priority: 2. Rationale: A clean self-contained statement for a top-level Lean theorem declaration. Once the energy Pythagorean identity is formalized, this reduces to invoking the identity and quoting nonnegativity of \(L^2\)-norms, making it a natural wrapper but secondary in formalization difficulty.</p>
       <p><strong>Informal statement:</strong></p>

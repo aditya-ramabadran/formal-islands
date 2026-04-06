@@ -34,7 +34,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
 
     status_counts = Counter(node.status for node in graph.nodes)
     checklist_items = "\n".join(_render_checklist_item(obligation, graph) for obligation in obligations)
-    node_sections = "\n".join(_render_node_section(node) for node in graph.nodes)
+    node_sections = "\n".join(_render_node_section(node, graph) for node in graph.nodes)
     graph_widget = _render_graph_widget(graph)
     interaction_styles = _render_interaction_styles(graph, obligations)
 
@@ -192,7 +192,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       overflow-y: visible;
     }}
     .graph-frame {{
-      width: min(100%, 460px);
+      width: min(100%, 720px);
       margin: 0 auto;
     }}
     .graph-widget {{
@@ -499,7 +499,7 @@ def _render_checklist_item(obligation: ReviewObligation, graph: ProofGraph) -> s
     """
 
 
-def _render_node_section(node: ProofNode) -> str:
+def _render_node_section(node: ProofNode, graph: ProofGraph) -> str:
     display_label = (
         f"<p class=\"meta\">Display label: {escape(node.display_label)}</p>"
         if node.display_label
@@ -513,6 +513,30 @@ def _render_node_section(node: ProofNode) -> str:
             f"Rationale: {escape(node.formalization_rationale)}"
             "</p>"
         )
+
+    # Build parent/child neighbor links.
+    # Edges go source → target where source "supports" target.
+    # "Parent nodes" of X = nodes X feeds into (outgoing edges, X is source).
+    # "Dependency nodes" of X = nodes that support X (incoming edges, X is target).
+    parent_ids = [e.target_id for e in graph.edges if e.source_id == node.id]
+    dependency_ids = [e.source_id for e in graph.edges if e.target_id == node.id]
+    node_id_set = {n.id for n in graph.nodes}
+
+    def _nlink(nid: str) -> str:
+        if nid in node_id_set:
+            return f'<a class="node-jump" href="#node-{escape(nid)}">{escape(nid)}</a>'
+        return escape(nid)
+
+    neighbor_parts: list[str] = []
+    if parent_ids:
+        neighbor_parts.append("Parent nodes: " + ", ".join(_nlink(nid) for nid in parent_ids))
+    if dependency_ids:
+        neighbor_parts.append("Dependency nodes: " + ", ".join(_nlink(nid) for nid in dependency_ids))
+    neighbor_block = (
+        '<p class="meta">' + " &nbsp;|&nbsp; ".join(neighbor_parts) + "</p>"
+        if neighbor_parts
+        else ""
+    )
 
     formal_block = ""
     if node.formal_artifact is not None:
@@ -556,6 +580,7 @@ stderr:
     <article class="node-card {node_key}" id="node-{escape(node.id)}" data-node-id="{escape(node.id)}">
       <h3>{escape(node.title)}</h3>
       <p class="meta">Node id: {escape(node.id)} | Status: {escape(node.status)}</p>
+      {neighbor_block}
       {display_label}
       {candidate_block}
       <p><strong>Informal statement:</strong></p>
@@ -744,13 +769,23 @@ def _render_graph_widget(graph: ProofGraph) -> str:
 def _render_edge(edge: ProofEdge, layout: dict) -> str:
     x1, y1 = layout["centers"][edge.source_id]
     x2, y2 = layout["centers"][edge.target_id]
+    # Source "supports" target: typically source sits below target in the layout.
+    # Connect from the bottom of the source node to the top of the target node.
     start_y = y1 + NODE_HEIGHT / 2 - 3
     end_y = y2 - NODE_HEIGHT / 2 + 3
+    # Cubic bezier with vertical tangents at both endpoints.  Control points share
+    # x with their respective anchor so the curve enters/exits each node vertically,
+    # producing smooth diagonal arcs for sibling-to-parent connections.
+    span = end_y - start_y  # negative when source is below target (normal case)
+    ctrl1_x, ctrl1_y = x1, start_y + span * 0.4
+    ctrl2_x, ctrl2_y = x2, end_y - span * 0.4
     edge_class = _edge_class(edge.source_id, edge.target_id)
     provenance_class = " edge-provenance" if edge.label in PROVENANCE_EDGE_LABELS else ""
     return (
-        f'<line class="graph-edge {edge_class}{provenance_class}" x1="{x1}" y1="{start_y}" x2="{x2}" y2="{end_y}" '
-        f'marker-end="url(#graph-arrow)"></line>'
+        f'<path class="graph-edge {edge_class}{provenance_class}" '
+        f'd="M {x1:.1f} {start_y:.1f} C {ctrl1_x:.1f} {ctrl1_y:.1f}, '
+        f'{ctrl2_x:.1f} {ctrl2_y:.1f}, {x2:.1f} {end_y:.1f}" '
+        f'marker-end="url(#graph-arrow)"></path>'
     )
 
 
@@ -778,30 +813,44 @@ def _render_node(node: ProofNode, layout: dict) -> str:
 
 
 def _compute_graph_layout(graph: ProofGraph) -> dict:
-    children_by_source: dict[str, list[str]] = defaultdict(list)
+    # Edges go source → target where source "supports" target (e.g. a sublemma
+    # feeds into a higher claim).  The root is therefore a target, not a source.
+    # To assign depths, we traverse backwards from the root: for each node we find
+    # all nodes that have an edge pointing *to* that node (its supporters).
+    supporters_of: dict[str, list[str]] = defaultdict(list)
     for edge in graph.edges:
         if edge.label in PROVENANCE_EDGE_LABELS:
             continue
-        children_by_source[edge.source_id].append(edge.target_id)
+        supporters_of[edge.target_id].append(edge.source_id)
 
     depths = {graph.root_node_id: 0}
     queue = deque([graph.root_node_id])
     while queue:
         node_id = queue.popleft()
         depth = depths[node_id]
-        for child_id in children_by_source.get(node_id, []):
+        for supporter_id in supporters_of.get(node_id, []):
             proposed = depth + 1
-            previous = depths.get(child_id)
+            previous = depths.get(supporter_id)
             if previous is None or proposed < previous:
-                depths[child_id] = proposed
-                queue.append(child_id)
+                depths[supporter_id] = proposed
+                queue.append(supporter_id)
+
+    # For nodes not reached by the main BFS (e.g. provenance-only child nodes such as
+    # formal_core children), try to place them just below their provenance parent.
+    # Remaining orphans all share the same extra_start row rather than stacking.
+    provenance_parent: dict[str, str] = {}
+    for edge in graph.edges:
+        if edge.label in PROVENANCE_EDGE_LABELS:
+            provenance_parent[edge.source_id] = edge.target_id
 
     extra_start = max(depths.values(), default=0) + 1
-    next_depth = extra_start
     for node in graph.nodes:
         if node.id not in depths:
-            depths[node.id] = next_depth
-            next_depth += 1
+            prov_target = provenance_parent.get(node.id)
+            if prov_target is not None and prov_target in depths:
+                depths[node.id] = depths[prov_target] + 1
+            else:
+                depths[node.id] = extra_start
 
     rows: dict[int, list[str]] = defaultdict(list)
     for node in graph.nodes:
