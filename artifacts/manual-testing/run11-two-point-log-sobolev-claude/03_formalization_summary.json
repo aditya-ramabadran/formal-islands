@@ -1,9 +1,0 @@
-{
-  "node_id": "N3",
-  "status": "failed",
-  "artifact_path": null,
-  "attempt_count": 1,
-  "stderr": "Claude CLI timed out while waiting for structured output for task 'formalize_node_agentic' after 420.0 seconds.",
-  "faithfulness_classification": "full_node",
-  "lean_theorem_name": "N3_backend_failure"
-}

@@ -1,6 +1,0 @@
-{
-  "node_id": "gradient_blowup",
-  "status": "failed",
-  "attempt_count": 1,
-  "stderr": "Codex CLI timed out while waiting for structured output for task 'formalize_node' after 20.0 seconds."
-}

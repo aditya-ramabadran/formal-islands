@@ -1,9 +1,0 @@
-{
-  "node_id": "bernoulli_ineq_refined_local_claim",
-  "status": "verified",
-  "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/bernoulli_ineq_refined_local_claim_worker_20260405-171444_c1d7a409.lean",
-  "attempt_count": 1,
-  "stderr": "",
-  "faithfulness_classification": "full_node",
-  "lean_theorem_name": "bernoulli_ineq_Fq_vanishes_at_q"
-}

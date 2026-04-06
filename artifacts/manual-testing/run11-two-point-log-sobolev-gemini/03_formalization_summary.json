@@ -1,9 +1,0 @@
-{
-  "node_id": "scalar_inequality_lemma_refined_local_claim",
-  "status": "verified",
-  "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/scalar_inequality_lemma_refined_local_claim_worker.lean",
-  "attempt_count": 1,
-  "stderr": "",
-  "faithfulness_classification": "concrete_sublemma",
-  "lean_theorem_name": "local_identity"
-}

@@ -1,9 +1,0 @@
-{
-  "node_id": "n1",
-  "status": "failed",
-  "artifact_path": "/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/n1_worker_20260405-213954_c0a757b9.lean",
-  "attempt_count": 1,
-  "stderr": "Lean verification timed out after 120.0 seconds.",
-  "faithfulness_classification": "concrete_sublemma",
-  "lean_theorem_name": "n1_aristotle"
-}
