@@ -77,6 +77,44 @@ header {
   margin-top: 0.35rem;
 }
 
+.header-author {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.header-links {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.8rem;
+  text-decoration: none;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.header-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+.header-btn svg {
+  flex-shrink: 0;
+}
+
 /* ── Sections ───────────────────────────────────────────────── */
 section { margin-bottom: 3rem; }
 
@@ -258,23 +296,39 @@ footer {
 <header>
   <div class="site-title">Formal Islands</div>
   <div class="tagline">Certified local cores inside natural-language mathematical proofs</div>
+  <div class="header-author">Aditya Ramabadran</div>
+  <div class="header-links">
+    <a class="header-btn" href="https://github.com/aditya-ramabadran/formal-islands" target="_blank">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+          0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
+          -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66
+          .07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15
+          -.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27
+          .68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12
+          .51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48
+          0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+      </svg>
+      GitHub
+    </a>
+  </div>
 </header>
 
 <section>
   <h2>The Problem</h2>
   <p>
-    Current AI-for-math systems face a bottleneck from two directions at once.
+    Current AI-for-math systems face a bottleneck from two directions:
   </p>
   <p>
-    Strong informal systems — language models doing natural-language mathematical reasoning —
+    Strong informal systems (language models doing natural-language mathematical reasoning)
     can handle broad, flexible proof search. But they can also drift semantically, prove
     the wrong thing, or produce arguments whose correctness is hard for humans to audit.
     As these systems improve, the proofs they produce will get <em>longer and harder to
     check</em>, not easier.
   </p>
   <p>
-    Fully formal systems like Lean give much stronger guarantees, but in many domains —
-    PDEs, geometric measure theory, spectral theory — you often cannot even
+    Fully formal systems like Lean give much stronger guarantees, but in many domains
+    like PDEs, geometric measure theory, and spectral theory, you often cannot even
     <em>state</em> the intended theorem in Lean yet, let alone prove it. This caps what
     fully formal AI theorem-proving can realistically achieve today.
   </p>
@@ -285,7 +339,7 @@ footer {
     are genuinely machine-checked.
   </p>
   <div class="callout">
-    A <strong>formal island</strong> is a proof node independently verified in Lean —
+    A <strong>formal island</strong> is a proof node independently verified in Lean,
     certified in isolation, without requiring the rest of the proof to be formalized first.
   </div>
 </section>
@@ -297,36 +351,35 @@ footer {
       <strong>Tractable human review.</strong>
       Instead of auditing one long informal proof end-to-end, a reviewer can focus on the
       uncertified gaps while knowing the key lemmas are machine-checked. The generated report
-      makes this explicit with a per-node review checklist.
+      makes this explicit with a review checklist. 
     </li>
     <li>
       <strong>Honest accounting.</strong>
       The report distinguishes full-node verification, narrower certified supporting cores,
-      and informal steps. No overclaiming.
+      and informal steps.
     </li>
     <li>
-      <strong>Faithfulness as a first-class concern.</strong>
+      <strong>Faithfulness / semantic correctness.</strong>
       A proof that compiles in Lean is not automatically a proof of the right thing. The
       pipeline uses heuristic checks and LLM-assisted semantic review to guard against
       statement drift, and surfaces the remaining verification burden explicitly to the human reviewer.
     </li>
     <li>
       <strong>Scales as infrastructure improves.</strong>
-      As Mathlib expands, the same architecture certifies larger portions of proofs —
+      As Mathlib expands, the same architecture certifies larger portions of proofs,
       approaching full formalization wherever that becomes realistic, while remaining
       useful in the meantime.
     </li>
     <li>
       <strong>A natural path for combining systems.</strong>
-      Broad informal reasoning from language models; AlphaProof-style formal search on
-      the formalizable subproblems. These aren't competing approaches — they compose.
+      Broad informal reasoning from language models, and the potential to use formal/Lean-optimized tools on the formalizable subproblems. The architecture is modular by design.
     </li>
   </ul>
 </section>
 
 <section>
   <h2>Featured Examples</h2>
-  <p style="margin-bottom: 1.25rem;">Each of these reports was produced entirely by this system — given only the theorem statement and an informal proof as input, the pipeline planned the proof graph, selected candidates, ran Lean verification, and generated the report automatically.</p>
+  <p style="margin-bottom: 1.25rem;">Each of these reports was produced entirely by this system. Given only the theorem statement and an informal proof as input, the pipeline planned the proof graph, selected candidates, ran Lean verification, and generated the report automatically.</p>
   <div class="gallery">
 
     <div class="card">
@@ -343,7 +396,7 @@ footer {
           The scalar log-Sobolev inequality and the key one-dimensional non-negativity lemma
           G(u) ≥ 0 are both independently certified in Lean.
         </div>
-        <a class="card-link" href="reports/two_point_log_sobolev.html">View report →</a>
+        <a class="card-link" target="_blank" href="reports/two_point_log_sobolev.html">View report →</a>
       </div>
     </div>
 
@@ -359,11 +412,11 @@ footer {
         </div>
         <span class="verified-badge">✓ 2 of 3 nodes verified</span>
         <div class="card-desc">
-          The energy dissipation lemma — showing the energy of the difference solution is
-          non-increasing — is fully verified, along with a certified local core
+          The energy dissipation lemma (showing the energy of the difference solution is
+          non-increasing) is fully verified, along with a certified local core
           for the uniqueness conclusion itself.
         </div>
-        <a class="card-link" href="reports/heat_uniqueness.html">View report →</a>
+        <a class="card-link" target="_blank" href="reports/heat_uniqueness.html">View report →</a>
       </div>
     </div>
 
@@ -379,11 +432,11 @@ footer {
         </div>
         <span class="verified-badge">✓ 2 of 2 nodes verified</span>
         <div class="card-desc">
-          Both nodes in the proof graph are formally closed — the rank-one base case
+          Both nodes in the proof graph are formally closed: the rank-one base case
           and the full determinant lemma. End-to-end formal certification on a
           Mathlib-supported benchmark.
         </div>
-        <a class="card-link" href="reports/matrix_determinant_lemma.html">View report →</a>
+        <a class="card-link" target="_blank" href="reports/matrix_determinant_lemma.html">View report →</a>
       </div>
     </div>
 
@@ -400,10 +453,10 @@ footer {
         <span class="verified-badge">✓ 2 of 3 nodes verified</span>
         <div class="card-desc">
           The expectation bound via convexity and the log-MGF function bound are
-          both independently verified — together covering nearly all of the
+          both independently verified, together covering nearly all of the
           substantive proof content.
         </div>
-        <a class="card-link" href="reports/hoeffding_lemma.html">View report →</a>
+        <a class="card-link" target="_blank" href="reports/hoeffding_lemma.html">View report →</a>
       </div>
     </div>
 

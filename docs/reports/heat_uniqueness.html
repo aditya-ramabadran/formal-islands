@@ -94,6 +94,22 @@
         background: radial-gradient(circle at top, #2a211b, var(--bg));
       }
     }
+    .fi-attribution {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+    .fi-attribution a {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .fi-attribution a:hover {
+      text-decoration: underline;
+    }
     main.report-root {
       max-width: 1040px;
       margin: 0 auto;
@@ -551,6 +567,7 @@
   </style>
 </head>
 <body>
+  <div class="fi-attribution">Created by <a href="https://github.com/aditya-ramabadran/formal-islands" target="_blank">Formal Islands</a></div>
   <main class="report-root">
     <section>
       <h1>Heat equation uniqueness by the energy method</h1>

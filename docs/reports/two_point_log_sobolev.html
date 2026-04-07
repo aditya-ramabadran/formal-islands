@@ -94,6 +94,22 @@
         background: radial-gradient(circle at top, #2a211b, var(--bg));
       }
     }
+    .fi-attribution {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+    .fi-attribution a {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .fi-attribution a:hover {
+      text-decoration: underline;
+    }
     main.report-root {
       max-width: 1040px;
       margin: 0 auto;
@@ -593,6 +609,7 @@
   </style>
 </head>
 <body>
+  <div class="fi-attribution">Created by <a href="https://github.com/aditya-ramabadran/formal-islands" target="_blank">Formal Islands</a></div>
   <main class="report-root">
     <section>
       <h1>Two-point logarithmic Sobolev inequality</h1>
@@ -769,7 +786,7 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
       <div class="math-text">Set \(a:=f(1)\) and \(b:=f(-1)\). Since \(\mu\) is uniform, \(\mathbb{E}_\mu[f^2]=(a^2+b^2)/2\) and \(\mathbb{E}_\mu[f^2\log f^2]=(a^2\log(a^2)+b^2\log(b^2))/2\). Multiplying both sides of \(\operatorname{Ent}_\mu(f^2)\le\tfrac12(a-b)^2\) by 2 shows the claim is equivalent to the scalar inequality \(a^2\log(a^2)+b^2\log(b^2)-(a^2+b^2)\log\!\bigl(\tfrac{a^2+b^2}{2}\bigr)\le(a-b)^2\) for all \(a,b\in\mathbb{R}\). That scalar inequality is established in the node below.</div>
       
       <p><strong>Remaining proof burden (assuming results of <a class="node-jump" href="#node-scalar_ineq">scalar_ineq</a>):</strong></p>
-      <div class="math-text">With <code class="inline-code">scalar_ineq_aristotle</code> in hand, the parent proof reduces to a straightforward assembly argument that has not yet been formally certified. Concretely, one must (1) set a = f(1) and b = f(−1), unfold the definition of Ent_μ(f²) under the uniform measure on {−1,1}, and compute E_μ[f²] = (a²+b²)/2 and E_μ[f²·log f²] = (a²·log(a²)+b²·log(b²))/2; (2) rewrite Ent_μ(f²) as exactly ½·[a²·log(a²)+b²·log(b²)−(a²+b²)·log((a²+b²)/2)], i.e., show the entropy definition and the scalar LHS differ by a factor of ½; and (3) invoke <code class="inline-code">scalar_ineq_aristotle</code> and scale by ½ to conclude Ent_μ(f²) ≤ ½·(a−b)² = ½·(f(1)−f(−1))². None of these steps involves nontrivial analysis—the residual burden is purely a definitional unfolding and algebraic assembly at the parent level, but it remains informal and would need to be checked or formalized.</div>
+      <div class="math-text">Assuming <code class="inline-code">scalar_ineq_aristotle</code>, the parent theorem reduces to a short assembly argument that has not yet been formally certified. Specifically, one must (i) unfold the definition of the entropy functional Ent_μ(f²) under the uniform measure on {−1,1} to obtain Ent_μ(f²) = (a²log(a²)+b²log(b²))/2 − ((a²+b²)/2)·log((a²+b²)/2), where a = f(1) and b = f(−1); (ii) perform the algebraic rewrite showing this equals exactly ½·[a²log(a²)+b²log(b²)−(a²+b²)log((a²+b²)/2)], i.e., one-half the left-hand side of the scalar inequality; and (iii) apply <code class="inline-code">scalar_ineq_aristotle</code> and divide by 2 to conclude Ent_μ(f²) ≤ ½(a−b)². The main residual obligation is thus a definitional unfolding of the discrete entropy and the ×½ scaling step that connects the scalar child to the parent; no new analytic inequality is needed, making this essentially a parent-level assembly theorem.</div>
     
       
     </article>
