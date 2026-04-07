@@ -56,6 +56,7 @@ class MultiFormalizationOutcome:
 
 
 FormalizationUpdateCallback = Callable[[FormalizationOutcome], None]
+DEFAULT_FORMALIZATION_ATTEMPTS = 2
 MAX_TOTAL_FORMALIZATION_ATTEMPTS = 4
 FormalizationBackend = StructuredBackend | AristotleBackend
 
@@ -71,7 +72,7 @@ def formalize_candidate_node(
     verifier: LeanVerifier,
     graph: ProofGraph,
     node_id: str,
-    max_attempts: int = MAX_TOTAL_FORMALIZATION_ATTEMPTS,
+    max_attempts: int = DEFAULT_FORMALIZATION_ATTEMPTS,
     on_update: FormalizationUpdateCallback | None = None,
     mode: str = "agentic",
 ) -> FormalizationOutcome:
@@ -101,6 +102,7 @@ def formalize_candidate_node(
             verifier=verifier,
             graph=graph,
             node_id=node_id,
+            max_attempts=max_attempts,
             on_update=on_update,
         )
 
@@ -125,7 +127,7 @@ def formalize_candidate_nodes(
     verifier: LeanVerifier,
     graph: ProofGraph,
     node_ids: list[str] | None = None,
-    max_attempts: int = MAX_TOTAL_FORMALIZATION_ATTEMPTS,
+    max_attempts: int = DEFAULT_FORMALIZATION_ATTEMPTS,
     on_update: FormalizationUpdateCallback | None = None,
     mode: str = "agentic",
 ) -> MultiFormalizationOutcome:
@@ -382,7 +384,7 @@ def _formalize_candidate_node_aristotle(
 ) -> FormalizationOutcome:
     """Project-based formalization loop for Aristotle."""
 
-    attempt_limit = min(max_attempts, 2)
+    attempt_limit = max_attempts
     attempt_history: list[VerificationResult] = []
     latest_artifact: FormalArtifact | None = None
     latest_feedback: str | None = None
@@ -586,6 +588,7 @@ def _formalize_candidate_node_agentic(
     verifier: LeanVerifier,
     graph: ProofGraph,
     node_id: str,
+    max_attempts: int,
     on_update: FormalizationUpdateCallback | None,
 ) -> FormalizationOutcome:
     workspace_root = verifier.workspace.root.resolve()
@@ -595,8 +598,9 @@ def _formalize_candidate_node_agentic(
     previous_lean_code: str | None = None
     faithfulness_feedback: str | None = None
 
-    for attempt_number in (1, 2):
-        _progress(f"node {node_id}: agentic attempt {attempt_number}/2")
+    attempt_limit = max_attempts
+    for attempt_number in range(1, attempt_limit + 1):
+        _progress(f"node {node_id}: agentic attempt {attempt_number}/{attempt_limit}")
         try:
             artifact = request_agentic_formalization(
                 backend=backend,
@@ -674,7 +678,7 @@ def _formalize_candidate_node_agentic(
             updated_graph = _update_node(current_graph, node_id, "formal_failed", artifact)
             _emit_update(updated_graph, node_id, artifact, on_update)
             _progress(f"node {node_id}: formalization failed after backend error")
-            if attempt_number >= 2:
+            if attempt_number >= attempt_limit:
                 updated_graph = _maybe_refine_failed_node(
                     planning_backend=planning_backend,
                     graph=updated_graph,
@@ -703,7 +707,7 @@ def _formalize_candidate_node_agentic(
             )
             current_graph = _update_node(current_graph, node_id, "formal_failed", artifact)
             _emit_update(current_graph, node_id, artifact, on_update)
-            if attempt_number >= 2:
+            if attempt_number >= attempt_limit:
                 _progress(f"node {node_id}: formalization failed after faithfulness guard")
                 current_graph = _maybe_refine_failed_node(
                     planning_backend=planning_backend,
@@ -761,7 +765,7 @@ def _formalize_candidate_node_agentic(
             if expanded_artifact is not None:
                 artifact = expanded_artifact
         if (
-            attempt_number < 2
+            attempt_number < attempt_limit
             and artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA
             and _should_run_bonus_retry(graph=current_graph, node_id=node_id, assessment=assessment)
         ):
@@ -793,7 +797,9 @@ def _formalize_candidate_node_agentic(
         )
         return FormalizationOutcome(graph=updated_graph, node_id=node_id, artifact=artifact)
 
-    raise AssertionError("agentic formalization loop should always return within two attempts")
+    raise AssertionError(
+        f"agentic formalization loop should always return within {attempt_limit} attempts"
+    )
 
 
 def _attempt_aristotle_coverage_expansion(

@@ -27,6 +27,9 @@ from formal_islands.formalization import (
     formalize_candidate_node,
     formalize_candidate_nodes,
 )
+from formal_islands.formalization.loop import (
+    DEFAULT_FORMALIZATION_ATTEMPTS,
+)
 from formal_islands.models import FormalArtifact, ProofGraph, VerificationResult
 from formal_islands.report import export_report_bundle, render_html_report
 from formal_islands.review import derive_review_obligations
@@ -101,8 +104,11 @@ def build_parser() -> argparse.ArgumentParser:
     formalize_parser.add_argument(
         "--max-attempts",
         type=int,
-        default=4,
-        help="Maximum number of bounded formalization attempts. The current prototype uses at most three repair retries after the initial attempt.",
+        default=DEFAULT_FORMALIZATION_ATTEMPTS,
+        help=(
+            "Maximum number of bounded formalization attempts. Default: "
+            f"{DEFAULT_FORMALIZATION_ATTEMPTS}."
+        ),
     )
     formalize_parser.add_argument(
         "--formalization-mode",
@@ -125,8 +131,11 @@ def build_parser() -> argparse.ArgumentParser:
     formalize_all_parser.add_argument(
         "--max-attempts",
         type=int,
-        default=4,
-        help="Maximum number of bounded formalization attempts per node.",
+        default=DEFAULT_FORMALIZATION_ATTEMPTS,
+        help=(
+            "Maximum number of bounded formalization attempts per node. Default: "
+            f"{DEFAULT_FORMALIZATION_ATTEMPTS}."
+        ),
     )
     formalize_all_parser.add_argument(
         "--formalization-mode",
@@ -154,8 +163,11 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--max-attempts",
         type=int,
-        default=4,
-        help="Maximum number of bounded formalization attempts. The current prototype uses at most three repair retries after the initial attempt.",
+        default=DEFAULT_FORMALIZATION_ATTEMPTS,
+        help=(
+            "Maximum number of bounded formalization attempts. Default: "
+            f"{DEFAULT_FORMALIZATION_ATTEMPTS}."
+        ),
     )
     run_parser.add_argument(
         "--formalization-mode",
@@ -193,8 +205,11 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark_parser.add_argument(
         "--max-attempts",
         type=int,
-        default=4,
-        help="Maximum number of bounded formalization attempts.",
+        default=DEFAULT_FORMALIZATION_ATTEMPTS,
+        help=(
+            "Maximum number of bounded formalization attempts. Default: "
+            f"{DEFAULT_FORMALIZATION_ATTEMPTS}."
+        ),
     )
     benchmark_parser.add_argument(
         "--formalization-mode",

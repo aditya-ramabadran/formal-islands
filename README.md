@@ -126,7 +126,7 @@ Useful options:
 --workspace lean_project
 --node-id auto
 --formalization-mode agentic
---max-attempts 4
+--max-attempts 2
 --formalization-timeout-seconds 900
 --model gpt-5.4
 ```
