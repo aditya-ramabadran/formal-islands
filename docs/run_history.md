@@ -57,6 +57,19 @@ For each benchmark section:
     - much better than `run4-heat-uniqueness-gemini-aristotle-3`, where a very similar local theorem was rejected too harshly and nothing was verified.
   - Verdict: one of the strongest runs in the repo so far, and a very strong public-facing showcase benchmark. It demonstrates the intended Formal Islands workflow clearly and also provides direct evidence that the recent faithfulness-policy change was a good one.
 
+- `2026-04-06 20:23 PT` — `artifacts/manual-testing/run4-heat-uniqueness-gemini-aristotle-5`
+  - Benchmark quality: still one of the best small benchmarks in the suite, because the proof has a clean energy-method spine and a single obvious local island.
+  - Planner: again kept the graph compact and well structured, with `energy_dissipation` as the central local step feeding the uniqueness theorem.
+  - Formalizer: had another genuinely strong run. It verified:
+    - `energy_dissipation` as a full match for the intended local energy-dissipation lemma, and
+    - `heat_uniqueness__formal_core` as a strong concrete supporting theorem for the final uniqueness deduction from nonincreasing energy and matching initial data.
+  - What went well: the formalizer again stayed in the correct theorem family and produced the same clean two-part proof spine as the previous successful run4: one verified analytic PDE estimate and one verified energy-method conclusion.
+  - Comparison to earlier runs:
+    - much better than `run4-heat-uniqueness-gemini-aristotle-3`, where a very similar local theorem was rejected too harshly and nothing was verified;
+    - broadly on par with `run4-heat-uniqueness-gemini-aristotle-4`, but valuable because it shows that the strong run4 result is stable and repeatable rather than a one-off.
+  - **Operational note:** **this run used `max_attempts=4` rather than the default `2`**, though in practice the verified nodes compiled on their first successful attempts and did not need the extra retry budget.
+  - Verdict: still one of the strongest runs in the repo, and one of the best public-facing showcase benchmarks. This rerun mainly strengthens confidence that run4 is now a reliable example of the intended Formal Islands workflow.
+
 ## run5-negative-part-maximum-principle
 - `2026-04-06 09:11 PT` — `artifacts/manual-testing/run5-negative-part-maximum-principle-aristotle`
   - Benchmark quality: good benchmark, because the gradient identity for \(u_-\) is a natural high-value local island.
@@ -78,6 +91,23 @@ For each benchmark section:
   - Guard behavior: correct. The gradient-identity attempt was honestly rejected as over-abstract / dimensional-analogue drift. The root attempt also failed and never got close to the actual negative-part / IBP argument.
   - Comparison to earlier run5s: worse than both prior runs. The first run at least salvaged useful supporting cores, and the second run reached the right theorem family for `grad_identity` before dying on Lean-engineering issues. This run missed the right theorem family entirely and produced no certified artifact.
   - Verdict: bad run on a good benchmark. This is a real regression and suggests the retry / fallback policy still allows overly large theorem-family jumps instead of staying anchored to the chosen local node.
+
+- `2026-04-06 22:25 PT` — `artifacts/manual-testing/run5-negative-part-maximum-principle-claude-aristotle-4`
+  - Benchmark quality: still a good benchmark, because the gradient identity for \(u_-\) is a natural high-value local island inside the weak maximum principle proof.
+  - Planner: kept the proof graph clean and focused, with the right intended local structure.
+  - Formalizer: partially recovered after the weaker recent reruns. It verified:
+    - `grad_identity__formal_core`, and
+    - `root__formal_core`.
+  - What went well: unlike `run5-negative-part-maximum-principle-claude-aristotle-3`, this run did not drift into obviously unrelated analogues and did leave behind two honest verified supporting artifacts.
+  - What still went wrong:
+    - `grad_identity__formal_core` is only the algebraic shell of the target node: it bakes in the negative-part gradient as an `if`-expression built from an arbitrary `grad_u`, rather than deriving the actual chain-rule/Sobolev identity for \(u_-\).
+    - `root__formal_core` verifies only the final logical skeleton of the maximum-principle argument, while packaging the PDE/IBP/gradient-identity chain and the Poincaré step as hypotheses.
+  - Comparison to earlier runs:
+    - better than `run5-negative-part-maximum-principle-claude-aristotle-3`, which missed the theorem family entirely and produced no verified artifact;
+    - better than `run5-negative-part-maximum-principle-aristotle-2` in practical output, since this run at least verifies supporting theorems;
+    - more mixed relative to the very first `run5-negative-part-maximum-principle-aristotle`, which also salvaged useful supporting results.
+  - **Operational note:** **this run used `max_attempts=8` rather than the default `2`**. The extra retry budget appears to have helped recover verified supporting artifacts, even though it still did not reach the true analytic local island.
+  - Verdict: partial recovery on a good benchmark, but still not a showcase result. The benchmark should remain in the suite, but the verified results are still structural supporting shells rather than certifications of the main analytic burden.
 
 ## run7-harmonic-minimizer
 
@@ -106,6 +136,23 @@ For each benchmark section:
     - better than `run7-harmonic-minimizer-aristotle-2`, which only produced rejected abstractions;
     - better than `run7-harmonic-minimizer-claude-aristotle-3`, because the verified result here is more central and more faithful than the earlier root-side salvage.
   - Verdict: improved partial success on a good benchmark. Not yet a showcase result, because the main minimization theorem still fails, but this rerun shows real progress and suggests the benchmark should remain in the suite.
+
+- `2026-04-06 20:22 PT` — `artifacts/manual-testing/run7-harmonic-minimizer-rerun-claude-aristotle-5`
+  - Benchmark quality: still a good benchmark in principle, because the Pythagorean energy decomposition is exactly the kind of local island Formal Islands should aim to certify.
+  - Planner: produced a sensible graph centered on the `dirichlet_pythagorean` identity feeding the energy-minimization theorem.
+  - Formalizer: improved materially and produced the best run7 artifact so far.
+    - `dirichlet_pythagorean__formal_core` verified successfully and formalizes the central integral identity
+      \(\int_\Omega |\nabla u+\nabla w|^2 = \int_\Omega |\nabla u|^2 + \int_\Omega |\nabla w|^2\)
+      under the vanishing cross-term hypothesis.
+    - `harmonic_min_dirichlet` still failed to verify. The attempted theorem stayed in the gradient-field setting and was not immediately rejected after the first attempt, but the Lean proof failed on proof-engineering issues and finally on a missing object-file/import problem.
+  - What went well: the certified island is stronger and more central than in the earlier run7s. It captures most of the algebraic/integration content of the target local node and is clearly on the right proof path.
+  - What still went wrong: the hardest functional-analytic step is still missing — namely deriving the cross-term vanishing from actual weak harmonicity and \(w \in H_0^1(\Omega)\) — and the root minimization theorem remains unverified.
+  - Comparison to earlier runs:
+    - better than `run7-harmonic-minimizer-aristotle-2`, which only produced rejected abstractions;
+    - better than `run7-harmonic-minimizer-claude-aristotle-3`, whose salvage was on the easier root-side inequality;
+    - better than `run7-harmonic-minimizer-rerun-claude-aristotle-4`, because the verified result here is closer to the real central local island.
+  - **Operational note:** **this run used `max_attempts=4` rather than the default `2`**. The extra retry budget appears to have mattered here, since the verified `dirichlet_pythagorean__formal_core` only succeeded on attempt 3.
+  - Verdict: best run7 so far, and a meaningful partial success on a good benchmark. Still not a showcase result, because the main weak-harmonicity-to-minimization burden remains unverified, but clearly a real step forward.
 
 ## run8-semilinear-heat-blowup
 
@@ -154,6 +201,34 @@ For each benchmark section:
     - not clearly better than `run10-first-dirichlet-eigenfunction-gemini-aristotle-3`, since this rerun still produced no verified artifact and still failed to keep the multiplier-identification node concrete.
   - Verdict: disappointing rerun on a still-good benchmark. The benchmark should remain in the suite, and `multiplier_identification` still looks like the best local island, but this run confirms that the current worker still needs much better theorem-shape discipline on that node and that the direct-method existence node is still too infrastructure-heavy to be a near-term showcase result
 
+- `2026-04-06 20:26 PT` — `artifacts/manual-testing/run10-first-dirichlet-eigenfunction-gemini-aristotle-5`
+  - Benchmark quality: still a good benchmark in principle, since it separates the deep direct-method existence burden from the much smaller Euler–Lagrange / multiplier-identification step.
+  - Planner: again produced a sensible graph with the two real proof burdens: minimizer existence and Euler–Lagrange derivation.
+  - Formalizer: improved somewhat over the last two run10 reruns by recovering a verified artifact.
+    - `minimizer_exists` still failed: Aristotle again drifted into an abstract Hilbert-space / embedding / weak-topology formalization with packaged compactness and lower-semicontinuity hypotheses, and the faithfulness guard rejected it on all attempts.
+    - `euler_lagrange_derivation__formal_core` verified successfully: it formalizes the algebraic core where one tests the weak equation at `u₁`, uses normalization and energy, identifies `μ = λ₁`, and substitutes back.
+  - Comparison to earlier runs:
+    - better than `run10-first-dirichlet-eigenfunction-gemini-aristotle-3` and `-4`, because this run at least restores a useful verified artifact rather than ending empty-handed;
+    - still worse than `run10-first-dirichlet-eigenfunction-aristotle`, which verified a more substantial attainment-side core and also nearly got the multiplier step.
+  - **Operational note:** **this run used `max_attempts=4` rather than the default `2`**. The extra retry budget helped enough to recover a verified smaller shard on the Euler–Lagrange side, but it did not fix the deeper theorem-shape problem on the minimizer-existence node.
+  - Verdict: partial recovery on a still-good benchmark. The small Euler–Lagrange / multiplier-identification region remains the most promising formal island here, while the direct-method existence node still looks too infrastructure-heavy and too prone to over-abstract formalization for the current worker.
+
+- `2026-04-06 22:25 PT` — `artifacts/manual-testing/run10-first-dirichlet-eigenfunction-gemini-aristotle-6`
+  - Benchmark quality: still a good benchmark in principle, since it separates the deep compactness/direct-method burden from the smaller but important attainment and Euler–Lagrange identification steps.
+  - Planner: produced a clean graph with a sensible decomposition into the existence-of-limit branch, the attainment branch, and the Euler–Lagrange branch.
+  - Formalizer: this is the strongest run10 artifact so far. It verified:
+    - `infimum_attained__formal_core`, a faithful local core for the attainment step showing that weak lower semicontinuity plus minimizing-sequence convergence force `dirichletEnergy Ω u1 = lambda1 Ω`, and
+    - `euler_lagrange_equation__formal_core`, a faithful local core for the algebraic multiplier-identification step that upgrades the Lagrange multiplier equation to the weak eigenvalue equation with eigenvalue `lambda1`.
+  - What went well: unlike the earlier run10s, this run certifies useful supporting cores on **both** main branches of the proof graph rather than only one side or none at all.
+  - What still went wrong: the hardest infrastructure-heavy steps remain informal:
+    - `existence_admissible_limit` is still not formalized, so the compactness / weak-convergence / strong \(L^2\) convergence step is missing;
+    - the Euler–Lagrange core still assumes the existence of a Lagrange multiplier equation rather than deriving it from constrained minimization.
+  - Comparison to earlier runs:
+    - better than `run10-first-dirichlet-eigenfunction-gemini-aristotle-3`, `-4`, and `-5`, because it now certifies two central local cores rather than one narrow shard or nothing;
+    - arguably better as a public-facing artifact than the original `run10-first-dirichlet-eigenfunction-aristotle`, because the verified nodes align more directly with the intended proof structure instead of relying on a finite-dimensional surrogate theorem.
+  - **Operational note:** **this run used `max_attempts=8` rather than the default `2`**.
+  - Verdict: strong partial success on a good benchmark, and the best run10 artifact so far. Still not a top showcase benchmark, because the deepest functional-analytic steps remain unverified, but now a genuinely convincing example of meaningful formal islands inside a larger informal proof.
+ 
 ## run11-two-point-log-sobolev
 
 - `2026-04-05 22:20-23:50 PT` — `artifacts/manual-testing/run11-two-point-log-sobolev-aristotle`
@@ -177,6 +252,19 @@ For each benchmark section:
   - Comparison to previous run: at least as strong mathematically, and arguably better as a showcase artifact because the graph is simpler and the verified nodes line up more directly with the human proof structure.
   - Verdict: one of the best runs so far, and a very strong candidate for a public-facing showcase benchmark. It demonstrates the repo’s core idea clearly and convincingly
 
+- `2026-04-06 20:23 PT` — `artifacts/manual-testing/run11-two-point-log-sobolev-claude-aristotle-4`
+  - Benchmark quality: still one of the strongest benchmarks in the suite. The global theorem is meaningful, but the proof reduces to a clean scalar argument with obvious local islands.
+  - Planner: again produced a strong proof graph, with the root reducing to the one-variable key lemma \(G(u)\ge 0\), and the convexity calculation sitting underneath that lemma.
+  - Formalizer: had another genuinely strong run. It verified:
+    - `key_lemma` as a full match for the main one-variable inequality \(G(u)\ge 0\) on \([0,2]\), and
+    - `convexity__formal_core` as a faithful certified core for the nonnegativity of the explicit second-derivative expression \(G''(u)\).
+  - What went well: the formalizer stayed in the correct theorem family and certified the main analytic burden of the proof, not just a distant analogue or a bookkeeping tail.
+  - Comparison to previous runs:
+    - stronger mathematically than the earliest run11 in some ways, because the key lemma itself is now verified directly;
+    - slightly less clean as a showcase artifact than `run11-two-point-log-sobolev-claude-aristotle-3`, since the root scalar inequality node is not itself verified and the graph is a bit more helper-layered again.
+  - **Operational note:** **this run used `max_attempts=4` rather than the default `2`**, and the extra retry budget mattered: `key_lemma` verified on attempt 2 and `convexity__formal_core` verified on attempt 3.
+  - Verdict: still one of the best runs in the repo, and a strong public-facing showcase benchmark. It also provides good evidence that extra retry budget can pay off on the right scalar-analysis benchmarks.
+
 ## run12-ito-taylor-expansion
 
 - `2026-04-06 17:35 PT` — `artifacts/manual-testing/run12-ito-taylor-expansion-gemini-aristotle-3`
@@ -189,13 +277,45 @@ For each benchmark section:
   - What still went wrong: nothing was verified, and the probabilistic node remains too abstraction-prone. The deterministic node is closer, but still fails on proof execution rather than theorem selection.
   - Verdict: useful diagnostic run, but not a showcase result. The benchmark should stay in the suite, with the main improvement priorities being better Lean execution on deterministic analysis and stronger theorem-shape discipline 
 
+- `2026-04-06 22:27 PT` — `artifacts/manual-testing/run12-ito-taylor-expansion-gemini-aristotle-4`
+  - Benchmark quality: still a good benchmark in principle, because it separates a deterministic Taylor-expansion island from a stochastic convergence node.
+  - Planner: again preserved the right proof structure, with `discrete_taylor_expansion` and `stochastic_convergence` feeding the Itô-formula root.
+  - Formalizer: still did not verify anything.
+    - `discrete_taylor_expansion` stayed in the correct deterministic theorem family and continued targeting the right Taylor-expansion identity, but failed Lean verification after many repair attempts on calculus/API/algebra issues around Taylor remainder lemmas, interval coercions (`Icc`/`uIcc`/`uIoo`), and telescoping-sum manipulations.
+    - `stochastic_convergence` again drifted into an abstract `Type*` probability-space theorem with generic processes and packaged convergence hypotheses, and was hard-rejected by the faithfulness guard on every attempt.
+  - What went well: the deterministic Taylor node still looks like the right formal island, and this run again confirms that the system recognizes that rather than replacing it with a totally different theorem.
+  - What still went wrong: no artifact was verified, and the extra retry budget did not help enough. The stochastic node remains too abstraction-prone, while the deterministic node remains stuck on Lean execution rather than theorem choice.
+  - Comparison to previous run: broadly similar to `run12-ito-taylor-expansion-gemini-aristotle-3`, but now with stronger evidence that the deterministic node is limited by proof execution rather than by faithfulness, since it stayed on-target for many attempts without closing.
+  - **Operational note:** **this run used `max_attempts=8` rather than the default `2`**. The larger retry budget did not produce a verified result, which suggests that for this benchmark the current bottleneck is not just insufficient retry count.
+  - Verdict: useful diagnostic run, but still not a showcase result. The benchmark should remain in the suite, with the main improvement priorities still being better Lean execution on deterministic analysis and stronger theorem-shape discipline on the stochastic node.
+
 ## run13-pinsker-via-bernoulli-core
+
+- `2026-04-05 22:04 PT` — `artifacts/manual-testing/run13-pinsker-via-bernoulli-core-claude-aristotle-2`
+  - Benchmark quality: good benchmark, because the proof cleanly separates a heavy measure-theoretic reduction step (DPI) from a very natural scalar formal island (the Bernoulli inequality).
+  - Planner: produced a sensible graph with the right decomposition: DPI plus Bernoulli scalar inequality feeding the Pinsker root theorem.
+  - Formalizer:
+    - `dpi` failed in the familiar way, drifting to an abstract generic `Type*` measurable-space theorem and getting hard-rejected by the faithfulness guard.
+    - `bernoulli_ineq__formal_core` verified successfully and proved the exact scalar inequality
+      \(p\log(p/q) + (1-p)\log((1-p)/(1-q)) \ge 2(p-q)^2\).
+  - What went well: the Bernoulli scalar step is exactly the right local island for this benchmark, and Aristotle did certify it.
+  - What still looked off: the verified Bernoulli theorem was represented as a narrower supporting core rather than as the full scalar node, even though its statement essentially matched the whole Bernoulli inequality.
+  - Verdict: strong partial success on a good benchmark. Not yet a full showcase for the global theorem, but already a convincing example of a meaningful local island being certified inside a larger proof.
+
+- `2026-04-06 15:38 PT` — `artifacts/manual-testing/run13-pinsker-via-bernoulli-core-gemini-aristotle-3`
+  - Benchmark quality: still a strong benchmark for the same reason — the Bernoulli scalar inequality is an obvious and valuable formal island inside a larger measure-theoretic argument.
+  - Planner: again produced a good graph, with the Bernoulli scalar inequality isolated as the central local target and the Pinsker root depending on it.
+  - Formalizer:
+    - `pinskers_inequality` failed, again drifting into a very abstract measure-theoretic theorem over arbitrary measurable spaces and getting rejected by the faithfulness guard.
+    - `bernoulli_scalar_inequality` verified successfully and is now classified directly as a `full_match` for the scalar node.
+  - What improved versus the previous run: the artifact is semantically cleaner. The Bernoulli inequality is now represented as the verified node itself, rather than needing a separate “certified core” child to carry the real theorem.
+  - Comparison to previous run: better as a public-facing artifact, even if mathematically similar, because the reporting now lines up more directly with what was actually proved.
+  - **Operational note:** **this latest run used `max_attempts=4` rather than the default `2`**.
+  - Verdict: one of the better partial-success benchmarks in the suite. The global Pinsker theorem still remains out of reach for the current worker, but the Bernoulli scalar island is now a clean and convincing certified result.
 
 ## run14-vandermonde-convolution
 
-## run14-vandermonde-convolution-identity
-
-- `2026-04-06 18:57 PT` — `artifacts/manual-testing/run14-vandermonde-convolution-identity-claude-aristotle`
+- `2026-04-06 18:57 PT` — `artifacts/manual-testing/run14-vandermonde-convolution-claude-aristotle`
   - Benchmark quality: acceptable as a small sanity-check benchmark, but weak as a flagship Formal Islands example. The theorem is very simple, and the theorem proof given and the graph contain two complete proof paths that both establish the same final identity.
   - Planner: produced a clean graph with two proof branches: a generating-function proof and a combinatorial proof.
   - Formalizer:
@@ -220,3 +340,22 @@ For each benchmark section:
   - Faithfulness issue: the guard behaved reasonably on the root node. The real problem is not that Lean needed `Type*`; it is that Aristotle unnecessarily generalized into a library-style theorem rather than staying with the benchmark’s concrete finite-dimensional setting.
   - Reliability issue: any Aristotle-side claim that the proof “compiles cleanly” should not be trusted unless it matches the pipeline’s stored `verification` record. In this run, the authoritative verification result says the special-case file failed Lean compilation and the root was rejected before final verification.
   - Verdict: useful diagnostic run on a good benchmark, but not a success. The benchmark should stay in the suite, with the main next improvements being stronger anti-generalization pressure on theorem statements and better concrete use of Mathlib’s matrix APIs
+
+- `2026-04-06 22:26 PT` — `artifacts/manual-testing/run15-matrix-determinant-lemma-claude-aristotle-2`
+  - Benchmark quality: good benchmark in principle. The special case `det(I + uv^T) = 1 + v^T u` is the right finite-dimensional algebraic island, and the full matrix determinant lemma is a natural one-step wrapper once that core is established.
+  - Planner: again produced a sensible two-node graph, with the rank-one special case feeding the full determinant lemma.
+  - Formalizer: this time had a genuinely strong run. It verified:
+    - `special_case` as a **full match** for the rank-one identity `det(I + uv^T) = 1 + v^T u`, and
+    - `root` as a **full match** for the full matrix determinant lemma `det(A + uv^T) = det(A)(1 + v^T A⁻¹ u)`.
+  - What improved versus the previous run:
+    - the system eventually escaped the unnecessary `Type*` / library-style over-generalization that caused hard rejections before;
+    - it also repaired the earlier concrete matrix-API mistakes and successfully used the appropriate Mathlib determinant lemmas.
+  - Comparison to previous run:
+    - much better than `run15-matrix-determinant-lemma-claude-aristotle`, where the special case never compiled and the root theorem was hard-rejected as over-generalized;
+    - this new run turns the benchmark from a diagnostic example into a real success artifact.
+  - **Operational note:** **this run used `max_attempts=8` rather than the default `2`**. The extra retry budget clearly mattered: `special_case` verified on attempt 4 and `root` verified on attempt 5, after earlier failed attempts due to both over-generalization and Lean engineering issues.
+  - Verdict: strong success, and one of the cleaner algebraic showcase benchmarks in the suite. This is a good public-facing example of the Formal Islands workflow on a benchmark with strong Mathlib support.
+
+## run16-hoeffding-lemma
+
+## run17-gershgorin-circle

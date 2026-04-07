@@ -52,7 +52,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
         processEscapes: true
       }},
       options: {{
-        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'svg']
       }}
     }};
   </script>
@@ -74,7 +74,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       --checked-soft: #e6f5eb;
       --edge: #b3aa9f;
       --status-informal-stroke: #8c4f2b;
-      --status-informal-fill: rgba(255, 250, 241, 0.98);
+      --status-informal-fill: #fffaf1;
       --status-candidate-stroke: #d97c2b;
       --status-candidate-fill: #fff0da;
       --status-verified-stroke: #2f8f5b;
@@ -103,7 +103,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
         --checked-soft: #213126;
         --edge: #8f8172;
         --status-informal-stroke: #d69760;
-        --status-informal-fill: rgba(46, 34, 26, 0.96);
+        --status-informal-fill: #2e221a;
         --status-candidate-stroke: #f0a64e;
         --status-candidate-fill: #3f2d18;
         --status-verified-stroke: #65c08a;
@@ -491,7 +491,7 @@ def _render_checklist_item(obligation: ReviewObligation, graph: ProofGraph) -> s
         <input id="{control_id}" type="checkbox" />
         <span>
           <span class="checklist-kind">{escape(obligation.kind)}</span><br />
-          {escape(obligation.text)}
+          {_render_inline_code_html(obligation.text)}
           {code_block}
           <div class="checklist-nodes">Related nodes: {node_links}</div>
         </span>
@@ -511,7 +511,7 @@ def _render_node_section(node: ProofNode, graph: ProofGraph) -> str:
         candidate_block = (
             "<p class=\"meta\">"
             f"Formalization priority: {node.formalization_priority}. "
-            f"Rationale: {escape(node.formalization_rationale)}"
+            f"Rationale: {_render_inline_code_html(node.formalization_rationale)}"
             "</p>"
         )
 
@@ -549,9 +549,9 @@ def _render_node_section(node: ProofNode, graph: ProofGraph) -> str:
         )
         coverage_note = f"<p><strong>Coverage:</strong> {escape(coverage_label)}</p>"
         if reason:
-            coverage_note += f"<p class=\"meta\">{escape(reason)}</p>"
+            coverage_note += f"<p class=\"meta\">{_render_inline_code_html(reason)}</p>"
         elif node.formal_artifact.faithfulness_notes:
-            coverage_note += f"<p class=\"meta\">{escape(node.formal_artifact.faithfulness_notes)}</p>"
+            coverage_note += f"<p class=\"meta\">{_render_inline_code_html(node.formal_artifact.faithfulness_notes)}</p>"
         formal_block = f"""
         <h4>Formal Artifact</h4>
         <p><strong>Lean theorem name:</strong> {escape(node.formal_artifact.lean_theorem_name)}</p>
