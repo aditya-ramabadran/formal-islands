@@ -102,6 +102,33 @@ p:last-child { margin-bottom: 0; }
   font-size: 0.95rem;
 }
 
+/* ── Value bullets ──────────────────────────────────────────── */
+.value-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin: 1rem 0;
+}
+
+.value-list li {
+  padding-left: 1.25rem;
+  position: relative;
+  font-size: 0.95rem;
+}
+
+.value-list li::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.value-list li strong {
+  color: var(--text);
+}
+
 /* ── Gallery ────────────────────────────────────────────────── */
 .gallery {
   display: grid;
@@ -130,7 +157,6 @@ p:last-child { margin-bottom: 0; }
   justify-content: center;
   border-bottom: 1px solid var(--border);
   overflow: hidden;
-  position: relative;
 }
 
 .card-thumb img {
@@ -237,29 +263,67 @@ footer {
 </header>
 
 <section>
-  <h2>What Is This?</h2>
+  <h2>The Problem</h2>
   <p>
-    Most mathematical proofs are written informally — definitions are left implicit, steps rely
-    on shared notation, and the overall argument is human-readable but not machine-checkable.
-    Full formalization in a proof assistant like Lean is powerful but expensive: it often requires
-    months of infrastructure work just to state a theorem in a way the system accepts.
+    Current AI-for-math systems face a bottleneck from two directions at once.
   </p>
   <p>
-    Formal Islands targets the middle ground. Given a theorem statement and an informal proof,
-    the pipeline plans a small proof graph, identifies which steps are concrete enough to certify
-    today, and runs a Lean verification attempt on each one. The result is a mixed artifact:
-    parts of the proof are formally verified; the rest is clearly labelled as informal and
-    given an honest review checklist.
+    Strong informal systems — language models doing natural-language mathematical reasoning —
+    can handle broad, flexible proof search. But they can also drift semantically, prove
+    the wrong thing, or produce arguments whose correctness is hard for humans to audit.
+    As these systems improve, the proofs they produce will get <em>longer and harder to
+    check</em>, not easier.
+  </p>
+  <p>
+    Fully formal systems like Lean give much stronger guarantees, but in many domains —
+    PDEs, geometric measure theory, spectral theory — you often cannot even
+    <em>state</em> the intended theorem in Lean yet, let alone prove it. This caps what
+    fully formal AI theorem-proving can realistically achieve today.
+  </p>
+  <p>
+    Formal Islands is a near-term compromise: let an informal system handle the broad
+    reasoning, then identify the local claims that really are within current Lean coverage
+    and certify those. Most of the proof stays informal, but important nodes inside it
+    are genuinely machine-checked.
   </p>
   <div class="callout">
-    A <strong>formal island</strong> is a node in the proof graph that has been independently
-    verified in Lean — certified in isolation, without requiring the rest of the proof to be
-    formalized first.
+    A <strong>formal island</strong> is a proof node independently verified in Lean —
+    certified in isolation, without requiring the rest of the proof to be formalized first.
   </div>
-  <p>
-    This is especially useful for analysis, PDEs, and variational arguments where the global
-    proof is too large to formalize end-to-end, but local steps are concrete enough to verify now.
-  </p>
+</section>
+
+<section>
+  <h2>Why This Matters</h2>
+  <ul class="value-list">
+    <li>
+      <strong>Tractable human review.</strong>
+      Instead of auditing one long informal proof end-to-end, a reviewer can focus on the
+      uncertified gaps while knowing the key lemmas are machine-checked. The generated report
+      makes this explicit with a per-node review checklist.
+    </li>
+    <li>
+      <strong>Honest accounting.</strong>
+      The report distinguishes full-node verification, narrower certified supporting cores,
+      and informal steps. No overclaiming.
+    </li>
+    <li>
+      <strong>Faithfulness as a first-class concern.</strong>
+      A proof that compiles in Lean is not automatically a proof of the right thing. The
+      pipeline uses heuristic checks and LLM-assisted semantic review to guard against
+      statement drift, and surfaces the remaining verification burden explicitly to the human reviewer.
+    </li>
+    <li>
+      <strong>Scales as infrastructure improves.</strong>
+      As Mathlib expands, the same architecture certifies larger portions of proofs —
+      approaching full formalization wherever that becomes realistic, while remaining
+      useful in the meantime.
+    </li>
+    <li>
+      <strong>A natural path for combining systems.</strong>
+      Broad informal reasoning from language models; AlphaProof-style formal search on
+      the formalizable subproblems. These aren't competing approaches — they compose.
+    </li>
+  </ul>
 </section>
 
 <section>
@@ -275,10 +339,10 @@ footer {
         <div class="card-statement">
           Entropy of a function on the two-point space {−1,1} is bounded by its discrete gradient energy.
         </div>
-        <span class="verified-badge">✓ 2 nodes verified</span>
+        <span class="verified-badge">✓ 2 of 3 nodes verified</span>
         <div class="card-desc">
           The scalar log-Sobolev inequality and the key one-dimensional non-negativity lemma
-          <em>G(u) ≥ 0</em> are both independently certified in Lean.
+          G(u) ≥ 0 are both independently certified in Lean.
         </div>
         <a class="card-link" href="reports/two_point_log_sobolev.html">View report →</a>
       </div>
@@ -294,7 +358,7 @@ footer {
           Two solutions of the heat equation on (0,L) with matching initial and boundary
           data must be identical.
         </div>
-        <span class="verified-badge">✓ 2 nodes verified</span>
+        <span class="verified-badge">✓ 2 of 3 nodes verified</span>
         <div class="card-desc">
           The energy dissipation lemma — showing the energy of the difference solution is
           non-increasing — is fully verified, along with a certified local core
@@ -316,9 +380,9 @@ footer {
         </div>
         <span class="verified-badge">✓ 2 of 2 nodes verified</span>
         <div class="card-desc">
-          Both nodes in the proof graph — the rank-one identity base case and the
-          full matrix determinant lemma — are formally closed. End-to-end formal
-          certification on a Mathlib-supported benchmark.
+          Both nodes in the proof graph are formally closed — the rank-one base case
+          and the full determinant lemma. End-to-end formal certification on a
+          Mathlib-supported benchmark.
         </div>
         <a class="card-link" href="reports/matrix_determinant_lemma.html">View report →</a>
       </div>
@@ -332,9 +396,9 @@ footer {
         <div class="card-title">Hoeffding's Lemma</div>
         <div class="card-statement">
           For a bounded mean-zero random variable X with a ≤ X ≤ b a.s.,
-          the log-MGF satisfies log E[e<sup>tX</sup>] ≤ t²(b−a)²/8.
+          log E[e<sup>tX</sup>] ≤ t²(b−a)²/8.
         </div>
-        <span class="verified-badge">✓ 2 nodes verified</span>
+        <span class="verified-badge">✓ 2 of 3 nodes verified</span>
         <div class="card-desc">
           The expectation bound via convexity and the log-MGF function bound are
           both independently verified — together covering nearly all of the
@@ -357,8 +421,9 @@ python3 -m venv .venv
   <p>
     You'll also need a local Lean/Mathlib workspace (see the
     <a href="https://github.com/aditya-ramabadran/formal-islands#setup">full setup guide</a>)
-    and at least one backend — Claude Code, Gemini, or Codex for planning;
-    Aristotle for formalization.
+    and at least one backend. For planning: Claude Code, Gemini, or Codex.
+    For formalization: Aristotle (recommended), or any of those same CLI backends used
+    as an autonomous agentic Lean worker.
   </p>
   <p>Run the pipeline interactively on your own theorem:</p>
 <pre><code>formal-islands new --backends claude/aristotle</code></pre>

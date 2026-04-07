@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Formal Islands"
+abstract: >
+  Formal Islands is a prototype system for certifying local steps inside
+  natural-language mathematical proofs. Given a theorem and an informal proof,
+  the pipeline plans a proof graph, identifies candidate sublemmas that are
+  within current Lean/Mathlib coverage, and verifies those locally in Lean 4.
+  The result is a mixed artifact: parts of the proof are formally certified;
+  the rest is clearly labelled as informal with an explicit review checklist
+  describing what remains for human verification.
+authors:
+  - family-names: Ramabadran
+    given-names: Aditya
+    alias: adihaya
+repository-code: "https://github.com/aditya-ramabadran/formal-islands"
+license: MIT
+version: "0.1.0"

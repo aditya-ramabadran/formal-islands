@@ -660,7 +660,7 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
       <rect class="graph-node-box status-formal-verified" x="144.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
       <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="268" r="4.6"></circle>
       <text class="graph-node-title"><tspan x="210.0" y="278">Core 1D</tspan>
-<tspan x="210.0" y="290">inequality \(G(…</tspan></text>
+<tspan x="210.0" y="290">inequality G(u)…</tspan></text>
       <text class="graph-node-id" x="210.0" y="304">core_1d</text>
     </a>
     </g>
@@ -759,7 +759,7 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
       <div class="math-text">Set \(a:=f(1)\) and \(b:=f(-1)\). Since \(\mu\) is uniform, \(\mathbb{E}_\mu[f^2]=(a^2+b^2)/2\) and \(\mathbb{E}_\mu[f^2\log f^2]=(a^2\log(a^2)+b^2\log(b^2))/2\). Multiplying both sides of \(\operatorname{Ent}_\mu(f^2)\le\tfrac12(a-b)^2\) by 2 shows the claim is equivalent to the scalar inequality \(a^2\log(a^2)+b^2\log(b^2)-(a^2+b^2)\log\!\bigl(\tfrac{a^2+b^2}{2}\bigr)\le(a-b)^2\) for all \(a,b\in\mathbb{R}\). That scalar inequality is established in the node below.</div>
       
       <p><strong>Remaining proof burden (assuming results of <a class="node-jump" href="#node-scalar_ineq">scalar_ineq</a>):</strong></p>
-      <div class="math-text">With <code class="inline-code">scalar_ineq_aristotle</code> in hand, the parent theorem reduces to a purely assembly-level argument, but several concrete steps remain informal. First, one must formally unfold the definition of the entropy functional Ent_μ(f²) under the uniform measure μ on {-1,1}, expressing it explicitly as (a²log(a²)+b²log(b²))/2 − ((a²+b²)/2)·log((a²+b²)/2) where a=f(1) and b=f(-1). Second, one must carry out the algebraic rewriting that shows Ent_μ(f²) ≤ ½(a−b)² is equivalent—after multiplying both sides by 2—to exactly the scalar inequality certified by the child, i.e., a²log(a²)+b²log(b²)−(a²+b²)·log((a²+b²)/2) ≤ (a−b)². Finally, a human reviewer must check the side condition that this equivalence holds for the convention 0·log 0 = 0 used in Mathlib, and assemble the chain: unfold entropy → algebraic equivalence → apply <code class="inline-code">scalar_ineq_aristotle</code> → conclude the parent bound. No further analytic content is needed beyond the child result; the remaining burden is entirely definitional unfolding and algebraic assembly at the parent level.</div>
+      <div class="math-text">With <code class="inline-code">scalar_ineq_aristotle</code> in hand, the parent theorem reduces to a pure assembly and rewriting task. Concretely, a human still needs to: (1) unfold the definition of entropy Ent_μ(f²) under the uniform measure on {−1,1}, verifying that 𝔼_μ[f²] = (a²+b²)/2 and 𝔼_μ[f²log f²] = (a²log(a²)+b²log(b²))/2 where a=f(1), b=f(−1); (2) perform the factor-of-2 rewrite showing that Ent_μ(f²) ≤ ½(a−b)² is equivalent to a²log(a²)+b²log(b²)−(a²+b²)log((a²+b²)/2) ≤ (a−b)²; and (3) invoke <code class="inline-code">scalar_ineq_aristotle</code> to close the goal. The parent is thus almost entirely an assembly theorem: no new analytic content is needed beyond these bookkeeping rewrites and the substitution a=f(1), b=f(−1).</div>
     
       
     </article>

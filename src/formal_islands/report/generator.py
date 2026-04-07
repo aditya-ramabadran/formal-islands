@@ -842,10 +842,26 @@ def _render_edge(edge: ProofEdge, layout: dict) -> str:
     )
 
 
+def _strip_latex_delimiters(text: str) -> str:
+    """Remove LaTeX markup so SVG text is legible plain text."""
+    # Strip math environment delimiters
+    text = re.sub(r"\\\[|\\\]|\\\(|\\\)", "", text)
+    # Strip pure size/grouping commands that add no content (\bigl, \bigr, \left, \right, etc.)
+    text = re.sub(r"\\(?:bigl?r?|Bigl?r?|left|right|,|;|!|quad|qquad)\b", "", text)
+    # Strip curly braces (LaTeX grouping)
+    text = re.sub(r"[{}]", "", text)
+    # Remove backslash from remaining \commandname sequences (e.g. \det → det)
+    text = re.sub(r"\\([A-Za-z]+)", r"\1", text)
+    # Clean up any stray lone backslashes
+    text = text.replace("\\", "")
+    return text.strip()
+
+
 def _render_node(node: ProofNode, layout: dict) -> str:
     x, y = layout["positions"][node.id]
     cx = x + NODE_WIDTH / 2
-    title_lines = _wrap_title_lines(node.display_label or node.title)
+    svg_label = _strip_latex_delimiters(node.display_label or node.title)
+    title_lines = _wrap_title_lines(svg_label)
     title_y_positions = _title_y_positions(y, len(title_lines))
     node_key = _node_class(node.id)
     visual_status = _graph_visual_status(node)
