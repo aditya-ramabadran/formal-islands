@@ -379,4 +379,5 @@ def test_derive_review_obligations_words_supporting_sublemma_honestly() -> None:
     boundary = next(item for item in obligations if item.kind == "boundary_interface_check")
 
     assert "narrower verified lean supporting sublemma" in semantic.text.lower()
+    assert "statement '" not in semantic.text.lower()
     assert "without overclaiming full coverage" in boundary.text.lower()

@@ -32,13 +32,11 @@ def derive_review_obligations(graph: ProofGraph) -> list[ReviewObligation]:
             if node.formal_artifact.faithfulness_classification == "concrete_sublemma":
                 text = (
                     f"Check that node '{node.id}' ({node.title}) honestly represents a narrower verified Lean "
-                    f"supporting sublemma with statement '{node.formal_artifact.lean_statement}', rather than "
-                    "overclaiming full coverage of its parent informal step."
+                    "supporting sublemma, rather than overclaiming full coverage of its parent informal step."
                 )
             else:
                 text = (
-                    f"Check that node '{node.id}' ({node.title}) matches the verified Lean "
-                    f"statement '{node.formal_artifact.lean_statement}'."
+                    f"Check that node '{node.id}' ({node.title}) matches the verified Lean theorem for this node."
                 )
             obligations.append(
                 ReviewObligation(

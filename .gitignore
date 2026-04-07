@@ -15,5 +15,6 @@ lean_project/FormalIslands/Generated/*
 lean_project/test_*.lean
 
 artifacts/
+dev/
 .env
 auth.json
