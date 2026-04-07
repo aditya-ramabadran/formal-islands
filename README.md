@@ -1,6 +1,8 @@
 # Formal Islands
 
-**Certified local cores inside natural-language mathematical proofs.**
+**Partial formal certification for natural-language mathematical proofs.**
+
+Formal Islands turns a theorem statement plus informal proof into a proof graph with Lean-verified nodes and a human-readable report. The output is a mixed artifact that makes the formally checked pieces, the remaining informal gaps, and the review burden explicit.
 
 ## What Is This?
 
@@ -12,9 +14,7 @@ Fully formal systems like Lean give much stronger guarantees, but they are bottl
 
 Formal Islands is built around a near-term compromise: let an informal system handle the broad reasoning and proof search, then extract the smaller local claims that really are within current formal coverage and certify those in Lean. The result is a **mixed artifact**: most of the proof remains informal, but important **formal islands** inside it are genuinely machine-checked.
 
-A **formal island** is a proof node independently verified in Lean, certified in isolation, without requiring the rest of the proof to be formalized first.
-
-This is more useful than it might sound:
+A **formal island** is a proof node independently verified in Lean, certified in isolation, without requiring the rest of the proof to be formalized first. The benefits of this system:
 
 - **It makes human review tractable.** Instead of auditing one long informal proof monolithically, a reviewer can focus on the uncertified gaps while knowing that key lemmas are already verified. The generated report makes this explicit: each uncertified claim gets a concrete review checklist.
 - **It gives an honest answer to "what exactly was checked?"** The report distinguishes full-node verification, narrower certified supporting cores, and informal steps, with no overclaiming.

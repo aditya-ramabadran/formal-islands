@@ -605,6 +605,8 @@ def test_lean_verifier_captures_command_result(tmp_path: Path) -> None:
     assert result.status == "verified"
     assert result.exit_code == 0
     assert result.artifact_path is not None
+    assert "lean_project/FormalIslands/Generated/" in result.command
+    assert "/Users/" not in result.command
 
 
 def test_lean_verifier_handles_relative_workspace_root(
@@ -637,6 +639,7 @@ def test_lean_verifier_handles_relative_workspace_root(
     )
 
     assert result.status == "verified"
+    assert "lean_project/FormalIslands/Generated/" in result.command
 
 
 def test_lean_verifier_verifies_existing_file(tmp_path: Path) -> None:
@@ -660,6 +663,7 @@ def test_lean_verifier_verifies_existing_file(tmp_path: Path) -> None:
     result = verifier.verify_existing_file(file_path=worker_file, attempt_number=1)
 
     assert result.status == "verified"
+    assert result.command.startswith("lake env lean lean_project/")
     assert result.artifact_path == str(worker_file.resolve())
 
 

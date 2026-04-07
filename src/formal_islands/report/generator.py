@@ -6,6 +6,7 @@ import json
 import re
 from collections import Counter, defaultdict, deque
 from html import escape
+from pathlib import Path
 
 from formal_islands.formalization.pipeline import parse_faithfulness_notes
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode, ReviewObligation
@@ -24,7 +25,7 @@ def export_report_bundle(graph: ProofGraph, obligations: list[ReviewObligation])
     """Export a JSON-serializable report bundle."""
 
     return {
-        "graph": graph.model_dump(mode="json"),
+        "graph": _sanitize_report_payload(graph.model_dump(mode="json")),
         "review_obligations": [obligation.model_dump(mode="json") for obligation in obligations],
     }
 
@@ -592,7 +593,7 @@ def _render_node_section(node: ProofNode, graph: ProofGraph) -> str:
           {_render_lean_code_block(node.formal_artifact.lean_statement)}
         </div>
         <p><strong>Verification status:</strong> {escape(verification.status)}</p>
-        <p><strong>Verification command:</strong> <code>{escape(verification.command)}</code></p>
+        <p><strong>Verification command:</strong> <code>{escape(_display_verification_command(verification))}</code></p>
         <details>
           <summary>Lean code</summary>
           {_render_lean_code_block(node.formal_artifact.lean_code)}
@@ -657,6 +658,51 @@ def _render_remaining_proof_burden_section(node: ProofNode, graph: ProofGraph) -
       <p><strong>Remaining proof burden (assuming results of {child_links}):</strong></p>
       {_render_math_text(node.remaining_proof_burden)}
     """
+
+
+def _display_verification_command(verification: object) -> str:
+    """Render verification commands using repo-relative paths when possible."""
+
+    command = getattr(verification, "command", "")
+    artifact_path = getattr(verification, "artifact_path", None)
+    if not isinstance(command, str) or not command:
+        return ""
+    if not isinstance(artifact_path, str) or not artifact_path:
+        return command
+    repo_relative = _repo_relative_artifact_path(artifact_path)
+    if repo_relative and artifact_path in command:
+        return command.replace(artifact_path, repo_relative)
+    return command
+
+
+def _repo_relative_artifact_path(artifact_path: str) -> str | None:
+    """Map an absolute artifact path into a repo-relative path when possible."""
+
+    path = Path(artifact_path)
+    parts = path.parts
+    if "lean_project" not in parts:
+        return None
+    anchor_index = parts.index("lean_project")
+    return Path(*parts[anchor_index:]).as_posix()
+
+
+def _sanitize_report_payload(value: object) -> object:
+    """Recursively scrub public report payloads before serialization."""
+
+    if isinstance(value, dict):
+        sanitized = {key: _sanitize_report_payload(inner_value) for key, inner_value in value.items()}
+        command = sanitized.get("command")
+        artifact_path = sanitized.get("artifact_path")
+        if isinstance(command, str) and isinstance(artifact_path, str):
+            repo_relative = _repo_relative_artifact_path(artifact_path)
+            if repo_relative:
+                sanitized["artifact_path"] = repo_relative
+            if repo_relative and artifact_path in command:
+                sanitized["command"] = command.replace(artifact_path, repo_relative)
+        return sanitized
+    if isinstance(value, list):
+        return [_sanitize_report_payload(item) for item in value]
+    return value
 
 
 def _render_math_text(text: str) -> str:

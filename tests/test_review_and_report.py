@@ -39,6 +39,56 @@ def test_export_report_bundle_is_json_serializable() -> None:
     assert "formal_verified" in serialized
 
 
+def test_render_html_report_sanitizes_verification_command_paths() -> None:
+    artifact_path = (
+        "/Users/example/GitHub/formal-islands/lean_project/"
+        "FormalIslands/Generated/test_attempt_1.lean"
+    )
+    artifact = FormalArtifact(
+        lean_theorem_name="child_core",
+        lean_statement="theorem child_core : True",
+        lean_code="theorem child_core : True := by trivial",
+        faithfulness_classification="full_node",
+        verification={
+            "status": "verified",
+            "command": f"lake env lean {artifact_path}",
+            "artifact_path": artifact_path,
+        },
+    )
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Parent theorem",
+                informal_statement="Show the parent theorem.",
+                informal_proof_text="Use n1.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Verified child",
+                informal_statement="Child.",
+                informal_proof_text="Core.",
+                status="formal_verified",
+                formal_artifact=artifact,
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1")],
+    )
+    obligations = derive_review_obligations(graph)
+
+    bundle = export_report_bundle(graph, obligations)
+    html = render_html_report(graph, obligations)
+    serialized = json.dumps(bundle)
+
+    assert artifact_path not in serialized
+    assert artifact_path not in html
+    assert "lean_project/FormalIslands/Generated/test_attempt_1.lean" in serialized
+    assert "lean_project/FormalIslands/Generated/test_attempt_1.lean" in html
+
+
 def test_render_html_report_includes_core_sections() -> None:
     graph = build_example_graph()
     obligations = derive_review_obligations(graph)

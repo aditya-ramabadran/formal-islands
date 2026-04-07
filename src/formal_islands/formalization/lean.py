@@ -118,6 +118,12 @@ class LeanVerifier:
             lean_code=lean_code,
         ).resolve()
         command = [self._lake_executable(), "env", "lean", str(scratch_path)]
+        display_command = [
+            self._lake_executable(),
+            "env",
+            "lean",
+            self._repo_relative_path(scratch_path, workspace_root),
+        ]
 
         start = time.monotonic()
         try:
@@ -153,7 +159,7 @@ class LeanVerifier:
 
         result = VerificationResult(
             status="verified" if completed.returncode == 0 else "failed",
-            command=" ".join(command),
+            command=" ".join(display_command),
             exit_code=completed.returncode,
             stdout=completed.stdout,
             stderr=completed.stderr,
@@ -176,6 +182,12 @@ class LeanVerifier:
             f"running local Lean verification for {resolved_path} (attempt {attempt_number})"
         )
         command = [self._lake_executable(), "env", "lean", str(resolved_path)]
+        display_command = [
+            self._lake_executable(),
+            "env",
+            "lean",
+            self._repo_relative_path(resolved_path, workspace_root),
+        ]
 
         start = time.monotonic()
         try:
@@ -211,7 +223,7 @@ class LeanVerifier:
 
         result = VerificationResult(
             status="verified" if completed.returncode == 0 else "failed",
-            command=" ".join(command),
+            command=" ".join(display_command),
             exit_code=completed.returncode,
             stdout=completed.stdout,
             stderr=completed.stderr,
@@ -224,3 +236,13 @@ class LeanVerifier:
             f"with status {result.status}"
         )
         return result
+
+    @staticmethod
+    def _repo_relative_path(path: Path, workspace_root: Path) -> str:
+        """Render a path relative to the repo root for public-facing display."""
+
+        try:
+            relative_to_workspace = path.relative_to(workspace_root)
+        except ValueError:
+            return path.as_posix()
+        return (Path("lean_project") / relative_to_workspace).as_posix()

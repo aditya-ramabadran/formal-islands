@@ -195,16 +195,24 @@ p:last-child { margin-bottom: 0; }
   justify-content: center;
   border-bottom: 1px solid var(--border);
   overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 
 @media (prefers-color-scheme: dark) {
   .card-thumb { background: #221e16; }
 }
 
+.card-thumb:hover img {
+  transform: scale(1.01);
+}
+
 .card-thumb img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  transition: transform 0.15s ease;
 }
 
 .card-body {
@@ -267,6 +275,61 @@ p:last-child { margin-bottom: 0; }
   border-color: var(--accent);
 }
 
+/* ── Workflow strip ─────────────────────────────────────────── */
+.workflow-strip {
+  margin-top: 2rem;
+  padding: 1.1rem 1.1rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.35));
+}
+
+@media (prefers-color-scheme: dark) {
+  .workflow-strip {
+    background: linear-gradient(180deg, rgba(39,31,25,0.82), rgba(32,25,20,0.78));
+  }
+}
+
+.workflow-strip h2 {
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+}
+
+.workflow-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.workflow-step {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 0.9rem;
+  background: var(--panel);
+}
+
+.workflow-step .step-kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.workflow-step .step-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+
+.workflow-step p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
 /* ── Quick start ─────────────────────────────────────────────── */
 pre {
   background: var(--bg-code);
@@ -295,7 +358,7 @@ footer {
 
 <header>
   <div class="site-title">Formal Islands</div>
-  <div class="tagline">Certified local cores inside natural-language mathematical proofs</div>
+  <div class="tagline">Lean-checked islands inside natural-language mathematical proofs</div>
   <div class="header-author">Aditya Ramabadran</div>
   <div class="header-links">
     <a class="header-btn" href="https://github.com/aditya-ramabadran/formal-islands" target="_blank">
@@ -315,6 +378,15 @@ footer {
 </header>
 
 <section>
+  <h2>What Formal Islands Produces</h2>
+  <p>
+    Give the system a theorem statement and an informal proof, and it produces a proof graph with
+    Lean-verified nodes plus a report that shows which parts are certified and which parts still need
+    human review. 
+  </p>
+</section>
+
+<section>
   <h2>The Problem</h2>
   <p>
     Current AI-for-math systems face a bottleneck from two directions:
@@ -327,10 +399,10 @@ footer {
     check</em>, not easier.
   </p>
   <p>
-    Fully formal systems like Lean give much stronger guarantees, but in many domains
-    like PDEs, geometric measure theory, and spectral theory, you often cannot even
+    Fully formal systems that use Lean give much stronger guarantees, but in many domains
+    (e.g., PDEs, geometric measure theory, spectral theory), you often can't even
     <em>state</em> the intended theorem in Lean yet, let alone prove it. This caps what
-    fully formal AI theorem-proving can realistically achieve today.
+    fully formal AI theorem-proving can achieve today.
   </p>
   <p>
     Formal Islands is a near-term compromise: let an informal system handle the broad
@@ -377,21 +449,47 @@ footer {
   </ul>
 </section>
 
+<section class="workflow-strip">
+  <h2>How It Works</h2>
+  <div class="workflow-steps">
+    <div class="workflow-step">
+      <div class="step-kicker">1</div>
+      <div class="step-title">Plan</div>
+      <p>A planning backend LLM reads the theorem and informal proof, then builds a compact proof graph.</p>
+    </div>
+    <div class="workflow-step">
+      <div class="step-kicker">2</div>
+      <div class="step-title">Select</div>
+      <p>The system ranks candidate nodes by how concrete and Lean-formalizable they are.</p>
+    </div>
+    <div class="workflow-step">
+      <div class="step-kicker">3</div>
+      <div class="step-title">Formalize</div>
+      <p>An agentic Lean worker writes and repairs proofs for the chosen nodes (autoformalizer of your choice).</p>
+    </div>
+    <div class="workflow-step">
+      <div class="step-kicker">4</div>
+      <div class="step-title">Report</div>
+      <p>The pipeline produces an HTML report with verified nodes, logs, and the remaining proof burden (human review checklist).</p>
+    </div>
+  </div>
+</section>
+
 <section>
   <h2>Featured Examples</h2>
-  <p style="margin-bottom: 1.25rem;">Each of these reports was produced entirely by this system. Given only the theorem statement and an informal proof as input, the pipeline planned the proof graph, selected candidates, ran Lean verification, and generated the report automatically.</p>
+  <p style="margin-bottom: 1.25rem;">Each of these reports was produced entirely by this system. Given only the theorem statement and an informal proof as input, the pipeline planned the proof graph, selected candidates, ran Lean verification, and generated the report automatically. <strong>Green nodes</strong> are formally verified in Lean.</p>
   <div class="gallery">
 
     <div class="card">
-      <div class="card-thumb">
+      <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/two_point_log_sobolev.html">
         <img src="assets/two_point_log_sobolev.png" alt="Proof graph for the two-point log-Sobolev inequality">
-      </div>
+      </a>
       <div class="card-body">
         <div class="card-title">Two-Point Log-Sobolev Inequality</div>
         <div class="card-statement">
           Entropy of a function on the two-point space {−1,1} is bounded by its discrete gradient energy.
         </div>
-        <span class="verified-badge">✓ 2 of 3 nodes verified</span>
+        <span class="verified-badge">✓ 2 of 3 nodes formally verified, 1 informal</span>
         <div class="card-desc">
           The scalar log-Sobolev inequality and the key one-dimensional non-negativity lemma
           G(u) ≥ 0 are both independently certified in Lean.
@@ -401,16 +499,16 @@ footer {
     </div>
 
     <div class="card">
-      <div class="card-thumb">
+      <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/heat_uniqueness.html">
         <img src="assets/heat_uniqueness.png" alt="Proof graph for heat equation uniqueness">
-      </div>
+      </a>
       <div class="card-body">
         <div class="card-title">Heat Equation Uniqueness</div>
         <div class="card-statement">
           Two solutions of the heat equation on (0,L) with matching initial and boundary
           data must be identical.
         </div>
-        <span class="verified-badge">✓ 2 of 3 nodes verified</span>
+        <span class="verified-badge">✓ 2 of 3 nodes formally verified, 1 informal</span>
         <div class="card-desc">
           The energy dissipation lemma (showing the energy of the difference solution is
           non-increasing) is fully verified, along with a certified local core
@@ -421,16 +519,16 @@ footer {
     </div>
 
     <div class="card">
-      <div class="card-thumb">
+      <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/matrix_determinant_lemma.html">
         <img src="assets/matrix_determinant_lemma.png" alt="Proof graph for the matrix determinant lemma">
-      </div>
+      </a>
       <div class="card-body">
         <div class="card-title">Matrix Determinant Lemma</div>
         <div class="card-statement">
           det(A + uv<sup>T</sup>) = (1 + v<sup>T</sup>A<sup>−1</sup>u) · det(A)
           for invertible A and column vectors u, v.
         </div>
-        <span class="verified-badge">✓ 2 of 2 nodes verified</span>
+        <span class="verified-badge">✓ 2 of 2 nodes formally verified</span>
         <div class="card-desc">
           Both nodes in the proof graph are formally closed: the rank-one base case
           and the full determinant lemma. End-to-end formal certification on a
@@ -441,16 +539,16 @@ footer {
     </div>
 
     <div class="card">
-      <div class="card-thumb">
+      <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/hoeffding_lemma.html">
         <img src="assets/hoeffding_lemma.png" alt="Proof graph for Hoeffding's lemma">
-      </div>
+      </a>
       <div class="card-body">
         <div class="card-title">Hoeffding's Lemma</div>
         <div class="card-statement">
           For a bounded mean-zero random variable X with a ≤ X ≤ b a.s.,
           log E[e<sup>tX</sup>] ≤ t²(b−a)²/8.
         </div>
-        <span class="verified-badge">✓ 2 of 3 nodes verified</span>
+        <span class="verified-badge">✓ 2 of 3 nodes formally verified, 1 informal</span>
         <div class="card-desc">
           The expectation bound via convexity and the log-MGF function bound are
           both independently verified, together covering nearly all of the
