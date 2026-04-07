@@ -52,28 +52,11 @@ def derive_review_obligations(graph: ProofGraph) -> list[ReviewObligation]:
     for edge in graph.edges:
         parent = node_by_id[edge.source_id]
         child = node_by_id[edge.target_id]
-        if (
-            edge.label == "formal_sublemma_for"
-            and parent.status == "formal_verified"
-            and child.status in INFORMAL_REVIEW_STATUSES
-        ):
-            obligations.append(
-                ReviewObligation(
-                    id=f"boundary-{parent.id}-{child.id}",
-                    kind="boundary_interface_check",
-                    text=(
-                        f"Check that verified supporting sublemma '{parent.id}' certifies the specific concrete local core "
-                        f"that informal parent '{child.id}' relies on, without overclaiming full coverage of the parent node."
-                    ),
-                    node_ids=[parent.id, child.id],
-                )
-            )
-            continue
         if parent.status in INFORMAL_REVIEW_STATUSES and child.status == "formal_verified":
             if edge.label == "formal_sublemma_for":
                 text = (
-                    f"Check that verified supporting sublemma '{parent.id}' certifies the specific concrete local core "
-                    f"that informal parent '{child.id}' relies on, without overclaiming full coverage of the parent node."
+                    f"Check that verified supporting sublemma '{child.id}' certifies the specific concrete local core "
+                    f"that informal parent '{parent.id}' relies on, without overclaiming full coverage of the parent node."
                 )
             else:
                 text = (

@@ -82,6 +82,7 @@ class ProofNode(StrictModel):
     display_label: str | None = None
     formalization_priority: int | None = Field(default=None, ge=1, le=3)
     formalization_rationale: str | None = None
+    remaining_proof_burden: str | None = None
     formal_artifact: FormalArtifact | None = None
 
     @model_validator(mode="after")
@@ -108,7 +109,7 @@ class ProofNode(StrictModel):
 
 
 class ProofEdge(StrictModel):
-    """A dependency edge from parent claim to child claim."""
+    """A dependency edge from a claim to one of the claims it depends on."""
 
     source_id: str = Field(min_length=1)
     target_id: str = Field(min_length=1)

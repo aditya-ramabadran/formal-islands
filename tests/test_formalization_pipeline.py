@@ -8,6 +8,7 @@ from formal_islands.formalization.pipeline import (
     FormalizationFaithfulnessError,
     build_coverage_expansion_assessment_request,
     build_combined_verification_assessment_request,
+    build_parent_promotion_assessment_request,
     _normalize_concrete_sublemma_summary_text,
     assess_formalization_faithfulness,
     build_concrete_sublemma_summary_request,
@@ -19,6 +20,7 @@ from formal_islands.formalization.pipeline import (
     request_concrete_sublemma_summary,
     request_coverage_expansion_assessment,
     request_node_formalization,
+    request_parent_promotion_assessment,
     request_repair_assessment,
 )
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode
@@ -83,6 +85,64 @@ def build_pde_graph() -> ProofGraph:
     )
 
 
+def build_two_child_graph() -> ProofGraph:
+    return ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="If a and b are nonnegative, then a + b is nonnegative.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Main claim",
+                informal_statement="a + b is nonnegative.",
+                informal_proof_text="It follows from the arithmetic lemmas n1 and n2.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Arithmetic lemma 1",
+                informal_statement="0 <= a.",
+                informal_proof_text="This is a local technical fact.",
+                status="formal_verified",
+                formal_artifact=FormalArtifact(
+                    lean_theorem_name="a_nonneg",
+                    lean_statement="theorem a_nonneg : 0 ≤ a",
+                    lean_code="theorem a_nonneg : 0 ≤ a := by\n  sorry",
+                ),
+            ),
+            ProofNode(
+                id="n2",
+                title="Arithmetic lemma 2",
+                informal_statement="0 <= b.",
+                informal_proof_text="This is another local technical fact.",
+                status="formal_verified",
+                formal_artifact=FormalArtifact(
+                    lean_theorem_name="b_nonneg",
+                    lean_statement="theorem b_nonneg : 0 ≤ b",
+                    lean_code="theorem b_nonneg : 0 ≤ b := by\n  sorry",
+                ),
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1"), ProofEdge(source_id="n0", target_id="n2")],
+    )
+
+
+def build_two_child_candidate_graph() -> ProofGraph:
+    graph = build_two_child_graph()
+    updated_nodes = [
+        node.model_copy(
+            update={
+                "status": "candidate_formal",
+                "formalization_priority": 1,
+                "formalization_rationale": "Parent assembly target.",
+            }
+        )
+        if node.id == "n0"
+        else node
+        for node in graph.nodes
+    ]
+    return graph.model_copy(update={"nodes": updated_nodes})
+
+
 def test_build_formalization_request_includes_local_context() -> None:
     request = build_formalization_request(build_graph(), "n2")
 
@@ -94,7 +154,7 @@ def test_build_formalization_request_includes_local_context() -> None:
     assert "local proof neighborhood" in request.prompt.lower()
     assert "verified supporting lemmas already certified in this run" in request.prompt.lower()
     assert "context-only sibling ingredients" in request.prompt.lower()
-    assert "provenance note" in request.prompt.lower()
+    assert "dependency note" in request.prompt.lower()
     assert "arbitrary index types" in request.prompt.lower()
     assert "easy side consequence" in request.prompt.lower()
     assert "do not default to `import mathlib`" in request.prompt.lower()
@@ -105,6 +165,17 @@ def test_build_formalization_request_includes_local_context() -> None:
     assert "preserve the ambient mathematical setting" in request.prompt.lower()
     assert "coverage sketch" in request.prompt.lower()
     assert "mathlib search results" not in request.prompt.lower()
+
+
+def test_build_formalization_request_includes_all_verified_direct_children() -> None:
+    request = build_formalization_request(build_two_child_candidate_graph(), "n0")
+
+    lowered = request.prompt.lower()
+    assert "verified direct child lemmas" in lowered
+    assert "a_nonneg" in request.prompt
+    assert "b_nonneg" in request.prompt
+    assert "Arithmetic lemma 1" in request.prompt
+    assert "Arithmetic lemma 2" in request.prompt
 
 
 def test_request_node_formalization_treats_measure_space_abstraction_as_borderline_core() -> None:
@@ -189,6 +260,43 @@ def test_build_coverage_expansion_assessment_request_mentions_target_and_verifie
     assert "verified lean theorem to assess" in request.prompt.lower()
     assert "same setting and same proof path" in request.prompt.lower()
     assert "coverage score" in request.prompt.lower()
+
+
+def test_build_parent_promotion_assessment_request_mentions_verified_children() -> None:
+    request = build_parent_promotion_assessment_request(
+        graph=build_two_child_graph(),
+        parent_node_id="n0",
+    )
+
+    lowered = request.prompt.lower()
+    assert "all of its direct children are already verified" in lowered
+    assert "verified direct child lemmas already available" in lowered
+    assert "parent-assembly theorem" in lowered
+    assert "recommended_priority" in request.prompt
+    assert "a_nonneg" in request.prompt
+    assert "b_nonneg" in request.prompt
+
+
+def test_request_parent_promotion_assessment_returns_priority_and_reason() -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "promote_parent": True,
+                "recommended_priority": 2,
+                "reason": "The remaining step is just a short assembly argument.",
+            }
+        ]
+    )
+
+    assessment = request_parent_promotion_assessment(
+        backend=backend,
+        graph=build_two_child_graph(),
+        parent_node_id="n0",
+    )
+
+    assert assessment.promote_parent is True
+    assert assessment.recommended_priority == 2
+    assert "assembly argument" in assessment.reason
 
 
 def test_build_combined_verification_assessment_request_mentions_recoverability_fields() -> None:

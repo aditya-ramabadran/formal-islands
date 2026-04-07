@@ -50,12 +50,10 @@ Select the strongest runs and copy their input JSON files there with clean descr
 | `run10_first_dirichlet_eigenfunction.json` | `run10-first-dirichlet-eigenfunction-gemini-aristotle-6` | two cores across both branches |
 | `run7_harmonic_minimizer.json` | `run7-harmonic-minimizer-rerun-claude-aristotle-5` | `dirichlet_pythagorean__formal_core` |
 
-**Benchmarks to keep in `examples/manual-testing/` but not feature:**
-- `run9_weak_poisson_lax_milgram.json` — good stress test but Sobolev spaces not in Mathlib; not a showcase
-- `run3_full_glassey.json`, `run8_semilinear_heat_blowup.json` — partial successes, too mixed for public highlight
+NOTE: **Still keep all the benchmarks in examples/manual-testing, don't remove or edit those files, only copy from there**
 
 **Rename convention for featured examples:**
-Use clean descriptive names, not run numbers:
+Use clean descriptive names, not run numbers, for example like
 - `heat_uniqueness.json`
 - `two_point_log_sobolev.json`
 - `vandermonde_convolution.json`
@@ -65,34 +63,96 @@ Use clean descriptive names, not run numbers:
 
 ---
 
-## 3. CLI UX Improvement — Interactive Entry Point
+## 3. CLI Rename + UX Overhaul
 
-The current flow requires creating a JSON file manually before running anything. This is a barrier for new users.
+### The "smoke" name problem
 
-**New command: `formal-islands-smoke new`** (or `formal-islands-smoke run-interactive`)
+The CLI is currently called `formal-islands-smoke`. "Smoke" is a developer-in-joke holdover from when this was a scratch smoke-test runner for the pipeline — it means nothing to an end user and makes the tool look unfinished. It should be renamed.
+
+**Rename `formal-islands-smoke` → `formal-islands`** as the main user-facing entry point.
+The old name can be kept as an alias or removed entirely once the rename is stable.
+
+### The verbosity problem
+
+The typical invocation today:
+```bash
+./.venv/bin/formal-islands-smoke run-benchmark \
+  --planning-backend=gemini \
+  --formalization-backend=aristotle \
+  --input=/Users/adihaya/GitHub/formal-islands/examples/manual-testing/run4_heat_uniqueness.json \
+  --output-dir=/Users/adihaya/GitHub/formal-islands/artifacts/manual-testing/run4-heat-uniqueness-gemini-aristotle-5 \
+  --workspace=/Users/adihaya/GitHub/formal-islands/lean_project \
+  --max-attempts=4
+```
+
+Every flag is full-path and all of them are required. This is 300+ characters for something that should be a 50-character command.
+
+### Better defaults
+
+Most of these flags have obvious sensible defaults that should never need to be typed:
+
+- **`--workspace`**: Default to `lean_project` relative to the repo root (auto-discovered). Should almost never need to be specified explicitly.
+- **`--output-dir`**: Auto-derive from the input filename + backends + a short timestamp slug. E.g. input `heat_uniqueness.json` + backends `gemini/aristotle` → `artifacts/heat-uniqueness-gemini-aristotle-<date>`. User only specifies this if they want an explicit name.
+- **`--input`**: When given just a filename (no path), search `examples/featured/` first, then `examples/manual-testing/`. Full path still accepted.
+
+### Backend shorthand
+
+`--planning-backend=gemini --formalization-backend=aristotle` is the most common pattern. Consider:
+```
+--backends gemini/aristotle
+```
+as a single shorthand that splits on `/`. `--backends aristotle` means both backends are the same. The long-form flags still work for the cases where they differ.
+
+### Ideal invocation after the overhaul
+
+```bash
+formal-islands run heat_uniqueness --backends gemini/aristotle --attempts 4
+```
+
+Or with a full path:
+```bash
+formal-islands run examples/featured/heat_uniqueness.json --backends gemini/aristotle
+```
+
+The command is now `run` instead of `run-benchmark` (shorter, unambiguous). The input is just a filename. The backends are one flag. The workspace and output dir are inferred. The only thing you still specify explicitly is the input and the backends.
+
+### Interactive entry point — `formal-islands new`
+
+For users who don't have a JSON file at all:
+
+```bash
+formal-islands new
+```
 
 Behavior:
 1. Prompts for theorem title (single line)
-2. Prompts for theorem statement (multiline, end with blank line or `---`)
-3. Prompts for raw proof text (multiline, same terminator)
-4. Optionally prompts for output directory (default: auto-derived from title slug)
-5. Writes a JSON input file to a temp or named location
-6. Immediately calls `run-benchmark` with the generated JSON
+2. Prompts for theorem statement (multiline, terminate with blank line)
+3. Prompts for informal proof text (multiline, same terminator)
+4. Asks which backends to use (default: whatever is configured / available)
+5. Writes a JSON input file to the output dir as `input.json`
+6. Immediately calls the `run` pipeline with the generated input
 
-This removes the friction of the JSON format entirely for the common case.
+This removes the JSON format requirement entirely for the common case.
 
 **Implementation notes:**
-- Lives in `smoke.py` as a new `new` subcommand
-- Uses `input()` calls with clear prompts; no external dependency
-- After collecting input, calls the existing `run_benchmark` logic directly (no subprocess)
-- The generated JSON is saved to the output dir as `input.json` alongside the run artifacts, so the user can inspect or rerun it
+- `new` and `run` both live in the renamed `cli.py` (or `smoke.py` renamed)
+- `new` uses `input()` with clear prompts; no new dependencies
+- After collecting input, calls the existing `run_benchmark` logic directly (not a subprocess)
+- The generated `input.json` is saved alongside the artifacts so the run is reproducible
 
-**Alternative / complement: stdin one-liner mode**
-For scripting / CI usage, also support:
+### One-liner stdin mode (for scripting)
+
+For CI / scripting use:
 ```bash
-formal-islands-smoke run-benchmark --stdin
+formal-islands run --stdin
 ```
-where the tool reads title, statement, and proof from stdin in a simple `---`-delimited format rather than requiring a pre-created JSON file.
+where stdin provides the input as a simple delimited format:
+```
+TITLE: Heat equation uniqueness
+STATEMENT: ...
+PROOF: ...
+```
+This is machine-friendly without requiring a pre-created file.
 
 ---
 
@@ -184,7 +244,32 @@ The current README is accurate but written for active developers. A public-facin
 
 ---
 
-## 6. License and Metadata
+## 6. Report HTML Visual Fixes
+
+Several rendering issues in the current HTML reports need to be fixed before reports are published on the site. These apply to `generator.py` and should be done before regenerating the featured report files in Phase 4.
+
+### `**bold**` markdown in informal proof text
+
+The informal proof text often contains markdown-style step labels like `**Symmetry and base value.**`, `**First derivative.**`, etc. These currently render as literal `**` characters on screen.
+
+**Decision: render `**text**` as `<em>` (italic)**, and also handle `*text*` as `<em>` for consistency.
+
+Rationale:
+- Plain bold (`<strong>`) would visually collide with the existing section headers ("Informal statement:", "Coverage:", "Lean theorem name:") which are already `<strong>` in paragraph context
+- Italic is the conventional typographic treatment for named proof steps in mathematical writing
+- The visual hierarchy becomes clear: `<h3>` node title → `<strong>` structural section labels → `<em>` named proof steps within prose
+- No changes needed to the existing section header markup
+
+Implementation: add a markdown-inline pass in `_render_inline_code_html` (alongside the existing backtick → `<code>` pass) that converts `**...**` and `*...*` patterns to `<em>`. Order of operations: backtick spans first (they may contain `*`), then bold/italic.
+
+### Already fixed (don't redo)
+- MathJax flicker in SVG node text: fixed via `skipHtmlTags: ['svg']`
+- Transparent node fill causing edge bleed-through: fixed by making fills fully opaque
+- Backtick → `<code>` inline rendering in coverage notes and checklist text: fixed
+
+---
+
+## 7. License and Metadata
 
 - Add a `LICENSE` file if one doesn't exist (MIT or Apache-2.0 recommended for an open research tool)
 - Add a `CITATION.md` or `CITATION.cff` if citation is desired
@@ -219,22 +304,36 @@ The phases below are ordered by dependency and risk. Each phase can be reviewed 
 - Pick the definitive best run artifact for each featured benchmark
 - Update README to reference featured examples
 
-**Phase 3 — CLI `new` command**
-- Implement `formal-islands-smoke new` interactive entry point
-- Update README quick-start to use it
+**Phase 3 — Report visual fixes**
+- Render `**...**` / `*...*` as `<em>` in `_render_inline_code_html`
+- Any other polish to the HTML generator that affects published reports
 
-**Phase 4 — Site + gallery**
-- Regenerate `04_report.html` for each featured benchmark using the latest generator (picks up all visual fixes)
+**Phase 4 — CLI rename + UX overhaul**
+- Rename `formal-islands-smoke` → `formal-islands` (keep old name as alias if needed)
+- Rename `smoke.py` → `cli.py` (or similar)
+- Add smart defaults: workspace auto-discovery, output-dir auto-derivation, `--backends` shorthand
+- Rename `run-benchmark` → `run`
+- Implement `formal-islands new` interactive entry point
+- Update README quick-start to use the new commands
+
+**Phase 5 — Site + gallery**
+- Regenerate `04_report.html` for each featured benchmark using the latest generator (picks up all visual fixes from Phase 3)
+NOTE: Command needs to be something like "./.venv/bin/formal-islands-smoke report \
+  --graph=/Users/adihaya/GitHub/formal-islands/artifacts/manual-testing/run13-pinsker-via-bernoulli-core-gemini-aristotle-4/03_formalized_graph.json \
+  --output-dir=/Users/adihaya/GitHub/formal-islands/artifacts/manual-testing/run13-pinsker-via-bernoulli-core-gemini-aristotle-4 \
+  --planning-backend=gemini" for example (need to specify planning-backend now)
 - Create `docs/reports/` and copy in the featured HTML files
 - Write `docs/index.html` landing page
+NOTE: Site needs to look good, be clear and not too complicated, and clearly explain the project and what the issues it's tackling are / what the need for it is. The gallery for benchmarks etc can have placeholder images that I can fill in using screenshots of the report pages. 
 - Configure GitHub Pages to serve from `docs/`
 
-**Phase 5 — README + docs polish**
-- Polish README with the new structure
+**Phase 6 — README + docs polish**
+- Polish README with the new structure, using the new `formal-islands` command name
+NOTE: Make README much more user-facing, also include information about the backends and how to install them or authenticate if needed (e.g. codex, gemini, claude code, aristotle), say the preferred combination in my experience is using codex/gemini/claude code as the planning_backend and aristotle as the formalization_backend. Also make sure to talk about the various flags and parameters for the command, default values, especially of stuff like timeouts. 
 - Add screenshots / preview images once the Pages site is live
 - Write `dev/INTERNALS.md` as a single home for design notes, run history, and integration plans
 
-**Phase 6 — Metadata + CI**
+**Phase 7 — Metadata + CI**
 - Add `LICENSE`
 - Add `CITATION.cff` if desired
 - Add basic CI workflow
@@ -248,12 +347,14 @@ The phases below are ordered by dependency and risk. Each phase can be reviewed 
    - Keep it as-is (just a folder people can ignore)
    - Move it to `dev/benchmarks/` for cleanliness
    - Keep only `examples/featured/` and remove `manual-testing/` entirely from the public repo
+NOTE: I think it should be kept, perhaps renamed at the end from "manual-testing" to something else OR moved to dev/benchmarks, but keeping all those files is important.
 
 2. **Which exact run to use per featured benchmark?**
    For some benchmarks (e.g. run4) there are multiple strong runs. Pick the most recent clean one, or the one with the most verified nodes that are faithfully classified. See the candidate table in Phase 2.
 
 3. **Should the reports on the Pages site be regenerated fresh each time (CI) or manually curated?**
    Manual curation is simpler for now. CI re-generation would require committing the Lean workspace or verifying without it, which is complex.
+NOTE: Yes, manual curation, no CI.
 
 4. **Domain name for the Pages site?**
    `<username>.github.io/formal-islands` is the default. A custom domain can be added later via `CNAME` file.

@@ -17,7 +17,9 @@ from formal_islands.formalization.pipeline import (
     enforce_formalization_faithfulness,
     build_node_coverage_sketch,
     build_local_proof_context,
+    build_verified_direct_child_context,
     format_local_proof_context,
+    format_verified_direct_child_context,
 )
 from formal_islands.formalization.schemas import AgenticFormalizationResult
 from formal_islands.models import FormalArtifact, ProofGraph, VerificationResult
@@ -81,8 +83,9 @@ def build_agentic_formalization_request(
         }
         for child in graph.nodes
         if child.id in children and child.formal_artifact is not None
-    ][:1]
+    ]
     local_context = build_local_proof_context(graph, node_id)
+    direct_child_context = build_verified_direct_child_context(graph, node_id)
 
     prompt_parts = [
         f"Theorem title: {graph.theorem_title}",
@@ -114,10 +117,11 @@ def build_agentic_formalization_request(
             else "Immediate parent summary:\n[]"
         ),
         (
-            "Verified child context:\n" + json.dumps(child_summaries[0], indent=2)
+            "Verified child context:\n" + json.dumps(child_summaries, indent=2)
             if child_summaries
             else "Verified child context:\n[]"
         ),
+        format_verified_direct_child_context(direct_child_context),
         f"Lean workspace root: {workspace_root}",
         f"Scratch file to create and edit: {scratch_file_path}",
         f"Plan markdown file to create and maintain: {plan_file_path}",

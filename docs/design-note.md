@@ -156,7 +156,7 @@ The main objects are:
 The graph is intentionally simple:
 
 - nodes
-- directed dependency/support edges
+- directed dependency edges
 
 No AND/OR search semantics, no proof objects, no rich theorem-diff system.
 
@@ -179,7 +179,7 @@ Current important edge label introduced by the newer honesty work:
 
 That edge means:
 
-- a verified supporting child certifies a narrower concrete local core inside an informal parent step
+- a verified supporting child certifies a narrower concrete local core that the informal parent depends on
 
 ## 5. End-to-End Pipeline
 
@@ -272,10 +272,12 @@ It contains:
 - the target node's informal statement and informal proof text
 - a local proof neighborhood split into:
   - verified supporting lemmas already certified in this run
+  - verified direct child lemmas of the target node, listed explicitly so the worker can use all of them
   - context-only sibling ingredients in the same proof neighborhood
 
 Verified supporting lemmas are included as text context with their theorem names and Lean statements when available.
 They may be relied on as established facts for proof planning, but they are not auto-imported as generated Lean source files in the Aristotle snapshot.
+The explicit verified-direct-child block is separate from the generic local neighborhood block because the prompt builders now surface all verified direct children, not just the first one, and the formalizer should be able to use that whole certified child set when assembling a parent theorem.
 If Aristotle returns an `ARISTOTLE_SUMMARY_*.md` file, its contents are appended to `_progress.log` as part of the run record, but they are not printed to the terminal.
 
 User-facing formalization is now agentic-only in the CLI. The older structured repair-loop path is retained only as an internal compatibility fallback for legacy callers and tests, not as a supported mode for normal use.
@@ -286,6 +288,7 @@ The formalization loop also now does more than just accept or reject a proof:
 - borderline measure-space, inner-product-space, and dimension-downgrade signals are treated as advisory and passed to the planner for the final semantic call
 - after verification, the planning backend can classify the Lean theorem against the target node and decide whether the result is already the full match, only a faithful core, a downstream consequence, a dimensional analogue, or just a helper shard
 - that same combined semantic review also decides whether bounded coverage expansion is worthwhile
+- if all direct children of an informal parent are verified, the loop can now ask the planning backend whether the parent should be promoted into the candidate set as a parent-assembly theorem
 - if a failure occurs, repair guidance is built from a cheap heuristic diagnosis plus an optional planning-backend semantic diagnosis
 - if a verified concrete sublemma is still a genuine candidate for more coverage, the loop can make one bounded bonus retry on the main proof path
 
@@ -370,7 +373,7 @@ The report now supports:
 - inline code rendering in math-ish text
 - automatic dark mode
 - better honesty for certified local core nodes
-- dashed gray provenance / refinement edges that are shown as provenance, not proof dependencies
+- dashed gray refinement edges that still point to proof dependencies, with all arrows standardized as dependency arrows
 - node-detail labels that distinguish faithful cores, downstream consequences, dimensional analogues, and similar narrower outcomes
 
 ## 6. CLI Entry Point
@@ -555,7 +558,7 @@ The formalization prompts also carry an explicit proof-neighborhood split:
 
 - verified supporting lemmas may be relied on as established facts
 - context-only sibling ingredients are only orientation and should not be assumed
-- provenance edges in the graph are not proof dependencies by default
+- every graph arrow is a dependency edge; refinement-style edges are just narrower dependencies
 
 Aristotle-specific upload pruning:
 
@@ -678,7 +681,7 @@ This led to the current `concrete_sublemma` support:
 
 - parent stays informal
 - verified supporting child is inserted
-- support edge is added
+- dependency edge is added
 - review/report language becomes honest
 
 ### 9.7 Bounded coverage expansion attempt
@@ -721,7 +724,7 @@ This keeps refinement tied to a real failure mode and reduces the chance that a 
 
 Two refinements make that path more robust:
 
-- if the backend certifies a narrow local claim, the deterministic loop can later promote the broader source node reached by a `uses` edge, so a successful core can seed a second pass upward
+- if the backend certifies a narrow local claim, the deterministic loop can later promote the broader parent node once all of its direct children are verified, so a successful core can seed a second pass upward
 - the proposal ranker and deterministic span fallback penalize point-evaluation fragments and substitution-only facts when they look like isolated snapshots rather than reusable theorems
 
 ## 10. How the Current Faithfulness Classifier Works
@@ -804,7 +807,7 @@ Current behavior now is:
 - the file may contain helper lemmas
 - artifact extraction/recovery tries to align to the intended main theorem, not just the first declaration in the file
 - after a verified concrete sublemma, the loop makes one bounded coverage-expansion attempt from the verified file rather than treating the first successful core as terminal
-- if a certified refined local claim points back to the source node through a `uses` edge, that source node may be promoted into the candidate set on a later dynamic pass
+- when all direct children of an informal parent are verified, that parent may be promoted into the candidate set on a later dynamic pass
 - timestamped worker and plan filenames avoid collisions when the same node is revisited
 
 ## 12. Manual Benchmark Suite
@@ -1050,7 +1053,7 @@ Main lessons:
 - initial full-node classification was too generous
 - this benchmark directly motivated:
   - stricter full-node vs supporting-core classification
-  - honest `formal_sublemma_for` graph structure
+  - honest dependency-graph structure with `formal_sublemma_for` labels where useful
   - one-main-theorem plus helper-lemmas discipline
 
 It is now one of the cleanest benchmarks for:
@@ -1541,6 +1544,50 @@ When the local heuristic produces a borderline warning rather than a hard reject
 
 This is the current answer to the “run4 heat-method energy identity” style of case: we prefer planner-confirmed borderline handling over a brittle hard-coded rejection.
 
+### 20.8.2 Parent assembly promotion after children are verified
+
+The formalization loop now has a late promotion stage that is distinct from refinement and coverage expansion.
+
+The new rule is:
+
+- scan informal parent nodes whose direct children are all already `formal_verified`
+- ask the planning backend whether the parent is now cheap enough to formalize as a parent-assembly theorem
+- if the planner says yes, promote the parent to `candidate_formal`
+- cache that planner decision for the current child snapshot so the same eligible parent is not re-asked repeatedly
+- let the normal dynamic discovery loop pick up the newly promoted parent on a later pass
+
+This is intentionally not the same as coverage expansion:
+
+- coverage expansion grows a verified theorem upward when the theorem itself is only a concrete sublemma
+- parent assembly promotion starts from an informal parent that became feasible because its children were already certified
+
+The older follow-up hook has been folded into the same post-verification philosophy. The important new behavior is the planner-gated scan over informal parents whose children have all been discharged.
+
+### 20.8.3 Report-stage remaining-proof-burden synthesis
+
+After formalization is finished and the final graph is being prepared for reporting, the report stage can synthesize a short "Remaining proof burden" paragraph for any node that is still unverified but has at least one verified direct child.
+
+This is a report-only annotation step:
+
+- it does not change planning
+- it does not change formalization candidate selection
+- it does not change the graph during formalization itself
+
+The report-stage synthesis:
+
+- asks the planning backend to read the parent's informal proof together with all verified direct child lemmas
+- asks for a concise delta description: what remains to be checked once those verified child results are assumed
+- stores the resulting text on the node as report metadata
+- renders it under the node's informal proof in the HTML report
+- titles the section as `Remaining proof burden (assuming results of [child ids])`, with the verified child ids linked to their node cards
+
+This differs from the parent-assembly promotion step:
+
+- parent-assembly promotion decides whether an informal parent should now become a formalization candidate
+- remaining-proof-burden synthesis decides how to explain the residual proof burden in the final report, even if the parent is never promoted
+
+Because this is a final-report artifact, it runs after all formalization is complete and can be invoked from the report stage on the finished graph.
+
 ### 20.9 Aristotle-specific behavior
 
 Aristotle is formalization-only.
@@ -1598,6 +1645,7 @@ It is append-only and now records:
 - coverage-expansion attempts
 - Aristotle project completion status
 - combined semantic review results
+- report-stage remaining-proof-burden syntheses
 - Aristotle summary markdown blocks
 
 This is why the current progress logs are much more useful than they were early in the project. They let you reconstruct:
@@ -1642,5 +1690,11 @@ If a verified theorem is narrower but honest:
 - the graph records it as a supporting core
 - the report says it is a narrower core, not the whole node
 - the system may make one bounded expansion attempt if the planning review says that is worthwhile
+
+If a parent node still remains informal but has verified children:
+
+- the report stage may add a short "Remaining proof burden" paragraph
+- the title names the verified child ids and links them to their node cards
+- the paragraph is meant to help a human reviewer see exactly what the certified children have discharged and what is still left to check
 
 That is the behavior the code currently implements.

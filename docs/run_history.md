@@ -8,6 +8,14 @@ For each benchmark section:
 - each run notes what the planner chose, how the formalizer behaved, and whether the final artifact is actually useful
 - multiple runs of the same benchmark stay together so comparisons are easy
 
+Overview of the best benchmark runs:
+1. run11-two-point-log-sobolev-claude-aristotle-3: clean graph, two verified nodes, both have nontrivial Lean code 
+2. run4-heat-uniqueness-gemini-aristotle-4: clean graph, natural local island, it has two total verified nodes, one doesn't do much but the other is pretty nontrivial 
+3. run15-matrix-determinant-lemma-claude-aristotle-2: less impressive mathematically since the theorem itself isn't that hard, and its able to prove the entire thing formally (2/2 nodes), but shows the system can go end-to-end on a benchmark with good mathlib support
+4. run16-hoeffding-lemma-gemini-aristotle: two central local islands verified, together they cover almost all the substance of the proof, root staying informal not serious weakness
+5. run17-gershgorin-circle-gemini-aristotle: root-side theorem still classified as faithful core rather than full-node theorem but seems good
+6. run3-full-glassey-aristotle-2: clean graph, 2 certified local cores verified in Lean, one is fairly trivial but one is pretty nontrivial
+
 ## run3-full-glassey
 - `2026-04-06 09:11 PT` — `artifacts/manual-testing/run3-full-glassey-aristotle`
   - Earlier attempt with no separate narrative summary in the draft history.
@@ -313,6 +321,16 @@ For each benchmark section:
   - **Operational note:** **this latest run used `max_attempts=4` rather than the default `2`**.
   - Verdict: one of the better partial-success benchmarks in the suite. The global Pinsker theorem still remains out of reach for the current worker, but the Bernoulli scalar island is now a clean and convincing certified result.
 
+- `2026-04-07 09:21 PT` — `artifacts/manual-testing/run13-pinsker-via-bernoulli-core-gemini-aristotle-4`
+  - Benchmark quality: still a good benchmark, because the scalar Bernoulli inequality remains an obvious and valuable formal island inside a larger measure-theoretic proof.
+  - Planner: this time chose a narrower, cleaner strategy. It left the root `pinskers_inequality` informal and targeted only the scalar `bernoulli_inequality` node.
+  - Formalizer: had a clean successful run on that node. `bernoulli_inequality` verified directly as a **full match** on the first attempt.
+  - What went well: the run is semantically clean and honest. The certified theorem is exactly the intended scalar local island, with no extra “formal_core” child bookkeeping and no abstraction drift on the verified node.
+  - What is missing relative to earlier run13s: the pipeline did not even attempt the root theorem or an intermediate DPI-style supporting theorem. So this artifact is narrower than the earlier run13s in scope, even though the scalar certification itself is clean.
+  - What I think about the root: unlike run16/Hoeffding, the root here is probably **not** a cheap assembly theorem. It still depends on substantial measure-theoretic infrastructure: total variation, measurable set selection, pushforward measures, binary reduction, and KL data processing. So leaving it informal is currently defensible.
+  - **Operational note:** **this run used `max_attempts=8` rather than the default `2`**, but in practice the extra retry budget did not matter here because the verified Bernoulli node succeeded on attempt 1.
+  - Verdict: good clean partial success. Slightly narrower as an artifact than the earlier run13s, but still a solid public-facing example of Formal Islands certifying the right scalar core inside a larger theorem. Parent-promotion logic should be added for cheap assembly cases, but this benchmark probably should **not** automatically promote the root unless the remaining burden is judged genuinely lightweight.
+
 ## run14-vandermonde-convolution
 
 - `2026-04-06 18:57 PT` — `artifacts/manual-testing/run14-vandermonde-convolution-claude-aristotle`
@@ -358,4 +376,26 @@ For each benchmark section:
 
 ## run16-hoeffding-lemma
 
+- `2026-04-07 08:34 PT` — `artifacts/manual-testing/run16-hoeffding-lemma-gemini-aristotle`
+  - Benchmark quality: strong benchmark in principle. The proof splits naturally into two meaningful local islands: a probabilistic expectation bound via convexity, and a purely real-analytic log-MGF bound.
+  - Planner: produced a clean and sensible graph, with `convexity_expectation` and `log_mgf_bound` feeding the Hoeffding-lemma root theorem.
+  - Formalizer: had a genuinely strong run. It verified:
+    - `convexity_expectation` as a **full match** for the expectation bound \( \mathbb{E}[e^{sX}] \le e^{-pu}(q + p e^u) \), and
+    - `log_mgf_bound` as a **full match** for the scalar inequality \( -pu + \log(q + p e^u) \le u^2/8 \).
+  - What went well: both verified nodes are central proof burdens, not helper scraps. The run stayed in the correct theorem family, and the final artifact gives a very good mixed informal/formal decomposition of Hoeffding’s lemma.
+  - What still remains informal: the root theorem itself was not formally assembled, but this is not a major weakness here because the two verified child nodes already capture almost all of the mathematical substance of the proof.
+  - **Operational note:** **this run used `max_attempts=8` rather than the default `2`**, but in practice the extra retry budget was not very important: `log_mgf_bound` verified on attempt 1, and `convexity_expectation` verified on attempt 2 after one initial faithfulness rejection.
+  - Verdict: strong partial success, and a good candidate for public-facing use. Not quite as polished as the very best end-to-end-feeling showcase runs, since the root theorem remains informal, but the certified islands are central, substantial, and mathematically convincing.
+
 ## run17-gershgorin-circle
+
+- `2026-04-07 08:33 PT` — `artifacts/manual-testing/run17-gershgorin-circle-gemini-aristotle`
+  - Benchmark quality: strong benchmark in principle. The proof has a clean, central local island — the eigenvector maximum-component bound — feeding the full Gershgorin conclusion.
+  - Planner: produced a sensible graph with the key local inequality `eigenvector_component_bound` supporting the root theorem.
+  - Formalizer: had a genuinely strong run. It verified:
+    - `eigenvector_component_bound` as a **full match** for the core Gershgorin inequality obtained from the maximal component of an eigenvector, and
+    - `gershgorin_theorem__formal_core` as a strong faithful certified core showing that any eigenvalue with a nonzero eigenvector lies in at least one Gershgorin disc.
+  - What went well: the verified nodes are central and mathematically meaningful, not helper scraps. In particular, the maximum-component bound is exactly the main inferential step in the classical proof.
+  - What still remains slightly informal / downgraded: the theorem-level verified core is represented as a supporting `faithful_core` rather than full-node certification, mainly because it stops at the eigenvalue/existential-disc formulation instead of explicitly packaging the final spectrum-containment statement.
+  - **Operational note:** **this run used `max_attempts=8` rather than the default `2`**, but in practice the extra retry budget was not very important: `eigenvector_component_bound` verified on attempt 1, and `gershgorin_theorem__formal_core` verified on attempt 2 after a minor Lean repair.
+  - Verdict: strong partial success, and a good candidate for public-facing use. Not quite a full end-to-end theorem verification, but very close mathematically, and an excellent example of Formal Islands certifying the central local burden of a classical theorem.

@@ -1061,16 +1061,8 @@ def _apply_candidate_refinement(
             target_id=refined_id,
             label="refined_from",
             explanation=(
-                "This refined local claim was carved out from the source node as provenance, not as a proof dependency."
+                "This refined local claim was carved out from the source node and serves as a narrower dependency for retrying that source node."
             ),
-        )
-    )
-    updated_edges.append(
-        ProofEdge(
-            source_id=refined_id,
-            target_id=source_node_id,
-            label="uses",
-            explanation="This refined local claim is intended to support a later retry of the source node.",
         )
     )
 

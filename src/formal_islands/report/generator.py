@@ -17,7 +17,7 @@ ROW_GAP = 52
 COL_GAP = 36
 MARGIN_X = 24
 MARGIN_Y = 20
-PROVENANCE_EDGE_LABELS = {"refined_from", "formal_sublemma_for", "uses"}
+REFINEMENT_EDGE_LABELS = {"refined_from"}
 
 
 def export_report_bundle(graph: ProofGraph, obligations: list[ReviewObligation]) -> dict:
@@ -208,7 +208,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       fill: none;
       transition: stroke 140ms ease, stroke-width 140ms ease;
     }}
-    .graph-edge.edge-provenance {{
+    .graph-edge.edge-refinement {{
       stroke-dasharray: 7 5;
       opacity: 0.66;
     }}
@@ -454,7 +454,10 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
         Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
       </p>
       <p class="graph-caption">
-        Dashed gray edges represent refinement or "derived from" relationships — they show how some nodes were generated from others, not that one node logically depends on another for the proof.
+        All arrows point from a claim to one of the claims it depends on.
+      </p>
+      <p class="graph-caption">
+        Dashed gray arrows mark refinement edges: they are still dependency edges, but they indicate that a narrower claim was carved out from a broader proof step.
       </p>
     </section>
     <section>
@@ -515,12 +518,12 @@ def _render_node_section(node: ProofNode, graph: ProofGraph) -> str:
             "</p>"
         )
 
-    # Build parent/child neighbor links.
-    # Edges go source → target where source "supports" target.
-    # "Parent nodes" of X = nodes X feeds into (outgoing edges, X is source).
-    # "Dependency nodes" of X = nodes that support X (incoming edges, X is target).
-    parent_ids = [e.target_id for e in graph.edges if e.source_id == node.id]
-    dependency_ids = [e.source_id for e in graph.edges if e.target_id == node.id]
+    # Build dependency / usage neighbor links.
+    # Edges go source → target where source depends on target.
+    # "Used by" nodes are incoming edges (claims that depend on this node).
+    # "Depends on" nodes are outgoing edges (claims this node relies on).
+    used_by_ids = [e.source_id for e in graph.edges if e.target_id == node.id]
+    dependency_ids = [e.target_id for e in graph.edges if e.source_id == node.id]
     node_id_set = {n.id for n in graph.nodes}
 
     def _nlink(nid: str) -> str:
@@ -529,10 +532,10 @@ def _render_node_section(node: ProofNode, graph: ProofGraph) -> str:
         return escape(nid)
 
     neighbor_parts: list[str] = []
-    if parent_ids:
-        neighbor_parts.append("Parent nodes: " + ", ".join(_nlink(nid) for nid in parent_ids))
+    if used_by_ids:
+        neighbor_parts.append("Used by: " + ", ".join(_nlink(nid) for nid in used_by_ids))
     if dependency_ids:
-        neighbor_parts.append("Dependency nodes: " + ", ".join(_nlink(nid) for nid in dependency_ids))
+        neighbor_parts.append("Depends on: " + ", ".join(_nlink(nid) for nid in dependency_ids))
     neighbor_block = (
         '<p class="meta">' + " &nbsp;|&nbsp; ".join(neighbor_parts) + "</p>"
         if neighbor_parts
@@ -573,8 +576,10 @@ def _render_node_section(node: ProofNode, graph: ProofGraph) -> str:
 
 stderr:
 {escape(verification.stderr)}</code></pre>
-        </details>
+          </details>
         """
+
+    remaining_burden_block = _render_remaining_proof_burden_section(node, graph)
 
     node_key = _node_class(node.id)
     return f"""
@@ -588,8 +593,41 @@ stderr:
       {_render_math_text(node.informal_statement)}
       <p><strong>Informal proof:</strong></p>
       {_render_math_text(node.informal_proof_text)}
+      {remaining_burden_block}
       {formal_block}
     </article>
+    """
+
+
+def _render_remaining_proof_burden_section(node: ProofNode, graph: ProofGraph) -> str:
+    if not node.remaining_proof_burden:
+        return ""
+
+    verified_child_ids = [
+        edge.target_id
+        for edge in graph.edges
+        if edge.source_id == node.id
+        and any(
+            child.id == edge.target_id
+            and child.status == "formal_verified"
+            and child.formal_artifact is not None
+            for child in graph.nodes
+        )
+    ]
+    if not verified_child_ids:
+        return ""
+
+    node_id_set = {candidate.id for candidate in graph.nodes}
+
+    def _link(node_id: str) -> str:
+        if node_id in node_id_set:
+            return f'<a class="node-jump" href="#node-{escape(node_id)}">{escape(node_id)}</a>'
+        return escape(node_id)
+
+    child_links = ", ".join(_link(node_id) for node_id in verified_child_ids)
+    return f"""
+      <p><strong>Remaining proof burden (assuming results of {child_links}):</strong></p>
+      {_render_math_text(node.remaining_proof_burden)}
     """
 
 
@@ -770,20 +808,20 @@ def _render_graph_widget(graph: ProofGraph) -> str:
 def _render_edge(edge: ProofEdge, layout: dict) -> str:
     x1, y1 = layout["centers"][edge.source_id]
     x2, y2 = layout["centers"][edge.target_id]
-    # Source "supports" target: typically source sits below target in the layout.
+    # Source is the theorem/claim and target is one of its dependencies.
     # Connect from the bottom of the source node to the top of the target node.
     start_y = y1 + NODE_HEIGHT / 2 - 3
     end_y = y2 - NODE_HEIGHT / 2 + 3
     # Cubic bezier with vertical tangents at both endpoints.  Control points share
     # x with their respective anchor so the curve enters/exits each node vertically,
-    # producing smooth diagonal arcs for sibling-to-parent connections.
-    span = end_y - start_y  # negative when source is below target (normal case)
+    # producing smooth dependency arcs in the direction source -> target.
+    span = end_y - start_y
     ctrl1_x, ctrl1_y = x1, start_y + span * 0.4
     ctrl2_x, ctrl2_y = x2, end_y - span * 0.4
     edge_class = _edge_class(edge.source_id, edge.target_id)
-    provenance_class = " edge-provenance" if edge.label in PROVENANCE_EDGE_LABELS else ""
+    refinement_class = " edge-refinement" if edge.label in REFINEMENT_EDGE_LABELS else ""
     return (
-        f'<path class="graph-edge {edge_class}{provenance_class}" '
+        f'<path class="graph-edge {edge_class}{refinement_class}" '
         f'd="M {x1:.1f} {start_y:.1f} C {ctrl1_x:.1f} {ctrl1_y:.1f}, '
         f'{ctrl2_x:.1f} {ctrl2_y:.1f}, {x2:.1f} {end_y:.1f}" '
         f'marker-end="url(#graph-arrow)"></path>'
@@ -814,44 +852,29 @@ def _render_node(node: ProofNode, layout: dict) -> str:
 
 
 def _compute_graph_layout(graph: ProofGraph) -> dict:
-    # Edges go source → target where source "supports" target (e.g. a sublemma
-    # feeds into a higher claim).  The root is therefore a target, not a source.
-    # To assign depths, we traverse backwards from the root: for each node we find
-    # all nodes that have an edge pointing *to* that node (its supporters).
-    supporters_of: dict[str, list[str]] = defaultdict(list)
+    # Edges go source → target where source depends on target.
+    # To assign depths, we traverse forward from the root: each outgoing edge
+    # reaches a dependency that should appear lower in the layout.
+    children_of: dict[str, list[str]] = defaultdict(list)
     for edge in graph.edges:
-        if edge.label in PROVENANCE_EDGE_LABELS:
-            continue
-        supporters_of[edge.target_id].append(edge.source_id)
+        children_of[edge.source_id].append(edge.target_id)
 
     depths = {graph.root_node_id: 0}
     queue = deque([graph.root_node_id])
     while queue:
         node_id = queue.popleft()
         depth = depths[node_id]
-        for supporter_id in supporters_of.get(node_id, []):
+        for child_id in children_of.get(node_id, []):
             proposed = depth + 1
-            previous = depths.get(supporter_id)
+            previous = depths.get(child_id)
             if previous is None or proposed < previous:
-                depths[supporter_id] = proposed
-                queue.append(supporter_id)
-
-    # For nodes not reached by the main BFS (e.g. provenance-only child nodes such as
-    # formal_core children), try to place them just below their provenance parent.
-    # Remaining orphans all share the same extra_start row rather than stacking.
-    provenance_parent: dict[str, str] = {}
-    for edge in graph.edges:
-        if edge.label in PROVENANCE_EDGE_LABELS:
-            provenance_parent[edge.source_id] = edge.target_id
+                depths[child_id] = proposed
+                queue.append(child_id)
 
     extra_start = max(depths.values(), default=0) + 1
     for node in graph.nodes:
         if node.id not in depths:
-            prov_target = provenance_parent.get(node.id)
-            if prov_target is not None and prov_target in depths:
-                depths[node.id] = depths[prov_target] + 1
-            else:
-                depths[node.id] = extra_start
+            depths[node.id] = extra_start
 
     rows: dict[int, list[str]] = defaultdict(list)
     for node in graph.nodes:
@@ -1036,8 +1059,6 @@ def _render_interaction_styles(graph: ProofGraph, obligations: list[ReviewObliga
 def _incident_edge_classes(graph: ProofGraph) -> dict[str, set[str]]:
     mapping: dict[str, set[str]] = defaultdict(set)
     for edge in graph.edges:
-        if edge.label in PROVENANCE_EDGE_LABELS:
-            continue
         edge_class = _edge_class(edge.source_id, edge.target_id)
         mapping[edge.source_id].add(edge_class)
         mapping[edge.target_id].add(edge_class)

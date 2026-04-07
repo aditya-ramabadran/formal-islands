@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import json
 import shutil
 import tarfile
 import tempfile
@@ -14,7 +15,9 @@ from formal_islands.formalization.agentic import recover_agentic_artifact_from_s
 from formal_islands.formalization.pipeline import (
     build_local_proof_context,
     build_node_coverage_sketch,
+    build_verified_direct_child_context,
     format_local_proof_context,
+    format_verified_direct_child_context,
 )
 from formal_islands.models import FormalArtifact, ProofGraph
 from formal_islands.progress import append_to_progress_log, progress
@@ -165,6 +168,20 @@ def build_aristotle_formalization_prompt(
 ) -> str:
     sketch = build_node_coverage_sketch(node)
     local_context = build_local_proof_context(graph, node.id)
+    direct_child_context = build_verified_direct_child_context(graph, node.id)
+    children = {edge.target_id for edge in graph.edges if edge.source_id == node.id}
+    child_summaries = [
+        {
+            "id": child.id,
+            "title": child.title,
+            "informal_statement": child.informal_statement,
+            "formal_artifact": (
+                child.formal_artifact.model_dump(mode="json") if child.formal_artifact else None
+            ),
+        }
+        for child in graph.nodes
+        if child.id in children and child.formal_artifact is not None
+    ]
     prompt_parts = [
         f"Theorem title: {graph.theorem_title}",
         (
@@ -191,6 +208,9 @@ def build_aristotle_formalization_prompt(
         _format_coverage_sketch(sketch),
         "Local proof neighborhood:",
         format_local_proof_context(local_context),
+        "Verified direct child lemmas:",
+        json.dumps(child_summaries, indent=2) if child_summaries else "[]",
+        format_verified_direct_child_context(direct_child_context),
         (
             "Rewrite the designated scratch file into a Lean 4 theorem and proof that formalize the node. "
             "Use the same concrete setting as the node whenever possible, and keep the theorem faithful to the "
@@ -272,6 +292,7 @@ def _render_aristotle_scratch_header(
 ) -> str:
     sketch = build_node_coverage_sketch(node)
     local_context = build_local_proof_context(graph, node.id)
+    direct_child_context = build_verified_direct_child_context(graph, node.id)
     return "\n".join(
         [
             "/--",
@@ -300,6 +321,9 @@ def _render_aristotle_scratch_header(
             "",
             "Local proof neighborhood:",
             format_local_proof_context(local_context),
+            "",
+            "Verified direct child lemmas:",
+            format_verified_direct_child_context(direct_child_context),
             "",
             "Instructions:",
             "- Rewrite this file into a compilable Lean 4 theorem and proof for the target node above.",

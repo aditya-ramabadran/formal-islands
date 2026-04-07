@@ -13,6 +13,7 @@ from formal_islands.formalization.schemas import FormalizationResult
 from formal_islands.models import (
     FaithfulnessClassification,
     FormalArtifact,
+    ProofNode,
     ProofGraph,
     VerificationResult,
 )
@@ -171,6 +172,15 @@ class CombinedFormalizationAssessment:
     reason: str
 
 
+@dataclass(frozen=True)
+class ParentPromotionAssessment:
+    """Planning-backend judgment about whether an informal parent should now be promoted."""
+
+    promote_parent: bool
+    recommended_priority: int | None
+    reason: str
+
+
 class RepairCategory(StrEnum):
     """Structured repair buckets for retry guidance."""
 
@@ -220,6 +230,13 @@ class LocalProofContext:
 
     verified_supporting_nodes: list[ProofNode]
     context_only_nodes: list[ProofNode]
+
+
+@dataclass(frozen=True)
+class VerifiedDirectChildContext:
+    """Direct child nodes of the target that are already verified."""
+
+    child_nodes: list[ProofNode]
 
 
 def build_node_coverage_sketch(node, *, max_components: int = 4) -> CoverageSketch:
@@ -285,6 +302,23 @@ def build_local_proof_context(
     return LocalProofContext(verified_supporting_nodes=verified, context_only_nodes=context)
 
 
+def build_verified_direct_child_context(graph: ProofGraph, node_id: str) -> VerifiedDirectChildContext:
+    """Collect the target node's direct children that are already verified."""
+
+    node_by_id = {node.id: node for node in graph.nodes}
+    if node_id not in node_by_id:
+        raise ValueError(f"node '{node_id}' was not found in the graph")
+
+    child_ids = [edge.target_id for edge in graph.edges if edge.source_id == node_id]
+    child_nodes = [
+        node
+        for node in graph.nodes
+        if node.id in child_ids and node.status == "formal_verified" and node.formal_artifact is not None
+    ]
+    child_nodes = sorted(child_nodes, key=lambda node: node.id)
+    return VerifiedDirectChildContext(child_nodes=child_nodes)
+
+
 def format_local_proof_context(context: LocalProofContext) -> str:
     """Render local proof context as plain text for prompt injection."""
 
@@ -333,10 +367,38 @@ def format_local_proof_context(context: LocalProofContext) -> str:
     sections.append("\n".join(lines))
 
     sections.append(
-        "Provenance note: a refinement edge means a local claim was carved out from a broader sibling; "
-        "it is not a proof dependency unless the prompt explicitly marks it as one."
+        "Dependency note: every edge goes from a claim to one of the claims it depends on. "
+        "A refinement edge marks a narrower dependency carved out from a broader proof step."
     )
     return "\n\n".join(sections)
+
+
+def format_verified_direct_child_context(context: VerifiedDirectChildContext) -> str:
+    """Render verified direct children as prompt-ready text."""
+
+    lines = [
+        "Verified direct child lemmas already certified in this run:",
+        (
+            "These are the target node's own direct child theorems, so you may use them as established "
+            "lemmas when they are listed here."
+        ),
+    ]
+    if context.child_nodes:
+        for node in context.child_nodes:
+            theorem_name = node.formal_artifact.lean_theorem_name if node.formal_artifact else "(no theorem name)"
+            lean_statement = node.formal_artifact.lean_statement if node.formal_artifact else ""
+            lines.extend(
+                [
+                    f"- id: {node.id}",
+                    f"  title: {node.title}",
+                    f"  informal statement: {node.informal_statement}",
+                    f"  Lean theorem: {theorem_name}",
+                    f"  Lean statement: {lean_statement}",
+                ]
+            )
+    else:
+        lines.append("  - none listed")
+    return "\n".join(lines)
 
 
 def _format_coverage_sketch_for_prompt(sketch: CoverageSketch) -> str:
@@ -431,8 +493,9 @@ def build_formalization_request(
         }
         for child in graph.nodes
         if child.id in children and child.formal_artifact is not None
-    ][:1]
+    ]
     local_context = build_local_proof_context(graph, node_id)
+    direct_child_context = build_verified_direct_child_context(graph, node_id)
 
     prompt_parts = [
             f"Theorem title: {graph.theorem_title}",
@@ -459,10 +522,11 @@ def build_formalization_request(
                 else "Immediate parent summary:\n[]"
             ),
             (
-                "Verified child context:\n" + json.dumps(child_summaries[0], indent=2)
+                "Verified child context:\n" + json.dumps(child_summaries, indent=2)
                 if child_summaries
                 else "Verified child context:\n[]"
             ),
+            format_verified_direct_child_context(direct_child_context),
             (
                 "Return a JSON object with keys lean_theorem_name, lean_statement, and lean_code."
             ),
@@ -802,6 +866,98 @@ def request_concrete_sublemma_summary(
         informal_proof_text=_normalize_concrete_sublemma_summary_text(
             str(payload["informal_proof_text"]).strip()
         ),
+    )
+
+
+def build_parent_promotion_assessment_request(
+    *,
+    graph: ProofGraph,
+    parent_node_id: str,
+) -> StructuredBackendRequest:
+    parent = next(node for node in graph.nodes if node.id == parent_node_id)
+    local_context = build_local_proof_context(graph, parent_node_id)
+    sketch = build_node_coverage_sketch(parent)
+    verified_children = build_verified_direct_child_context(graph, parent_node_id)
+    prompt = "\n\n".join(
+        [
+            f"Theorem title: {graph.theorem_title}",
+            (
+                "Target informal parent node:\n"
+                f"- id: {parent.id}\n"
+                f"- title: {parent.title}\n"
+                f"- informal statement: {parent.informal_statement}\n"
+                f"- informal proof text: {parent.informal_proof_text}\n"
+                f"- formalization priority: {parent.formalization_priority if parent.formalization_priority is not None else 'unset'}\n"
+                f"- formalization rationale: {parent.formalization_rationale or '(no rationale recorded)'}"
+            ),
+            "Verified direct child lemmas already available:",
+            format_verified_direct_child_context(verified_children),
+            "Parent coverage sketch:",
+            _format_coverage_sketch_for_prompt(sketch),
+            "Local proof neighborhood:",
+            format_local_proof_context(local_context),
+            (
+                "The target node is still informal, but all of its direct children are already verified. Decide whether "
+                "the parent is now reasonable to formalize as a parent-assembly theorem, or whether it should remain "
+                "informal for now. Be conservative: if the remaining work is still the main burden or the parent is "
+                "really a different theorem family, do not promote it."
+            ),
+            (
+                "If you do promote it, return a recommended_priority from 1 to 3, where 1 means it should be tried "
+                "very soon and 3 means it can wait behind other candidates. If you do not promote it, return null for "
+                "recommended_priority."
+            ),
+            (
+                "Focus on whether the verified children now cover the hard proof burden, leaving only parent-level "
+                "assembly, rewriting, or side-condition discharge. Do not promote a parent if the children merely "
+                "suggest an analogue or if the remaining work is still the main theorem."
+            ),
+            "Return JSON with keys promote_parent, recommended_priority, and reason.",
+        ]
+    )
+    return StructuredBackendRequest(
+        prompt=prompt,
+        system_prompt=(
+            "You are a conservative proof-graph planner deciding whether an informal parent should now be promoted. "
+            "Return only JSON matching the schema."
+        ),
+        json_schema={
+            "type": "object",
+            "properties": {
+                "promote_parent": {"type": "boolean"},
+                "recommended_priority": {
+                    "anyOf": [
+                        {"type": "integer", "minimum": 1, "maximum": 3},
+                        {"type": "null"},
+                    ]
+                },
+                "reason": {"type": "string", "minLength": 1},
+            },
+            "required": ["promote_parent", "recommended_priority", "reason"],
+            "additionalProperties": False,
+        },
+        task_name="assess_parent_promotion",
+    )
+
+
+def request_parent_promotion_assessment(
+    *,
+    backend: StructuredBackend,
+    graph: ProofGraph,
+    parent_node_id: str,
+) -> ParentPromotionAssessment:
+    response = run_structured_with_progress(
+        backend,
+        build_parent_promotion_assessment_request(graph=graph, parent_node_id=parent_node_id),
+    )
+    payload = response.payload
+    recommended_priority = payload.get("recommended_priority")
+    if recommended_priority is not None:
+        recommended_priority = int(recommended_priority)
+    return ParentPromotionAssessment(
+        promote_parent=bool(payload["promote_parent"]),
+        recommended_priority=recommended_priority,
+        reason=str(payload["reason"]).strip(),
     )
 
 

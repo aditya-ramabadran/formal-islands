@@ -135,6 +135,40 @@ def append_formalization_assessment_to_progress_log(
     append_to_progress_log("\n".join(lines))
 
 
+def append_parent_promotion_assessment_to_progress_log(
+    *,
+    parent_node_id: str,
+    promote_parent: bool,
+    reason: str,
+    recommended_priority: int | None = None,
+    verified_child_count: int | None = None,
+) -> None:
+    """Append a concise parent-promotion review summary to the active progress log."""
+
+    lines = [f"node {parent_node_id}: parent promotion assessment promote_parent={promote_parent}"]
+    if recommended_priority is not None:
+        lines.append(f"recommended_priority={recommended_priority}")
+    if verified_child_count is not None:
+        lines.append(f"verified_child_count={verified_child_count}")
+    lines.append(f"reason: {reason}")
+    append_to_progress_log("\n".join(lines))
+
+
+def append_remaining_proof_burden_to_progress_log(
+    *,
+    node_id: str,
+    verified_child_ids: list[str],
+    remaining_proof_burden: str,
+) -> None:
+    """Append a concise report-synthesis summary to the active progress log."""
+
+    lines = [f"node {node_id}: remaining proof burden synthesized"]
+    if verified_child_ids:
+        lines.append("verified_children=" + ", ".join(verified_child_ids))
+    lines.append(f"text: {remaining_proof_burden}")
+    append_to_progress_log("\n".join(lines))
+
+
 def describe_backend(backend: object) -> str:
     """Return a short human-readable backend label for progress logging."""
 

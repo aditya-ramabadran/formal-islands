@@ -32,6 +32,7 @@ from formal_islands.formalization.loop import (
 )
 from formal_islands.models import FormalArtifact, ProofGraph, VerificationResult
 from formal_islands.report import export_report_bundle, render_html_report
+from formal_islands.report.annotation import synthesize_remaining_proof_burdens
 from formal_islands.review import derive_review_obligations
 from formal_islands.progress import (
     append_graph_summary_to_progress_log,
@@ -147,6 +148,7 @@ def build_parser() -> argparse.ArgumentParser:
     formalize_all_parser.set_defaults(func=cmd_formalize_all_candidates)
 
     report_parser = subparsers.add_parser("report")
+    add_backend_args(report_parser)
     add_graph_input_arg(report_parser)
     add_output_dir_arg(report_parser)
     report_parser.set_defaults(func=cmd_report)
@@ -544,6 +546,24 @@ def cmd_report(args: argparse.Namespace) -> int:
     with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
         progress("report stage starting")
         graph = load_graph(Path(args.graph))
+        planning_backend_name = getattr(args, "planning_backend", None)
+        legacy_backend_name = getattr(args, "backend", None)
+        planning_backend = None
+        if planning_backend_name is not None or legacy_backend_name is not None:
+            planning_backend = build_backend(
+                planning_backend_name or legacy_backend_name,
+                getattr(args, "planning_model", None)
+                if planning_backend_name is not None
+                else getattr(args, "model", None),
+                output_dir / "_backend_logs",
+                timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
+            )
+        if planning_backend is not None:
+            progress("report stage: synthesizing remaining proof burdens")
+            graph = synthesize_remaining_proof_burdens(
+                graph=graph,
+                planning_backend=planning_backend,
+            )
         obligations = derive_review_obligations(graph)
         bundle = export_report_bundle(graph, obligations)
         html = render_html_report(graph, obligations)
@@ -603,6 +623,12 @@ def cmd_run_example(args: argparse.Namespace) -> int:
                 argparse.Namespace(
                     graph=str(formalized_graph_path),
                     output_dir=str(output_dir),
+                    backend=getattr(args, "backend", None),
+                    model=getattr(args, "model", None),
+                    planning_backend=getattr(args, "planning_backend", None),
+                    planning_model=getattr(args, "planning_model", None),
+                    formalization_backend=getattr(args, "formalization_backend", None),
+                    formalization_model=getattr(args, "formalization_model", None),
                 )
             )
         finally:
@@ -662,6 +688,12 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
                 argparse.Namespace(
                     graph=str(formalized_graph_path),
                     output_dir=str(output_dir),
+                    backend=getattr(args, "backend", None),
+                    model=getattr(args, "model", None),
+                    planning_backend=getattr(args, "planning_backend", None),
+                    planning_model=getattr(args, "planning_model", None),
+                    formalization_backend=getattr(args, "formalization_backend", None),
+                    formalization_model=getattr(args, "formalization_model", None),
                 )
             )
         finally:

@@ -2,6 +2,8 @@ import json
 
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode
 from formal_islands.examples.fixtures import build_example_graph
+from formal_islands.backends import MockBackend
+from formal_islands.report.annotation import synthesize_remaining_proof_burdens
 from formal_islands.report.generator import (
     NODE_HEIGHT,
     _compute_graph_layout,
@@ -53,7 +55,8 @@ def test_render_html_report_includes_core_sections() -> None:
     assert 'id="MathJax-script"' in html
     assert "width: min(100%, 720px);" in html
     assert "Nodes without attached Lean artifacts use dashed amber outlines." in html
-    assert "Dashed gray edges represent refinement or" in html
+    assert "All arrows point from a claim to one of the claims it depends on." in html
+    assert "Dashed gray arrows mark refinement edges" in html
     assert "language-lean" in html
     assert 'class="tok-keyword"' in html or 'class="tok-type"' in html
     assert 'preserveAspectRatio="xMidYMin meet"' in html
@@ -65,6 +68,114 @@ def test_render_html_report_includes_core_sections() -> None:
     assert "--checklist-panel:" in html
     assert ".lean-code {" in html
     assert "#f2e8dc" in html
+
+
+def test_render_html_report_shows_remaining_proof_burden_for_verified_children() -> None:
+    artifact = FormalArtifact(
+        lean_theorem_name="child_core",
+        lean_statement="theorem child_core : True",
+        lean_code="theorem child_core : True := by trivial",
+        faithfulness_classification="full_node",
+    )
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Parent theorem",
+                informal_statement="Show the parent theorem.",
+                informal_proof_text="Use n1 and n2.",
+                remaining_proof_burden="Assuming the verified child lemmas, it remains to assemble their conclusions and discharge the final parent-level rewrite.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Verified child one",
+                informal_statement="Child one.",
+                informal_proof_text="Core one.",
+                status="formal_verified",
+                formal_artifact=artifact,
+            ),
+            ProofNode(
+                id="n2",
+                title="Verified child two",
+                informal_statement="Child two.",
+                informal_proof_text="Core two.",
+                status="formal_verified",
+                formal_artifact=artifact,
+            ),
+        ],
+        edges=[
+            ProofEdge(source_id="n0", target_id="n1"),
+            ProofEdge(source_id="n0", target_id="n2"),
+        ],
+    )
+    obligations = derive_review_obligations(graph)
+
+    html = render_html_report(graph, obligations)
+
+    assert "Remaining proof burden (assuming results of" in html
+    assert '<a class="node-jump" href="#node-n1">n1</a>' in html
+    assert '<a class="node-jump" href="#node-n2">n2</a>' in html
+    assert "final parent-level rewrite" in html
+
+
+def test_synthesize_remaining_proof_burdens_uses_planner_and_updates_graph() -> None:
+    artifact = FormalArtifact(
+        lean_theorem_name="child_core",
+        lean_statement="theorem child_core : True",
+        lean_code="theorem child_core : True := by trivial",
+        faithfulness_classification="full_node",
+    )
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Parent theorem",
+                informal_statement="Show the parent theorem.",
+                informal_proof_text="Use n1 and n2.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Verified child one",
+                informal_statement="Child one.",
+                informal_proof_text="Core one.",
+                status="formal_verified",
+                formal_artifact=artifact,
+            ),
+            ProofNode(
+                id="n2",
+                title="Verified child two",
+                informal_statement="Child two.",
+                informal_proof_text="Core two.",
+                status="formal_verified",
+                formal_artifact=artifact,
+            ),
+        ],
+        edges=[
+            ProofEdge(source_id="n0", target_id="n1"),
+            ProofEdge(source_id="n0", target_id="n2"),
+        ],
+    )
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "remaining_proof_burden": "Assuming n1 and n2, the remaining work is to assemble the two certified identities and discharge the final parent-level rewrite."
+            }
+        ]
+    )
+
+    updated = synthesize_remaining_proof_burdens(graph=graph, planning_backend=backend)
+    parent = next(node for node in updated.nodes if node.id == "n0")
+
+    assert parent.remaining_proof_burden is not None
+    assert "assemble the two certified identities" in parent.remaining_proof_burden
+    assert len(backend.requests) == 1
+    assert backend.requests[0].task_name == "assess_remaining_proof_burden"
 
 
 def test_render_html_report_preserves_latex_text_blocks() -> None:
@@ -139,7 +250,7 @@ def test_render_html_report_highlights_lean_tokens_locally() -> None:
     assert "tok-tactic" in html
 
 
-def test_render_html_report_marks_refinement_edges_as_provenance() -> None:
+def test_render_html_report_marks_refinement_edges_as_refinement() -> None:
     graph = build_example_graph().model_copy(
         update={
             "edges": [
@@ -151,8 +262,8 @@ def test_render_html_report_marks_refinement_edges_as_provenance() -> None:
 
     html = render_html_report(graph, obligations)
 
-    assert "edge-provenance" in html
-    assert "refinement or" in html
+    assert "edge-refinement" in html
+    assert "refinement edges" in html
 
 
 def test_compute_graph_layout_height_covers_all_nodes() -> None:
@@ -205,7 +316,7 @@ def test_derive_review_obligations_words_supporting_sublemma_honestly() -> None:
                 formal_artifact=artifact,
             ),
         ],
-        edges=[ProofEdge(source_id="n1__formal_core", target_id="n1", label="formal_sublemma_for")],
+        edges=[ProofEdge(source_id="n1", target_id="n1__formal_core", label="formal_sublemma_for")],
     )
 
     obligations = derive_review_obligations(graph)

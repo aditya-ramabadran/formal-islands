@@ -180,7 +180,7 @@ A normal benchmark run writes:
 - `04_report.html`
   Human-readable HTML report.
 - `_progress.log`
-  Shared run progress log in the output directory. It is append-only, so rerunning later stages like report generation will add to the existing file instead of replacing it. When the graph is generated or materially updated, the log also gets a compact node/edge preview. Planning-backend semantic assessments and Aristotle summary markdown files are appended there too.
+  Shared run progress log in the output directory. It is append-only, so rerunning later stages like report generation will add to the existing file instead of replacing it. When the graph is generated or materially updated, the log also gets a compact node/edge preview. Planning-backend semantic assessments, parent-promotion assessments, report-stage remaining-proof-burden syntheses, and Aristotle summary markdown files are appended there too.
 - `_backend_logs/*.json`
   Logged backend requests/responses, timings, and raw CLI output.
 
@@ -231,8 +231,9 @@ The report supports:
 - MathJax-rendered math
 - syntax-highlighted Lean code
 - automatic light/dark mode
-- dashed gray provenance / refinement edges for nearby nodes that are not proof dependencies
+- dashed gray refinement edges for nearby nodes, while every arrow still means a proof dependency
 - result labels that distinguish faithful cores, downstream consequences, dimensional analogues, and other narrower outcomes
+- a report-stage "Remaining proof burden" section on any still-unverified node that has verified children, with the verified child ids linked in the section title
 
 ## Current Formalization Behavior
 
@@ -250,9 +251,16 @@ The prompt now also includes a lightweight coverage sketch for the target node, 
 
 The formalization prompt also splits nearby nodes into:
 - verified supporting lemmas already certified in this run, which may be relied on as established facts
+- verified direct child lemmas, which are the target node's own already-certified children and are included explicitly as usable context
 - context-only sibling ingredients, which are only there for orientation and should not be assumed
 
 After a formalization verifies, the pipeline asks the planning backend for a combined semantic review of the Lean theorem against the target node. That review can classify the result as a full match, a faithful core, a downstream consequence, a dimensional analogue, or a helper shard, and it controls whether coverage expansion should run.
+
+If every direct child of an informal parent has already verified, the formalization loop may also ask the planning backend whether that parent should now be promoted to `candidate_formal`. This parent-assembly promotion is late and planner-gated: the children have to be done first, the planner has to say the remaining burden is now cheap enough, and then the parent can enter the normal dynamic discovery queue on a later pass.
+
+For Aristotle runs, these follow-up decisions are cached per parent/child snapshot so the same eligible parent is not re-asked repeatedly in the same run unless the child set changes.
+
+At the end of a run, the report stage can also synthesize a short "Remaining proof burden" paragraph for any still-unverified node that has at least one verified direct child. That paragraph is planner-generated, report-only, and describes the delta between the informal proof and the already certified children. The HTML report renders it directly under the node's informal proof, and the section title lists the verified child node ids as links.
 
 The agentic prompt also explicitly reminds the worker where Mathlib lives in this workspace:
 - `.lake/packages/mathlib/Mathlib`
@@ -307,7 +315,7 @@ When a verified result is only a concrete supporting sublemma, the pipeline make
 
 Two more details matter in the current run loop:
 - if a recovered agentic artifact verifies as a concrete sublemma, it still gets the same bounded expansion attempt
-- when a refined local claim is certified, the source node reached through a `uses` edge can be promoted into the candidate set in a later dynamic pass, so a successful narrow core can feed a follow-up formalization target
+- when all direct children of an informal parent are verified, the parent can be promoted into the candidate set in a later dynamic pass, so a successful local core can feed a follow-up parent-assembly target
 - when the graph is run in auto mode, `run-benchmark` now keeps discovering newly promoted candidates instead of stopping after the first success
 - when the result is only a concrete supporting sublemma, the planning backend can still be used to write the short informal statement/proof summary for that certified local core
 

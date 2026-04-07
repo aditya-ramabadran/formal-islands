@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 import re
+from threading import RLock
 from typing import Callable
 
 from formal_islands.backends import AgenticStructuredBackend, BackendError, StructuredBackend
@@ -21,6 +22,7 @@ from formal_islands.formalization.pipeline import (
     CombinedFormalizationAssessment,
     FaithfulnessClassification,
     FormalizationFaithfulnessError,
+    ParentPromotionAssessment,
     RepairAssessment,
     RepairCategory,
     build_node_coverage_sketch,
@@ -28,12 +30,14 @@ from formal_islands.formalization.pipeline import (
     format_faithfulness_notes,
     request_combined_verification_assessment,
     request_concrete_sublemma_summary,
+    request_parent_promotion_assessment,
     request_repair_assessment,
     request_node_formalization,
 )
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode, VerificationResult
 from formal_islands.progress import (
     append_formalization_assessment_to_progress_log,
+    append_parent_promotion_assessment_to_progress_log,
     progress,
 )
 
@@ -55,6 +59,14 @@ class MultiFormalizationOutcome:
     outcomes: list[FormalizationOutcome]
 
 
+@dataclass
+class ParentPromotionCache:
+    """Thread-safe cache for planner parent-promotion decisions."""
+
+    decisions: dict[str, ParentPromotionAssessment | None]
+    lock: RLock
+
+
 FormalizationUpdateCallback = Callable[[FormalizationOutcome], None]
 DEFAULT_FORMALIZATION_ATTEMPTS = 2
 MAX_TOTAL_FORMALIZATION_ATTEMPTS = 4
@@ -74,6 +86,8 @@ def formalize_candidate_node(
     node_id: str,
     max_attempts: int = DEFAULT_FORMALIZATION_ATTEMPTS,
     on_update: FormalizationUpdateCallback | None = None,
+    parent_promotion_cache: ParentPromotionCache | None = None,
+    enable_parent_promotion: bool = True,
     mode: str = "agentic",
 ) -> FormalizationOutcome:
     """Attempt to formalize and verify one candidate node with bounded retries."""
@@ -93,6 +107,8 @@ def formalize_candidate_node(
             node_id=node_id,
             max_attempts=max_attempts,
             on_update=on_update,
+            parent_promotion_cache=parent_promotion_cache,
+            enable_parent_promotion=enable_parent_promotion,
         )
 
     if hasattr(backend, "run_agentic_structured"):
@@ -104,6 +120,8 @@ def formalize_candidate_node(
             node_id=node_id,
             max_attempts=max_attempts,
             on_update=on_update,
+            parent_promotion_cache=parent_promotion_cache,
+            enable_parent_promotion=enable_parent_promotion,
         )
 
     if hasattr(backend, "run_structured"):
@@ -115,6 +133,8 @@ def formalize_candidate_node(
             node_id=node_id,
             max_attempts=max_attempts,
             on_update=on_update,
+            parent_promotion_cache=parent_promotion_cache,
+            enable_parent_promotion=enable_parent_promotion,
         )
 
     raise ValueError("formalization backend must support either agentic or structured output")
@@ -150,11 +170,15 @@ def formalize_candidate_nodes(
             max_attempts=max_attempts,
             on_update=on_update,
             mode=mode,
+            parent_promotion_cache=ParentPromotionCache(decisions={}, lock=RLock()),
+            enable_parent_promotion=node_ids is None,
         )
 
     current_graph = graph
     outcomes: list[FormalizationOutcome] = []
     attempted_ids: set[str] = set()
+    parent_promotion_cache = ParentPromotionCache(decisions={}, lock=RLock())
+    enable_parent_promotion = node_ids is None
 
     if node_ids is not None:
         # Explicit list: static order, no dynamic discovery.
@@ -172,6 +196,8 @@ def formalize_candidate_nodes(
                 node_id=node_id,
                 max_attempts=max_attempts,
                 on_update=on_update,
+                parent_promotion_cache=parent_promotion_cache,
+                enable_parent_promotion=enable_parent_promotion,
                 mode=mode,
             )
             current_graph = outcome.graph
@@ -202,6 +228,8 @@ def formalize_candidate_nodes(
                 node_id=next_node.id,
                 max_attempts=max_attempts,
                 on_update=on_update,
+                parent_promotion_cache=parent_promotion_cache,
+                enable_parent_promotion=enable_parent_promotion,
                 mode=mode,
             )
             current_graph = outcome.graph
@@ -219,6 +247,8 @@ def _formalize_candidate_node_structured(
     node_id: str,
     max_attempts: int,
     on_update: FormalizationUpdateCallback | None,
+    parent_promotion_cache: ParentPromotionCache | None,
+    enable_parent_promotion: bool,
 ) -> FormalizationOutcome:
     """Existing structured formalization + retry loop."""
 
@@ -330,6 +360,8 @@ def _formalize_candidate_node_structured(
             node_id=node_id,
             artifact=latest_artifact,
             verification_status=verification.status,
+            parent_promotion_cache=parent_promotion_cache,
+            enable_parent_promotion=enable_parent_promotion,
         )
         _emit_update(current_graph, node_id, latest_artifact, on_update)
 
@@ -381,6 +413,8 @@ def _formalize_candidate_node_aristotle(
     node_id: str,
     max_attempts: int,
     on_update: FormalizationUpdateCallback | None,
+    parent_promotion_cache: ParentPromotionCache | None,
+    enable_parent_promotion: bool,
 ) -> FormalizationOutcome:
     """Project-based formalization loop for Aristotle."""
 
@@ -549,6 +583,8 @@ def _formalize_candidate_node_aristotle(
             node_id=node_id,
             artifact=latest_artifact,
             verification_status=verification.status,
+            parent_promotion_cache=parent_promotion_cache,
+            enable_parent_promotion=enable_parent_promotion,
         )
         _progress(f"node {node_id}: integrated Aristotle result into graph")
         _emit_update(current_graph, node_id, latest_artifact, on_update)
@@ -590,6 +626,8 @@ def _formalize_candidate_node_agentic(
     node_id: str,
     max_attempts: int,
     on_update: FormalizationUpdateCallback | None,
+    parent_promotion_cache: ParentPromotionCache | None,
+    enable_parent_promotion: bool,
 ) -> FormalizationOutcome:
     workspace_root = verifier.workspace.root.resolve()
     scratch_path = verifier.workspace.prepare_worker_file(node_id).resolve()
@@ -648,6 +686,8 @@ def _formalize_candidate_node_agentic(
                     node_id=node_id,
                     artifact=salvaged_artifact,
                     verification_status=salvaged_artifact.verification.status,
+                    parent_promotion_cache=parent_promotion_cache,
+                    enable_parent_promotion=enable_parent_promotion,
                 )
                 _emit_update(updated_graph, node_id, salvaged_artifact, on_update)
                 _progress(
@@ -789,6 +829,8 @@ def _formalize_candidate_node_agentic(
             node_id=node_id,
             artifact=artifact,
             verification_status=verification.status,
+            parent_promotion_cache=parent_promotion_cache,
+            enable_parent_promotion=enable_parent_promotion,
         )
         _emit_update(updated_graph, node_id, artifact, on_update)
         _progress(
@@ -1156,23 +1198,201 @@ def _integrate_successful_formalization(
     node_id: str,
     artifact: FormalArtifact,
     verification_status: str,
+    parent_promotion_cache: ParentPromotionCache | None = None,
+    enable_parent_promotion: bool = True,
 ) -> ProofGraph:
     if verification_status != "verified":
         return _update_node(graph, node_id, "formal_failed", artifact)
 
     if artifact.faithfulness_classification == FaithfulnessClassification.FULL_NODE:
         updated = _update_node(graph, node_id, "formal_verified", artifact)
-        return _promote_informal_parents_via_uses_edges(updated, node_id)
+        if enable_parent_promotion:
+            updated = _promote_followup_candidates_after_verified_node(
+                graph=updated,
+                planning_backend=planning_backend,
+                verified_node_id=node_id,
+                parent_promotion_cache=parent_promotion_cache,
+            )
+        return updated
 
     if artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA:
-        return _promote_concrete_sublemma(
+        updated = _promote_concrete_sublemma(
             graph=graph,
             backend=planning_backend if planning_backend is not None else backend,
             parent_node_id=node_id,
             artifact=artifact,
         )
+        if enable_parent_promotion:
+            return _promote_followup_candidates_after_verified_node(
+                graph=updated,
+                planning_backend=planning_backend,
+                verified_node_id=None,
+                parent_promotion_cache=parent_promotion_cache,
+            )
+        return updated
 
     return _update_node(graph, node_id, "formal_failed", artifact)
+
+
+def _promote_followup_candidates_after_verified_node(
+    *,
+    graph: ProofGraph,
+    planning_backend: StructuredBackend | None,
+    verified_node_id: str | None,
+    parent_promotion_cache: ParentPromotionCache | None,
+) -> ProofGraph:
+    updated = graph
+    updated = _promote_informal_parents_with_verified_children(
+        graph=updated,
+        planning_backend=planning_backend,
+        parent_promotion_cache=parent_promotion_cache,
+    )
+    return updated
+
+
+def _parent_promotion_cache_key(graph: ProofGraph, parent_node_id: str) -> str:
+    parent = next(node for node in graph.nodes if node.id == parent_node_id)
+    child_ids = [edge.target_id for edge in graph.edges if edge.source_id == parent_node_id]
+    verified_children = [
+        node
+        for node in graph.nodes
+        if node.id in child_ids and node.status == "formal_verified" and node.formal_artifact is not None
+    ]
+    payload = {
+        "parent": {
+            "id": parent.id,
+            "title": parent.title,
+            "informal_statement": parent.informal_statement,
+            "informal_proof_text": parent.informal_proof_text,
+        },
+        "children": [
+            {
+                "id": child.id,
+                "theorem": child.formal_artifact.lean_theorem_name if child.formal_artifact else "",
+                "statement": child.formal_artifact.lean_statement if child.formal_artifact else "",
+                "classification": child.formal_artifact.faithfulness_classification if child.formal_artifact else "",
+            }
+            for child in verified_children
+        ],
+    }
+    return json.dumps(payload, sort_keys=True, ensure_ascii=False)
+
+
+def _eligible_informal_parents_with_verified_children(graph: ProofGraph) -> list[str]:
+    node_by_id = {node.id: node for node in graph.nodes}
+    eligible: list[str] = []
+    children_by_parent: dict[str, list[str]] = {}
+    for edge in graph.edges:
+        children_by_parent.setdefault(edge.source_id, []).append(edge.target_id)
+
+    for parent_id, child_ids in children_by_parent.items():
+        parent = node_by_id.get(parent_id)
+        if parent is None or parent.status != "informal":
+            continue
+        if not child_ids:
+            continue
+        if all(
+            node_by_id.get(child_id) is not None
+            and node_by_id[child_id].status == "formal_verified"
+            and node_by_id[child_id].formal_artifact is not None
+            for child_id in child_ids
+        ):
+            eligible.append(parent_id)
+    return sorted(eligible)
+
+
+def _promote_informal_parents_with_verified_children(
+    *,
+    graph: ProofGraph,
+    planning_backend: StructuredBackend | None,
+    parent_promotion_cache: ParentPromotionCache | None,
+) -> ProofGraph:
+    if planning_backend is None:
+        return graph
+
+    eligible_parent_ids = _eligible_informal_parents_with_verified_children(graph)
+    if not eligible_parent_ids:
+        _progress("parent promotion sweep: no informal parents with all-verified children")
+        return graph
+
+    _progress(
+        "parent promotion sweep: evaluating "
+        f"{len(eligible_parent_ids)} eligible informal parent(s)"
+    )
+    updated_nodes = list(graph.nodes)
+    node_index = {node.id: index for index, node in enumerate(updated_nodes)}
+
+    for parent_id in eligible_parent_ids:
+        parent = next(node for node in updated_nodes if node.id == parent_id)
+        cache_key = _parent_promotion_cache_key(graph, parent_id)
+        decision: ParentPromotionAssessment | None = None
+        cached_hit = False
+        if parent_promotion_cache is not None:
+            with parent_promotion_cache.lock:
+                if cache_key in parent_promotion_cache.decisions:
+                    decision = parent_promotion_cache.decisions[cache_key]
+                    cached_hit = True
+        if not cached_hit:
+            _progress(f"node {parent_id}: requesting parent assembly promotion assessment")
+            try:
+                decision = request_parent_promotion_assessment(
+                    backend=planning_backend,
+                    graph=graph,
+                    parent_node_id=parent_id,
+                )
+            except BackendError as exc:
+                _progress(
+                    f"node {parent_id}: parent assembly promotion assessment failed: "
+                    f"{_truncate_progress_summary(str(exc), max_length=180)}"
+                )
+                decision = None
+            if parent_promotion_cache is not None:
+                with parent_promotion_cache.lock:
+                    parent_promotion_cache.decisions[cache_key] = decision
+        else:
+            _progress(
+                f"node {parent_id}: parent promotion decision cache hit -> "
+                f"promote={(decision.promote_parent if decision is not None else False)}"
+            )
+
+        if decision is None:
+            _progress(f"node {parent_id}: leaving informal because no planner decision was available")
+            continue
+
+        append_parent_promotion_assessment_to_progress_log(
+            parent_node_id=parent_id,
+            promote_parent=decision.promote_parent,
+            recommended_priority=decision.recommended_priority,
+            verified_child_count=len([edge for edge in graph.edges if edge.source_id == parent_id]),
+            reason=_truncate_progress_summary(decision.reason, max_length=180),
+        )
+
+        _progress(
+            f"node {parent_id}: parent promotion assessment -> promote={decision.promote_parent} "
+            f"priority={decision.recommended_priority if decision.recommended_priority is not None else 'null'} "
+            f"reason={_truncate_progress_summary(decision.reason, max_length=180)}"
+        )
+        if not decision.promote_parent:
+            continue
+
+        priority = decision.recommended_priority if decision.recommended_priority is not None else 3
+        updated_nodes[node_index[parent_id]] = parent.model_copy(
+            update={
+                "status": "candidate_formal",
+                "formalization_priority": priority,
+                "formalization_rationale": _truncate_progress_summary(
+                    (
+                        f"Promoted after all direct children were verified; {decision.reason}"
+                    ),
+                    max_length=240,
+                ),
+            }
+        )
+        _progress(
+            f"node {parent_id}: promoted to candidate_formal at priority {priority}"
+        )
+
+    return graph.model_copy(update={"nodes": updated_nodes})
 
 
 def _apply_combined_verification_assessment(
@@ -1343,24 +1563,21 @@ def _maybe_refine_failed_node(
 
 
 def _node_is_on_main_proof_path(graph: ProofGraph, node_id: str) -> bool:
-    reverse_edges: dict[str, set[str]] = {}
-    provenance_labels = {"refined_from", "uses", "formal_sublemma_for"}
+    forward_edges: dict[str, set[str]] = {}
     for edge in graph.edges:
-        if edge.label in provenance_labels:
-            continue
-        reverse_edges.setdefault(edge.target_id, set()).add(edge.source_id)
+        forward_edges.setdefault(edge.source_id, set()).add(edge.target_id)
 
-    queue = [node_id]
-    seen = {node_id}
+    queue = [graph.root_node_id]
+    seen = {graph.root_node_id}
     while queue:
         current = queue.pop(0)
-        if current == graph.root_node_id:
+        if current == node_id:
             return True
-        for parent in reverse_edges.get(current, set()):
-            if parent in seen:
+        for dependency in forward_edges.get(current, set()):
+            if dependency in seen:
                 continue
-            seen.add(parent)
-            queue.append(parent)
+            seen.add(dependency)
+            queue.append(dependency)
     return False
 
 
@@ -1536,52 +1753,6 @@ def _maybe_upgrade_concrete_sublemma_to_full_node(
     )
 
 
-def _promote_informal_parents_via_uses_edges(graph: ProofGraph, node_id: str) -> ProofGraph:
-    """After a full-node success, promote any informal parent reachable via a 'uses' edge.
-
-    A refined local claim node has an outgoing edge with label 'uses' pointing to
-    the broader informal node it was carved out from.  If that parent is still
-    informal, elevate it to candidate_formal at priority 3 so the dynamic
-    formalize_candidate_nodes loop can attempt it next.
-
-    Guards:
-    - Only promotes nodes whose current status is 'informal' (skips candidate_formal,
-      formal_verified, formal_failed).
-    - Uses 'attempted_ids' in the caller loop to prevent double-attempting.
-    """
-    parent_ids = [
-        edge.target_id
-        for edge in graph.edges
-        if edge.source_id == node_id and edge.label == "uses"
-    ]
-    if not parent_ids:
-        return graph
-
-    updated_nodes = []
-    promoted_any = False
-    for node in graph.nodes:
-        if node.id in parent_ids and node.status == "informal":
-            updated_nodes.append(
-                node.model_copy(
-                    update={
-                        "status": "candidate_formal",
-                        "formalization_priority": 3,
-                        "formalization_rationale": (
-                            f"Promoted after verified child '{node_id}' certified a local core; "
-                            "attempting broader parent coverage."
-                        ),
-                    }
-                )
-            )
-            promoted_any = True
-        else:
-            updated_nodes.append(node)
-
-    if not promoted_any:
-        return graph
-    return graph.model_copy(update={"nodes": updated_nodes})
-
-
 def _promote_concrete_sublemma(
     *,
     graph: ProofGraph,
@@ -1629,8 +1800,8 @@ def _promote_concrete_sublemma(
     updated_edges = list(graph.edges)
     updated_edges.append(
         ProofEdge(
-            source_id=child_id,
-            target_id=parent_node_id,
+            source_id=parent_node_id,
+            target_id=child_id,
             label="formal_sublemma_for",
             explanation=(
                 "This verified Lean theorem certifies a narrower concrete local core used inside the parent informal step."
@@ -1930,6 +2101,8 @@ def _formalize_candidate_nodes_aristotle_parallel(
     max_attempts: int,
     on_update: FormalizationUpdateCallback | None,
     mode: str,
+    parent_promotion_cache: ParentPromotionCache | None,
+    enable_parent_promotion: bool,
 ) -> MultiFormalizationOutcome:
     current_graph = graph
     outcomes: list[FormalizationOutcome] = []
@@ -1973,6 +2146,8 @@ def _formalize_candidate_nodes_aristotle_parallel(
                     node_id=node.id,
                     max_attempts=max_attempts,
                     on_update=None,
+                    parent_promotion_cache=parent_promotion_cache,
+                    enable_parent_promotion=False,
                     mode=mode,
                 ): node.id
                 for node in batch_nodes
@@ -1995,6 +2170,12 @@ def _formalize_candidate_nodes_aristotle_parallel(
             _progress(
                 f"Aristotle batch: merging node {outcome.node_id} result into shared graph"
             )
+            if enable_parent_promotion:
+                current_graph = _promote_informal_parents_with_verified_children(
+                    graph=current_graph,
+                    planning_backend=planning_backend,
+                    parent_promotion_cache=parent_promotion_cache,
+                )
             _emit_update(current_graph, outcome.node_id, outcome.artifact, on_update)
             _progress(
                 f"Aristotle node {outcome.node_id}: completed with status "

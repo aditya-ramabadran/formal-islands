@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import subprocess
 from pathlib import Path
+from threading import RLock
 
 import pytest
 
@@ -19,8 +20,10 @@ from formal_islands.formalization.loop import (
     _attempt_agentic_coverage_expansion,
     _build_agentic_faithfulness_feedback,
     _build_aristotle_faithfulness_feedback,
+    _promote_informal_parents_with_verified_children,
     _summarize_compiler_feedback,
     formalize_candidate_node,
+    ParentPromotionCache,
     RepairAssessment,
     RepairCategory,
 )
@@ -60,6 +63,64 @@ def build_graph() -> ProofGraph:
         ],
         edges=[ProofEdge(source_id="n1", target_id="n2")],
     )
+
+
+def build_two_child_graph() -> ProofGraph:
+    return ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="If a and b are nonnegative, then a + b is nonnegative.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Main claim",
+                informal_statement="a + b is nonnegative.",
+                informal_proof_text="It follows from the arithmetic lemmas n1 and n2.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Arithmetic lemma 1",
+                informal_statement="0 <= a.",
+                informal_proof_text="This is a local technical fact.",
+                status="formal_verified",
+                formal_artifact=FormalArtifact(
+                    lean_theorem_name="a_nonneg",
+                    lean_statement="theorem a_nonneg : 0 ≤ a",
+                    lean_code="theorem a_nonneg : 0 ≤ a := by\n  sorry",
+                ),
+            ),
+            ProofNode(
+                id="n2",
+                title="Arithmetic lemma 2",
+                informal_statement="0 <= b.",
+                informal_proof_text="This is another local technical fact.",
+                status="formal_verified",
+                formal_artifact=FormalArtifact(
+                    lean_theorem_name="b_nonneg",
+                    lean_statement="theorem b_nonneg : 0 ≤ b",
+                    lean_code="theorem b_nonneg : 0 ≤ b := by\n  sorry",
+                ),
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1"), ProofEdge(source_id="n0", target_id="n2")],
+    )
+
+
+def build_two_child_candidate_graph() -> ProofGraph:
+    graph = build_two_child_graph()
+    updated_nodes = [
+        node.model_copy(
+            update={
+                "status": "candidate_formal",
+                "formalization_priority": 1,
+                "formalization_rationale": "Parent assembly target.",
+            }
+        )
+        if node.id == "n0"
+        else node
+        for node in graph.nodes
+    ]
+    return graph.model_copy(update={"nodes": updated_nodes})
 
 
 def create_workspace(root: Path) -> LeanWorkspace:
@@ -133,10 +194,27 @@ def test_build_agentic_formalization_request_includes_concrete_setting_guidance(
     assert "local proof neighborhood" in request.prompt.lower()
     assert "verified supporting lemmas already certified in this run" in request.prompt.lower()
     assert "context-only sibling ingredients" in request.prompt.lower()
-    assert "provenance note" in request.prompt.lower()
+    assert "dependency note" in request.prompt.lower()
     assert "reserved keyword" in request.prompt.lower()
     assert "component of the sketch" in request.prompt.lower()
     assert "formal-islands-search" in request.prompt.lower()
+
+
+def test_build_agentic_formalization_request_includes_all_verified_direct_children(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+    scratch_path = workspace.prepare_worker_file("n0")
+
+    request = build_agentic_formalization_request(
+        graph=build_two_child_candidate_graph(),
+        node_id="n0",
+        workspace_root=workspace.root,
+        scratch_file_path=scratch_path,
+    )
+
+    lowered = request.prompt.lower()
+    assert "verified direct child lemmas" in lowered
+    assert "a_nonneg" in request.prompt
+    assert "b_nonneg" in request.prompt
 
 
 def test_build_aristotle_formalization_prompt_marks_ambient_theorem_as_context_only(tmp_path: Path) -> None:
@@ -160,7 +238,7 @@ def test_build_aristotle_formalization_prompt_marks_ambient_theorem_as_context_o
     assert "local proof neighborhood" in prompt.lower()
     assert "verified supporting lemmas already certified in this run" in prompt.lower()
     assert "context-only sibling ingredients" in prompt.lower()
-    assert "provenance note" in prompt.lower()
+    assert "dependency note" in prompt.lower()
     assert "do not convert a difficult intermediate identity" in prompt.lower()
     assert "do not make a major shrink" in prompt.lower()
     assert "reserved keyword" in prompt.lower()
@@ -168,6 +246,90 @@ def test_build_aristotle_formalization_prompt_marks_ambient_theorem_as_context_o
     assert "fail rather than returning a trivial or over-shrunk theorem" in prompt.lower()
     assert "reserved keyword" in prompt.lower()
     assert "lambda1" in prompt.lower()
+
+
+def test_build_aristotle_formalization_prompt_includes_all_verified_direct_children(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+    scratch_path = workspace.prepare_worker_file("n0")
+    graph = build_two_child_candidate_graph()
+    node = next(node for node in graph.nodes if node.id == "n0")
+
+    prompt = build_aristotle_formalization_prompt(
+        graph=graph,
+        node=node,
+        desired_theorem_name="n0_aristotle",
+        relative_scratch_path=scratch_path.relative_to(workspace.root),
+    )
+
+    lowered = prompt.lower()
+    assert "verified direct child lemmas" in lowered
+    assert "a_nonneg" in prompt
+    assert "b_nonneg" in prompt
+
+
+def test_parent_promotion_assessment_is_cached_and_promotes_parent(tmp_path: Path) -> None:
+    graph = build_two_child_graph()
+    planning_backend = MockBackend(
+        queued_payloads=[
+            {
+                "promote_parent": True,
+                "recommended_priority": 2,
+                "reason": "The remaining work is just parent assembly.",
+            }
+        ]
+    )
+    cache = ParentPromotionCache(decisions={}, lock=RLock())
+    progress_log = tmp_path / "_progress.log"
+
+    with use_progress_log(progress_log):
+        updated_graph = _promote_informal_parents_with_verified_children(
+            graph=graph,
+            planning_backend=planning_backend,
+            parent_promotion_cache=cache,
+        )
+    root = next(node for node in updated_graph.nodes if node.id == "n0")
+    assert root.status == "candidate_formal"
+    assert root.formalization_priority == 2
+    assert root.formalization_rationale is not None
+    assert "parent assembly" in root.formalization_rationale.lower()
+    assert len(planning_backend.requests) == 1
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "parent promotion assessment -> promote=True" in log_text
+    assert "priority=2" in log_text
+
+
+def test_parent_promotion_assessment_cache_reuses_negative_decision(tmp_path: Path) -> None:
+    graph = build_two_child_graph()
+    planning_backend = MockBackend(
+        queued_payloads=[
+            {
+                "promote_parent": False,
+                "recommended_priority": None,
+                "reason": "The parent still carries the main burden.",
+            }
+        ]
+    )
+    cache = ParentPromotionCache(decisions={}, lock=RLock())
+    progress_log = tmp_path / "_progress.log"
+
+    with use_progress_log(progress_log):
+        first_graph = _promote_informal_parents_with_verified_children(
+            graph=graph,
+            planning_backend=planning_backend,
+            parent_promotion_cache=cache,
+        )
+        second_graph = _promote_informal_parents_with_verified_children(
+            graph=first_graph,
+            planning_backend=planning_backend,
+            parent_promotion_cache=cache,
+        )
+
+    root = next(node for node in second_graph.nodes if node.id == "n0")
+    assert root.status == "informal"
+    assert len(planning_backend.requests) == 1
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "cache hit" in log_text.lower()
+    assert "promote=False" in log_text
 
 
 def test_faithfulness_feedback_locks_theorem_family_for_setting_fix() -> None:
@@ -738,7 +900,7 @@ def test_formalize_candidate_node_promotes_concrete_sublemma_to_child_node(
     parent = next(node for node in outcome.graph.nodes if node.id == "n2")
     child = next(node for node in outcome.graph.nodes if node.id.startswith("n2__formal_core"))
     support_edge = next(
-        edge for edge in outcome.graph.edges if edge.source_id == child.id and edge.target_id == "n2"
+        edge for edge in outcome.graph.edges if edge.source_id == "n2" and edge.target_id == child.id
     )
 
     assert parent.status == "informal"
