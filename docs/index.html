@@ -150,8 +150,8 @@ p:last-child { margin-bottom: 0; }
 
 .card-thumb {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  background: var(--bg-code);
+  aspect-ratio: 4 / 3;
+  background: #f7f4ec;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,16 +159,14 @@ p:last-child { margin-bottom: 0; }
   overflow: hidden;
 }
 
+@media (prefers-color-scheme: dark) {
+  .card-thumb { background: #221e16; }
+}
+
 .card-thumb img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-}
-
-.card-thumb-placeholder {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-style: italic;
+  object-fit: contain;
 }
 
 .card-body {
@@ -328,11 +326,12 @@ footer {
 
 <section>
   <h2>Featured Examples</h2>
+  <p style="margin-bottom: 1.25rem;">Each of these reports was produced entirely by this system — given only the theorem statement and an informal proof as input, the pipeline planned the proof graph, selected candidates, ran Lean verification, and generated the report automatically.</p>
   <div class="gallery">
 
     <div class="card">
       <div class="card-thumb">
-        <span class="card-thumb-placeholder">screenshot</span>
+        <img src="assets/two_point_log_sobolev.png" alt="Proof graph for the two-point log-Sobolev inequality">
       </div>
       <div class="card-body">
         <div class="card-title">Two-Point Log-Sobolev Inequality</div>
@@ -350,7 +349,7 @@ footer {
 
     <div class="card">
       <div class="card-thumb">
-        <span class="card-thumb-placeholder">screenshot</span>
+        <img src="assets/heat_uniqueness.png" alt="Proof graph for heat equation uniqueness">
       </div>
       <div class="card-body">
         <div class="card-title">Heat Equation Uniqueness</div>
@@ -370,7 +369,7 @@ footer {
 
     <div class="card">
       <div class="card-thumb">
-        <span class="card-thumb-placeholder">screenshot</span>
+        <img src="assets/matrix_determinant_lemma.png" alt="Proof graph for the matrix determinant lemma">
       </div>
       <div class="card-body">
         <div class="card-title">Matrix Determinant Lemma</div>
@@ -390,7 +389,7 @@ footer {
 
     <div class="card">
       <div class="card-thumb">
-        <span class="card-thumb-placeholder">screenshot</span>
+        <img src="assets/hoeffding_lemma.png" alt="Proof graph for Hoeffding's lemma">
       </div>
       <div class="card-body">
         <div class="card-title">Hoeffding's Lemma</div>

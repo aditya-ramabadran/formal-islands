@@ -12,7 +12,7 @@
         processEscapes: true
       },
       options: {
-        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'svg']
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
       }
     };
   </script>
@@ -203,13 +203,20 @@
       stroke: var(--status-failed-stroke);
       stroke-dasharray: none;
     }
-    .graph-node-title {
-      fill: var(--ink);
-      font-size: 10.5px;
+    .graph-node-fo-title {
+      font-size: 9px;
       font-weight: 700;
-      text-anchor: middle;
-      dominant-baseline: middle;
+      text-align: center;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
       pointer-events: none;
+      overflow: visible;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.3;
     }
     .graph-node-id {
       fill: var(--muted);
@@ -589,8 +596,9 @@ Then \(u=v\) on \([0,L]\times[0,T]\).</div>
     <a class="graph-node-link node-main_theorem status-informal" href="#node-main_theorem">
       <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
       <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="210.0" y="42">Uniqueness for</tspan>
-<tspan x="210.0" y="54">the heat equati…</tspan></text>
+      <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Uniqueness for the heat equation</div>
+      </foreignObject>
       <text class="graph-node-id" x="210.0" y="68">main_theorem</text>
     </a>
     
@@ -598,8 +606,9 @@ Then \(u=v\) on \([0,L]\times[0,T]\).</div>
     <a class="graph-node-link node-energy_dissipation status-formal-verified" href="#node-energy_dissipation">
       <rect class="graph-node-box status-formal-verified" x="60.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
       <circle class="graph-node-badge status-formal-verified" cx="178.0" cy="150" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="126.0" y="160">Energy</tspan>
-<tspan x="126.0" y="172">Dissipation Lem…</tspan></text>
+      <foreignObject x="64.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Energy Dissipation Lemma</div>
+      </foreignObject>
       <text class="graph-node-id" x="126.0" y="186">energy_dissipation</text>
     </a>
     
@@ -607,7 +616,9 @@ Then \(u=v\) on \([0,L]\times[0,T]\).</div>
     <a class="graph-node-link node-main_theorem__formal_core status-formal-verified" href="#node-main_theorem__formal_core">
       <rect class="graph-node-box status-formal-verified" x="228.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
       <circle class="graph-node-badge status-formal-verified" cx="346.0" cy="150" r="4.6"></circle>
-      <text class="graph-node-title"><tspan x="294.0" y="165">Certified core</tspan></text>
+      <foreignObject x="232.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Certified core</div>
+      </foreignObject>
       <text class="graph-node-id" x="294.0" y="186">main_theorem__formal_core</text>
     </a>
     </g>

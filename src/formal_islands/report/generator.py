@@ -52,7 +52,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
         processEscapes: true
       }},
       options: {{
-        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'svg']
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
       }}
     }};
   </script>
@@ -243,13 +243,20 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
       stroke: var(--status-failed-stroke);
       stroke-dasharray: none;
     }}
-    .graph-node-title {{
-      fill: var(--ink);
-      font-size: 10.5px;
+    .graph-node-fo-title {{
+      font-size: 9px;
       font-weight: 700;
-      text-anchor: middle;
-      dominant-baseline: middle;
+      text-align: center;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
       pointer-events: none;
+      overflow: visible;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.3;
     }}
     .graph-node-id {{
       fill: var(--muted);
@@ -842,40 +849,25 @@ def _render_edge(edge: ProofEdge, layout: dict) -> str:
     )
 
 
-def _strip_latex_delimiters(text: str) -> str:
-    """Remove LaTeX markup so SVG text is legible plain text."""
-    # Strip math environment delimiters
-    text = re.sub(r"\\\[|\\\]|\\\(|\\\)", "", text)
-    # Strip pure size/grouping commands that add no content (\bigl, \bigr, \left, \right, etc.)
-    text = re.sub(r"\\(?:bigl?r?|Bigl?r?|left|right|,|;|!|quad|qquad)\b", "", text)
-    # Strip curly braces (LaTeX grouping)
-    text = re.sub(r"[{}]", "", text)
-    # Remove backslash from remaining \commandname sequences (e.g. \det → det)
-    text = re.sub(r"\\([A-Za-z]+)", r"\1", text)
-    # Clean up any stray lone backslashes
-    text = text.replace("\\", "")
-    return text.strip()
-
-
 def _render_node(node: ProofNode, layout: dict) -> str:
     x, y = layout["positions"][node.id]
     cx = x + NODE_WIDTH / 2
-    svg_label = _strip_latex_delimiters(node.display_label or node.title)
-    title_lines = _wrap_title_lines(svg_label)
-    title_y_positions = _title_y_positions(y, len(title_lines))
     node_key = _node_class(node.id)
     visual_status = _graph_visual_status(node)
     status_class = _status_class(visual_status)
     rx = _node_corner_radius(visual_status)
-    title_tspans = "\n".join(
-        f'<tspan x="{cx}" y="{title_y_positions[index]}">{escape(line)}</tspan>'
-        for index, line in enumerate(title_lines)
-    )
+    raw_label = node.display_label or node.title
+    fo_x = x + 4
+    fo_y = y + 4
+    fo_w = NODE_WIDTH - 8
+    fo_h = NODE_HEIGHT - 22
     return f"""
     <a class="graph-node-link {node_key} {status_class}" href="#node-{escape(node.id)}">
       <rect class="graph-node-box {status_class}" x="{x}" y="{y}" rx="{rx}" ry="{rx}" width="{NODE_WIDTH}" height="{NODE_HEIGHT}"></rect>
       <circle class="graph-node-badge {status_class}" cx="{x + NODE_WIDTH - 14}" cy="{y + 12}" r="4.6"></circle>
-      <text class="graph-node-title">{title_tspans}</text>
+      <foreignObject x="{fo_x}" y="{fo_y}" width="{fo_w}" height="{fo_h}" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">{escape(raw_label)}</div>
+      </foreignObject>
       <text class="graph-node-id" x="{cx}" y="{y + NODE_HEIGHT - 18}">{escape(node.id)}</text>
     </a>
     """
