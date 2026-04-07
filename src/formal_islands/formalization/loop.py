@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 import re
 from threading import RLock
@@ -65,6 +65,16 @@ class ParentPromotionCache:
 
     decisions: dict[str, ParentPromotionAssessment | None]
     lock: RLock
+    episodes: dict[str, list["ParentPromotionEpisode"]] = field(default_factory=dict)
+
+
+@dataclass
+class ParentPromotionEpisode:
+    """A parent-promotion episode anchored to a specific child snapshot."""
+
+    snapshot_key: str
+    trigger_child_ids: tuple[str, ...]
+    support_child_ids: tuple[str, ...] = ()
 
 
 FormalizationUpdateCallback = Callable[[FormalizationOutcome], None]
@@ -1216,12 +1226,23 @@ def _integrate_successful_formalization(
         return updated
 
     if artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA:
-        updated = _promote_concrete_sublemma(
+        promotion_snapshot_key = _parent_promotion_cache_key(graph, node_id)
+        updated, support_child_id = _promote_concrete_sublemma(
             graph=graph,
             backend=planning_backend if planning_backend is not None else backend,
             parent_node_id=node_id,
             artifact=artifact,
         )
+        consumed = _consume_parent_promotion_episode(
+            parent_promotion_cache=parent_promotion_cache,
+            parent_node_id=node_id,
+            snapshot_key=promotion_snapshot_key,
+            support_child_id=support_child_id,
+        )
+        if consumed:
+            _progress(
+                f"node {node_id}: parent promotion episode consumed via support child {support_child_id}"
+            )
         if enable_parent_promotion:
             return _promote_followup_candidates_after_verified_node(
                 graph=updated,
@@ -1252,12 +1273,7 @@ def _promote_followup_candidates_after_verified_node(
 
 def _parent_promotion_cache_key(graph: ProofGraph, parent_node_id: str) -> str:
     parent = next(node for node in graph.nodes if node.id == parent_node_id)
-    child_ids = [edge.target_id for edge in graph.edges if edge.source_id == parent_node_id]
-    verified_children = [
-        node
-        for node in graph.nodes
-        if node.id in child_ids and node.status == "formal_verified" and node.formal_artifact is not None
-    ]
+    verified_children = _current_verified_direct_child_nodes(graph, parent_node_id)
     payload = {
         "parent": {
             "id": parent.id,
@@ -1276,6 +1292,91 @@ def _parent_promotion_cache_key(graph: ProofGraph, parent_node_id: str) -> str:
         ],
     }
     return json.dumps(payload, sort_keys=True, ensure_ascii=False)
+
+
+def _current_direct_child_ids(graph: ProofGraph, parent_node_id: str) -> list[str]:
+    return sorted(edge.target_id for edge in graph.edges if edge.source_id == parent_node_id)
+
+
+def _current_verified_direct_child_nodes(graph: ProofGraph, parent_node_id: str) -> list[ProofNode]:
+    child_ids = set(_current_direct_child_ids(graph, parent_node_id))
+    return [
+        node
+        for node in graph.nodes
+        if node.id in child_ids and node.status == "formal_verified" and node.formal_artifact is not None
+    ]
+
+
+def _current_verified_direct_child_ids(graph: ProofGraph, parent_node_id: str) -> tuple[str, ...]:
+    return tuple(node.id for node in _current_verified_direct_child_nodes(graph, parent_node_id))
+
+
+def _parent_promotion_episode_basis(episode: ParentPromotionEpisode) -> frozenset[str]:
+    return frozenset(episode.trigger_child_ids) | frozenset(episode.support_child_ids)
+
+
+def _record_parent_promotion_episode(
+    *,
+    parent_promotion_cache: ParentPromotionCache | None,
+    parent_node_id: str,
+    snapshot_key: str,
+    trigger_child_ids: tuple[str, ...],
+) -> None:
+    if parent_promotion_cache is None:
+        return
+    with parent_promotion_cache.lock:
+        episodes = parent_promotion_cache.episodes.setdefault(parent_node_id, [])
+        if any(
+            episode.snapshot_key == snapshot_key and episode.trigger_child_ids == trigger_child_ids
+            for episode in episodes
+        ):
+            return
+        episodes.append(
+            ParentPromotionEpisode(
+                snapshot_key=snapshot_key,
+                trigger_child_ids=trigger_child_ids,
+            )
+        )
+
+
+def _consume_parent_promotion_episode(
+    *,
+    parent_promotion_cache: ParentPromotionCache | None,
+    parent_node_id: str,
+    snapshot_key: str,
+    support_child_id: str,
+) -> bool:
+    if parent_promotion_cache is None:
+        return False
+    with parent_promotion_cache.lock:
+        episodes = parent_promotion_cache.episodes.get(parent_node_id, [])
+        for episode in reversed(episodes):
+            if episode.snapshot_key == snapshot_key and not episode.support_child_ids:
+                episode.support_child_ids = (support_child_id,)
+                return True
+        for episode in reversed(episodes):
+            if not episode.support_child_ids:
+                episode.support_child_ids = (support_child_id,)
+                return True
+    return False
+
+
+def _has_consumed_parent_promotion_episode(
+    *,
+    parent_promotion_cache: ParentPromotionCache | None,
+    parent_node_id: str,
+    current_child_ids: tuple[str, ...],
+) -> bool:
+    if parent_promotion_cache is None:
+        return False
+    current_basis = frozenset(current_child_ids)
+    with parent_promotion_cache.lock:
+        for episode in parent_promotion_cache.episodes.get(parent_node_id, []):
+            if not episode.support_child_ids:
+                continue
+            if current_basis == _parent_promotion_episode_basis(episode):
+                return True
+    return False
 
 
 def _eligible_informal_parents_with_verified_children(graph: ProofGraph) -> list[str]:
@@ -1324,6 +1425,17 @@ def _promote_informal_parents_with_verified_children(
 
     for parent_id in eligible_parent_ids:
         parent = next(node for node in updated_nodes if node.id == parent_id)
+        current_verified_child_ids = _current_verified_direct_child_ids(graph, parent_id)
+        if _has_consumed_parent_promotion_episode(
+            parent_promotion_cache=parent_promotion_cache,
+            parent_node_id=parent_id,
+            current_child_ids=current_verified_child_ids,
+        ):
+            _progress(
+                f"node {parent_id}: skipping parent promotion because this verified child set already "
+                "came from a prior parent-assembly episode"
+            )
+            continue
         cache_key = _parent_promotion_cache_key(graph, parent_id)
         decision: ParentPromotionAssessment | None = None
         cached_hit = False
@@ -1390,6 +1502,12 @@ def _promote_informal_parents_with_verified_children(
         )
         _progress(
             f"node {parent_id}: promoted to candidate_formal at priority {priority}"
+        )
+        _record_parent_promotion_episode(
+            parent_promotion_cache=parent_promotion_cache,
+            parent_node_id=parent_id,
+            snapshot_key=cache_key,
+            trigger_child_ids=current_verified_child_ids,
         )
 
     return graph.model_copy(update={"nodes": updated_nodes})
@@ -1759,7 +1877,7 @@ def _promote_concrete_sublemma(
     backend: StructuredBackend | None,
     parent_node_id: str,
     artifact: FormalArtifact,
-) -> ProofGraph:
+) -> tuple[ProofGraph, str]:
     parent = next(node for node in graph.nodes if node.id == parent_node_id)
     child_id = _fresh_support_node_id(graph, parent_node_id)
     child_title = f"Certified local core for {parent.title}"
@@ -1808,7 +1926,7 @@ def _promote_concrete_sublemma(
             ),
         )
     )
-    return graph.model_copy(update={"nodes": updated_nodes, "edges": updated_edges})
+    return graph.model_copy(update={"nodes": updated_nodes, "edges": updated_edges}), child_id
 
 
 def _merge_formalization_outcome(

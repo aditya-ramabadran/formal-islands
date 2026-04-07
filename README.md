@@ -31,6 +31,8 @@ The system can distinguish between:
 - blatant abstraction drift, which is rejected immediately
 - borderline cases, which are reviewed semantically by the planning backend before a final verdict is made
 
+The proof graph uses a single canonical dependency direction: `A -> B` means `A` depends on `B`. Ordinary dependency edges are left unlabeled; only special labels like refinement or certified supporting sublemmas are kept.
+
 ## Repository Layout
 
 - `/Users/adihaya/GitHub/formal-islands/src/formal_islands`
@@ -181,6 +183,7 @@ A normal benchmark run writes:
   Human-readable HTML report.
 - `_progress.log`
   Shared run progress log in the output directory. It is append-only, so rerunning later stages like report generation will add to the existing file instead of replacing it. When the graph is generated or materially updated, the log also gets a compact node/edge preview. Planning-backend semantic assessments, parent-promotion assessments, report-stage remaining-proof-burden syntheses, and Aristotle summary markdown files are appended there too.
+  The log also warns if the loaded or planned graph contains an incoming dependency edge into the root theorem, since that usually signals a direction reversal in the extracted proof graph.
 - `_backend_logs/*.json`
   Logged backend requests/responses, timings, and raw CLI output.
 
@@ -293,6 +296,7 @@ Verified supporting lemmas are given as text summaries with their Lean theorem n
 If Aristotle returns an `ARISTOTLE_SUMMARY_*.md` file, its contents are appended to `_progress.log` so the run log keeps the backend's own plain-text summary without echoing it to the terminal.
 
 When `formalize-all-candidates` uses Aristotle, jobs are submitted in parallel batches so multiple candidate nodes can be worked on at once. Newly promoted parents are then picked up by the next batch.
+Parent promotion is episode-gated: once a promoted parent is formalized into a narrower supporting core, the same verified-child snapshot is not immediately re-promoted again unless the actual child evidence changes.
 
 Every benchmark run also writes a shared progress log to `_progress.log` inside the corresponding output directory.
 
@@ -305,6 +309,7 @@ The current verification path is a little richer than that summary:
 - the heuristic faithfulness guard now only hard-rejects the most obvious structural mismatches
 - borderline cases such as measure-space, inner-product-space, or dimension-downgrade signals are passed to the planning backend for the final semantic call
 - the planning backend may then refine the result kind and coverage estimate after verification, and can override the heuristic on a borderline case if the theorem is still a faithful core
+- formalization prompts now treat verified direct children as already available and ask only for the remaining parent-level delta, so a promoted parent does not just restate a child theorem in disguise
 - repair retries combine fast Lean-specific heuristics with an optional planning-backend diagnosis
 - if the result is only a concrete supporting sublemma, the pipeline may run one bounded coverage-expansion attempt from the verified file
 - if the result is still a concrete sublemma but the planning backend says it is worth another try, a single bonus retry may be attempted on the main proof path

@@ -79,25 +79,33 @@ def build_remaining_proof_burden_assessment_request(
             json.dumps(child_inventory, indent=2),
             "Verified direct child lemmas already available:",
             format_verified_direct_child_context(verified_children),
+            (
+                "Dependency direction note: assume the verified child lemmas are already established "
+                "dependencies of this parent node. Explain only what still remains informal at the parent level."
+            ),
             "Local proof neighborhood:",
             format_local_proof_context(local_context),
             (
                 "Write a short report-ready paragraph describing the remaining proof burden for this parent, "
                 "assuming the verified child results listed above. The paragraph should explain the delta between "
                 "the informal proof and the already certified children: what is left to assemble, rewrite, or "
-                "check manually once those children are granted."
+                "check manually once those children are granted, and which proof obligations a human would still "
+                "need to prove to complete the parent theorem."
             ),
             (
                 "Be concrete about how the verified children fit into the parent proof. If the remaining work is "
                 "mostly parent-level assembly, say so. If some branches are still unverified, mention that the "
-                "verified children cover only part of the burden and that the rest remains informal."
+                "verified children cover only part of the burden and that the rest remains informal. Name the "
+                "specific missing steps if possible: a final rewrite, a substitution, a side-condition discharge, "
+                "a monotonicity/inequality step, or the assembly step that combines the children into the parent."
             ),
             (
                 "Do not restate the verified children themselves. Focus on the residual burden that a human reviewer "
-                "should still check in the informal proof, using the verified children as assumptions."
+                "should still check in the informal proof, using the verified children as assumptions. If the parent "
+                "has become mostly an assembly theorem, say that explicitly."
             ),
             (
-                "Keep it concise, one to three sentences, and suitable for a section titled "
+                "Keep it concise but specific, roughly two to four sentences, and suitable for a section titled "
                 f"Remaining proof burden (assuming results of {title_child_list})."
             ),
             "Return JSON with key remaining_proof_burden.",

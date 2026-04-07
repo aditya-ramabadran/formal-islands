@@ -56,12 +56,12 @@ def derive_review_obligations(graph: ProofGraph) -> list[ReviewObligation]:
             if edge.label == "formal_sublemma_for":
                 text = (
                     f"Check that verified supporting sublemma '{child.id}' certifies the specific concrete local core "
-                    f"that informal parent '{parent.id}' relies on, without overclaiming full coverage of the parent node."
+                    f"that informal parent '{parent.id}' depends on, without overclaiming full coverage of the parent node."
                 )
             else:
                 text = (
                     f"Check that formal child '{child.id}' proves exactly what informal parent "
-                    f"'{parent.id}' uses across their dependency boundary."
+                    f"'{parent.id}' depends on across their dependency boundary."
                 )
             obligations.append(
                 ReviewObligation(

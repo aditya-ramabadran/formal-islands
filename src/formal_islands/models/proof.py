@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import re
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class NodeStatus(StrEnum):
@@ -116,6 +117,20 @@ class ProofEdge(StrictModel):
     label: str | None = None
     explanation: str | None = None
 
+    @field_validator("label", mode="before")
+    @classmethod
+    def _normalize_label(cls, value: object) -> str | None:
+        """Keep only the small set of special-purpose edge labels."""
+
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            return value  # type: ignore[return-value]
+        normalized = re.sub(r"[\s\-]+", "_", value.strip().lower())
+        if normalized in {"refined_from", "formal_sublemma_for"}:
+            return normalized
+        return None
+
 
 class ProofGraph(StrictModel):
     """Validated proof graph with a theorem root and dependency edges."""
@@ -147,6 +162,25 @@ class ProofGraph(StrictModel):
                 raise ValueError(f"edge target_id '{edge.target_id}' does not reference a node")
 
         return self
+
+
+def canonical_dependency_direction_warnings(graph: ProofGraph) -> list[str]:
+    """Return human-readable warnings for directionality anomalies in a proof graph."""
+
+    warnings: list[str] = []
+    incoming_to_root = [edge for edge in graph.edges if edge.target_id == graph.root_node_id]
+    if incoming_to_root:
+        source_ids = sorted({edge.source_id for edge in incoming_to_root})
+        label_parts = sorted(
+            {edge.label for edge in incoming_to_root if edge.label and edge.label.strip()}
+        )
+        source_text = ", ".join(source_ids)
+        label_text = f" Labels: {', '.join(label_parts)}." if label_parts else ""
+        warnings.append(
+            f"root node '{graph.root_node_id}' has incoming dependency edge(s) from {source_text}.{label_text} "
+            "The root theorem should normally be the source of its supporting dependencies, not their target."
+        )
+    return warnings
 
 
 class ReviewObligation(StrictModel):

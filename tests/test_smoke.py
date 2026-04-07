@@ -187,7 +187,8 @@ def test_graph_summary_logging_records_nodes_and_edges(tmp_path: Path) -> None:
 
     log_text = progress_log.read_text(encoding="utf-8")
     assert "02_candidate_graph.json: graph summary" in log_text
-    assert "n1 -> n2 [uses]" in log_text
+    assert "n1 -> n2" in log_text
+    assert "[uses]" not in log_text
     assert "[candidate_formal] n2" in log_text
     assert "stmt: A." in log_text
 

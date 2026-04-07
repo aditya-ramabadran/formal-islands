@@ -176,6 +176,7 @@ def test_build_formalization_request_includes_all_verified_direct_children() -> 
     assert "b_nonneg" in request.prompt
     assert "Arithmetic lemma 1" in request.prompt
     assert "Arithmetic lemma 2" in request.prompt
+    assert "remaining parent-level delta" in lowered
 
 
 def test_request_node_formalization_treats_measure_space_abstraction_as_borderline_core() -> None:

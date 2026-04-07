@@ -380,7 +380,7 @@ def format_verified_direct_child_context(context: VerifiedDirectChildContext) ->
         "Verified direct child lemmas already certified in this run:",
         (
             "These are the target node's own direct child theorems, so you may use them as established "
-            "lemmas when they are listed here."
+            "dependency lemmas when they are listed here. They are direct outgoing dependencies of the target node."
         ),
     ]
     if context.child_nodes:
@@ -527,6 +527,15 @@ def build_formalization_request(
                 else "Verified child context:\n[]"
             ),
             format_verified_direct_child_context(direct_child_context),
+            (
+                "Dependency direction note: the target node depends on the verified child lemmas listed here. "
+                "Do not treat those verified children as parents or as claims that depend on the target."
+            ),
+            (
+                "These verified children are already available. The theorem you produce should be only the "
+                "remaining parent-level delta, not a restatement of any verified child or a cosmetic corollary "
+                "that duplicates their work."
+            ),
             (
                 "Return a JSON object with keys lean_theorem_name, lean_statement, and lean_code."
             ),
@@ -899,18 +908,22 @@ def build_parent_promotion_assessment_request(
             (
                 "The target node is still informal, but all of its direct children are already verified. Decide whether "
                 "the parent is now reasonable to formalize as a parent-assembly theorem, or whether it should remain "
-                "informal for now. Be conservative: if the remaining work is still the main burden or the parent is "
-                "really a different theorem family, do not promote it."
+                "informal for now. Be conservative: if the remaining work is still the main burden, if the parent is "
+                "really a different theorem family, or if the would-be formal theorem would mostly restate a verified "
+                "child or a trivial corollary of one, do not promote it."
             ),
             (
                 "If you do promote it, return a recommended_priority from 1 to 3, where 1 means it should be tried "
                 "very soon and 3 means it can wait behind other candidates. If you do not promote it, return null for "
-                "recommended_priority."
+                "recommended_priority. Do not promote the parent if the strongest likely formal statement would "
+                "overlap a verified child almost verbatim, invert the dependency direction, or package a child "
+                "result as a fake parent theorem."
             ),
             (
                 "Focus on whether the verified children now cover the hard proof burden, leaving only parent-level "
                 "assembly, rewriting, or side-condition discharge. Do not promote a parent if the children merely "
-                "suggest an analogue or if the remaining work is still the main theorem."
+                "suggest an analogue, if the remaining work is still the main theorem, or if the strongest likely "
+                "formal statement would overlap one verified child almost verbatim."
             ),
             "Return JSON with keys promote_parent, recommended_priority, and reason.",
         ]

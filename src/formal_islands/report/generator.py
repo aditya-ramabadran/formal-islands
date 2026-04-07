@@ -454,7 +454,7 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
         Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
       </p>
       <p class="graph-caption">
-        All arrows point from a claim to one of the claims it depends on.
+        All arrows point from a claim to one of its dependencies.
       </p>
       <p class="graph-caption">
         Dashed gray arrows mark refinement edges: they are still dependency edges, but they indicate that a narrower claim was carved out from a broader proof step.
@@ -518,11 +518,11 @@ def _render_node_section(node: ProofNode, graph: ProofGraph) -> str:
             "</p>"
         )
 
-    # Build dependency / usage neighbor links.
+    # Build dependency-neighbor links.
     # Edges go source → target where source depends on target.
-    # "Used by" nodes are incoming edges (claims that depend on this node).
-    # "Depends on" nodes are outgoing edges (claims this node relies on).
-    used_by_ids = [e.source_id for e in graph.edges if e.target_id == node.id]
+    # "Used by (parent nodes)" are incoming edges (claims that depend on this node).
+    # "Depends on (child nodes)" are outgoing edges (claims this node relies on).
+    dependent_ids = [e.source_id for e in graph.edges if e.target_id == node.id]
     dependency_ids = [e.target_id for e in graph.edges if e.source_id == node.id]
     node_id_set = {n.id for n in graph.nodes}
 
@@ -532,10 +532,14 @@ def _render_node_section(node: ProofNode, graph: ProofGraph) -> str:
         return escape(nid)
 
     neighbor_parts: list[str] = []
-    if used_by_ids:
-        neighbor_parts.append("Used by: " + ", ".join(_nlink(nid) for nid in used_by_ids))
+    if dependent_ids:
+        neighbor_parts.append(
+            "Used by (parent nodes): " + ", ".join(_nlink(nid) for nid in dependent_ids)
+        )
     if dependency_ids:
-        neighbor_parts.append("Depends on: " + ", ".join(_nlink(nid) for nid in dependency_ids))
+        neighbor_parts.append(
+            "Depends on (child nodes): " + ", ".join(_nlink(nid) for nid in dependency_ids)
+        )
     neighbor_block = (
         '<p class="meta">' + " &nbsp;|&nbsp; ".join(neighbor_parts) + "</p>"
         if neighbor_parts

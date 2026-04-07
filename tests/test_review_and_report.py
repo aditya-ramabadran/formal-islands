@@ -3,7 +3,10 @@ import json
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode
 from formal_islands.examples.fixtures import build_example_graph
 from formal_islands.backends import MockBackend
-from formal_islands.report.annotation import synthesize_remaining_proof_burdens
+from formal_islands.report.annotation import (
+    build_remaining_proof_burden_assessment_request,
+    synthesize_remaining_proof_burdens,
+)
 from formal_islands.report.generator import (
     NODE_HEIGHT,
     _compute_graph_layout,
@@ -55,8 +58,10 @@ def test_render_html_report_includes_core_sections() -> None:
     assert 'id="MathJax-script"' in html
     assert "width: min(100%, 720px);" in html
     assert "Nodes without attached Lean artifacts use dashed amber outlines." in html
-    assert "All arrows point from a claim to one of the claims it depends on." in html
+    assert "All arrows point from a claim to one of its dependencies." in html
     assert "Dashed gray arrows mark refinement edges" in html
+    assert "Used by (parent nodes):" in html
+    assert "Depends on (child nodes):" in html
     assert "language-lean" in html
     assert 'class="tok-keyword"' in html or 'class="tok-type"' in html
     assert 'preserveAspectRatio="xMidYMin meet"' in html
@@ -176,6 +181,56 @@ def test_synthesize_remaining_proof_burdens_uses_planner_and_updates_graph() -> 
     assert "assemble the two certified identities" in parent.remaining_proof_burden
     assert len(backend.requests) == 1
     assert backend.requests[0].task_name == "assess_remaining_proof_burden"
+
+
+def test_remaining_proof_burden_prompt_is_concrete_about_the_residual_delta() -> None:
+    artifact = FormalArtifact(
+        lean_theorem_name="child_core",
+        lean_statement="theorem child_core : True",
+        lean_code="theorem child_core : True := by trivial",
+        faithfulness_classification="full_node",
+    )
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Parent theorem",
+                informal_statement="Show the parent theorem.",
+                informal_proof_text="Use n1 and n2.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Verified child one",
+                informal_statement="Child one.",
+                informal_proof_text="Core one.",
+                status="formal_verified",
+                formal_artifact=artifact,
+            ),
+            ProofNode(
+                id="n2",
+                title="Verified child two",
+                informal_statement="Child two.",
+                informal_proof_text="Core two.",
+                status="formal_verified",
+                formal_artifact=artifact,
+            ),
+        ],
+        edges=[
+            ProofEdge(source_id="n0", target_id="n1"),
+            ProofEdge(source_id="n0", target_id="n2"),
+        ],
+    )
+
+    request = build_remaining_proof_burden_assessment_request(graph=graph, parent_node_id="n0")
+
+    lowered = request.prompt.lower()
+    assert "dependency direction note" in lowered
+    assert "human would still need to prove" in lowered
+    assert "specific missing steps" in lowered
+    assert "two to four sentences" in lowered
 
 
 def test_render_html_report_preserves_latex_text_blocks() -> None:

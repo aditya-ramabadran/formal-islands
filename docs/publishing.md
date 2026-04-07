@@ -13,21 +13,23 @@ Nothing here is implemented yet — this is the ordered plan.
 - Delete `examples/nonnegative_sum_graph.json` — internal test artifact, not a real benchmark
 - Delete `examples/nonnegative_sum_input.json` — same
 - Delete `examples/toy_implication_input.md` — old format, superseded by JSON inputs
+- Do **not** touch `examples/manual-testing/` — keep all files there; only copy from it, never edit or delete
 
 **`lean_project/` root:**
 - Delete `lean_project/test_deriv.lean`, `test_deriv2.lean`, `test_deriv3.lean` — scratch files
 - Delete `lean_project/test_taylor.lean`, `test_bernoulli.lean` — scratch files
-- These should probably never have been committed; add a glob to `.gitignore` to prevent future commits of `lean_project/test_*.lean`
+- Add `lean_project/test_*.lean` to `.gitignore` to prevent future commits of scratch files
 
-**`docs/` (internal-only docs to remove or move out of public sight):**
-- `docs/design-note.md` — internal architecture notes; either move to `INTERNALS.md` at root (clearly marked as developer-only) or delete
-- `docs/run_history.md` — internal benchmark log; too raw for public consumption; move to `INTERNALS.md` or a private branch
-- `docs/opengauss-backend-plan.md` — unimplemented integration plan; keep but move to `INTERNALS.md` or a `dev/` folder outside the main docs tree
-- `docs/publishing.md` (this file) — also internal
+**`dev/` (internal docs — renamed from `docs/`):**
+- `dev/design-note.md` — internal architecture notes, stays in `dev/`
+- `dev/run_history.md` — internal benchmark log, stays in `dev/`
+- `dev/opengauss-backend-plan.md` — unimplemented integration plan, stays in `dev/`
+- `dev/publishing.md` (this file) — stays in `dev/`
+- These are developer-facing only; the renamed `docs/` folder becomes the GitHub Pages root (see Phase 5)
 
 **`artifacts/`:**
 - Confirm `artifacts/` is in `.gitignore` — it should never be committed (large, noisy, internal)
-- The featured reports will be published separately under `site/reports/` (see Phase 4)
+- The featured reports will be published under `docs/reports/` (see Phase 5)
 
 **`lean_project/FormalIslands/Generated/`:**
 - Confirm this is gitignored — worker scratch files should not be tracked
@@ -37,29 +39,24 @@ Nothing here is implemented yet — this is the ordered plan.
 ## 2. Featured Benchmarks Curation
 
 Create `examples/featured/` as the public-facing benchmark input folder.
-Select the strongest runs and copy their input JSON files there with clean descriptive names.
+Copy (never move or edit) the input JSON files from `examples/manual-testing/` with clean descriptive names.
 
-**Candidate featured benchmarks** (based on run history):
+**Do not remove or edit `examples/manual-testing/`** — all existing files stay there.
 
-| Input file | Best run artifact | What verified |
-|---|---|---|
-| `run4_heat_uniqueness.json` | `run4-heat-uniqueness-gemini-aristotle-4` or `-5` | `energy_dissipation` (full match) + `*__formal_core` |
-| `run11_two_point_log_sobolev.json` | `run11-two-point-log-sobolev-claude-aristotle-4` | `key_lemma` (full match) + `convexity__formal_core` |
-| `run14_vandermonde_convolution.json` | `run14-vandermonde-convolution-claude-aristotle` | `comb_proof__formal_core` |
-| `run15_matrix_determinant_lemma.json` | `run15-matrix-determinant-lemma-claude-aristotle-2` | `special_case` + `root` (two verified nodes) |
-| `run10_first_dirichlet_eigenfunction.json` | `run10-first-dirichlet-eigenfunction-gemini-aristotle-6` | two cores across both branches |
-| `run7_harmonic_minimizer.json` | `run7-harmonic-minimizer-rerun-claude-aristotle-5` | `dirichlet_pythagorean__formal_core` |
+### The four flagship benchmarks
 
-NOTE: **Still keep all the benchmarks in examples/manual-testing, don't remove or edit those files, only copy from there**
+These are the definitive public-facing examples. They were selected for a combination of mathematical substance, result clarity, and graph cleanliness.
 
-**Rename convention for featured examples:**
-Use clean descriptive names, not run numbers, for example like
-- `heat_uniqueness.json`
-- `two_point_log_sobolev.json`
-- `vandermonde_convolution.json`
-- `matrix_determinant_lemma.json`
-- `dirichlet_eigenfunction.json`
-- `harmonic_minimizer.json`
+| Clean name | Source input | Best run artifact | What verified | Why it's a flagship |
+|---|---|---|---|---|
+| `two_point_log_sobolev.json` | `run11_two_point_log_sobolev.json` | `run11-two-point-log-sobolev-claude-aristotle-3` | `key_lemma` (full match) + `convexity__formal_core` | Clean graph, two verified nodes, both have nontrivial Lean code |
+| `heat_uniqueness.json` | `run4_heat_uniqueness.json` | `run4-heat-uniqueness-gemini-aristotle-4` | `energy_dissipation` (full match) + `main_theorem__formal_core` | Clean graph, natural local island, one node is highly nontrivial |
+| `matrix_determinant_lemma.json` | `run15_matrix_determinant_lemma.json` | `run15-matrix-determinant-lemma-claude-aristotle-2` | `special_case` + `root` (2 of 2 nodes) | Less deep mathematically but shows end-to-end formal closure on a benchmark with good Mathlib support |
+| `hoeffding_lemma.json` | `run16_hoeffding_lemma.json` | `run16-hoeffding-lemma-gemini-aristotle` | `convexity_expectation` + `log_mgf_bound` | Two central local islands verified; together they cover almost all the proof substance; root staying informal is not a real weakness |
+
+### Benchmarks kept in `examples/manual-testing/` but not featured
+
+All other benchmark inputs remain in `examples/manual-testing/` for development use. They are not highlighted on the public site but are accessible to anyone exploring the repo. The folder may be renamed from `manual-testing` to something cleaner (e.g. `benchmarks`) in a later cleanup pass.
 
 ---
 
@@ -67,10 +64,10 @@ Use clean descriptive names, not run numbers, for example like
 
 ### The "smoke" name problem
 
-The CLI is currently called `formal-islands-smoke`. "Smoke" is a developer-in-joke holdover from when this was a scratch smoke-test runner for the pipeline — it means nothing to an end user and makes the tool look unfinished. It should be renamed.
+The CLI is currently called `formal-islands-smoke`. "Smoke" is a developer-in-joke holdover from when this was a scratch smoke-test runner for the pipeline — it means nothing to an end user and makes the tool look unfinished.
 
 **Rename `formal-islands-smoke` → `formal-islands`** as the main user-facing entry point.
-The old name can be kept as an alias or removed entirely once the rename is stable.
+The old name can be kept as an alias during transition, then removed.
 
 ### The verbosity problem
 
@@ -85,23 +82,21 @@ The typical invocation today:
   --max-attempts=4
 ```
 
-Every flag is full-path and all of them are required. This is 300+ characters for something that should be a 50-character command.
+Every flag requires a full path and all of them are required. This is 300+ characters for something that should be a 50-character command.
 
 ### Better defaults
 
-Most of these flags have obvious sensible defaults that should never need to be typed:
-
-- **`--workspace`**: Default to `lean_project` relative to the repo root (auto-discovered). Should almost never need to be specified explicitly.
-- **`--output-dir`**: Auto-derive from the input filename + backends + a short timestamp slug. E.g. input `heat_uniqueness.json` + backends `gemini/aristotle` → `artifacts/heat-uniqueness-gemini-aristotle-<date>`. User only specifies this if they want an explicit name.
+- **`--workspace`**: Default to `lean_project` relative to the repo root (auto-discovered via nearest `lakefile.toml`). Should almost never need to be specified explicitly.
+- **`--output-dir`**: Auto-derive from input filename + backends + short timestamp slug. E.g. `heat_uniqueness.json` + `gemini/aristotle` → `artifacts/heat-uniqueness-gemini-aristotle-<MMDD-HHMM>`. Only specify explicitly if you want a custom name.
 - **`--input`**: When given just a filename (no path), search `examples/featured/` first, then `examples/manual-testing/`. Full path still accepted.
 
 ### Backend shorthand
 
-`--planning-backend=gemini --formalization-backend=aristotle` is the most common pattern. Consider:
+`--planning-backend=gemini --formalization-backend=aristotle` is the most common pattern. Add:
 ```
 --backends gemini/aristotle
 ```
-as a single shorthand that splits on `/`. `--backends aristotle` means both backends are the same. The long-form flags still work for the cases where they differ.
+as a shorthand that splits on `/`. `--backends aristotle` means both backends are the same. The long-form flags still work.
 
 ### Ideal invocation after the overhaul
 
@@ -109,12 +104,12 @@ as a single shorthand that splits on `/`. `--backends aristotle` means both back
 formal-islands run heat_uniqueness --backends gemini/aristotle --attempts 4
 ```
 
-Or with a full path:
+Or with an explicit path:
 ```bash
 formal-islands run examples/featured/heat_uniqueness.json --backends gemini/aristotle
 ```
 
-The command is now `run` instead of `run-benchmark` (shorter, unambiguous). The input is just a filename. The backends are one flag. The workspace and output dir are inferred. The only thing you still specify explicitly is the input and the backends.
+The command is `run` instead of `run-benchmark`. The input is just a filename. The backends are one flag. Workspace and output dir are inferred. The only things you specify are the input and the backends.
 
 ### Interactive entry point — `formal-islands new`
 
@@ -129,152 +124,186 @@ Behavior:
 2. Prompts for theorem statement (multiline, terminate with blank line)
 3. Prompts for informal proof text (multiline, same terminator)
 4. Asks which backends to use (default: whatever is configured / available)
-5. Writes a JSON input file to the output dir as `input.json`
+5. Writes a JSON input file as `input.json` in the output dir
 6. Immediately calls the `run` pipeline with the generated input
 
 This removes the JSON format requirement entirely for the common case.
 
 **Implementation notes:**
-- `new` and `run` both live in the renamed `cli.py` (or `smoke.py` renamed)
+- `new` and `run` both live in the renamed `cli.py` (currently `smoke.py`)
 - `new` uses `input()` with clear prompts; no new dependencies
 - After collecting input, calls the existing `run_benchmark` logic directly (not a subprocess)
-- The generated `input.json` is saved alongside the artifacts so the run is reproducible
+- The generated `input.json` is saved alongside the artifacts so the run is fully reproducible
 
-### One-liner stdin mode (for scripting)
+### One-liner stdin mode (for scripting / CI)
 
-For CI / scripting use:
 ```bash
 formal-islands run --stdin
 ```
-where stdin provides the input as a simple delimited format:
+Reads title, statement, and proof from stdin in a simple delimited format:
 ```
 TITLE: Heat equation uniqueness
 STATEMENT: ...
 PROOF: ...
 ```
-This is machine-friendly without requiring a pre-created file.
 
 ---
 
-## 4. GitHub Pages Site + Report Gallery
+## 4. Report HTML Visual Fixes
 
-### Strategy
+These apply to `generator.py` and must be done before regenerating the featured report files for the site.
 
-GitHub Pages can serve from:
-- `docs/` folder on `main` branch (simple, no extra branch needed)
-- A dedicated `gh-pages` branch
+### `**bold**` markdown in informal proof text
 
-Because we already use `docs/` for markdown documentation, use a **`site/` folder** and configure GitHub Pages to serve from `site/` on `main`. (GitHub Pages supports custom source folder via repo settings or `_config.yml`.)
+Informal proof text often contains markdown-style step labels like `**Symmetry and base value.**`, `**First derivative.**`, etc. These currently render as literal `**` characters.
 
-Alternatively: rename the current `docs/` folder to `dev/` (since its contents are developer-facing, not user-facing), and use `docs/` as the GitHub Pages source — this is the conventional path and requires no custom Pages config.
+**Decision: render `**text**` as `<em>` (italic)**, and handle `*text*` as `<em>` as well.
 
-**Recommended: rename `docs/` → `dev/`, use `docs/` as Pages root.**
+Rationale:
+- Plain `<strong>` (bold) would visually collide with the existing section headers ("Informal statement:", "Coverage:", "Lean theorem name:") which are already rendered as bold in paragraph context
+- Italic is the conventional typographic treatment for named proof steps in mathematical writing
+- The visual hierarchy becomes clean: `<h3>` node title → `<strong>` structural section labels → `<em>` named proof steps within prose
+- No changes needed to the existing section header markup
 
-### `docs/` structure for Pages
+Implementation: add a markdown-inline pass in `_render_inline_code_html` (alongside the existing backtick → `<code>` pass). Process backtick spans first (they may contain `*`), then `**...**` → `<em>`, then `*...*` → `<em>`.
+
+### Already fixed (do not redo)
+- MathJax flicker in SVG node text: fixed via `skipHtmlTags: ['svg']`
+- Transparent node fill causing edge bleed-through: fixed by making informal/candidate node fills fully opaque
+- Backtick → `<code>` inline rendering in coverage notes, checklist text, and rationale: fixed
+
+---
+
+## 5. GitHub Pages Site + Report Gallery
+
+### Folder strategy
+
+Rename the current `docs/` folder to `dev/` — its contents are all developer-facing (design notes, run history, this file). Then use `docs/` as the GitHub Pages root, which is the conventional GitHub Pages path and requires no special configuration.
+
+### `docs/` structure
 
 ```
 docs/
-  index.html          ← main landing page (NOT README-based; custom HTML)
+  index.html              ← main landing page (custom HTML, not README-based)
   reports/
-    heat_uniqueness.html
     two_point_log_sobolev.html
-    vandermonde_convolution.html
+    heat_uniqueness.html
     matrix_determinant_lemma.html
-    dirichlet_eigenfunction.html
-    harmonic_minimizer.html
+    hoeffding_lemma.html
   assets/
-    style.css         ← shared styles if needed
-    screenshot_*.png  ← any screenshots used on index.html
+    style.css             ← shared landing page styles (if needed)
+    screenshot_*.png      ← placeholder images for the gallery cards
 ```
 
 ### Why custom `index.html` instead of README-based Pages
 
-- GitHub's README-based Pages renders the README as plain Markdown with no custom styling
-- We want to link to the live `report.html` files directly — a custom page lets us do this with proper framing (titles, descriptions, visual thumbnails or previews)
-- The `report.html` files themselves are already self-contained and self-styled; no extra work needed to display them
+GitHub's README-based Pages renders plain Markdown with no custom styling. A custom `index.html` lets us:
+- Link directly to the live report HTML files
+- Show a proper gallery with per-benchmark cards
+- Present the project clearly to someone who has never heard of Lean or formal verification
 
-### `index.html` contents
+### `index.html` design
 
-The landing page should include:
-- Project name + one-paragraph description of what Formal Islands does
-- What a "formal island" is (one sentence)
-- Link to the GitHub repo
-- A gallery section: one card per featured benchmark with:
-  - Theorem name / statement preview
-  - Short description of what was verified
+The landing page must be clear, focused, and not overly technical. It should explain the need for the project (the gap between informal mathematical proofs and fully formal verification) before describing what it does. Contents:
+
+- Project name + one-line tagline
+- Short explanation of the problem being solved and why it matters
+- What a "formal island" is (one concrete sentence)
+- Gallery section: one card per flagship benchmark, with:
+  - Theorem name and short informal statement
+  - Brief description of what was formally verified
+  - Placeholder screenshot (to be filled in with actual screenshots of the report pages)
   - Link to `reports/<name>.html`
-- Setup / quick start section (condensed from README)
-- Link to full README on GitHub
+- Condensed quick-start section
+- Link to the GitHub repo and full README
 
-### Report HTML files
+The gallery placeholder images are screenshots taken from the actual report HTML pages. These are filled in manually; no automation needed.
 
-Copy the best run's `04_report.html` into `docs/reports/` with the clean descriptive name.
-These files are already fully self-contained (all CSS/JS inline or via CDN), so no assets need to travel with them.
+### Generating the featured report HTML files
 
-The reports link to CDN-hosted MathJax, so they display correctly on GitHub Pages without any build step.
+Before copying reports to `docs/reports/`, regenerate each one from its artifact using the latest generator (to pick up all visual fixes from Phase 4). The report command currently requires `--planning-backend` explicitly:
+
+```bash
+./.venv/bin/formal-islands-smoke report \
+  --graph=artifacts/manual-testing/<run-dir>/03_formalized_graph.json \
+  --output-dir=artifacts/manual-testing/<run-dir> \
+  --planning-backend=<backend>
+```
+
+Specific commands for the four flagship runs:
+
+```bash
+# Two-point log-Sobolev
+./.venv/bin/formal-islands-smoke report \
+  --graph=artifacts/manual-testing/run11-two-point-log-sobolev-claude-aristotle-3/03_formalized_graph.json \
+  --output-dir=artifacts/manual-testing/run11-two-point-log-sobolev-claude-aristotle-3 \
+  --planning-backend=claude
+
+# Heat uniqueness
+./.venv/bin/formal-islands-smoke report \
+  --graph=artifacts/manual-testing/run4-heat-uniqueness-gemini-aristotle-4/03_formalized_graph.json \
+  --output-dir=artifacts/manual-testing/run4-heat-uniqueness-gemini-aristotle-4 \
+  --planning-backend=gemini
+
+# Matrix determinant lemma
+./.venv/bin/formal-islands-smoke report \
+  --graph=artifacts/manual-testing/run15-matrix-determinant-lemma-claude-aristotle-2/03_formalized_graph.json \
+  --output-dir=artifacts/manual-testing/run15-matrix-determinant-lemma-claude-aristotle-2 \
+  --planning-backend=claude
+
+# Hoeffding's lemma
+./.venv/bin/formal-islands-smoke report \
+  --graph=artifacts/manual-testing/run16-hoeffding-lemma-gemini-aristotle/03_formalized_graph.json \
+  --output-dir=artifacts/manual-testing/run16-hoeffding-lemma-gemini-aristotle \
+  --planning-backend=gemini
+```
+
+Then copy the resulting `04_report.html` from each artifact directory into `docs/reports/` with the clean name.
 
 ---
 
-## 5. README Polish
+## 6. README Polish
 
-The current README is accurate but written for active developers. A public-facing README needs:
+The current README is written for active developers. The public-facing version needs to be understood by someone who only knows informal mathematics and has heard vaguely of Lean.
 
 **Add:**
-- One-line tagline above the first section (e.g. "Formal Islands turns informal math proofs into honest partial Lean certificates.")
-- Screenshot / image of an example report (placeholder for now; fill in once site is live)
-- A "Try it" section at the top with the `new` interactive command
-- Brief note on what "formal islands" means conceptually, before the technical description
-- Shields/badges (build status, license, maybe Lean version)
+- One-line tagline at the top
+- A short "What Is This?" section explaining the problem (gap between informal proofs and full formalization, and why partial certification is still useful)
+- A "Try it" section near the top using the new `formal-islands new` interactive command
+- A "Featured Examples" section linking to the GitHub Pages gallery
+- Brief conceptual explanation of what a "formal island" means
+
+**Backend documentation:**
+The README should document all supported backends with setup instructions for each:
+- **Codex** (`--planning-backend codex` or `--backends codex`): install via npm, authenticate with OpenAI key
+- **Claude Code** (`--planning-backend claude`): install via npm, authenticate via `claude auth login` or `ANTHROPIC_API_KEY`
+- **Gemini** (`--planning-backend gemini`): install via npm, authenticate with Google API key
+- **Aristotle** (`--formalization-backend aristotle`): install via pip, requires `ARISTOTLE_API_KEY` env var
+- Preferred combination based on experience: use Gemini or Claude as `--planning-backend`, Aristotle as `--formalization-backend`
+
+**Document all flags and defaults**, especially:
+- `--max-attempts` (default: 2; recommend 4 for stronger results)
+- `--formalization-timeout-seconds` (no default for Aristotle; add one if not present)
+- `--backends` shorthand (once implemented)
+- `--workspace` (default: auto-discovered `lean_project/`)
+- `--output-dir` (default: auto-derived once implemented)
 
 **Remove / move to `dev/`:**
-- Internal details about backend design (covered in design-note.md)
+- Internal pipeline architecture details
 - Run history references
-- References to `ARISTOTLE_API_KEY` can stay but should be clearly marked as optional
+- Anything that reads like a developer journal rather than user documentation
 
 **Restructure:**
 ```
-## What Is This?         ← new, one paragraph
-## Quick Start           ← currently buried; bring up, use `new` command
-## Featured Examples     ← link to the GitHub Pages gallery
-## How It Works          ← condensed version of current pipeline description
-## Setup                 ← current setup section, lightly trimmed
-## Backends              ← keep, trim Aristotle API key prominence
-## Development           ← keep, move to bottom
+## What Is This?         ← new, one paragraph explaining the problem and the approach
+## Quick Start           ← bring to top; use `formal-islands new`
+## Featured Examples     ← links to GitHub Pages gallery
+## How It Works          ← condensed pipeline description, non-technical
+## Setup                 ← install steps
+## Backends              ← per-backend setup + preferred combination
+## All CLI Flags         ← full flag reference with defaults
+## Development           ← move to bottom
 ```
-
----
-
-## 6. Report HTML Visual Fixes
-
-Several rendering issues in the current HTML reports need to be fixed before reports are published on the site. These apply to `generator.py` and should be done before regenerating the featured report files in Phase 4.
-
-### `**bold**` markdown in informal proof text
-
-The informal proof text often contains markdown-style step labels like `**Symmetry and base value.**`, `**First derivative.**`, etc. These currently render as literal `**` characters on screen.
-
-**Decision: render `**text**` as `<em>` (italic)**, and also handle `*text*` as `<em>` for consistency.
-
-Rationale:
-- Plain bold (`<strong>`) would visually collide with the existing section headers ("Informal statement:", "Coverage:", "Lean theorem name:") which are already `<strong>` in paragraph context
-- Italic is the conventional typographic treatment for named proof steps in mathematical writing
-- The visual hierarchy becomes clear: `<h3>` node title → `<strong>` structural section labels → `<em>` named proof steps within prose
-- No changes needed to the existing section header markup
-
-Implementation: add a markdown-inline pass in `_render_inline_code_html` (alongside the existing backtick → `<code>` pass) that converts `**...**` and `*...*` patterns to `<em>`. Order of operations: backtick spans first (they may contain `*`), then bold/italic.
-
-### Already fixed (don't redo)
-- MathJax flicker in SVG node text: fixed via `skipHtmlTags: ['svg']`
-- Transparent node fill causing edge bleed-through: fixed by making fills fully opaque
-- Backtick → `<code>` inline rendering in coverage notes and checklist text: fixed
-
----
-
-## 7. License and Metadata
-
-- Add a `LICENSE` file if one doesn't exist (MIT or Apache-2.0 recommended for an open research tool)
-- Add a `CITATION.md` or `CITATION.cff` if citation is desired
-- Review `pyproject.toml` / `setup.py` for correct metadata (name, description, author)
-- Add a `.github/workflows/` CI file that runs `pytest -q` on pushes (optional but professional)
 
 ---
 
@@ -282,7 +311,7 @@ Implementation: add a markdown-inline pass in `_render_inline_code_html` (alongs
 
 Ensure the following are gitignored:
 - `artifacts/` — all benchmark output
-- `lean_project/.lake/` — Mathlib build cache (already large, should never be committed)
+- `lean_project/.lake/` — Mathlib build cache (large, should never be committed)
 - `lean_project/FormalIslands/Generated/` — worker scratch files
 - `lean_project/test_*.lean` — scratch Lean files
 - `**/__pycache__/`, `.venv/`, `*.egg-info/` — Python build artifacts
@@ -290,71 +319,70 @@ Ensure the following are gitignored:
 
 ---
 
+## 8. License and Metadata
+
+- Add a `LICENSE` file (MIT or Apache-2.0 recommended for an open research tool)
+- Add a `CITATION.cff` if citation is desired
+- Review `pyproject.toml` for correct metadata (name, description, author, version)
+- Add a `.github/workflows/` CI file that runs `pytest -q` on pushes (optional but professional)
+
+---
+
 ## Implementation Order
 
-The phases below are ordered by dependency and risk. Each phase can be reviewed independently.
+Each phase is independently reviewable and can be done in sequence.
 
-**Phase 1 — Cleanup** (low risk, do first)
-- Remove stale files from `examples/`, `lean_project/`
+**Phase 1 — Cleanup**
+- Remove stale files from `examples/` root and `lean_project/`
 - Audit and update `.gitignore`
-- Rename `docs/` → `dev/` (or keep as-is and use `site/`)
+- Rename `docs/` → `dev/`
 
 **Phase 2 — Featured benchmarks**
-- Create `examples/featured/` with renamed input JSONs
-- Pick the definitive best run artifact for each featured benchmark
-- Update README to reference featured examples
+- Create `examples/featured/` with the four flagship input JSONs (copied, not moved)
+- Confirm the exact artifact directory for each flagship run
 
 **Phase 3 — Report visual fixes**
 - Render `**...**` / `*...*` as `<em>` in `_render_inline_code_html`
-- Any other polish to the HTML generator that affects published reports
+- Any other generator polish that affects published reports
 
 **Phase 4 — CLI rename + UX overhaul**
-- Rename `formal-islands-smoke` → `formal-islands` (keep old name as alias if needed)
-- Rename `smoke.py` → `cli.py` (or similar)
-- Add smart defaults: workspace auto-discovery, output-dir auto-derivation, `--backends` shorthand
+- Rename `formal-islands-smoke` → `formal-islands`; rename `smoke.py` → `cli.py`
+- Add smart defaults: workspace auto-discovery, output-dir auto-derivation
+- Add `--backends` shorthand
 - Rename `run-benchmark` → `run`
 - Implement `formal-islands new` interactive entry point
 - Update README quick-start to use the new commands
 
 **Phase 5 — Site + gallery**
-- Regenerate `04_report.html` for each featured benchmark using the latest generator (picks up all visual fixes from Phase 3)
-NOTE: Command needs to be something like "./.venv/bin/formal-islands-smoke report \
-  --graph=/Users/adihaya/GitHub/formal-islands/artifacts/manual-testing/run13-pinsker-via-bernoulli-core-gemini-aristotle-4/03_formalized_graph.json \
-  --output-dir=/Users/adihaya/GitHub/formal-islands/artifacts/manual-testing/run13-pinsker-via-bernoulli-core-gemini-aristotle-4 \
-  --planning-backend=gemini" for example (need to specify planning-backend now)
-- Create `docs/reports/` and copy in the featured HTML files
-- Write `docs/index.html` landing page
-NOTE: Site needs to look good, be clear and not too complicated, and clearly explain the project and what the issues it's tackling are / what the need for it is. The gallery for benchmarks etc can have placeholder images that I can fill in using screenshots of the report pages. 
+- Regenerate the four flagship `04_report.html` files using the commands above (picks up Phase 3 fixes)
+- Copy them into `docs/reports/` with clean names
+- Write `docs/index.html` landing page with gallery cards and placeholder screenshots
+- Take screenshots of each report and fill in the gallery card images
 - Configure GitHub Pages to serve from `docs/`
 
 **Phase 6 — README + docs polish**
-- Polish README with the new structure, using the new `formal-islands` command name
-NOTE: Make README much more user-facing, also include information about the backends and how to install them or authenticate if needed (e.g. codex, gemini, claude code, aristotle), say the preferred combination in my experience is using codex/gemini/claude code as the planning_backend and aristotle as the formalization_backend. Also make sure to talk about the various flags and parameters for the command, default values, especially of stuff like timeouts. 
-- Add screenshots / preview images once the Pages site is live
-- Write `dev/INTERNALS.md` as a single home for design notes, run history, and integration plans
+- Rewrite README with the new structure and `formal-islands` command name
+- Document all backends with setup instructions and preferred combination
+- Document all flags with defaults
+- Optionally add `dev/INTERNALS.md` as a short index/table-of-contents pointing to the existing dev files — `design-note.md`, `run_history.md`, `opengauss-backend-plan.md` all stay as-is; don't delete or merge them
 
 **Phase 7 — Metadata + CI**
 - Add `LICENSE`
 - Add `CITATION.cff` if desired
-- Add basic CI workflow
+- Add basic CI workflow (`pytest -q` on push)
 
 ---
 
-## Open Questions
+## Resolved Questions
 
 1. **Should `examples/manual-testing/` stay in the repo?**
-   It's useful for developers rerunning benchmarks but adds clutter for readers. Options:
-   - Keep it as-is (just a folder people can ignore)
-   - Move it to `dev/benchmarks/` for cleanliness
-   - Keep only `examples/featured/` and remove `manual-testing/` entirely from the public repo
-NOTE: I think it should be kept, perhaps renamed at the end from "manual-testing" to something else OR moved to dev/benchmarks, but keeping all those files is important.
+   Yes — keep all files there. The folder may be renamed from `manual-testing` to `benchmarks` or similar in a later pass, but nothing is removed.
 
-2. **Which exact run to use per featured benchmark?**
-   For some benchmarks (e.g. run4) there are multiple strong runs. Pick the most recent clean one, or the one with the most verified nodes that are faithfully classified. See the candidate table in Phase 2.
+2. **Which exact run to use per flagship benchmark?**
+   Resolved — see the flagship table in Phase 2.
 
-3. **Should the reports on the Pages site be regenerated fresh each time (CI) or manually curated?**
-   Manual curation is simpler for now. CI re-generation would require committing the Lean workspace or verifying without it, which is complex.
-NOTE: Yes, manual curation, no CI.
+3. **CI vs manual curation for published reports?**
+   Manual. No CI re-generation. Reports are committed as static files to `docs/reports/`.
 
 4. **Domain name for the Pages site?**
-   `<username>.github.io/formal-islands` is the default. A custom domain can be added later via `CNAME` file.
+   Default `<username>.github.io/formal-islands` for now. Custom domain can be added later via `CNAME`.

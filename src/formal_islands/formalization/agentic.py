@@ -122,6 +122,14 @@ def build_agentic_formalization_request(
             else "Verified child context:\n[]"
         ),
         format_verified_direct_child_context(direct_child_context),
+        (
+            "These verified children are already available. Your theorem should capture only the remaining "
+            "parent-level delta, not a restatement of any verified child or a near-equivalent corollary."
+        ),
+        (
+            "Dependency direction note: the verified child lemmas are outgoing dependencies of the target node. "
+            "Treat them as already established support, not as parents or as claims that depend on the target."
+        ),
         f"Lean workspace root: {workspace_root}",
         f"Scratch file to create and edit: {scratch_file_path}",
         f"Plan markdown file to create and maintain: {plan_file_path}",

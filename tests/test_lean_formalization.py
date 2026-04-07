@@ -20,6 +20,7 @@ from formal_islands.formalization.loop import (
     _attempt_agentic_coverage_expansion,
     _build_agentic_faithfulness_feedback,
     _build_aristotle_faithfulness_feedback,
+    _integrate_successful_formalization,
     _promote_informal_parents_with_verified_children,
     _summarize_compiler_feedback,
     formalize_candidate_node,
@@ -215,6 +216,7 @@ def test_build_agentic_formalization_request_includes_all_verified_direct_childr
     assert "verified direct child lemmas" in lowered
     assert "a_nonneg" in request.prompt
     assert "b_nonneg" in request.prompt
+    assert "dependency direction note" in lowered
 
 
 def test_build_aristotle_formalization_prompt_marks_ambient_theorem_as_context_only(tmp_path: Path) -> None:
@@ -265,6 +267,8 @@ def test_build_aristotle_formalization_prompt_includes_all_verified_direct_child
     assert "verified direct child lemmas" in lowered
     assert "a_nonneg" in prompt
     assert "b_nonneg" in prompt
+    assert "remaining parent-level delta" in lowered
+    assert "dependency direction note" in lowered
 
 
 def test_parent_promotion_assessment_is_cached_and_promotes_parent(tmp_path: Path) -> None:
@@ -293,6 +297,7 @@ def test_parent_promotion_assessment_is_cached_and_promotes_parent(tmp_path: Pat
     assert root.formalization_rationale is not None
     assert "parent assembly" in root.formalization_rationale.lower()
     assert len(planning_backend.requests) == 1
+    assert "restat" in planning_backend.requests[0].prompt.lower()
     log_text = progress_log.read_text(encoding="utf-8")
     assert "parent promotion assessment -> promote=True" in log_text
     assert "priority=2" in log_text
@@ -330,6 +335,65 @@ def test_parent_promotion_assessment_cache_reuses_negative_decision(tmp_path: Pa
     log_text = progress_log.read_text(encoding="utf-8")
     assert "cache hit" in log_text.lower()
     assert "promote=False" in log_text
+
+
+def test_parent_promotion_episode_prevents_immediate_repromotion(tmp_path: Path) -> None:
+    graph = build_two_child_graph()
+    planning_backend = MockBackend(
+        queued_payloads=[
+            {
+                "promote_parent": True,
+                "recommended_priority": 2,
+                "reason": "The verified children now discharge the hard burden.",
+            },
+            {
+                "informal_statement": (
+                    "Assuming the verified children, the parent only needs the remaining assembly step."
+                ),
+                "informal_proof_text": (
+                    "The remaining work is to assemble the verified child results into the parent conclusion."
+                ),
+            },
+        ]
+    )
+    cache = ParentPromotionCache(decisions={}, lock=RLock())
+    progress_log = tmp_path / "_progress.log"
+
+    artifact = FormalArtifact(
+        lean_theorem_name="n0_core",
+        lean_statement="theorem n0_core : True",
+        lean_code="theorem n0_core : True := by trivial",
+        faithfulness_classification="concrete_sublemma",
+        verification=VerificationResult(status="verified", command="lake env lean fake.lean"),
+    )
+
+    with use_progress_log(progress_log):
+        promoted_graph = _promote_informal_parents_with_verified_children(
+            graph=graph,
+            planning_backend=planning_backend,
+            parent_promotion_cache=cache,
+        )
+        updated_graph = _integrate_successful_formalization(
+            graph=promoted_graph,
+            backend=None,
+            planning_backend=planning_backend,
+            node_id="n0",
+            artifact=artifact,
+            verification_status="verified",
+            parent_promotion_cache=cache,
+            enable_parent_promotion=True,
+        )
+
+    root = next(node for node in updated_graph.nodes if node.id == "n0")
+    support_nodes = [node for node in updated_graph.nodes if node.id.startswith("n0__formal_core")]
+
+    assert root.status == "informal"
+    assert len(support_nodes) == 1
+    assert len(planning_backend.requests) == 2
+    assert planning_backend.requests[0].task_name == "assess_parent_promotion"
+    assert planning_backend.requests[1].task_name == "summarize_concrete_sublemma"
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "skipping parent promotion because this verified child set already came from a prior parent-assembly episode" in log_text
 
 
 def test_faithfulness_feedback_locks_theorem_family_for_setting_fix() -> None:

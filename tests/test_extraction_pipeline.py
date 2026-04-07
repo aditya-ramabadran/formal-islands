@@ -62,6 +62,7 @@ def test_build_extraction_request_uses_explicit_schema() -> None:
     assert "theorem_statement" in request.prompt
     assert "local technical subclaims" in request.prompt
     assert "compact, faithful, formalization-sensitive graph" in request.prompt
+    assert "root theorem should normally be the source" in request.prompt.lower()
 
 
 def test_build_theorem_planning_request_uses_merged_schema() -> None:
@@ -75,6 +76,7 @@ def test_build_theorem_planning_request_uses_merged_schema() -> None:
     assert request.json_schema["type"] == "object"
     assert "candidates" in request.prompt
     assert "plan the graph and candidate ranking jointly" in request.prompt.lower()
+    assert "single canonical dependency direction" in request.prompt.lower()
 
 
 def test_extract_proof_graph_validates_schema_and_maps_to_internal_graph() -> None:

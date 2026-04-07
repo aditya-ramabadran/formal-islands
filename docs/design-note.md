@@ -181,6 +181,13 @@ That edge means:
 
 - a verified supporting child certifies a narrower concrete local core that the informal parent depends on
 
+The canonical graph contract is now:
+
+- `A -> B` means `A` depends on `B`
+- the root theorem should normally be the source of its supporting dependency edges, not a dependency target
+- generic labels such as `implies`, `uses`, or `dependency` are normalized away; only special labels like `refined_from` and `formal_sublemma_for` are kept
+- if a loaded graph has incoming dependency edges into the root theorem, the CLI logs a warning because that usually means the proof direction is backwards
+
 ## 5. End-to-End Pipeline
 
 The repository now has the following conceptual pipeline.
@@ -1554,12 +1561,14 @@ The new rule is:
 - ask the planning backend whether the parent is now cheap enough to formalize as a parent-assembly theorem
 - if the planner says yes, promote the parent to `candidate_formal`
 - cache that planner decision for the current child snapshot so the same eligible parent is not re-asked repeatedly
+- record the promotion episode so a parent that was already attempted on that same verified-child basis is not immediately re-promoted just because the attempt yielded a narrower concrete sublemma
 - let the normal dynamic discovery loop pick up the newly promoted parent on a later pass
 
 This is intentionally not the same as coverage expansion:
 
 - coverage expansion grows a verified theorem upward when the theorem itself is only a concrete sublemma
 - parent assembly promotion starts from an informal parent that became feasible because its children were already certified
+- the formalization prompts for that promoted parent still treat the verified children as already available and ask only for the remaining parent-level delta
 
 The older follow-up hook has been folded into the same post-verification philosophy. The important new behavior is the planner-gated scan over informal parents whose children have all been discharged.
 
@@ -1576,7 +1585,7 @@ This is a report-only annotation step:
 The report-stage synthesis:
 
 - asks the planning backend to read the parent's informal proof together with all verified direct child lemmas
-- asks for a concise delta description: what remains to be checked once those verified child results are assumed
+- asks for a concrete delta description: what remains informal at the parent level once those verified child results are assumed, what a human would still need to prove, and which specific proof steps are still missing
 - stores the resulting text on the node as report metadata
 - renders it under the node's informal proof in the HTML report
 - titles the section as `Remaining proof burden (assuming results of [child ids])`, with the verified child ids linked to their node cards

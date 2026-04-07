@@ -2,6 +2,7 @@ from pydantic import ValidationError
 
 from formal_islands.models import (
     FormalArtifact,
+    canonical_dependency_direction_warnings,
     ProofEdge,
     ProofGraph,
     ProofNode,
@@ -70,6 +71,16 @@ def test_proof_graph_accepts_valid_dependency_graph() -> None:
     assert graph.root_node_id == "n1"
     assert len(graph.nodes) == 3
     assert graph.nodes[2].formal_artifact is not None
+    assert graph.edges[1].label is None
+
+
+def test_proof_edge_preserves_special_labels_but_drops_generic_ones() -> None:
+    assert ProofEdge(source_id="n1", target_id="n2", label="implies").label is None
+    assert (
+        ProofEdge(source_id="n1", target_id="n2", label="formal_sublemma_for").label
+        == "formal_sublemma_for"
+    )
+    assert ProofEdge(source_id="n1", target_id="n2", label="refined_from").label == "refined_from"
 
 
 def test_proof_graph_rejects_duplicate_node_ids() -> None:
@@ -162,3 +173,31 @@ def test_review_obligation_requires_kind_text_and_nodes() -> None:
 
     assert obligation.kind == "boundary_interface_check"
     assert obligation.node_ids == ["parent", "child"]
+
+
+def test_canonical_dependency_direction_warnings_flag_root_incoming_edges() -> None:
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="A implies B.",
+        root_node_id="n1",
+        nodes=[
+            ProofNode(
+                id="n1",
+                title="Main claim",
+                informal_statement="B holds.",
+                informal_proof_text="Use n2.",
+            ),
+            ProofNode(
+                id="n2",
+                title="Supporting claim",
+                informal_statement="A implies B.",
+                informal_proof_text="By assumption.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n2", target_id="n1")],
+    )
+
+    warnings = canonical_dependency_direction_warnings(graph)
+
+    assert warnings
+    assert "root node 'n1' has incoming dependency edge(s)" in warnings[0]

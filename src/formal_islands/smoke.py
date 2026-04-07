@@ -30,7 +30,12 @@ from formal_islands.formalization import (
 from formal_islands.formalization.loop import (
     DEFAULT_FORMALIZATION_ATTEMPTS,
 )
-from formal_islands.models import FormalArtifact, ProofGraph, VerificationResult
+from formal_islands.models import (
+    FormalArtifact,
+    ProofGraph,
+    VerificationResult,
+    canonical_dependency_direction_warnings,
+)
 from formal_islands.report import export_report_bundle, render_html_report
 from formal_islands.report.annotation import synthesize_remaining_proof_burdens
 from formal_islands.review import derive_review_obligations
@@ -51,6 +56,11 @@ DEFAULT_BACKEND_TIMEOUT_SECONDS = 360.0
 GEMINI_BACKEND_TIMEOUT_SECONDS = 360.0
 FORMALIZATION_BACKEND_TIMEOUT_SECONDS = 420.0
 PROGRESS_LOG_FILENAME = "_progress.log"
+
+
+def _log_dependency_direction_warnings(graph: ProofGraph, *, context: str) -> None:
+    for warning in canonical_dependency_direction_warnings(graph):
+        progress(f"{context}: canonical direction warning: {warning}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -388,6 +398,7 @@ def cmd_select_candidates(args: argparse.Namespace) -> int:
             timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
         )
         graph = load_graph(Path(args.graph))
+        _log_dependency_direction_warnings(graph, context="candidate-selection stage")
         updated_graph = select_formalization_candidates(backend=backend, graph=graph)
         path = output_dir / "02_candidate_graph.json"
         write_graph(updated_graph, path)
@@ -421,6 +432,7 @@ def cmd_formalize_one(args: argparse.Namespace) -> int:
             formalization=True,
         )
         graph = load_graph(Path(args.graph))
+        _log_dependency_direction_warnings(graph, context="formalization stage")
         node_id = select_candidate_node_id(graph, requested_node_id=args.node_id)
         verifier = LeanVerifier(workspace=LeanWorkspace(root=Path(args.workspace)))
         graph_path = output_dir / "03_formalized_graph.json"
@@ -487,6 +499,7 @@ def cmd_formalize_all_candidates(args: argparse.Namespace) -> int:
                 formalization=True,
             )
             graph = load_graph(Path(args.graph))
+            _log_dependency_direction_warnings(graph, context="formalization stage")
             verifier = LeanVerifier(workspace=LeanWorkspace(root=Path(args.workspace)))
             graph_path = output_dir / "03_formalized_graph.json"
             summary_path = output_dir / "03_formalization_summaries.json"
@@ -546,6 +559,7 @@ def cmd_report(args: argparse.Namespace) -> int:
     with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
         progress("report stage starting")
         graph = load_graph(Path(args.graph))
+        _log_dependency_direction_warnings(graph, context="report stage")
         planning_backend_name = getattr(args, "planning_backend", None)
         legacy_backend_name = getattr(args, "backend", None)
         planning_backend = None

@@ -3,6 +3,7 @@
 from formal_islands.models.proof import (
     FaithfulnessClassification,
     FormalArtifact,
+    canonical_dependency_direction_warnings,
     ProofEdge,
     ProofGraph,
     ProofNode,
@@ -14,6 +15,7 @@ from formal_islands.models.proof import (
 __all__ = [
     "FormalArtifact",
     "FaithfulnessClassification",
+    "canonical_dependency_direction_warnings",
     "ProofEdge",
     "ProofGraph",
     "ProofNode",

@@ -78,6 +78,22 @@ Overview of the best benchmark runs:
   - **Operational note:** **this run used `max_attempts=4` rather than the default `2`**, though in practice the verified nodes compiled on their first successful attempts and did not need the extra retry budget.
   - Verdict: still one of the strongest runs in the repo, and one of the best public-facing showcase benchmarks. This rerun mainly strengthens confidence that run4 is now a reliable example of the intended Formal Islands workflow.
 
+- `2026-04-07 11:49 PT` — `artifacts/manual-testing/run4-heat-uniqueness-gemini-aristotle-6`
+  - Benchmark quality: still one of the best small benchmarks in the suite, because the proof has a clean energy-method spine and a single obvious local island.
+  - Planner / pipeline behavior: this run gives evidence that the two new pipeline features are now working.
+    - The root `uniqueness_heat_equation` was **promoted after child verification** and is now marked `candidate_formal` with priority 2.
+    - The final report bundle now includes non-null `remaining_proof_burden` text for still-informal parent nodes, including both `uniqueness_heat_equation` and `energy_dissipation`.
+  - Formalizer: again produced a strong two-part artifact. It verified:
+    - `energy_dissipation__formal_core`, capturing the main integration-by-parts / nonpositive-energy-derivative calculation, and
+    - `uniqueness_heat_equation__formal_core`, capturing the real-analysis uniqueness deduction from zero initial energy and nonincreasing energy.
+  - What improved: beyond the mathematical content, the reporting is now better. The artifact explicitly records what remains informal at each parent node, which makes the mixed informal/formal proof boundary much clearer.
+  - What still looks incomplete: although the root was promoted, the final verified result still appears as a supporting `__formal_core` node rather than as a direct formalization attached to the parent itself. So parent promotion is clearly influencing the graph metadata, but it is not yet obviously producing a direct parent-level formal artifact.
+  - Comparison to earlier runs:
+    - mathematically still in the same strong family as `run4-heat-uniqueness-gemini-aristotle-4` and `-5`;
+    - better as a reporting artifact, because the new remaining-burden text makes the residual informal obligations explicit.
+  - **Operational note:** **this run used `max_attempts=8` rather than the default `2`**.
+  - Verdict: still one of the strongest runs in the repo, and now also a better human-facing artifact because the parent-promotion metadata and remaining-proof-burden reporting are starting to work. The next improvement would be to make promoted parents more visibly attempted as parent-level theorems, rather than only yielding supporting `__formal_core` children.
+  
 ## run5-negative-part-maximum-principle
 - `2026-04-06 09:11 PT` — `artifacts/manual-testing/run5-negative-part-maximum-principle-aristotle`
   - Benchmark quality: good benchmark, because the gradient identity for \(u_-\) is a natural high-value local island.

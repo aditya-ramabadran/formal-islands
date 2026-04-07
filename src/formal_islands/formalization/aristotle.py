@@ -212,6 +212,14 @@ def build_aristotle_formalization_prompt(
         json.dumps(child_summaries, indent=2) if child_summaries else "[]",
         format_verified_direct_child_context(direct_child_context),
         (
+            "These verified children are already available. The theorem should prove only the remaining "
+            "parent-level delta, not a restatement of any verified child or a close corollary that duplicates it."
+        ),
+        (
+            "Dependency direction note: the verified child lemmas are outgoing dependencies of the target node. "
+            "Treat them as already established support, not as parents or as claims that depend on the target."
+        ),
+        (
             "Rewrite the designated scratch file into a Lean 4 theorem and proof that formalize the node. "
             "Use the same concrete setting as the node whenever possible, and keep the theorem faithful to the "
             "local inferential role described above."
@@ -324,6 +332,12 @@ def _render_aristotle_scratch_header(
             "",
             "Verified direct child lemmas:",
             format_verified_direct_child_context(direct_child_context),
+            "",
+            "These verified children are already available. The theorem should prove only the remaining parent-level delta,",
+            "not a restatement of any verified child or a close corollary that duplicates it.",
+            "",
+            "Dependency direction note: the verified child lemmas are outgoing dependencies of the target node.",
+            "Treat them as already established support, not as parents or as claims that depend on the target.",
             "",
             "Instructions:",
             "- Rewrite this file into a compilable Lean 4 theorem and proof for the target node above.",

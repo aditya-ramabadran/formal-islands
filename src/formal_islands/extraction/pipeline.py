@@ -17,7 +17,12 @@ from formal_islands.extraction.schemas import (
     RefinedLocalClaimResult,
 )
 from formal_islands.formalization.pipeline import build_node_coverage_sketch
-from formal_islands.models import ProofEdge, ProofGraph, ProofNode
+from formal_islands.models import (
+    ProofEdge,
+    ProofGraph,
+    ProofNode,
+    canonical_dependency_direction_warnings,
+)
 from formal_islands.progress import progress, run_structured_with_progress
 
 
@@ -34,6 +39,10 @@ EXTRACTION_SYSTEM_PROMPT = (
     "Return only JSON that matches the supplied schema. "
     "Do not add candidate-formalization or formal-artifact fields. "
     "Optimize for a compact, faithful, formalization-sensitive graph. "
+    "Use a single canonical dependency direction: a source node depends on its target node. "
+    "The root theorem should normally be the source of outgoing dependency edges to its supporting lemmas; "
+    "do not make the root theorem a dependency target in the final graph. "
+    "Leave ordinary dependency edges unlabeled unless a special refinement or supporting-sublemma label is genuinely needed. "
     "Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible."
 )
 
@@ -49,6 +58,10 @@ THEOREM_PLANNING_SYSTEM_PROMPT = (
     "Return only JSON that matches the supplied schema. "
     "In one pass, choose the graph shape and rank the best local formalization candidates. "
     "Keep the graph readable and preserve one or two strong formal islands when they carry real inferential load. "
+    "Use a single canonical dependency direction: a source node depends on its target node. "
+    "The root theorem should normally be the source of outgoing dependency edges to its supporting lemmas; "
+    "do not make the root theorem a dependency target in the final graph. "
+    "Leave ordinary dependency edges unlabeled unless a special refinement or supporting-sublemma label is genuinely needed. "
     "Preserve the user's mathematical notation, especially LaTeX delimiters and formulas, whenever possible."
 )
 
@@ -111,7 +124,9 @@ def build_extraction_request(
             ),
             (
                 "Represent the proof as dependency edges where a source node depends on its target node. "
-                "Keep every node informal at this stage."
+                "Keep every node informal at this stage. The root theorem should normally be the source of its "
+                "supporting dependencies, not a dependency target. Leave ordinary dependency edges unlabeled; "
+                "reserve labels only for special cases such as refinement or a certified supporting sublemma."
             ),
             (
                 "Use a compact, faithful, formalization-sensitive graph. A node should exist only if it is the root theorem, "
@@ -185,6 +200,12 @@ def build_theorem_planning_request(
             (
                 "Plan the graph and candidate ranking jointly. Optimize for a compact, faithful, "
                 "formalization-sensitive graph with a small, high-yield candidate set."
+            ),
+            (
+                "Use a single canonical dependency direction: a source node depends on its target node. "
+                "The root theorem should normally be the source of outgoing dependency edges to its supporting "
+                "lemmas; do not make the root theorem a dependency target in the final graph. Leave ordinary "
+                "dependency edges unlabeled unless a special refinement or supporting-sublemma label is genuinely needed."
             ),
             (
                 "A node should exist only if it is the root theorem, a nontrivial intermediate claim, "
@@ -268,6 +289,7 @@ def extract_proof_graph(
         ],
     )
     graph = simplify_proof_graph(graph)
+    _log_canonical_direction_warnings(graph, stage_label="extract stage")
     return graph
 
 
@@ -300,6 +322,7 @@ def plan_proof_graph(
         selection=CandidateSelectionResult(candidates=planned.candidates),
         backend=backend,
     )
+    _log_canonical_direction_warnings(candidate_graph, stage_label="plan stage")
     progress(
         "planning complete: "
         f"{len(simplified_graph.nodes)} nodes, {len([n for n in candidate_graph.nodes if n.status == 'candidate_formal'])} candidates"
@@ -398,6 +421,12 @@ def _build_internal_graph(
             for edge in extracted.edges
         ],
     )
+
+
+def _log_canonical_direction_warnings(graph: ProofGraph, *, stage_label: str) -> None:
+    warnings = canonical_dependency_direction_warnings(graph)
+    for warning in warnings:
+        progress(f"{stage_label}: canonical direction warning: {warning}")
 
 
 def _apply_candidate_selection_result(

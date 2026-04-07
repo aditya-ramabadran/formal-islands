@@ -10,7 +10,7 @@ from threading import RLock
 from typing import Iterator, TextIO
 
 from formal_islands.backends.base import StructuredBackend, StructuredBackendRequest, StructuredBackendResponse
-from formal_islands.models import ProofGraph
+from formal_islands.models import ProofGraph, canonical_dependency_direction_warnings
 
 _PROGRESS_PREFIX = "[formal-islands]"
 
@@ -95,6 +95,12 @@ def append_graph_summary_to_progress_log(
             lines.append(f"  ... ({len(graph.edges) - max_edges} more)")
     else:
         lines.append("  (none)")
+
+    warnings = canonical_dependency_direction_warnings(graph)
+    if warnings:
+        lines.append("Directionality warnings:")
+        for warning in warnings:
+            lines.append(f"  ! {warning}")
 
     lines.append("Nodes:")
     if graph.nodes:
