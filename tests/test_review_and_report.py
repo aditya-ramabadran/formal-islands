@@ -53,7 +53,7 @@ def test_render_html_report_includes_core_sections() -> None:
     assert 'id="MathJax-script"' in html
     assert "width: min(100%, 720px);" in html
     assert "Nodes without attached Lean artifacts use dashed amber outlines." in html
-    assert "Dashed gray edges show provenance or refinement links" in html
+    assert "Dashed gray edges represent refinement or" in html
     assert "language-lean" in html
     assert 'class="tok-keyword"' in html or 'class="tok-type"' in html
     assert 'preserveAspectRatio="xMidYMin meet"' in html
@@ -152,7 +152,7 @@ def test_render_html_report_marks_refinement_edges_as_provenance() -> None:
     html = render_html_report(graph, obligations)
 
     assert "edge-provenance" in html
-    assert "provenance or refinement links" in html
+    assert "refinement or" in html
 
 
 def test_compute_graph_layout_height_covers_all_nodes() -> None:

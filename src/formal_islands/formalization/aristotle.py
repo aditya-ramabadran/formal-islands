@@ -207,8 +207,15 @@ def build_aristotle_formalization_prompt(
             "scope just to make the theorem easier."
         ),
         (
+            "Keep theorem headers and binders ASCII-safe. Lean treats `λ` as a reserved keyword in declarations, "
+            "so do not use Unicode binder names like `λ₁`; use plain names such as `lambda1` or `lambda_1` "
+            "instead. Preserve the mathematical notation in comments and statements, but keep Lean identifiers "
+            "plain when possible."
+        ),
+        (
             "If the full node is too hard, prefer a smaller but still genuinely nontrivial concrete theorem in the "
-            "same setting. The fallback must still carry meaningful inferential load from the parent proof."
+            "same setting. The fallback must still carry meaningful inferential load from the parent proof, and it "
+            "must not switch theorem family to a simpler proxy or lower-dimensional analogue."
         ),
         (
             "If the local proof neighborhood lists verified supporting lemmas, you may rely on their statements "
@@ -299,6 +306,7 @@ def _render_aristotle_scratch_header(
             "- Keep the theorem faithful to the target node's concrete setting.",
             "- Do not promote an unproven intermediate identity or estimate to a hypothesis.",
             "- Do not make a major shrink in the mathematical setting, dimension, ambient structure, or variable scope.",
+            "- Keep theorem headers and binders ASCII-safe. Lean treats `λ` as a reserved keyword in declarations, so do not use Unicode binder names like `λ₁`; use plain names such as `lambda1` or `lambda_1` instead.",
             "- Prefer the most concrete faithful theorem you can manage.",
             "- Avoid sorrys and avoid unrelated abstraction.",
             "- Use any imports you need, but prefer specific imports to broad ones like `import Mathlib`.",

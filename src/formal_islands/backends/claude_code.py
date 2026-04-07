@@ -29,7 +29,7 @@ class ClaudeCodeBackend:
     model: str | None = None
     max_output_tokens: int | None = None
     effort: str | None = None
-    timeout_seconds: float | None = 180.0
+    timeout_seconds: float | None = 360.0
     log_dir: Path | None = None
     use_no_session_persistence: bool = True
 

@@ -34,7 +34,7 @@ class GeminiCLIBackend:
 
     executable: str = "gemini"
     model: str | None = None
-    timeout_seconds: float | None = 180.0
+    timeout_seconds: float | None = 360.0
     log_dir: Path | None = None
     use_yolo: bool = False
     approval_mode: str | None = "auto_edit"
@@ -427,7 +427,22 @@ class GeminiCLIBackend:
     def _write_log(path: Path | None, payload: dict[str, Any]) -> None:
         if path is None:
             return
-        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        path.write_text(
+            json.dumps(GeminiCLIBackend._json_safe(payload), indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+    @staticmethod
+    def _json_safe(value: Any) -> Any:
+        if isinstance(value, bytes):
+            return value.decode("utf-8", errors="replace")
+        if isinstance(value, dict):
+            return {str(key): GeminiCLIBackend._json_safe(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [GeminiCLIBackend._json_safe(item) for item in value]
+        if isinstance(value, tuple):
+            return [GeminiCLIBackend._json_safe(item) for item in value]
+        return value
 
     @staticmethod
     def _render_prompt(request: StructuredBackendRequest, *, agentic: bool) -> str:

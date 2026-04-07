@@ -43,7 +43,8 @@ DEFAULT_EXAMPLE_INPUT = {
     "raw_proof_text": TOY_RAW_PROOF,
 }
 
-DEFAULT_BACKEND_TIMEOUT_SECONDS = 180.0
+DEFAULT_BACKEND_TIMEOUT_SECONDS = 360.0
+GEMINI_BACKEND_TIMEOUT_SECONDS = 360.0
 FORMALIZATION_BACKEND_TIMEOUT_SECONDS = 420.0
 PROGRESS_LOG_FILENAME = "_progress.log"
 
@@ -669,7 +670,7 @@ def build_backend(
         timeout_seconds = DEFAULT_BACKEND_TIMEOUT_SECONDS if timeout_seconds is None else timeout_seconds
         return ClaudeCodeBackend(model=model, log_dir=log_dir, timeout_seconds=timeout_seconds)
     if name == "gemini":
-        timeout_seconds = DEFAULT_BACKEND_TIMEOUT_SECONDS if timeout_seconds is None else timeout_seconds
+        timeout_seconds = GEMINI_BACKEND_TIMEOUT_SECONDS if timeout_seconds is None else timeout_seconds
         return GeminiCLIBackend(model=model, log_dir=log_dir, timeout_seconds=timeout_seconds)
     if name == "aristotle":
         if not formalization:

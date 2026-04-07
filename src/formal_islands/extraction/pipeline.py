@@ -18,7 +18,7 @@ from formal_islands.extraction.schemas import (
 )
 from formal_islands.formalization.pipeline import build_node_coverage_sketch
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
-from formal_islands.progress import progress
+from formal_islands.progress import progress, run_structured_with_progress
 
 
 @dataclass(frozen=True)
@@ -233,7 +233,8 @@ def extract_proof_graph(
     """Call a backend for graph extraction and validate the result."""
 
     progress("extracting proof graph")
-    response = backend.run_structured(
+    response = run_structured_with_progress(
+        backend,
         build_extraction_request(
             theorem_statement=theorem_statement,
             raw_proof_text=raw_proof_text,
@@ -279,7 +280,8 @@ def plan_proof_graph(
     """Run a single theorem-level planning pass and emit explicit graph artifacts."""
 
     progress("planning theorem graph")
-    response = backend.run_structured(
+    response = run_structured_with_progress(
+        backend,
         build_theorem_planning_request(
             theorem_statement=theorem_statement,
             raw_proof_text=raw_proof_text,
@@ -357,7 +359,7 @@ def select_formalization_candidates(
     """Apply validated candidate-selection metadata to matching nodes."""
 
     progress("selecting formalization candidates")
-    response = backend.run_structured(build_candidate_selection_request(graph))
+    response = run_structured_with_progress(backend, build_candidate_selection_request(graph))
     selection = CandidateSelectionResult.model_validate(response.payload)
     updated = _apply_candidate_selection_result(graph=graph, selection=selection, backend=backend)
     progress(
@@ -689,12 +691,13 @@ def _request_refined_local_claim(
 
     span_hints = _rank_local_consequence_spans(graph=graph, candidate_id=source_node_id)[:3]
     try:
-        response = backend.run_structured(
+        response = run_structured_with_progress(
+            backend,
             build_local_refinement_request(
                 graph=graph,
                 source_node_id=source_node_id,
                 span_hints=span_hints,
-            )
+            ),
         )
         proposals = RefinedLocalClaimResult.model_validate(response.payload).proposals
     except Exception:

@@ -964,7 +964,7 @@ def _repair_policy_lines(repair_assessment: RepairAssessment | None) -> list[str
     elif repair_assessment.category == RepairCategory.LEAN_PACKAGING_FIX:
         lines.append(
             "Keep the theorem statement fixed and repair Lean packaging only: imports, namespaces, "
-            "identifiers, and typeclass plumbing."
+            "identifiers, typeclass plumbing, and Lean-safe binder names."
         )
     elif repair_assessment.category == RepairCategory.PROOF_STRATEGY_FIX:
         lines.append(
@@ -980,6 +980,57 @@ def _repair_policy_lines(repair_assessment: RepairAssessment | None) -> list[str
             "Stay in the same setting and expand toward the missing core without changing the mathematical universe."
         )
     return lines
+
+
+def _faithfulness_repair_lines(repair_assessment: RepairAssessment | None) -> list[str]:
+    if repair_assessment is None:
+        return []
+
+    if repair_assessment.category == RepairCategory.SETTING_FIX:
+        return [
+            "The theorem family is locked: keep the same ambient universe, dimension profile, and object types. "
+            "Do not retreat to a lower-dimensional, proxy, or analogue theorem family as a workaround.",
+            "If the current theorem cannot be made to work, the next attempt should still stay in the same setting; "
+            "do not change the theorem family just to obtain a proof that compiles.",
+        ]
+
+    if repair_assessment.category == RepairCategory.THEOREM_SHAPE_FIX:
+        return [
+            "The theorem family is locked: keep the same concrete claim and proof role. Do not replace it with a "
+            "consequence, analogue, assumed intermediate step, or easier side fact.",
+            "Do not use a smaller sublemma escape hatch unless a later diagnostic explicitly says try_smaller_sublemma.",
+        ]
+
+    if repair_assessment.category == RepairCategory.LEAN_PACKAGING_FIX:
+        return [
+            "Keep the theorem statement fixed and repair Lean packaging only: imports, namespaces, identifiers, "
+            "typeclass plumbing, and Lean-safe binder names.",
+            "Do not change the theorem family or ambient setting while fixing packaging issues.",
+            "If a binder name or theorem-header identifier uses Unicode like `λ₁`, rename it to a plain ASCII "
+            "identifier such as `lambda1` and keep everything else fixed.",
+        ]
+
+    if repair_assessment.category == RepairCategory.PROOF_STRATEGY_FIX:
+        return [
+            "Keep the theorem statement fixed and change only the proof strategy, lemma order, or tactic script.",
+            "The theorem family is already acceptable; do not switch to a different setting or a smaller analogue "
+            "unless a later diagnostic explicitly asks for it.",
+        ]
+
+    if repair_assessment.category == RepairCategory.TRY_SMALLER_SUBLEMMA:
+        return [
+            "If you must shrink, stay in the same setting and extract the nearest honest local core; do not "
+            "switch universes or hide the hard step as a hypothesis.",
+            "The fallback must still be a genuinely nontrivial local theorem, not a bookkeeping identity or a "
+            "mere substitution step.",
+        ]
+
+    if repair_assessment.category == RepairCategory.TRY_LARGER_CORE:
+        return [
+            "Stay in the same setting and expand toward the missing core without changing the mathematical universe.",
+        ]
+
+    return []
 
 
 def _build_repair_feedback(
@@ -1011,13 +1062,16 @@ def _build_repair_feedback(
             "Stdout from the previous attempt:",
             previous_result.stdout or "(no stdout)",
             (
-                "Repair guidance: fix the Lean syntax or compiler issue and keep the theorem concrete and faithful to the original node. "
-                "Reuse the node's variable names and hypotheses when reasonable. Avoid arbitrary `Type*` parameters, unrelated function "
-                "families, unnecessary higher-order abstraction, or a shift to an arbitrary measure-space theorem when the node is concrete. "
-                "Preserve the ambient setting when possible. Prefer plain Lean syntax that compiles in a scratch file. "
-                "Use a short, specific import list that matches the identifiers actually used, and avoid both `import Mathlib` "
-                "for tiny local theorems and speculative deep imports that may not exist in the pinned workspace."
-            ),
+            "Repair guidance: fix the Lean syntax or compiler issue and keep the theorem concrete and faithful to the original node. "
+            "Reuse the node's variable names and hypotheses when reasonable. Avoid arbitrary `Type*` parameters, unrelated function "
+            "families, unnecessary higher-order abstraction, or a shift to an arbitrary measure-space theorem when the node is concrete. "
+            "Preserve the ambient setting when possible. If the diagnosis is setting_fix or theorem_shape_fix, do not "
+            "use a smaller theorem family as an escape hatch; keep the same setting and theorem shape locked. "
+            "If the diagnosis is proof_strategy_fix or lean_packaging_fix, keep the theorem statement fixed and only "
+            "repair the proof or packaging. Prefer plain Lean syntax that compiles in a scratch file. "
+            "Use a short, specific import list that matches the identifiers actually used, and avoid both `import Mathlib` "
+            "for tiny local theorems and speculative deep imports that may not exist in the pinned workspace."
+        ),
         ]
     )
     if extra_guidance:
@@ -1047,19 +1101,7 @@ def _build_agentic_faithfulness_feedback(
         ),
     ]
     parts.extend(_repair_policy_lines(repair_assessment))
-    parts.extend(
-        [
-            (
-                "If the full node is too hard, replace it with a smaller but still concrete local sublemma in the "
-                "same ambient setting rather than a more abstract theorem."
-            ),
-            (
-                "For this revision, explicitly reconsider the most literal whole-node theorem shape first. If you still "
-                "cannot make that work, keep the fallback concrete, document the reason for the fallback in the plan file, "
-                "and do not jump to a more abstract ambient theorem."
-            ),
-        ]
-    )
+    parts.extend(_faithfulness_repair_lines(repair_assessment))
     return "\n\n".join(parts)
 
 
@@ -1081,14 +1123,7 @@ def _build_aristotle_faithfulness_feedback(
         ),
     ]
     parts.extend(_repair_policy_lines(repair_assessment))
-    parts.append(
-        "If the theorem is too ambitious, replace it with a smaller but still concrete local sublemma in the same "
-        "ambient setting rather than a more abstract theorem."
-    )
-    parts.append(
-        "For this revision, explicitly reconsider the most literal whole-node theorem shape first. If you still "
-        "cannot make that work, keep the fallback concrete and do not jump to a more abstract ambient theorem."
-    )
+    parts.extend(_faithfulness_repair_lines(repair_assessment))
     return "\n\n".join(parts)
 
 
@@ -1234,6 +1269,7 @@ def _should_attempt_refinement_after_failure(repair_assessment: RepairAssessment
     if repair_assessment.category in {
         RepairCategory.SETTING_FIX,
         RepairCategory.LEAN_PACKAGING_FIX,
+        RepairCategory.THEOREM_SHAPE_FIX,
     }:
         return False
     if repair_assessment.category == RepairCategory.TRY_SMALLER_SUBLEMMA:

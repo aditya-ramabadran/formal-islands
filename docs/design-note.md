@@ -92,6 +92,14 @@ It strongly dislikes:
 - unrelated function families
 - “mathematically related but semantically too distant” theorems
 
+The current policy is intentionally asymmetric:
+
+- the hard-coded heuristic guard only makes immediate rejections for the most obvious structural mismatches, especially blatant genericity like `Type*`
+- borderline cases such as measure-space, inner-product-space, and dimension-downgrade signals are treated as advisory warnings
+- the planning backend then makes the final semantic call on whether the theorem is still a faithful core, a smaller honest sublemma, or a real abstraction drift
+
+This is a deliberate calibration choice. We want the local heuristics to be almost never wrong, and we want borderline semantics to be resolved by the planner instead of by fixed marker lists.
+
 ### 2.4 Underclaim rather than overclaim
 
 One of the biggest lessons from the benchmark suite is:
@@ -274,7 +282,8 @@ User-facing formalization is now agentic-only in the CLI. The older structured r
 
 The formalization loop also now does more than just accept or reject a proof:
 
-- the heuristic guard runs first and rejects obvious abstraction drift, including dimension downgrades
+- the heuristic guard runs first and hard-rejects only the most obvious structural mismatches
+- borderline measure-space, inner-product-space, and dimension-downgrade signals are treated as advisory and passed to the planner for the final semantic call
 - after verification, the planning backend can classify the Lean theorem against the target node and decide whether the result is already the full match, only a faithful core, a downstream consequence, a dimensional analogue, or just a helper shard
 - that same combined semantic review also decides whether bounded coverage expansion is worthwhile
 - if a failure occurs, repair guidance is built from a cheap heuristic diagnosis plus an optional planning-backend semantic diagnosis
@@ -309,9 +318,11 @@ This was strengthened significantly after the benchmark suite exposed two failur
 The current faithfulness path now has a two-layer shape:
 
 1. **Heuristic first pass**
-   - catches obvious over-abstraction
-   - includes the usual `Type*` / measure-space / inner-product-space checks
-   - now also includes a dimension-downgrade check for cases where a function-space or variational claim has been replaced by a finite-dimensional Euclidean / matrix / `Fin n` analogue
+   - catches only the most obvious over-abstraction
+   - is intentionally conservative and is mostly a cheap warning layer
+   - hard-rejects the truly blatant structural mismatches, especially `Type*`-style genericity and unrelated function-family swaps
+   - records borderline signals such as measure-space, inner-product-space, and dimension-downgrade hints, but does not try to make the final semantic decision on those
+   - still lets the planning backend make the final call on whether a borderline theorem is a faithful core or a real analogue
 
 2. **Planning-backend semantic review**
    - runs only after a verified Lean artifact exists
@@ -319,7 +330,7 @@ The current faithfulness path now has a two-layer shape:
    - records a coverage score and a short reason
    - is used to decide whether coverage expansion is warranted and whether a later retry is worth attempting
 
-The result of that semantic review is stored in `faithfulness_notes` in a structured text form so the report can show more specific labels than the old generic “concrete sublemma” wording.
+The result of that semantic review is stored in `faithfulness_notes` in a structured text form so the report can show more specific labels than the old generic “concrete sublemma” wording. The heuristic layer can still annotate the artifact with advisory notes, but the planner is the final semantic judge for borderline cases.
 
 ### 5.4 Review extraction
 
@@ -757,7 +768,7 @@ Important current lesson:
 - but still heuristic
 - it is better as a deterministic floor than as a perfect semantic judge
 
-There has been discussion about adding an optional LLM-based second-opinion classifier for borderline cases, but that has not been implemented yet.
+Borderline cases now go through the combined semantic review described above; the old idea of a separate optional second-opinion classifier has effectively been absorbed into that planner-led check.
 
 ## 11. Prompt Strategy for the Agentic Worker
 
@@ -1109,11 +1120,11 @@ Especially on:
 - functional analysis flavored local nodes
 - whole-node local estimates that invite abstraction
 
-### 15.2 Coverage classification is still heuristic
+### 15.2 Coverage classification uses a heuristic floor plus planner review
 
 It is much better than before, but it is still heuristic.
 
-This is good enough for a prototype, but borderline cases remain possible.
+This is good enough for a prototype, but borderline cases are now intentionally handed to the planning backend rather than being decided solely by the heuristic layer.
 
 ### 15.3 Whole-node local formalization is still near the frontier
 
@@ -1215,7 +1226,7 @@ If a fresh agent session starts from this repo state, the best likely next tasks
 
 1. benchmark the Claude backend on real runs
 2. tighten whole-node-first worker behavior on harder local estimate nodes
-3. consider an optional LLM-assisted second-opinion coverage classifier for borderline `full_node` vs `concrete_sublemma` cases
+3. keep the planning backend as the final semantic judge for borderline faithfulness / coverage calls
 4. continue improving benchmark quality rather than adding speculative infrastructure
 
 ## 18. Things Explicitly Not Wanted Right Now
@@ -1401,6 +1412,13 @@ The current behavior after a failed attempt is:
 
 That means a good target that fails for Lean-engineering reasons is not automatically replaced by a smaller theorem. The system first tries to fix the same theorem.
 
+Borderline faithfulness cases are handled slightly differently:
+
+- the heuristic layer may emit an advisory signal for things like measure-space, inner-product-space, or dimension-downgrade hints
+- those signals do not automatically force `OVER_ABSTRACT`
+- instead, the combined semantic review can confirm that the theorem is still a `faithful_core` or a concrete local core in the same setting
+- only the truly blatant structural mismatches remain hard rejects at the heuristic layer
+
 ### 20.5 What happens when a good target fails on Lean-engineering reasons
 
 This is the subtle case you specifically asked about.
@@ -1417,6 +1435,7 @@ The current behavior is:
 - if the failure is `lean_packaging_fix`, the fix focuses on imports, names, namespaces, and syntax
 - if the failure is `proof_strategy_fix`, the fix focuses on the proof script
 - if the failure is `setting_fix` or `theorem_shape_fix`, the retry prompt is much stricter about preserving the same theorem universe and logical shape
+- if the artifact only has a borderline heuristic warning, the planner gets the final say before the system treats it as over-abstract
 
 What the current system does **not** do is equally important:
 
@@ -1461,6 +1480,7 @@ Important subtlety:
 - `full_match` means the verified theorem is judged to be the full target
 - `faithful_core` means the theorem is already close enough in theorem shape that expansion is not worthwhile, but it may still be a narrower core
 - `certifies_main_burden` is a separate flag that asks whether the theorem covers the hardest inferential step of the node
+- if the heuristic layer emitted only a borderline warning, the planner can explicitly override that warning in favor of `faithful_core` or `full_match`
 
 Those are deliberately not identical.
 
@@ -1509,6 +1529,17 @@ The implementation sits in:
 - `_maybe_refine_failed_node(...)`
 
 That is a deliberate change from the older eager refinement behavior. The current design prefers honesty and proof relevance over opportunistic graph growth.
+
+### 20.8.1 What borderline faithfulness warnings mean now
+
+When the local heuristic produces a borderline warning rather than a hard reject:
+
+- the artifact is still allowed to proceed to the combined semantic review
+- the planner sees the heuristic warning as advisory context
+- the planner may still label the artifact `faithful_core` or `full_match` if the theorem is actually in the right setting
+- the run only treats the theorem as truly over-abstract if the heuristic hard-rejects it or the planner confirms that it is genuinely a proxy theorem
+
+This is the current answer to the “run4 heat-method energy identity” style of case: we prefer planner-confirmed borderline handling over a brittle hard-coded rejection.
 
 ### 20.9 Aristotle-specific behavior
 
@@ -1601,7 +1632,8 @@ If a good target fails for proof-strategy reasons:
 
 If the formalizer drifts into the wrong mathematical universe:
 
-- the faithfulness guard or planning review should catch it
+- the hard heuristic guard should catch the obvious cases immediately
+- the planning review should settle the borderline cases
 - the retry prompt should lock the theorem shape or setting
 - the system should not “salvage” by switching to a different universe
 

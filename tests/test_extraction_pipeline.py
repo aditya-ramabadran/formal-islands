@@ -1,5 +1,6 @@
 from pydantic import ValidationError
 import pytest
+from pathlib import Path
 
 from formal_islands.backends import MockBackend
 from formal_islands.extraction.pipeline import (
@@ -13,6 +14,7 @@ from formal_islands.extraction.pipeline import (
     select_formalization_candidates,
 )
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode, VerificationResult
+from formal_islands.progress import use_progress_log
 
 
 def build_graph() -> ProofGraph:
@@ -256,6 +258,52 @@ def test_plan_proof_graph_normalizes_textual_candidate_priority_labels() -> None
 
     selected = next(node for node in artifacts.candidate_graph.nodes if node.id == "n2")
     assert selected.formalization_priority == 1
+
+
+def test_plan_proof_graph_logs_backend_prompt_to_progress_file(tmp_path: Path) -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "theorem_title": "Toy theorem",
+                "theorem_statement": "If A then B.",
+                "root_node_id": "n1",
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "title": "Main claim",
+                        "informal_statement": "B holds.",
+                        "informal_proof_text": "Use n2.",
+                    },
+                    {
+                        "id": "n2",
+                        "title": "Lemma",
+                        "informal_statement": "A implies B.",
+                        "informal_proof_text": "By inspection.",
+                    },
+                ],
+                "edges": [{"source_id": "n1", "target_id": "n2"}],
+                "candidates": [
+                    {
+                        "node_id": "n2",
+                        "priority": 3,
+                        "rationale": "Self-contained technical node.",
+                    }
+                ],
+            }
+        ]
+    )
+    progress_log = tmp_path / "_progress.log"
+
+    with use_progress_log(progress_log):
+        plan_proof_graph(
+            backend=backend,
+            theorem_statement="If A then B.",
+            raw_proof_text="Assume A and deduce B.",
+        )
+
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "prompting Mock backend for plan_theorem" in log_text
+    assert "Mock backend completed for plan_theorem" in log_text
 
 
 def test_extract_proof_graph_preserves_input_theorem_statement_exactly() -> None:

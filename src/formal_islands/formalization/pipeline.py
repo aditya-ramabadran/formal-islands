@@ -16,6 +16,7 @@ from formal_islands.models import (
     ProofGraph,
     VerificationResult,
 )
+from formal_islands.progress import run_structured_with_progress
 
 
 FORMALIZATION_SYSTEM_PROMPT = (
@@ -25,6 +26,8 @@ FORMALIZATION_SYSTEM_PROMPT = (
     "Stay close to the node's actual mathematical content, avoid gratuitous abstraction, "
     "prefer the most concrete faithful theorem you can manage, "
     "and do not game the task by replacing the node with an easier but low-value nearby fact. "
+    "Keep theorem headers and binders Lean-safe: Lean treats `λ` as a reserved keyword, so prefer "
+    "ASCII identifiers like `lambda1` or `lambda_1` instead of Unicode binder names like `λ₁`. "
     "Treat the local Lean workspace as the source of truth for available imports and prefer "
     "small, concrete, stable import lists over broad or speculative boilerplate."
 )
@@ -48,6 +51,18 @@ DIMENSION_DOWNGRADE_LEAN_MARKERS = (
     "EuclideanSpace",
     "FiniteDimensional",
     "Matrix",
+    "Icc",
+    "interval",
+    "one-dimensional",
+    "one dimensional",
+    "1d",
+    "concave",
+    "concavity",
+    "convex",
+    "convexity",
+    "proxy",
+    "analogue",
+    "lower-dimensional",
 )
 FAITHFULNESS_GUARD_FAILURE_MARKERS = (
     "faithfulness guard",
@@ -70,6 +85,13 @@ SETTING_FAILURE_MARKERS = (
     "wrong mathematical setting",
     "different mathematical setting",
     "dimension profile",
+    "lower-dimensional",
+    "one-dimensional",
+    "one dimensional",
+    "1d",
+    "proxy model",
+    "proxy theorem",
+    "analogue",
 )
 THEOREM_SHAPE_FAILURE_MARKERS = (
     "downstream consequence",
@@ -458,6 +480,11 @@ def build_formalization_request(
                 "directly motivated by the code you are writing, and keep the import list short."
             ),
             (
+                "Keep theorem names, binder names, and hypotheses ASCII-safe. Lean treats `λ` as a reserved "
+                "keyword in theorem headers and binders, so do not use Unicode binder names like `λ₁`; prefer "
+                "plain names such as `lambda1` or `lambda_1` instead."
+            ),
+            (
                 "Bias strongly toward faithfulness to the target node. Reuse the node's concrete "
                 "variables and hypotheses when reasonable. Do not introduce arbitrary index types, "
                 "unrelated function families, or a much more generic theorem unless the node text "
@@ -474,7 +501,8 @@ def build_formalization_request(
             ),
             (
                 "If you simplify, simplify the local inferential step while keeping the same concrete objects and "
-                "ambient setting. Prefer a concrete sublemma about the same named quantities, variables, operators, "
+                "ambient setting. Do not switch theorem family, dimension, or proof universe just to get a theorem "
+                "that compiles. Prefer a concrete sublemma about the same named quantities, variables, operators, "
                 "or integrals over a theorem about an arbitrary type, arbitrary measure, or unrelated families of functions."
             ),
             (
@@ -501,7 +529,9 @@ def build_formalization_request(
             [
                 (
                     "Previous failed Lean file to revise. Make the smallest changes needed to fix the reported issue. "
-                    "Preserve the theorem statement and overall structure unless the compiler error forces a change."
+                    "Preserve the theorem statement and overall structure unless the compiler error forces a change. "
+                    "If the error is about a Unicode binder or theorem-header identifier, keep the theorem shape fixed "
+                    "and only rename the binder or hypothesis to a Lean-safe ASCII identifier such as `lambda1`."
                 ),
                 f"```lean\n{previous_lean_code}\n```",
             ]
@@ -546,6 +576,12 @@ def build_combined_verification_assessment_request(
                 f"- Lean statement: {artifact.lean_statement}\n"
                 "Only use the theorem statement for the semantic judgment; the proof text is not part of the comparison."
             ),
+            (
+                "Prior heuristic faithfulness assessment (advisory only; the planning backend has the final say on "
+                "borderline cases):\n"
+                f"- classification: {artifact.faithfulness_classification}\n"
+                f"- notes: {artifact.faithfulness_notes or '(none)'}"
+            ),
             "Coverage sketch:",
             _format_coverage_sketch_for_prompt(sketch),
             "Local proof neighborhood:",
@@ -557,7 +593,8 @@ def build_combined_verification_assessment_request(
                 "call it full_match. Distinguish faithful_core from certifies_main_burden: faithful_core means the same "
                 "setting and same proof path, while certifies_main_burden means the theorem covers the hardest inferential "
                 "step in the node. Coverage score: give a number from 0 to 10 describing how much of the node's proof burden "
-                "this theorem already covers."
+                "this theorem already covers. If the prior heuristic assessment suggested a possible downgrade but the theorem "
+                "still looks faithful, override the heuristic and say so explicitly in the reason."
             ),
             (
                 "Return JSON with keys result_kind, certifies_main_burden, coverage_score, expansion_warranted, "
@@ -611,12 +648,13 @@ def request_combined_verification_assessment(
     node_id: str,
     artifact: FormalArtifact,
 ) -> CombinedFormalizationAssessment:
-    response = backend.run_structured(
+    response = run_structured_with_progress(
+        backend,
         build_combined_verification_assessment_request(
             graph=graph,
             node_id=node_id,
             artifact=artifact,
-        )
+        ),
     )
     payload = response.payload
     if "result_kind" not in payload:
@@ -655,13 +693,14 @@ def request_node_formalization(
     if node is None:
         raise ValueError(f"node '{node_id}' was not found in the graph")
 
-    response = backend.run_structured(
+    response = run_structured_with_progress(
+        backend,
         build_formalization_request(
             graph=graph,
             node_id=node_id,
             compiler_feedback=compiler_feedback,
             previous_lean_code=previous_lean_code,
-        )
+        ),
     )
     formalization = FormalizationResult.model_validate(response.payload)
     artifact = FormalArtifact(
@@ -747,12 +786,13 @@ def request_concrete_sublemma_summary(
     parent_node_id: str,
     artifact: FormalArtifact,
 ) -> ConcreteSublemmaSummary:
-    response = backend.run_structured(
+    response = run_structured_with_progress(
+        backend,
         build_concrete_sublemma_summary_request(
             graph=graph,
             parent_node_id=parent_node_id,
             artifact=artifact,
-        )
+        ),
     )
     payload = response.payload
     return ConcreteSublemmaSummary(
@@ -813,12 +853,17 @@ def build_repair_assessment_request(
                 f"- informal proof text: {node.informal_proof_text}"
             ),
             (
-                "Current Lean theorem:\n"
+            "Current Lean theorem:\n"
                 f"- theorem name: {artifact.lean_theorem_name}\n"
                 f"- Lean statement: {artifact.lean_statement}"
             ),
             "Local proof neighborhood:",
             format_local_proof_context(local_context),
+            (
+                "Prior heuristic faithfulness assessment:\n"
+                f"- classification: {artifact.faithfulness_classification}\n"
+                f"- notes: {artifact.faithfulness_notes or '(none)'}"
+            ),
             (
                 "Failure text:\n"
                 f"{failure_text}\n\n"
@@ -834,7 +879,9 @@ def build_repair_assessment_request(
                 "When a faithfulness guard rejection mentions a different mathematical universe, a finite-dimensional "
                 "analogue, or an arbitrary type/measurable-space proxy, prefer setting_fix over theorem_shape_fix. "
                 "When the theorem already has the right setting and only the proof script is failing, prefer "
-                "proof_strategy_fix or lean_packaging_fix rather than theorem_shape_fix."
+                "proof_strategy_fix or lean_packaging_fix rather than theorem_shape_fix. If the failure is a Lean "
+                "binder-name or Unicode syntax issue, treat it as lean_packaging_fix and keep the theorem family fixed. "
+                "Use a plain ASCII replacement such as `lambda1` instead of a Unicode binder like `λ₁`."
             ),
             "Return JSON with keys repair_category and repair_note.",
         ]
@@ -868,13 +915,14 @@ def request_repair_assessment(
     artifact: FormalArtifact,
     failure_text: str,
 ) -> RepairAssessment:
-    response = backend.run_structured(
+    response = run_structured_with_progress(
+        backend,
         build_repair_assessment_request(
             graph=graph,
             node_id=node_id,
             artifact=artifact,
             failure_text=failure_text,
-        )
+        ),
     )
     payload = response.payload
     return RepairAssessment(
@@ -1050,7 +1098,34 @@ def assess_formalization_faithfulness(node, artifact: FormalArtifact) -> Faithfu
             coverage_score=0,
         )
 
+    borderline_signals = _collect_borderline_faithfulness_signals(node, artifact)
     coverage_score = _coverage_match_score(node, artifact)
+
+    if borderline_signals:
+        message = " ".join(
+            [
+                "Borderline heuristic signal only; let the planning backend make the final faithfulness call.",
+                *borderline_signals,
+            ]
+        )
+        if _looks_like_concrete_sublemma(node, artifact) or _looks_undercovered_for_node_complexity(
+            node=node,
+            artifact=artifact,
+            coverage_score=coverage_score,
+        ):
+            return FaithfulnessAssessment(
+                classification=FaithfulnessClassification.CONCRETE_SUBLEMMA,
+                message=(
+                    message
+                    + " Accepted locally as a narrower concrete core in the same setting pending planner confirmation."
+                ),
+                coverage_score=coverage_score,
+            )
+        return FaithfulnessAssessment(
+            classification=FaithfulnessClassification.CONCRETE_SUBLEMMA,
+            message=message,
+            coverage_score=coverage_score,
+        )
 
     if _looks_like_concrete_sublemma(node, artifact) or _looks_undercovered_for_node_complexity(
         node=node,
@@ -1083,30 +1158,39 @@ def _collect_over_abstract_issues(node, artifact: FormalArtifact) -> list[str]:
             "Avoid introducing arbitrary `Type*` parameters when the node describes a concrete local claim."
         )
 
-    if (
-        ("[InnerProductSpace" in lean_text or "[NormedAddCommGroup" in lean_text)
-        and not any(marker in node_text for marker in ("inner product", "hilbert", "normed"))
-    ):
-        issues.append(
-            "Avoid translating the node into an arbitrary normed/inner-product space unless the node itself calls for that abstraction."
-        )
-
-    if _node_does_not_invite_measure_abstraction(node_text) and _looks_like_arbitrary_measure_abstraction(statement):
-        issues.append(
-            "Avoid replacing a concrete local claim with an arbitrary measure-space theorem."
-        )
-
     if _has_multiple_unrelated_function_families(statement, node_text):
         issues.append(
             "Avoid replacing the node with unrelated families of functions or indexed maps absent from the original claim."
         )
 
-    if _looks_like_dimension_downgrade(node_text=node_text, lean_text=lean_text):
-        issues.append(
-            "Avoid replacing an infinite-dimensional or functional-analytic argument with a finite-dimensional analogue."
+    return issues
+
+
+def _collect_borderline_faithfulness_signals(node, artifact: FormalArtifact) -> list[str]:
+    signals: list[str] = []
+    lean_text = f"{artifact.lean_statement}\n{artifact.lean_code}"
+    node_text = " ".join([node.title, node.informal_statement, node.informal_proof_text]).lower()
+    statement = artifact.lean_statement
+
+    if (
+        ("[InnerProductSpace" in lean_text or "[NormedAddCommGroup" in lean_text)
+        and not any(marker in node_text for marker in ("inner product", "hilbert", "normed"))
+    ):
+        signals.append(
+            "Possible normed/inner-product-space abstraction; planner should confirm whether the theorem is still in the right concrete setting."
         )
 
-    return issues
+    if _node_does_not_invite_measure_abstraction(node_text) and _looks_like_arbitrary_measure_abstraction(statement):
+        signals.append(
+            "Possible measure-space abstraction; planner should confirm whether this is still the intended local setting."
+        )
+
+    if _looks_like_dimension_downgrade(node_text=node_text, lean_text=lean_text):
+        signals.append(
+            "Possible dimension or universe downgrade; planner should confirm whether this is a faithful core or merely a simpler analogue."
+        )
+
+    return signals
 
 
 def _looks_like_dimension_downgrade(*, node_text: str, lean_text: str) -> bool:
@@ -1114,7 +1198,8 @@ def _looks_like_dimension_downgrade(*, node_text: str, lean_text: str) -> bool:
     if node_hits < 2:
         return False
 
-    if any(marker in lean_text for marker in DIMENSION_DOWNGRADE_LEAN_MARKERS):
+    lean_text_lower = lean_text.lower()
+    if any(marker.lower() in lean_text_lower for marker in DIMENSION_DOWNGRADE_LEAN_MARKERS):
         return True
 
     return bool(re.search(r"\bFin\s+[A-Za-z_][A-Za-z0-9_']*\b", lean_text))

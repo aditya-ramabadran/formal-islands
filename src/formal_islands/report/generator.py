@@ -448,17 +448,18 @@ def render_html_report(graph: ProofGraph, obligations: list[ReviewObligation]) -
         {graph_widget}
       </div>
       <p class="graph-caption">
-        Click a node to jump to its detail section. Hovering or checking review items highlights related nodes and edges.
+        Click a node to jump to its detail section.
       </p>
       <p class="graph-caption">
         Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
       </p>
       <p class="graph-caption">
-        Dashed gray edges show provenance or refinement links between nearby nodes. They are not proof dependencies unless the edge is part of the main dependency layout.
+        Dashed gray edges represent refinement or "derived from" relationships — they show how some nodes were generated from others, not that one node logically depends on another for the proof.
       </p>
     </section>
     <section>
       <h2>Review Checklist</h2>
+      <p class="graph-caption">The following are sufficient items for a human to check to verify correctness of the proof. Hovering or checking review items highlights related nodes and edges.</p>
       <ul class="checklist">
         {checklist_items}
       </ul>

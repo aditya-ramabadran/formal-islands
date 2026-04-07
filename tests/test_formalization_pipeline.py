@@ -2,6 +2,7 @@ from pydantic import ValidationError
 import pytest
 
 from formal_islands.backends import MockBackend
+from formal_islands.formalization.loop import _should_attempt_refinement_after_failure
 from formal_islands.formalization.pipeline import (
     FaithfulnessClassification,
     FormalizationFaithfulnessError,
@@ -11,6 +12,7 @@ from formal_islands.formalization.pipeline import (
     assess_formalization_faithfulness,
     build_concrete_sublemma_summary_request,
     build_formalization_request,
+    build_repair_assessment_request,
     classify_heuristic_repair_assessment,
     format_faithfulness_notes,
     parse_faithfulness_notes,
@@ -20,6 +22,7 @@ from formal_islands.formalization.pipeline import (
     request_repair_assessment,
 )
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode
+from formal_islands.progress import use_progress_log
 
 
 def build_graph() -> ProofGraph:
@@ -96,36 +99,40 @@ def test_build_formalization_request_includes_local_context() -> None:
     assert "easy side consequence" in request.prompt.lower()
     assert "do not default to `import mathlib`" in request.prompt.lower()
     assert "do not guess deep or speculative module paths" in request.prompt.lower()
+    assert "lean treats `λ` as a reserved keyword" in request.prompt.lower()
+    assert "lambda1" in request.prompt.lower()
     assert "Ambient theorem statement:" in request.prompt
     assert "preserve the ambient mathematical setting" in request.prompt.lower()
     assert "coverage sketch" in request.prompt.lower()
     assert "mathlib search results" not in request.prompt.lower()
 
 
-def test_request_node_formalization_rejects_measure_space_abstraction_for_concrete_node() -> None:
+def test_request_node_formalization_treats_measure_space_abstraction_as_borderline_core() -> None:
     backend = MockBackend(
         queued_payloads=[
-            {
-                "lean_theorem_name": "energy_identity",
-                "lean_statement": (
-                    "theorem energy_identity {α : Type*} [MeasurableSpace α] (μ : Measure α) "
-                    "{f g : α → ℝ} (h : ∀ x, f x = - g x) : "
-                    "∫ x, f x ∂μ = - ∫ x, g x ∂μ"
-                ),
-                "lean_code": (
-                    "import Mathlib.MeasureTheory.Integral.Bochner.Basic\n\n"
-                    "open MeasureTheory\n\n"
-                    "theorem energy_identity {α : Type*} [MeasurableSpace α] (μ : Measure α) "
-                    "{f g : α → ℝ} (h : ∀ x, f x = - g x) : "
-                    "∫ x, f x ∂μ = - ∫ x, g x ∂μ := by\n"
-                    "  sorry\n"
-                ),
-            }
+                {
+                    "lean_theorem_name": "energy_identity",
+                    "lean_statement": (
+                        "theorem energy_identity (μ : Measure ℝ) "
+                        "{f g : ℝ → ℝ} (h : ∀ x, f x = - g x) : "
+                        "∫ x, f x ∂μ = - ∫ x, g x ∂μ"
+                    ),
+                    "lean_code": (
+                        "import Mathlib.MeasureTheory.Integral.Bochner.Basic\n\n"
+                        "open MeasureTheory\n\n"
+                        "theorem energy_identity (μ : Measure ℝ) {f g : ℝ → ℝ} (h : ∀ x, f x = - g x) : "
+                        "∫ x, f x ∂μ = - ∫ x, g x ∂μ := by\n"
+                        "  sorry\n"
+                    ),
+                }
         ]
     )
 
-    with pytest.raises(FormalizationFaithfulnessError, match="measure-space theorem"):
-        request_node_formalization(backend=backend, graph=build_pde_graph(), node_id="n1")
+    artifact = request_node_formalization(backend=backend, graph=build_pde_graph(), node_id="n1")
+
+    assert artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA
+    assert artifact.faithfulness_notes is not None
+    assert "planner should confirm" in artifact.faithfulness_notes.lower()
 
 
 def test_build_formalization_request_includes_previous_lean_file_on_repair() -> None:
@@ -201,6 +208,29 @@ def test_build_combined_verification_assessment_request_mentions_recoverability_
     assert request.task_name == "assess_verified_formalization"
     assert "certifies_main_burden" in request.prompt
     assert "worth_retrying_later" in request.prompt
+    assert "prior heuristic faithfulness assessment" in request.prompt.lower()
+    assert "advisory only" in request.prompt.lower()
+
+
+def test_build_repair_assessment_request_mentions_unicode_binder_fix() -> None:
+    graph = build_graph()
+    artifact = FormalArtifact(
+        lean_theorem_name="sum_nonneg",
+        lean_statement="theorem sum_nonneg (a b : ℝ) : 0 <= a + b",
+        lean_code="theorem sum_nonneg (a b : ℝ) : 0 <= a + b := by\n  nlinarith",
+    )
+
+    request = build_repair_assessment_request(
+        graph=graph,
+        node_id="n2",
+        artifact=artifact,
+        failure_text="unexpected token 'λ'; expected '_' or identifier",
+    )
+
+    lowered = request.prompt.lower()
+    assert "binder-name or unicode syntax issue" in lowered
+    assert "lambda1" in lowered
+    assert "keep the theorem family fixed" in lowered
 
 
 def test_request_coverage_expansion_assessment_returns_boolean_gate() -> None:
@@ -264,6 +294,27 @@ def test_classify_heuristic_repair_assessment_prefers_setting_fix_for_dimension_
     assert assessment.category.value == "setting_fix"
 
 
+def test_classify_heuristic_repair_assessment_prefers_setting_fix_for_lower_dimensional_proxy() -> None:
+    verification = FormalArtifact(
+        lean_theorem_name="narrow_energy_split",
+        lean_statement="theorem narrow_energy_split : True",
+        lean_code="theorem narrow_energy_split : True := by trivial",
+    ).verification.model_copy(
+        update={
+            "command": "faithfulness_guard",
+            "stderr": (
+                "Formalization drifted too far from the target node. "
+                "The attempt replaced the proof with a one-dimensional interval concavity proxy."
+            ),
+            "stdout": "",
+        }
+    )
+
+    assessment = classify_heuristic_repair_assessment(previous_result=verification)
+
+    assert assessment.category.value == "setting_fix"
+
+
 def test_classify_heuristic_repair_assessment_prefers_packaging_fix_for_unknown_identifier() -> None:
     verification = FormalArtifact(
         lean_theorem_name="sum_nonneg",
@@ -299,6 +350,17 @@ def test_classify_heuristic_repair_assessment_prefers_theorem_shape_fix_for_fait
     assert assessment.category.value == "theorem_shape_fix"
 
 
+def test_should_attempt_refinement_after_failure_blocks_theorem_shape_fix() -> None:
+    from formal_islands.formalization.loop import RepairAssessment, RepairCategory
+
+    assessment = RepairAssessment(
+        category=RepairCategory.THEOREM_SHAPE_FIX,
+        note="The theorem shape drifted toward a proxy theorem.",
+    )
+
+    assert _should_attempt_refinement_after_failure(assessment) is False
+
+
 def test_request_repair_assessment_returns_category() -> None:
     backend = MockBackend(
         queued_payloads=[
@@ -325,6 +387,37 @@ def test_request_repair_assessment_returns_category() -> None:
 
     assert assessment.category.value == "theorem_shape_fix"
     assert "assumed the key identity" in assessment.note
+
+
+def test_request_repair_assessment_logs_backend_prompt_to_progress_file(tmp_path) -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "repair_category": "theorem_shape_fix",
+                "repair_note": "The attempt assumed the key identity instead of proving it.",
+            }
+        ]
+    )
+    graph = build_graph()
+    artifact = FormalArtifact(
+        lean_theorem_name="sum_nonneg",
+        lean_statement="theorem sum_nonneg (a b : ℝ) : 0 <= a + b",
+        lean_code="theorem sum_nonneg (a b : ℝ) : 0 <= a + b := by\n  nlinarith",
+    )
+    progress_log = tmp_path / "_progress.log"
+
+    with use_progress_log(progress_log):
+        request_repair_assessment(
+            backend=backend,
+            graph=graph,
+            node_id="n2",
+            artifact=artifact,
+            failure_text="type mismatch",
+        )
+
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "prompting Mock backend for assess_repair" in log_text
+    assert "Mock backend completed for assess_repair" in log_text
 
 
 def test_request_concrete_sublemma_summary_returns_generated_text() -> None:
@@ -478,7 +571,7 @@ def test_request_node_formalization_accepts_concrete_narrower_sublemma() -> None
     assert artifact.faithfulness_notes is not None
 
 
-def test_request_node_formalization_rejects_dimension_downgrade() -> None:
+def test_request_node_formalization_treats_dimension_downgrade_as_borderline_core() -> None:
     backend = MockBackend(
         queued_payloads=[
             {
@@ -509,8 +602,11 @@ def test_request_node_formalization_rejects_dimension_downgrade() -> None:
         ]
     )
 
-    with pytest.raises(FormalizationFaithfulnessError, match="finite-dimensional analogue"):
-        request_node_formalization(backend=backend, graph=build_pde_graph(), node_id="n1")
+    artifact = request_node_formalization(backend=backend, graph=build_pde_graph(), node_id="n1")
+
+    assert artifact.faithfulness_classification == FaithfulnessClassification.CONCRETE_SUBLEMMA
+    assert artifact.faithfulness_notes is not None
+    assert "planner should confirm" in artifact.faithfulness_notes.lower()
 
 
 def test_assess_formalization_faithfulness_marks_scalarized_core_as_sublemma() -> None:

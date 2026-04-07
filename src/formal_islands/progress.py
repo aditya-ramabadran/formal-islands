@@ -9,6 +9,7 @@ from pathlib import Path
 from threading import RLock
 from typing import Iterator, TextIO
 
+from formal_islands.backends.base import StructuredBackend, StructuredBackendRequest, StructuredBackendResponse
 from formal_islands.models import ProofGraph
 
 _PROGRESS_PREFIX = "[formal-islands]"
@@ -134,6 +135,42 @@ def append_formalization_assessment_to_progress_log(
     append_to_progress_log("\n".join(lines))
 
 
+def describe_backend(backend: object) -> str:
+    """Return a short human-readable backend label for progress logging."""
+
+    backend_name = backend.__class__.__name__
+    mapping = {
+        "ClaudeCodeBackend": "Claude",
+        "CodexCLIBackend": "Codex",
+        "GeminiCLIBackend": "Gemini",
+        "AristotleBackend": "Aristotle",
+        "MockBackend": "Mock",
+    }
+    if backend_name in mapping:
+        return mapping[backend_name]
+    if backend_name.endswith("Backend"):
+        backend_name = backend_name[: -len("Backend")]
+    return backend_name
+
+
+def run_structured_with_progress(
+    backend: StructuredBackend,
+    request: StructuredBackendRequest,
+) -> StructuredBackendResponse:
+    """Run a structured backend call while logging the prompt / completion to progress output."""
+
+    backend_label = describe_backend(backend)
+    task_label = request.task_name or "structured_request"
+    progress(f"prompting {backend_label} backend for {task_label}")
+    try:
+        response = backend.run_structured(request)
+    except Exception as exc:
+        progress(f"{backend_label} backend for {task_label} failed: {_truncate_error_summary(exc)}")
+        raise
+    progress(f"{backend_label} backend completed for {task_label}")
+    return response
+
+
 def _write_to_active_log(message: str) -> None:
     with _LOCK:
         if _STATE.file is None:
@@ -151,6 +188,13 @@ def _normalize_progress_text(message: str) -> str:
     if message == _PROGRESS_PREFIX:
         return ""
     return message
+
+
+def _truncate_error_summary(error: Exception, *, max_length: int = 180) -> str:
+    summary = " ".join(str(error).split())
+    if len(summary) <= max_length:
+        return summary
+    return summary[: max_length - 1].rstrip() + "…"
 
 
 def _format_graph_diff(previous_graph: ProofGraph, current_graph: ProofGraph) -> list[str]:

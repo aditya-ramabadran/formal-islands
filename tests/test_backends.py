@@ -255,6 +255,41 @@ def test_gemini_backend_parses_json_response_wrapper() -> None:
     assert response.payload == {"nodes": []}
 
 
+def test_gemini_backend_defaults_to_360_second_timeout() -> None:
+    backend = GeminiCLIBackend()
+
+    assert backend.timeout_seconds == 360.0
+
+
+def test_gemini_backend_writes_debug_log_when_timeout_returns_bytes(tmp_path: Path) -> None:
+    log_dir = tmp_path / "logs"
+    backend = GeminiCLIBackend(model="gemini-2.5-flash", log_dir=log_dir, timeout_seconds=1.0)
+    request = StructuredBackendRequest(
+        prompt="Return an empty graph.",
+        system_prompt="Return JSON only.",
+        json_schema={"type": "object"},
+        cwd=tmp_path,
+        task_name="plan_theorem",
+    )
+
+    timeout = subprocess.TimeoutExpired(cmd=["gemini"], timeout=1.0)
+    timeout.stdout = b'{"partial": true}'
+    timeout.stderr = b"timeout stderr"
+
+    with patch("shutil.which", return_value="/usr/bin/gemini"), patch(
+        "subprocess.run", side_effect=timeout
+    ):
+        with pytest.raises(BackendInvocationError, match="timed out"):
+            backend.run_structured(request)
+
+    logs = sorted(log_dir.glob("plan_theorem_*.json"))
+    assert logs
+    payload = json.loads(logs[0].read_text(encoding="utf-8"))
+    assert payload["status"] == "timeout"
+    assert payload["raw_stdout"] == '{"partial": true}'
+    assert payload["raw_stderr"] == "timeout stderr"
+
+
 def test_gemini_backend_parses_streamed_content_chunks() -> None:
     backend = GeminiCLIBackend(model="gemini-2.5-flash")
     request = StructuredBackendRequest(

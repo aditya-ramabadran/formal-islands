@@ -29,7 +29,7 @@ class CodexCLIBackend:
     model: str | None = None
     sandbox: str = "read-only"
     use_ephemeral_session: bool = True
-    timeout_seconds: float | None = 180.0
+    timeout_seconds: float | None = 360.0
     log_dir: Path | None = None
 
     def run_structured(self, request: StructuredBackendRequest) -> StructuredBackendResponse:

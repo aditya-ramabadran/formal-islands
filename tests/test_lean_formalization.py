@@ -17,8 +17,12 @@ from formal_islands.formalization.aristotle import _append_aristotle_summary_fil
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.formalization.loop import (
     _attempt_agentic_coverage_expansion,
+    _build_agentic_faithfulness_feedback,
+    _build_aristotle_faithfulness_feedback,
     _summarize_compiler_feedback,
     formalize_candidate_node,
+    RepairAssessment,
+    RepairCategory,
 )
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode, VerificationResult
 from formal_islands.progress import use_progress_log
@@ -130,6 +134,7 @@ def test_build_agentic_formalization_request_includes_concrete_setting_guidance(
     assert "verified supporting lemmas already certified in this run" in request.prompt.lower()
     assert "context-only sibling ingredients" in request.prompt.lower()
     assert "provenance note" in request.prompt.lower()
+    assert "reserved keyword" in request.prompt.lower()
     assert "component of the sketch" in request.prompt.lower()
     assert "formal-islands-search" in request.prompt.lower()
 
@@ -158,8 +163,77 @@ def test_build_aristotle_formalization_prompt_marks_ambient_theorem_as_context_o
     assert "provenance note" in prompt.lower()
     assert "do not convert a difficult intermediate identity" in prompt.lower()
     assert "do not make a major shrink" in prompt.lower()
+    assert "reserved keyword" in prompt.lower()
     assert "genuinely nontrivial" in prompt.lower()
     assert "fail rather than returning a trivial or over-shrunk theorem" in prompt.lower()
+    assert "reserved keyword" in prompt.lower()
+    assert "lambda1" in prompt.lower()
+
+
+def test_faithfulness_feedback_locks_theorem_family_for_setting_fix() -> None:
+    verification = FormalArtifact(
+        lean_theorem_name="narrow_energy_split",
+        lean_statement="theorem narrow_energy_split : True",
+        lean_code="theorem narrow_energy_split : True := by trivial",
+    ).verification.model_copy(
+        update={
+            "command": "faithfulness_guard",
+            "stderr": "Formalization drifted too far from the target node. One-dimensional interval proxy.",
+            "stdout": "",
+        }
+    )
+    repair_assessment = RepairAssessment(
+        category=RepairCategory.SETTING_FIX,
+        note="The theorem moved to a lower-dimensional proxy model.",
+    )
+
+    agentic_prompt = _build_agentic_faithfulness_feedback(
+        previous_result=verification,
+        repair_assessment=repair_assessment,
+    )
+    aristotle_prompt = _build_aristotle_faithfulness_feedback(
+        previous_result=verification,
+        repair_assessment=repair_assessment,
+    )
+
+    for prompt in (agentic_prompt, aristotle_prompt):
+        lowered = prompt.lower()
+        assert "same ambient universe" in lowered
+        assert "lower-dimensional, proxy, or analogue theorem family" in lowered
+        assert "smaller but still concrete local sublemma" not in lowered
+
+
+def test_faithfulness_feedback_mentions_ascii_binder_names_for_packaging_fix() -> None:
+    verification = FormalArtifact(
+        lean_theorem_name="binder_issue",
+        lean_statement="theorem binder_issue : True",
+        lean_code="theorem binder_issue : True := by trivial",
+    ).verification.model_copy(
+        update={
+            "command": "lake env lean",
+            "stderr": "unexpected token 'λ'; expected '_' or identifier",
+            "stdout": "",
+        }
+    )
+    repair_assessment = RepairAssessment(
+        category=RepairCategory.LEAN_PACKAGING_FIX,
+        note="Unicode binder names are not valid in Lean theorem headers.",
+    )
+
+    agentic_prompt = _build_agentic_faithfulness_feedback(
+        previous_result=verification,
+        repair_assessment=repair_assessment,
+    )
+    aristotle_prompt = _build_aristotle_faithfulness_feedback(
+        previous_result=verification,
+        repair_assessment=repair_assessment,
+    )
+
+    for prompt in (agentic_prompt, aristotle_prompt):
+        lowered = prompt.lower()
+        assert "lean-safe binder names" in lowered
+        assert "unicode" in lowered
+        assert "lambda1" in lowered
 
 
 def test_append_aristotle_summary_files_writes_to_active_progress_log(tmp_path: Path) -> None:
@@ -926,7 +1000,8 @@ def test_formalize_candidate_node_agentic_retries_once_after_faithfulness_failur
     assert "formal-islands-search" in backend.requests[0].prompt.lower()
     assert "at most 2 additional highly targeted searches" in backend.requests[0].prompt.lower()
     assert "appending a new labeled section" in backend.requests[1].prompt.lower()
-    assert "explicitly reconsider the most literal whole-node theorem shape first" in backend.requests[1].prompt.lower()
+    assert "the theorem family is locked" in backend.requests[1].prompt.lower()
+    assert "do not switch theorem family to a simpler proxy universe" in backend.requests[1].prompt.lower()
     assert backend.worker_file.read_text(encoding="utf-8").startswith("import Mathlib.Data.Real.Basic")
     assert len(updates) == 2
 

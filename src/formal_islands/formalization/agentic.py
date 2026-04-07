@@ -178,9 +178,10 @@ def build_agentic_formalization_request(
         ),
         (
             "Keep the Lean output syntactically conservative. Prefer ASCII identifiers in theorem names, "
-            "binder names, and hypotheses unless a non-ASCII symbol is clearly unavoidable. Avoid Unicode "
-            "variable names like `λ₁` in declarations; prefer plain names such as `lambda1`. Do not invent "
-            "fancy notation when ordinary Lean identifiers and explicit expressions work."
+            "binder names, and hypotheses unless a non-ASCII symbol is clearly unavoidable. Lean treats `λ` "
+            "as a reserved keyword in theorem headers and binders, so do not use Unicode binder names like "
+            "`λ₁`; prefer plain names such as `lambda1` or `lambda_1`. Do not invent fancy notation when "
+            "ordinary Lean identifiers and explicit expressions work."
         ),
         (
             "Prefer simple theorem signatures and straightforward binder lists over elaborate notation-heavy "
@@ -221,8 +222,9 @@ def build_agentic_formalization_request(
         (
             "Before settling on a fallback theorem, spend a short but genuine attempt on the literal node-level statement or the "
             "closest direct transcription that seems syntactically realistic. Do not jump immediately to a more abstract "
-            "or indirect theorem just because it is familiar, and do not treat a tiny side lemma as an acceptable fallback "
-            "unless it really is the best reachable core after that attempt."
+            "or indirect theorem just because it is familiar, do not switch theorem family to a simpler proxy universe, "
+            "and do not treat a tiny side lemma as an acceptable fallback unless it really is the best reachable core after "
+            "that attempt."
         ),
         (
             "Return a JSON object with keys lean_theorem_name, lean_statement, final_file_path, and plan_file_path. "

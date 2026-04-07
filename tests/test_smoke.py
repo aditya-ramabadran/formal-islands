@@ -407,7 +407,7 @@ def test_build_backend_configures_backend_logs(tmp_path: Path) -> None:
     assert isinstance(backend, CodexCLIBackend)
     assert backend.model == "gpt-5.4"
     assert backend.log_dir == tmp_path / "_backend_logs"
-    assert backend.timeout_seconds == 180.0
+    assert backend.timeout_seconds == 360.0
 
 
 def test_build_backend_supports_claude(tmp_path: Path) -> None:
@@ -418,7 +418,7 @@ def test_build_backend_supports_claude(tmp_path: Path) -> None:
     assert isinstance(backend, ClaudeCodeBackend)
     assert backend.model == "sonnet"
     assert backend.log_dir == tmp_path / "_backend_logs"
-    assert backend.timeout_seconds == 180.0
+    assert backend.timeout_seconds == 360.0
 
 
 def test_build_backend_supports_gemini(tmp_path: Path) -> None:
@@ -429,7 +429,7 @@ def test_build_backend_supports_gemini(tmp_path: Path) -> None:
     assert isinstance(backend, GeminiCLIBackend)
     assert backend.model == "gemini-2.5-flash"
     assert backend.log_dir == tmp_path / "_backend_logs"
-    assert backend.timeout_seconds == 180.0
+    assert backend.timeout_seconds == 360.0
 
 
 def test_build_backend_supports_aristotle_for_formalization(tmp_path: Path) -> None:

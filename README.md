@@ -28,7 +28,8 @@ the current pipeline:
 The system can distinguish between:
 - full-node formalization
 - a narrower but still concrete certified local core
-- bad abstraction drift, which is rejected
+- blatant abstraction drift, which is rejected immediately
+- borderline cases, which are reviewed semantically by the planning backend before a final verdict is made
 
 ## Repository Layout
 
@@ -293,8 +294,9 @@ The system then classifies the result as:
 - or failure
 
 The current verification path is a little richer than that summary:
-- the heuristic faithfulness guard runs first and rejects obvious abstraction drift, including dimension downgrades
-- the planning backend may then refine the result kind and coverage estimate after verification
+- the heuristic faithfulness guard now only hard-rejects the most obvious structural mismatches
+- borderline cases such as measure-space, inner-product-space, or dimension-downgrade signals are passed to the planning backend for the final semantic call
+- the planning backend may then refine the result kind and coverage estimate after verification, and can override the heuristic on a borderline case if the theorem is still a faithful core
 - repair retries combine fast Lean-specific heuristics with an optional planning-backend diagnosis
 - if the result is only a concrete supporting sublemma, the pipeline may run one bounded coverage-expansion attempt from the verified file
 - if the result is still a concrete sublemma but the planning backend says it is worth another try, a single bonus retry may be attempted on the main proof path
