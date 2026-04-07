@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hoeffding&#x27;s lemma - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'svg']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: #fffaf1;
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
+      --graph-shell-top: rgba(255, 251, 242, 0.96);
+      --graph-shell-bottom: rgba(245, 238, 227, 0.96);
+      --checklist-panel: rgba(255, 250, 241, 0.95);
+      --target-panel: #fff8ee;
+      --code-surface: #f4efe6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161311;
+        --panel: #211b17;
+        --ink: #f3ede5;
+        --muted: #c0b2a3;
+        --border: #4a3d32;
+        --accent: #f0b47b;
+        --accent-soft: #3a2b20;
+        --highlight: #ffb25c;
+        --highlight-soft: #3f2d19;
+        --preview-soft: #312419;
+        --checked: #65c08a;
+        --checked-soft: #213126;
+        --edge: #8f8172;
+        --status-informal-stroke: #d69760;
+        --status-informal-fill: #2e221a;
+        --status-candidate-stroke: #f0a64e;
+        --status-candidate-fill: #3f2d18;
+        --status-verified-stroke: #65c08a;
+        --status-verified-fill: #213126;
+        --status-failed-stroke: #dd8a79;
+        --status-failed-fill: #3b2320;
+        --graph-shell-top: rgba(44, 34, 27, 0.98);
+        --graph-shell-bottom: rgba(32, 25, 21, 0.98);
+        --checklist-panel: rgba(36, 29, 24, 0.98);
+        --target-panel: #31261f;
+        --code-surface: #2a231e;
+      }
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(circle at top, #2a211b, var(--bg));
+      }
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .math-text mjx-container {
+      max-width: 100%;
+    }
+    .math-text mjx-container[display="true"] {
+      margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .math-text mjx-container[jax="CHTML"][display="true"] {
+      padding: 0 !important;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--graph-shell-top), var(--graph-shell-bottom));
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+    .graph-frame {
+      width: min(100%, 720px);
+      margin: 0 auto;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 240px;
+      overflow: visible;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 2.8;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-edge.edge-refinement {
+      stroke-dasharray: 7 5;
+      opacity: 0.66;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-box {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-title {
+      fill: var(--ink);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 9.5px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--checklist-panel);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {
+      min-width: 0;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: var(--target-panel);
+    }
+    pre {
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 0.75rem;
+      background: var(--code-surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin: 0.6rem 0;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    code.inline-code {
+      background: var(--code-surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.95em;
+      white-space: break-spaces;
+    }
+    .statement-code {
+      margin-top: 0.35rem;
+    }
+    .statement-code pre,
+    .checklist-code pre {
+      margin-top: 0.35rem;
+      background: var(--code-surface);
+    }
+    .lean-code {
+      color: #2a241f;
+    }
+    .lean-code .tok-keyword {
+      color: #8b2f18;
+      font-weight: 700;
+    }
+    .lean-code .tok-tactic {
+      color: #9d5d17;
+      font-weight: 600;
+    }
+    .lean-code .tok-type {
+      color: #245f7a;
+    }
+    .lean-code .tok-number {
+      color: #7442a8;
+    }
+    .lean-code .tok-comment {
+      color: #6e7a60;
+      font-style: italic;
+    }
+    .lean-code .tok-string {
+      color: #2d7f4d;
+    }
+    @media (prefers-color-scheme: dark) {
+      .lean-code {
+        color: #f2e8dc;
+      }
+      .lean-code .tok-keyword {
+        color: #f08f63;
+      }
+      .lean-code .tok-tactic {
+        color: #f4b35d;
+      }
+      .lean-code .tok-type {
+        color: #73c7ff;
+      }
+      .lean-code .tok-number {
+        color: #be8cff;
+      }
+      .lean-code .tok-comment {
+        color: #97b18b;
+      }
+      .lean-code .tok-string {
+        color: #67d59a;
+      }
+    }
+    
+            .report-root:has(a.node-hoeffdings_lemma:hover) .node-hoeffdings_lemma.node-card,
+            .report-root:has(#node-hoeffdings_lemma:target) a.node-hoeffdings_lemma .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-hoeffdings_lemma:hover) .node-hoeffdings_lemma.node-card,
+            .report-root:has(#node-hoeffdings_lemma:target).report-root .node-hoeffdings_lemma.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-convexity_expectation:hover) .node-convexity_expectation.node-card,
+            .report-root:has(#node-convexity_expectation:target) a.node-convexity_expectation .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-convexity_expectation:hover) .node-convexity_expectation.node-card,
+            .report-root:has(#node-convexity_expectation:target).report-root .node-convexity_expectation.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-log_mgf_bound:hover) .node-log_mgf_bound.node-card,
+            .report-root:has(#node-log_mgf_bound:target) a.node-log_mgf_bound .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-log_mgf_bound:hover) .node-log_mgf_bound.node-card,
+            .report-root:has(#node-log_mgf_bound:target).report-root .node-log_mgf_bound.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+                .report-root:has(.obligation-informal-proof-hoeffdings_lemma:hover) a.node-hoeffdings_lemma .graph-node-box,
+.report-root:has(.obligation-informal-proof-hoeffdings_lemma:hover) .node-hoeffdings_lemma.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-hoeffdings_lemma:checked) a.node-hoeffdings_lemma .graph-node-box,
+.report-root:has(#obligation-check-informal-proof-hoeffdings_lemma:checked) .node-hoeffdings_lemma.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-informal-proof-hoeffdings_lemma:checked) .edge-convexity_expectation-hoeffdings_lemma,
+.report-root:has(#obligation-check-informal-proof-hoeffdings_lemma:checked) .edge-log_mgf_bound-hoeffdings_lemma {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-informal-proof-hoeffdings_lemma:hover) .obligation-informal-proof-hoeffdings_lemma {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-informal-proof-hoeffdings_lemma:checked) .obligation-informal-proof-hoeffdings_lemma {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-convexity_expectation:hover) a.node-convexity_expectation .graph-node-box,
+.report-root:has(.obligation-semantic-match-convexity_expectation:hover) .node-convexity_expectation.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-convexity_expectation:checked) a.node-convexity_expectation .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-convexity_expectation:checked) .node-convexity_expectation.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-convexity_expectation:checked) .edge-convexity_expectation-hoeffdings_lemma {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-convexity_expectation:hover) .obligation-semantic-match-convexity_expectation {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-convexity_expectation:checked) .obligation-semantic-match-convexity_expectation {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-log_mgf_bound:hover) a.node-log_mgf_bound .graph-node-box,
+.report-root:has(.obligation-semantic-match-log_mgf_bound:hover) .node-log_mgf_bound.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-log_mgf_bound:checked) a.node-log_mgf_bound .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-log_mgf_bound:checked) .node-log_mgf_bound.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-log_mgf_bound:checked) .edge-log_mgf_bound-hoeffdings_lemma {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-log_mgf_bound:hover) .obligation-semantic-match-log_mgf_bound {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-log_mgf_bound:checked) .obligation-semantic-match-log_mgf_bound {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-root">
+    <section>
+      <h1>Hoeffding&#x27;s lemma</h1>
+      <div class="math-text">Hoeffding&#x27;s lemma.
+
+Let \(X\) be a real-valued random variable such that
+\[
+\mathbb{E}[X]=0
+\]
+and suppose there exist real numbers \(a&lt;b\) such that
+\[
+a \le X \le b
+\qquad\text{almost surely}.
+\]
+Then for every real \(s\),
+\[
+\mathbb{E}\bigl[e^{sX}\bigr]
+\le
+\exp\!\left(\frac{s^2(b-a)^2}{8}\right).
+\]
+This is the classical Hoeffding moment-generating-function bound for a centered bounded random variable.</div>
+      <p class="meta">Root node: hoeffdings_lemma</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 3</span>
+        <span class="pill">Edges: 2</span>
+        <span class="pill">Informal: 1</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 2</span>
+        <span class="pill">Failed: 0</span>
+      </p>
+      <div class="graph-shell">
+        
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 224" width="420" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-convexity_expectation-hoeffdings_lemma" d="M 126.0 201.0 C 126.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-log_mgf_bound-hoeffdings_lemma" d="M 294.0 201.0 C 294.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path></g>
+        <g>
+    <a class="graph-node-link node-hoeffdings_lemma status-informal" href="#node-hoeffdings_lemma">
+      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="42">Hoeffding&#x27;s</tspan>
+<tspan x="210.0" y="54">lemma</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">hoeffdings_lemma</text>
+    </a>
+    
+
+    <a class="graph-node-link node-convexity_expectation status-formal-verified" href="#node-convexity_expectation">
+      <rect class="graph-node-box status-formal-verified" x="60.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="178.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="126.0" y="160">Expectation</tspan>
+<tspan x="126.0" y="172">bound via conve…</tspan></text>
+      <text class="graph-node-id" x="126.0" y="186">convexity_expectation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-log_mgf_bound status-formal-verified" href="#node-log_mgf_bound">
+      <rect class="graph-node-box status-formal-verified" x="228.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="346.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="294.0" y="160">Log-MGF function</tspan>
+<tspan x="294.0" y="172">bound</tspan></text>
+      <text class="graph-node-id" x="294.0" y="186">log_mgf_bound</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+      </div>
+      <p class="graph-caption">
+        Click a node to jump to its detail section.
+      </p>
+      <p class="graph-caption">
+        Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
+      </p>
+      <p class="graph-caption">
+        All arrows point from a claim to one of its dependencies.
+      </p>
+      <p class="graph-caption">
+        Dashed gray arrows mark refinement edges: they are still dependency edges, but they indicate that a narrower claim was carved out from a broader proof step.
+      </p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <p class="graph-caption">The following are sufficient items for a human to check to verify correctness of the proof. Hovering or checking review items highlights related nodes and edges.</p>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-informal-proof-hoeffdings_lemma" data-obligation-id="informal-proof-hoeffdings_lemma">
+      <label class="checklist-label" for="obligation-check-informal-proof-hoeffdings_lemma">
+        <input id="obligation-check-informal-proof-hoeffdings_lemma" type="checkbox" />
+        <span>
+          <span class="checklist-kind">informal_proof_check</span><br />
+          Check that node &#x27;hoeffdings_lemma&#x27; (Hoeffding&#x27;s lemma) has an informal proof that establishes its informal statement, assuming its child dependencies.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-hoeffdings_lemma">hoeffdings_lemma</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-convexity_expectation" data-obligation-id="semantic-match-convexity_expectation">
+      <label class="checklist-label" for="obligation-check-semantic-match-convexity_expectation">
+        <input id="obligation-check-semantic-match-convexity_expectation" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;convexity_expectation&#x27; (Expectation bound via convexity) matches the verified Lean statement &#x27;theorem convexity_expectation_aristotle
+    (μ : Measure ℝ) [IsProbabilityMeasure μ]
+    (a b s : ℝ) (hab : a &lt; b)
+    (hint : Integrable id μ)
+    (hexp_int : Integrable (fun x =&gt; exp (s <em> x)) μ)
+    (hmean : ∫ x, x ∂μ = 0)
+    (hlower : ∀ᵐ x ∂μ, a ≤ x)
+    (hupper : ∀ᵐ x ∂μ, x ≤ b) :
+    ∫ x, exp (s </em> x) ∂μ ≤
+      exp (-(-a / (b - a)) <em> (s </em> (b - a))) <em>
+        (b / (b - a) + -a / (b - a) </em> exp (s * (b - a)))&#x27;.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> convexity_expectation_aristotle
+    (μ : Measure <span class="tok-type">ℝ</span>) [IsProbabilityMeasure μ]
+    (a b s : <span class="tok-type">ℝ</span>) (hab : a &lt; b)
+    (hint : Integrable id μ)
+    (hexp_int : Integrable (<span class="tok-keyword">fun</span> x =&gt; exp (s * x)) μ)
+    (hmean : ∫ x, x ∂μ = <span class="tok-number">0</span>)
+    (hlower : ∀ᵐ x ∂μ, a ≤ x)
+    (hupper : ∀ᵐ x ∂μ, x ≤ b) :
+    ∫ x, exp (s * x) ∂μ ≤
+      exp (-(-a / (b - a)) * (s * (b - a))) *
+        (b / (b - a) + -a / (b - a) * exp (s * (b - a)))</code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-convexity_expectation">convexity_expectation</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-log_mgf_bound" data-obligation-id="semantic-match-log_mgf_bound">
+      <label class="checklist-label" for="obligation-check-semantic-match-log_mgf_bound">
+        <input id="obligation-check-semantic-match-log_mgf_bound" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;log_mgf_bound&#x27; (Log-MGF function bound) matches the verified Lean statement &#x27;theorem log_mgf_bound_aristotle (p q : ℝ) (hp : 0 ≤ p) (hq : 0 ≤ q) (hpq : p + q = 1)
+    (u : ℝ) : -p <em> u + Real.log (q + p </em> Real.exp u) ≤ u ^ 2 / 8&#x27;.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> log_mgf_bound_aristotle (p q : <span class="tok-type">ℝ</span>) (hp : <span class="tok-number">0</span> ≤ p) (hq : <span class="tok-number">0</span> ≤ q) (hpq : p + q = <span class="tok-number">1</span>)
+    (u : <span class="tok-type">ℝ</span>) : -p * u + Real.log (q + p * Real.exp u) ≤ u ^ <span class="tok-number">2</span> / <span class="tok-number">8</span></code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-log_mgf_bound">log_mgf_bound</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="nodes-grid">
+        
+    <article class="node-card node-hoeffdings_lemma" id="node-hoeffdings_lemma" data-node-id="hoeffdings_lemma">
+      <h3>Hoeffding&#x27;s lemma</h3>
+      <p class="meta">Node id: hoeffdings_lemma | Status: informal</p>
+      <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-convexity_expectation">convexity_expectation</a>, <a class="node-jump" href="#node-log_mgf_bound">log_mgf_bound</a></p>
+      
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \(X\) be a real-valued random variable such that \(\mathbb{E}[X]=0\) and suppose there exist real numbers \(a&lt;b\) such that \(a \le X \le b\) almost surely. Then for every real \(s\), \(\mathbb{E}\bigl[e^{sX}\bigr] \le \exp\!\left(\frac{s^2(b-a)^2}{8}\right).\)</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Fix a real number \(s\). Let \(p := \frac{-a}{b-a}\), \(q := \frac{b}{b-a}\), and \(u := s(b-a)\). Since \(a \le X \le b\) and \(\mathbb{E}[X]=0\), we have \(a \le 0 \le b\), which implies \(p, q \ge 0\). Furthermore, \(p+q = \frac{-a+b}{b-a}=1\).
+
+By bounding the expectation using convexity, we find that
+\[
+\mathbb{E}[e^{sX}] \le e^{-pu}(q+p e^u).
+\]
+We can rewrite the right side as \(e^{g(u)}\), where \(g(u) := -pu + \log(q+p e^u)\). By the log-MGF bound for such functions, we know \(g(u) \le \frac{u^2}{8}\).
+
+Therefore,
+\[
+\mathbb{E}[e^{sX}] \le e^{u^2/8}.
+\]
+Finally, substitute \(u=s(b-a)\). Then
+\[
+e^{u^2/8} = \exp\!\left(\frac{s^2(b-a)^2}{8}\right).
+\]
+Hence
+\[
+\mathbb{E}[e^{sX}] \le \exp\!\left(\frac{s^2(b-a)^2}{8}\right),
+\]
+which proves Hoeffding&#x27;s lemma.</div>
+      
+      
+    </article>
+    
+
+    <article class="node-card node-convexity_expectation" id="node-convexity_expectation" data-node-id="convexity_expectation">
+      <h3>Expectation bound via convexity</h3>
+      <p class="meta">Node id: convexity_expectation | Status: formal_verified</p>
+      <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-hoeffdings_lemma">hoeffdings_lemma</a></p>
+      
+      <p class="meta">Formalization priority: 2. Rationale: An excellent intermediate probabilistic step that isolates the use of convexity and linearity of expectation to bound the MGF, separating it from the final algebraic/calculus arguments.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \(X\) be a real-valued random variable with \(\mathbb{E}[X]=0\) and \(a \le X \le b\) almost surely. Let \(s\) be a real number, \(p := \frac{-a}{b-a}\), \(q := \frac{b}{b-a}\), and \(u := s(b-a)\). Then \(\mathbb{E}[e^{sX}] \le e^{-pu}(q+p e^u)\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Let \(x \in [a,b]\). Since \(x\) lies between \(a\) and \(b\), we may write it as the convex combination
+\[
+x = \frac{b-x}{b-a}\,a + \frac{x-a}{b-a}\,b.
+\]
+By convexity of the function \(t \mapsto e^{st}\), it follows that
+\[
+e^{sx} \le \frac{b-x}{b-a} e^{sa} + \frac{x-a}{b-a} e^{sb}.
+\]
+Applying this with \(x=X\), we get almost surely
+\[
+e^{sX} \le \frac{b-X}{b-a} e^{sa} + \frac{X-a}{b-a} e^{sb}.
+\]
+Taking expectations and using linearity of expectation gives
+\[
+\mathbb{E}[e^{sX}] \le \frac{b-\mathbb{E}[X]}{b-a} e^{sa} + \frac{\mathbb{E}[X]-a}{b-a} e^{sb}.
+\]
+Since \(\mathbb{E}[X]=0\), this simplifies to
+\[
+\mathbb{E}[e^{sX}] \le \frac{b}{b-a} e^{sa} + \frac{-a}{b-a} e^{sb} = q e^{sa} + p e^{sb}.
+\]
+Since \(b = a + (b-a)\), we have
+\[
+e^{sb} = e^{s(a+(b-a))} = e^{sa} e^u.
+\]
+Hence
+\[
+q e^{sa} + p e^{sb} = q e^{sa} + p e^{sa} e^u = e^{sa}(q + p e^u).
+\]
+Also, from the definition of \(p\), we have \(a = -p(b-a)\), so \(sa = -pu\). Thus
+\[
+e^{sa}(q+p e^u) = e^{-pu}(q+p e^u).
+\]
+We conclude that \(\mathbb{E}[e^{sX}] \le e^{-pu}(q+p e^u)\).</div>
+      
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> convexity_expectation_aristotle</p>
+        <p><strong>Coverage:</strong> full match</p><p class="meta">The Lean theorem perfectly matches the informal statement, directly unwrapping the definitions of p, q, and u into the final expectation bound. The added integrability hypotheses and the condition a &lt; b are standard and appropriate formalization details. The theorem captures the entire semantic content of the target node without any loss.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> convexity_expectation_aristotle
+    (μ : Measure <span class="tok-type">ℝ</span>) [IsProbabilityMeasure μ]
+    (a b s : <span class="tok-type">ℝ</span>) (hab : a &lt; b)
+    (hint : Integrable id μ)
+    (hexp_int : Integrable (<span class="tok-keyword">fun</span> x =&gt; exp (s * x)) μ)
+    (hmean : ∫ x, x ∂μ = <span class="tok-number">0</span>)
+    (hlower : ∀ᵐ x ∂μ, a ≤ x)
+    (hupper : ∀ᵐ x ∂μ, x ≤ b) :
+    ∫ x, exp (s * x) ∂μ ≤
+      exp (-(-a / (b - a)) * (s * (b - a))) *
+        (b / (b - a) + -a / (b - a) * exp (s * (b - a)))</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/convexity_expectation_worker_20260407-083404_466fef88.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code">/-
+Formalization of: Expectation bound via convexity (Hoeffding&#x27;s <span class="tok-keyword">lemma</span> ingredient)
+
+Let X be a real-valued random <span class="tok-keyword">variable</span> <span class="tok-keyword">with</span> E[X]=<span class="tok-number">0</span> and a ≤ X ≤ b a.s.
+Let s be a real number, p := -a/(b-a), q := b/(b-a), and u := s(b-a).
+Then E[e^{sX}] ≤ e^{-pu}(q + p e^u).
+
+The random <span class="tok-keyword">variable</span> X is modeled as the identity function on <span class="tok-type">ℝ</span> equipped
+<span class="tok-keyword">with</span> a probability measure μ, so E[X] = ∫ x, x ∂μ and E[e^{sX}] = ∫ x, e^{sx} ∂μ.
+-/
+<span class="tok-keyword">import</span> Mathlib
+
+<span class="tok-keyword">open</span> MeasureTheory Real
+
+noncomputable <span class="tok-keyword">section</span>
+
+/-! ## Pointwise convexity bound for exp -/
+
+/-
+For x ∈ [a,b] <span class="tok-keyword">with</span> a &lt; b, the exponential e^{sx} is bounded above <span class="tok-tactic">by</span>
+the linear interpolation of e^{sa} and e^{sb}. This is convexity of exp.
+-/
+<span class="tok-keyword">lemma</span> exp_convex_interpolation (s a b x : <span class="tok-type">ℝ</span>) (hab : a &lt; b) (hax : a ≤ x) (hxb : x ≤ b) :
+    exp (s * x) ≤ (b - x) / (b - a) * exp (s * a) + (x - a) / (b - a) * exp (s * b) := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Apply Jensen&#x27;s inequality for the convex function $f(t) = e^{st}$.</span>
+  <span class="tok-tactic">have</span> h_jensen : Real.exp (s * ((b - x) / (b - a) * a + (x - a) / (b - a) * b)) ≤ (b - x) / (b - a) * Real.exp (s * a) + (x - a) / (b - a) * Real.exp (s * b) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h_jensen : ConvexOn <span class="tok-type">ℝ</span> (Set.univ : Set <span class="tok-type">ℝ</span>) (<span class="tok-keyword">fun</span> x =&gt; Real.exp (s * x)) := <span class="tok-tactic">by</span>
+      apply_rules [ convexOn_of_deriv2_nonneg, convex_univ ];
+      · fun_prop;
+      · <span class="tok-tactic">exact</span> DifferentiableOn.exp ( differentiableOn_id.const_mul s );
+      · fun_prop;
+      · unfold deriv;
+        <span class="tok-tactic">norm_num</span> [ fderiv_apply_one_eq_deriv, mul_comm s ];
+        <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> x =&gt; <span class="tok-tactic">by</span> nlinarith [ Real.exp_pos ( x * s ), mul_self_nonneg s ];
+    <span class="tok-tactic">exact</span> h_jensen.<span class="tok-number">2</span> trivial trivial ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> div_nonneg ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> div_nonneg ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ ← add_div, div_eq_iff ] &lt;;&gt; <span class="tok-tactic">linarith</span> );
+  grind
+
+/-! ## Algebraic identity: factoring the interpolation -/
+
+/-
+The linear interpolation q·e^{sa} + p·e^{sb} equals e^{-pu}·(q + p·e^u)
+<span class="tok-keyword">where</span> p=-a/(b-a), q=b/(b-a), u=s(b-a).
+-/
+<span class="tok-keyword">lemma</span> rhs_factoring (s a b : <span class="tok-type">ℝ</span>) (hab : a &lt; b) :
+    b / (b - a) * exp (s * a) + -a / (b - a) * exp (s * b) =
+    exp (-(-a / (b - a)) * (s * (b - a))) *
+      (b / (b - a) + -a / (b - a) * exp (s * (b - a))) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">ring</span>;
+  <span class="tok-tactic">norm_num</span> [ ← Real.exp_add, mul_assoc, sub_mul, ← add_mul ] ; <span class="tok-tactic">ring</span>;
+  grind
+
+/-! ## Main <span class="tok-keyword">theorem</span> -/
+
+/-
+**Expectation bound via convexity (Hoeffding&#x27;s <span class="tok-keyword">lemma</span> ingredient)**.
+
+Let X be a real-valued random <span class="tok-keyword">variable</span> <span class="tok-keyword">with</span> E[X]=<span class="tok-number">0</span> and a ≤ X ≤ b a.s.,
+modeled as the identity on (<span class="tok-type">ℝ</span>, μ) <span class="tok-keyword">where</span> μ is a probability measure.
+Let s ∈ <span class="tok-type">ℝ</span>, p = -a/(b-a), q = b/(b-a), u = s(b-a).
+Then E[e^{sX}] ≤ e^{-pu}(q + p e^u).
+-/
+<span class="tok-keyword">theorem</span> convexity_expectation_aristotle
+    (μ : Measure <span class="tok-type">ℝ</span>) [IsProbabilityMeasure μ]
+    (a b s : <span class="tok-type">ℝ</span>) (hab : a &lt; b)
+    (hint : Integrable id μ)
+    (hexp_int : Integrable (<span class="tok-keyword">fun</span> x =&gt; exp (s * x)) μ)
+    (hmean : ∫ x, x ∂μ = <span class="tok-number">0</span>)
+    (hlower : ∀ᵐ x ∂μ, a ≤ x)
+    (hupper : ∀ᵐ x ∂μ, x ≤ b) :
+    ∫ x, exp (s * x) ∂μ ≤
+      exp (-(-a / (b - a)) * (s * (b - a))) *
+        (b / (b - a) + -a / (b - a) * exp (s * (b - a))) := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Apply the pointwise interpolation bound a.e. to get the integral inequality.</span>
+  <span class="tok-tactic">have</span> lintegral_bound : ∫ x, Real.exp (s * x) ∂μ ≤ ∫ x, ((b - x) / (b - a) * Real.exp (s * a)) + ((x - a) / (b - a) * Real.exp (s * b)) ∂μ := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">refine</span>&#x27; MeasureTheory.integral_mono_ae _ _ _;
+    · <span class="tok-tactic">exact</span> hexp_int;
+    · apply_rules [ MeasureTheory.Integrable.add, MeasureTheory.Integrable.mul_const, MeasureTheory.Integrable.const_mul ];
+      · <span class="tok-tactic">exact</span> MeasureTheory.integrable_const _;
+      · <span class="tok-tactic">exact</span> MeasureTheory.Integrable.neg ( <span class="tok-tactic">by</span> assumption );
+      · <span class="tok-tactic">norm_num</span>;
+    · filter_upwards [ hlower, hupper ] <span class="tok-keyword">with</span> x hx₁ hx₂ using exp_convex_interpolation s a b x hab hx₁ hx₂;
+  <span class="tok-tactic">rw</span> [ MeasureTheory.integral_add ] at lintegral_bound;
+  · simp_all +decide [ MeasureTheory.integral_div, MeasureTheory.integral_mul_const, sub_div ];
+    <span class="tok-tactic">rw</span> [ MeasureTheory.integral_sub, MeasureTheory.integral_sub ] at lintegral_bound &lt;;&gt; <span class="tok-tactic">norm_num</span> at *;
+    · convert lintegral_bound using <span class="tok-number">1</span> ; <span class="tok-tactic">norm_num</span> [ MeasureTheory.integral_div, hmean ] ; <span class="tok-tactic">ring</span>;
+      <span class="tok-tactic">norm_num</span> [ mul_assoc, ← Real.exp_add ] ; <span class="tok-tactic">ring</span>;
+      grind;
+    · <span class="tok-tactic">exact</span> MeasureTheory.Integrable.div_const ‹_› _;
+    · <span class="tok-tactic">exact</span> MeasureTheory.Integrable.div_const ( <span class="tok-tactic">by</span> <span class="tok-tactic">simpa</span> using ‹Integrable id μ› ) _;
+  · apply_rules [ MeasureTheory.Integrable.mul_const, MeasureTheory.Integrable.div_const, MeasureTheory.Integrable.sub, MeasureTheory.integrable_const ];
+  · <span class="tok-tactic">exact</span> MeasureTheory.Integrable.mul_const ( MeasureTheory.Integrable.div_const ( lintegral_bound |&gt; <span class="tok-keyword">fun</span> h =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> MeasureTheory.Integrable.sub ( <span class="tok-tactic">by</span> assumption ) ( MeasureTheory.integrable_const _ ) ) _ ) _
+
+<span class="tok-keyword">end</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/convexity_expectation_worker_20260407-083404_466fef88.lean:44:33: warning: unused variable `hab`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/convexity_expectation_worker_20260407-083404_466fef88.lean:83:23: warning: This simp argument is unused:
+  MeasureTheory.integral_div
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide [̵ ̵M̵e̵a̵s̵u̵r̵e̵T̵h̵e̵o̵r̵y̵.̵i̵n̵t̵e̵g̵r̵a̵l̵_̵d̵i̵v̵,̵ ̵M̵e̵a̵s̵u̵r̵e̵T̵h̵e̵o̵r̵y̵.̵i̵n̵t̵e̵g̵r̵a̵l̵_̵m̵u̵l̵_̵c̵o̵n̵s̵t̵,̵ ̵s̵u̵b̵_̵d̵i̵v̵ ̵]̵[̲M̲e̲a̲s̲u̲r̲e̲T̲h̲e̲o̲r̲y̲.̲i̲n̲t̲e̲g̲r̲a̲l̲_̲m̲u̲l̲_̲c̲o̲n̲s̲t̲,̲ ̲s̲u̲b̲_̲d̲i̲v̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+
+
+stderr:
+</code></pre>
+          </details>
+        
+    </article>
+    
+
+    <article class="node-card node-log_mgf_bound" id="node-log_mgf_bound" data-node-id="log_mgf_bound">
+      <h3>Log-MGF function bound</h3>
+      <p class="meta">Node id: log_mgf_bound | Status: formal_verified</p>
+      <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-hoeffdings_lemma">hoeffdings_lemma</a></p>
+      
+      <p class="meta">Formalization priority: 1. Rationale: A completely self-contained, purely real-analytic bound. It packages the Taylor expansion and derivative calculations into an elegant, isolated calculus problem, independent of probability.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \(p, q \ge 0\) such that \(p+q=1\). Define \(g(u) := -pu + \log(q+p e^u)\). Then \(g(u) \le \frac{u^2}{8}\) for all \(u \in \mathbb{R}\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">We analyze \(g\). First,
+\[
+g(0) = -p\cdot 0 + \log(q+p) = \log(1)=0.
+\]
+Differentiate:
+\[
+g&#x27;(u) = -p + \frac{p e^u}{q+p e^u}.
+\]
+In particular,
+\[
+g&#x27;(0) = -p + \frac{p}{q+p} = -p+p=0.
+\]
+Differentiate again:
+\[
+g&#x27;&#x27;(u) = \frac{p e^u(q+p e^u) - p e^u(p e^u)}{(q+p e^u)^2} = \frac{p q e^u}{(q+p e^u)^2}.
+\]
+Set \(y := \frac{p e^u}{q+p e^u}\). Then \(0 \le y \le 1\), and since
+\[
+1-y = \frac{q}{q+p e^u},
+\]
+we have
+\[
+y(1-y) = \frac{p e^u}{q+p e^u} \cdot \frac{q}{q+p e^u} = \frac{p q e^u}{(q+p e^u)^2} = g&#x27;&#x27;(u).
+\]
+But for every \(y \in [0,1]\),
+\[
+y(1-y) \le \frac14.
+\]
+Therefore \(g&#x27;&#x27;(u) \le \frac14\) for all \(u\).
+
+Now apply Taylor&#x27;s theorem with remainder in the mean-value form at the point \(0\). For each \(u\), there exists some \(\xi\) between \(0\) and \(u\) such that
+\[
+g(u) = g(0) + u g&#x27;(0) + \frac{u^2}{2} g&#x27;&#x27;(\xi).
+\]
+Since \(g(0)=0\), \(g&#x27;(0)=0\), and \(g&#x27;&#x27;(\xi) \le 1/4\), we obtain
+\[
+g(u) \le \frac{u^2}{2} \cdot \frac14 = \frac{u^2}{8}.
+\]</div>
+      
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> log_mgf_bound_aristotle</p>
+        <p><strong>Coverage:</strong> full match</p><p class="meta">The verified Lean theorem exactly translates the target node&#x27;s informal statement, inlining the definition of g(u) directly into the final inequality. The heuristic&#x27;s classification as a narrower concrete sublemma is overridden because the theorem captures the complete mathematical content of the node.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> log_mgf_bound_aristotle (p q : <span class="tok-type">ℝ</span>) (hp : <span class="tok-number">0</span> ≤ p) (hq : <span class="tok-number">0</span> ≤ q) (hpq : p + q = <span class="tok-number">1</span>)
+    (u : <span class="tok-type">ℝ</span>) : -p * u + Real.log (q + p * Real.exp u) ≤ u ^ <span class="tok-number">2</span> / <span class="tok-number">8</span></code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/log_mgf_bound_worker_20260407-083404_c241b338.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code">/-
+  Hoeffding&#x27;s <span class="tok-keyword">lemma</span>: Log-MGF function bound
+
+  Let p, q ≥ <span class="tok-number">0</span> such that p + q = <span class="tok-number">1</span>. Define g(u) := -pu + log(q + p·eᵘ).
+  Then g(u) ≤ u²/<span class="tok-number">8</span> for all u ∈ <span class="tok-type">ℝ</span>.
+
+  Proof strategy: define h(u) = u²/<span class="tok-number">8</span> + pu - log(q + p·eᵘ) = u²/<span class="tok-number">8</span> - g(u).
+  Show h is convex (second derivative ≥ <span class="tok-number">0</span>), h(<span class="tok-number">0</span>) = <span class="tok-number">0</span>, h&#x27;(<span class="tok-number">0</span>) = <span class="tok-number">0</span>.
+  Conclude h(u) ≥ h(<span class="tok-number">0</span>) = <span class="tok-number">0</span> for all u, i.e., g(u) ≤ u²/<span class="tok-number">8</span>.
+-/
+<span class="tok-keyword">import</span> Mathlib
+
+<span class="tok-keyword">open</span> Real Set
+
+noncomputable <span class="tok-keyword">section</span>
+
+/-! ### Positivity of the denominator -/
+
+private <span class="tok-keyword">lemma</span> denom_pos {p q : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">0</span> ≤ p) (hq : <span class="tok-number">0</span> ≤ q) (hpq : p + q = <span class="tok-number">1</span>)
+    (u : <span class="tok-type">ℝ</span>) : <span class="tok-number">0</span> &lt; q + p * exp u := <span class="tok-tactic">by</span>
+  rcases eq_or_lt_of_le hq <span class="tok-keyword">with</span> rfl | hq&#x27;
+  · <span class="tok-tactic">simp</span> at hpq; <span class="tok-tactic">simp</span> [hpq, exp_pos]
+  · <span class="tok-tactic">have</span> : <span class="tok-number">0</span> ≤ p * exp u := mul_nonneg hp (exp_pos u).le
+    <span class="tok-tactic">linarith</span>
+
+/-! ### The function h and its derivatives -/
+
+/<span class="tok-comment">-- h(u) = u²/8 + pu - log(q + p·eᵘ). We want to show h(u) ≥ 0. -/</span>
+private <span class="tok-keyword">def</span> h (p q : <span class="tok-type">ℝ</span>) (u : <span class="tok-type">ℝ</span>) : <span class="tok-type">ℝ</span> := u ^ <span class="tok-number">2</span> / <span class="tok-number">8</span> + p * u - Real.log (q + p * exp u)
+
+/<span class="tok-comment">-- The derivative of h: h&#x27;(u) = u/4 + p - p·eᵘ/(q + p·eᵘ) -/</span>
+private <span class="tok-keyword">def</span> h&#x27; (p q : <span class="tok-type">ℝ</span>) (u : <span class="tok-type">ℝ</span>) : <span class="tok-type">ℝ</span> := u / <span class="tok-number">4</span> + p - p * exp u / (q + p * exp u)
+
+/<span class="tok-comment">-- The second derivative of h: h&#x27;&#x27;(u) = 1/4 - p·q·eᵘ/(q + p·eᵘ)² -/</span>
+private <span class="tok-keyword">def</span> h&#x27;&#x27; (p q : <span class="tok-type">ℝ</span>) (u : <span class="tok-type">ℝ</span>) : <span class="tok-type">ℝ</span> := <span class="tok-number">1</span> / <span class="tok-number">4</span> - p * q * exp u / (q + p * exp u) ^ <span class="tok-number">2</span>
+
+private <span class="tok-keyword">lemma</span> h_hasDerivAt {p q : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">0</span> ≤ p) (hq : <span class="tok-number">0</span> ≤ q) (hpq : p + q = <span class="tok-number">1</span>)
+    (u : <span class="tok-type">ℝ</span>) : HasDerivAt (h p q) (h&#x27; p q u) u := <span class="tok-tactic">by</span>
+      convert HasDerivAt.sub ( HasDerivAt.add ( HasDerivAt.div_const ( hasDerivAt_pow <span class="tok-number">2</span> u ) _ ) ( HasDerivAt.const_mul p ( hasDerivAt_id u ) ) ) ( HasDerivAt.log ( HasDerivAt.add ( hasDerivAt_const _ _ ) ( HasDerivAt.const_mul p ( Real.hasDerivAt_exp u ) ) ) _ ) using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+      · unfold h&#x27; ; <span class="tok-tactic">ring</span>;
+      · <span class="tok-tactic">cases</span> lt_or_eq_of_le hp &lt;;&gt; <span class="tok-tactic">cases</span> lt_or_eq_of_le hq &lt;;&gt; nlinarith [ Real.exp_pos u ]
+
+private <span class="tok-keyword">lemma</span> h&#x27;_hasDerivAt {p q : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">0</span> ≤ p) (hq : <span class="tok-number">0</span> ≤ q) (hpq : p + q = <span class="tok-number">1</span>)
+    (u : <span class="tok-type">ℝ</span>) : HasDerivAt (h&#x27; p q) (h&#x27;&#x27; p q u) u := <span class="tok-tactic">by</span>
+      convert HasDerivAt.sub ( HasDerivAt.add ( HasDerivAt.div_const ( hasDerivAt_id u ) _ ) ( hasDerivAt_const _ _ ) ) ( HasDerivAt.div ( HasDerivAt.const_mul p &lt;| Real.hasDerivAt_exp _ ) ( HasDerivAt.add ( hasDerivAt_const _ _ ) &lt;| HasDerivAt.const_mul p &lt;| Real.hasDerivAt_exp _ ) _ ) using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+      · unfold h&#x27;&#x27;; <span class="tok-tactic">ring</span>;
+      · <span class="tok-tactic">exact</span> ne_of_gt ( denom_pos hp hq hpq u )
+
+private <span class="tok-keyword">lemma</span> h&#x27;&#x27;_nonneg {p q : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">0</span> ≤ p) (hq : <span class="tok-number">0</span> ≤ q) (hpq : p + q = <span class="tok-number">1</span>)
+    (u : <span class="tok-type">ℝ</span>) : <span class="tok-number">0</span> ≤ h&#x27;&#x27; p q u := <span class="tok-tactic">by</span>
+      unfold h&#x27;&#x27;;
+      <span class="tok-tactic">rw</span> [ sub_nonneg, div_le_iff₀ ];
+      · nlinarith [ sq_nonneg ( q - p * Real.exp u ) ];
+      · <span class="tok-tactic">exact</span> sq_pos_of_pos ( <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> lt_or_eq_of_le hp &lt;;&gt; <span class="tok-tactic">cases</span> lt_or_eq_of_le hq &lt;;&gt; nlinarith [ Real.exp_pos u ] )
+
+private <span class="tok-keyword">lemma</span> h_zero_eq {p q : <span class="tok-type">ℝ</span>} (hpq : p + q = <span class="tok-number">1</span>) :
+    h p q <span class="tok-number">0</span> = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+      unfold h;
+      <span class="tok-tactic">norm_num</span> [ add_comm, hpq ]
+
+private <span class="tok-keyword">lemma</span> h&#x27;_zero_eq {p q : <span class="tok-type">ℝ</span>} (hpq : p + q = <span class="tok-number">1</span>) :
+    h&#x27; p q <span class="tok-number">0</span> = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+      unfold h&#x27;;
+      <span class="tok-tactic">norm_num</span> [ <span class="tok-tactic">show</span> q = <span class="tok-number">1</span> - p <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ]
+
+/-! ### Deriv of h equals h&#x27; -/
+
+private <span class="tok-keyword">lemma</span> h_deriv_eq_h&#x27; {p q : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">0</span> ≤ p) (hq : <span class="tok-number">0</span> ≤ q) (hpq : p + q = <span class="tok-number">1</span>) :
+    deriv (h p q) = h&#x27; p q :=
+  funext <span class="tok-keyword">fun</span> u =&gt; (h_hasDerivAt hp hq hpq u).deriv
+
+/-! ### Convexity of h -/
+
+private <span class="tok-keyword">lemma</span> h_convex {p q : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">0</span> ≤ p) (hq : <span class="tok-number">0</span> ≤ q) (hpq : p + q = <span class="tok-number">1</span>) :
+    ConvexOn <span class="tok-type">ℝ</span> univ (h p q) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">apply</span> convexOn_univ_of_deriv2_nonneg
+  · <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> u =&gt; (h_hasDerivAt hp hq hpq u).differentiableAt
+  · <span class="tok-tactic">rw</span> [h_deriv_eq_h&#x27; hp hq hpq]
+    <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> u =&gt; (h&#x27;_hasDerivAt hp hq hpq u).differentiableAt
+  · <span class="tok-tactic">intro</span> u
+    change <span class="tok-number">0</span> ≤ deriv (deriv (h p q)) u
+    <span class="tok-tactic">rw</span> [h_deriv_eq_h&#x27; hp hq hpq]
+    <span class="tok-tactic">rw</span> [(h&#x27;_hasDerivAt hp hq hpq u).deriv]
+    <span class="tok-tactic">exact</span> h&#x27;&#x27;_nonneg hp hq hpq u
+
+/-! ### h has a global minimum at <span class="tok-number">0</span> -/
+
+private <span class="tok-keyword">lemma</span> h_nonneg {p q : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">0</span> ≤ p) (hq : <span class="tok-number">0</span> ≤ q) (hpq : p + q = <span class="tok-number">1</span>)
+    (u : <span class="tok-type">ℝ</span>) : <span class="tok-number">0</span> ≤ h p q u := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Apply the convexity result to conclude that $h(u)$ is non-negative.</span>
+  <span class="tok-tactic">have</span> h_convex : ConvexOn <span class="tok-type">ℝ</span> univ (h p q) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> h_convex hp hq hpq;
+  <span class="tok-comment">-- Apply the first-order condition for convex functions at the point $u = 0$.</span>
+  <span class="tok-tactic">have</span> h_first_order : ∀ u, h p q u ≥ h p q <span class="tok-number">0</span> + (h&#x27; p q <span class="tok-number">0</span>) * (u - <span class="tok-number">0</span>) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">intro</span> u
+    by_cases hu : u ≤ <span class="tok-number">0</span>;
+    · <span class="tok-tactic">have</span> := @ConvexOn.slope_le_of_hasDerivAt;
+      by_cases hu&#x27; : u &lt; <span class="tok-number">0</span>;
+      · <span class="tok-tactic">have</span> := @this ( Set.univ : Set <span class="tok-type">ℝ</span> ) ( <span class="tok-keyword">fun</span> u =&gt; h p q u ) u <span class="tok-number">0</span> ( h&#x27; p q <span class="tok-number">0</span> ) h_convex ( Set.mem_univ u ) ( Set.mem_univ <span class="tok-number">0</span> ) hu&#x27; ( h_hasDerivAt hp hq hpq <span class="tok-number">0</span> ) ; <span class="tok-tactic">norm_num</span> [ slope_def_field ] at *;
+        <span class="tok-tactic">rw</span> [ div_le_iff₀ ] at this &lt;;&gt; <span class="tok-tactic">linarith</span>;
+      · <span class="tok-tactic">norm_num</span> [ <span class="tok-tactic">show</span> u = <span class="tok-number">0</span> <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ];
+    · <span class="tok-tactic">have</span> := h_convex.<span class="tok-number">2</span> ( Set.mem_univ <span class="tok-number">0</span> ) ( Set.mem_univ u );
+      <span class="tok-comment">-- Apply the definition of the derivative to get the inequality.</span>
+      <span class="tok-tactic">have</span> h_deriv : Filter.Tendsto (<span class="tok-keyword">fun</span> t =&gt; (h p q (t * u) - h p q <span class="tok-number">0</span>) / t) (nhdsWithin <span class="tok-number">0</span> (Set.Ioi <span class="tok-number">0</span>)) (nhds (h&#x27; p q <span class="tok-number">0</span> * u)) := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">have</span> h_deriv : HasDerivAt (<span class="tok-keyword">fun</span> t =&gt; h p q (t * u)) (h&#x27; p q <span class="tok-number">0</span> * u) <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+          convert HasDerivAt.comp <span class="tok-number">0</span> ( h_hasDerivAt hp hq hpq _ ) ( hasDerivAt_mul_const u ) using <span class="tok-number">1</span> ; <span class="tok-tactic">norm_num</span>;
+        <span class="tok-tactic">simpa</span> [ div_eq_inv_mul ] using h_deriv.tendsto_slope_zero_right;
+      <span class="tok-comment">-- Apply the definition of the derivative to get the inequality for $t &gt; 0$.</span>
+      <span class="tok-tactic">have</span> h_deriv_pos : ∀ᶠ t <span class="tok-keyword">in</span> nhdsWithin <span class="tok-number">0</span> (Set.Ioi <span class="tok-number">0</span>), (h p q (t * u) - h p q <span class="tok-number">0</span>) / t ≤ h p q u - h p q <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+        filter_upwards [ Ioo_mem_nhdsGT_of_mem ⟨ le_rfl, zero_lt_one ⟩ ] <span class="tok-keyword">with</span> t ht using <span class="tok-tactic">by</span> <span class="tok-tactic">have</span> := @this ( <span class="tok-number">1</span> - t ) t ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ; <span class="tok-tactic">norm_num</span> at * ; <span class="tok-tactic">rw</span> [ div_le_iff₀ ] &lt;;&gt; nlinarith [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ;
+      <span class="tok-tactic">have</span> := le_of_tendsto h_deriv h_deriv_pos; <span class="tok-tactic">norm_num</span> at *; <span class="tok-tactic">linarith</span>;
+  <span class="tok-tactic">exact</span> le_trans ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> [ h_zero_eq hpq, h&#x27;_zero_eq hpq ] ) ( h_first_order u )
+
+/-! ### Main <span class="tok-keyword">theorem</span> -/
+
+<span class="tok-keyword">theorem</span> log_mgf_bound_aristotle (p q : <span class="tok-type">ℝ</span>) (hp : <span class="tok-number">0</span> ≤ p) (hq : <span class="tok-number">0</span> ≤ q) (hpq : p + q = <span class="tok-number">1</span>)
+    (u : <span class="tok-type">ℝ</span>) : -p * u + Real.log (q + p * Real.exp u) ≤ u ^ <span class="tok-number">2</span> / <span class="tok-number">8</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> key := h_nonneg hp hq hpq u
+  unfold h at key
+  <span class="tok-tactic">linarith</span>
+
+<span class="tok-keyword">end</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+</code></pre>
+          </details>
+        
+    </article>
+    
+      </div>
+    </section>
+  </main>
+</body>
+</html>

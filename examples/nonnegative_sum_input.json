@@ -1,5 +1,0 @@
-{
-  "theorem_title": "Nonnegative sum",
-  "theorem_statement": "If a and b are nonnegative, then a + b is nonnegative.",
-  "raw_proof_text": "Assume 0 <= a and 0 <= b. By the standard arithmetic lemma that sums of nonnegative reals are nonnegative, we obtain 0 <= a + b."
-}

@@ -654,13 +654,23 @@ def _render_faithfulness_label(*, result_kind: str | None, classification: str) 
 
 
 def _render_inline_code_html(text: str) -> str:
+    # Pass 1: split on backtick spans first (they may contain * characters).
     parts = re.split(r"(`[^`]+`)", text)
     rendered: list[str] = []
     for part in parts:
         if len(part) >= 2 and part.startswith("`") and part.endswith("`"):
             rendered.append(f'<code class="inline-code">{escape(part[1:-1])}</code>')
         else:
-            rendered.append(escape(part))
+            # Pass 2: render **bold** and *italic* as <em> within plain-text segments.
+            # Bold (double asterisk) must be matched before single asterisk.
+            segments = re.split(r"(\*\*[^*]+\*\*|\*[^*]+\*)", part)
+            for seg in segments:
+                if seg.startswith("**") and seg.endswith("**") and len(seg) >= 5:
+                    rendered.append(f"<em>{escape(seg[2:-2])}</em>")
+                elif seg.startswith("*") and seg.endswith("*") and len(seg) >= 3:
+                    rendered.append(f"<em>{escape(seg[1:-1])}</em>")
+                else:
+                    rendered.append(escape(seg))
     return "".join(rendered)
 
 

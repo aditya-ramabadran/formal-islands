@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Formal Islands</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #faf9f7;
+  --bg-card:     #ffffff;
+  --bg-code:     #f4f1ec;
+  --border:      #e2ddd8;
+  --text:        #1a1714;
+  --text-muted:  #6b6460;
+  --accent:      #7c5c38;
+  --accent-soft: #f2e8dc;
+  --green:       #2d6a4f;
+  --green-soft:  #d8f3e9;
+  --link:        #4a6fa5;
+  --radius:      8px;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:          #18160f;
+    --bg-card:     #221e16;
+    --bg-code:     #2a251c;
+    --border:      #3a342a;
+    --text:        #f0ece5;
+    --text-muted:  #a09890;
+    --accent:      #c49a6c;
+    --accent-soft: #2e2318;
+    --green:       #6fcf97;
+    --green-soft:  #1a2e24;
+    --link:        #80a8d8;
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--bg);
+  padding: 0 1rem;
+}
+
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.site-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 3rem 0 5rem;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.site-title {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.tagline {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+}
+
+/* ── Sections ───────────────────────────────────────────────── */
+section { margin-bottom: 3rem; }
+
+h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 1rem;
+}
+
+p { margin-bottom: 0.9rem; }
+p:last-child { margin-bottom: 0; }
+
+/* ── Island callout ─────────────────────────────────────────── */
+.callout {
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  font-size: 0.95rem;
+}
+
+/* ── Gallery ────────────────────────────────────────────────── */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.25rem;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.15s;
+}
+
+.card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.1); }
+
+.card-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--bg-code);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+}
+
+.card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-thumb-placeholder {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.card-body {
+  padding: 1rem 1.1rem 1.2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--text);
+}
+
+.card-statement {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 0.7rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--green);
+  background: var(--green-soft);
+  border-radius: 4px;
+  padding: 0.2rem 0.55rem;
+  font-weight: 500;
+  margin-bottom: 0.65rem;
+}
+
+.card-desc {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  flex: 1;
+  margin-bottom: 0.9rem;
+  line-height: 1.55;
+}
+
+.card-link {
+  align-self: flex-start;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--link);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.3rem 0.75rem;
+  transition: background 0.12s;
+}
+
+.card-link:hover {
+  background: var(--accent-soft);
+  text-decoration: none;
+  border-color: var(--accent);
+}
+
+/* ── Quick start ─────────────────────────────────────────────── */
+pre {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 0.75rem 0;
+}
+
+code { font-family: "SF Mono", "Fira Code", Menlo, monospace; }
+
+/* ── Footer ─────────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+</style>
+</head>
+<body>
+<div class="site-wrap">
+
+<header>
+  <div class="site-title">Formal Islands</div>
+  <div class="tagline">Certified local cores inside natural-language mathematical proofs</div>
+</header>
+
+<section>
+  <h2>What Is This?</h2>
+  <p>
+    Most mathematical proofs are written informally — definitions are left implicit, steps rely
+    on shared notation, and the overall argument is human-readable but not machine-checkable.
+    Full formalization in a proof assistant like Lean is powerful but expensive: it often requires
+    months of infrastructure work just to state a theorem in a way the system accepts.
+  </p>
+  <p>
+    Formal Islands targets the middle ground. Given a theorem statement and an informal proof,
+    the pipeline plans a small proof graph, identifies which steps are concrete enough to certify
+    today, and runs a Lean verification attempt on each one. The result is a mixed artifact:
+    parts of the proof are formally verified; the rest is clearly labelled as informal and
+    given an honest review checklist.
+  </p>
+  <div class="callout">
+    A <strong>formal island</strong> is a node in the proof graph that has been independently
+    verified in Lean — certified in isolation, without requiring the rest of the proof to be
+    formalized first.
+  </div>
+  <p>
+    This is especially useful for analysis, PDEs, and variational arguments where the global
+    proof is too large to formalize end-to-end, but local steps are concrete enough to verify now.
+  </p>
+</section>
+
+<section>
+  <h2>Featured Examples</h2>
+  <div class="gallery">
+
+    <div class="card">
+      <div class="card-thumb">
+        <span class="card-thumb-placeholder">screenshot</span>
+      </div>
+      <div class="card-body">
+        <div class="card-title">Two-Point Log-Sobolev Inequality</div>
+        <div class="card-statement">
+          Entropy of a function on the two-point space {−1,1} is bounded by its discrete gradient energy.
+        </div>
+        <span class="verified-badge">✓ 2 nodes verified</span>
+        <div class="card-desc">
+          The scalar log-Sobolev inequality and the key one-dimensional non-negativity lemma
+          <em>G(u) ≥ 0</em> are both independently certified in Lean.
+        </div>
+        <a class="card-link" href="reports/two_point_log_sobolev.html">View report →</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-thumb">
+        <span class="card-thumb-placeholder">screenshot</span>
+      </div>
+      <div class="card-body">
+        <div class="card-title">Heat Equation Uniqueness</div>
+        <div class="card-statement">
+          Two solutions of the heat equation on (0,L) with matching initial and boundary
+          data must be identical.
+        </div>
+        <span class="verified-badge">✓ 2 nodes verified</span>
+        <div class="card-desc">
+          The energy dissipation lemma — showing the energy of the difference solution is
+          non-increasing — is fully verified, along with a certified local core
+          for the uniqueness conclusion itself.
+        </div>
+        <a class="card-link" href="reports/heat_uniqueness.html">View report →</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-thumb">
+        <span class="card-thumb-placeholder">screenshot</span>
+      </div>
+      <div class="card-body">
+        <div class="card-title">Matrix Determinant Lemma</div>
+        <div class="card-statement">
+          det(A + uv<sup>T</sup>) = (1 + v<sup>T</sup>A<sup>−1</sup>u) · det(A)
+          for invertible A and column vectors u, v.
+        </div>
+        <span class="verified-badge">✓ 2 of 2 nodes verified</span>
+        <div class="card-desc">
+          Both nodes in the proof graph — the rank-one identity base case and the
+          full matrix determinant lemma — are formally closed. End-to-end formal
+          certification on a Mathlib-supported benchmark.
+        </div>
+        <a class="card-link" href="reports/matrix_determinant_lemma.html">View report →</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-thumb">
+        <span class="card-thumb-placeholder">screenshot</span>
+      </div>
+      <div class="card-body">
+        <div class="card-title">Hoeffding's Lemma</div>
+        <div class="card-statement">
+          For a bounded mean-zero random variable X with a ≤ X ≤ b a.s.,
+          the log-MGF satisfies log E[e<sup>tX</sup>] ≤ t²(b−a)²/8.
+        </div>
+        <span class="verified-badge">✓ 2 nodes verified</span>
+        <div class="card-desc">
+          The expectation bound via convexity and the log-MGF function bound are
+          both independently verified — together covering nearly all of the
+          substantive proof content.
+        </div>
+        <a class="card-link" href="reports/hoeffding_lemma.html">View report →</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <h2>Quick Start</h2>
+  <p>Install the package and its dependencies:</p>
+<pre><code>git clone https://github.com/aditya-ramabadran/formal-islands.git
+cd formal-islands
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[dev]'</code></pre>
+  <p>
+    You'll also need a local Lean/Mathlib workspace (see the
+    <a href="https://github.com/aditya-ramabadran/formal-islands#setup">full setup guide</a>)
+    and at least one backend — Claude Code, Gemini, or Codex for planning;
+    Aristotle for formalization.
+  </p>
+  <p>Run the pipeline interactively on your own theorem:</p>
+<pre><code>formal-islands new --backends claude/aristotle</code></pre>
+  <p>Or run against a featured example:</p>
+<pre><code>formal-islands run two_point_log_sobolev --backends claude/aristotle --max-attempts 4</code></pre>
+  <p>
+    The output directory, workspace path, and most options are inferred automatically.
+    See the <a href="https://github.com/aditya-ramabadran/formal-islands">README</a>
+    for the full flag reference.
+  </p>
+</section>
+
+<footer>
+  <p>
+    <a href="https://github.com/aditya-ramabadran/formal-islands">GitHub</a> ·
+    MIT License · Built with Lean 4, Mathlib, and Aristotle
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

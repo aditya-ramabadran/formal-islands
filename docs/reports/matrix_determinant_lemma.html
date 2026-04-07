@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Matrix determinant lemma - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'svg']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: #fffaf1;
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
+      --graph-shell-top: rgba(255, 251, 242, 0.96);
+      --graph-shell-bottom: rgba(245, 238, 227, 0.96);
+      --checklist-panel: rgba(255, 250, 241, 0.95);
+      --target-panel: #fff8ee;
+      --code-surface: #f4efe6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161311;
+        --panel: #211b17;
+        --ink: #f3ede5;
+        --muted: #c0b2a3;
+        --border: #4a3d32;
+        --accent: #f0b47b;
+        --accent-soft: #3a2b20;
+        --highlight: #ffb25c;
+        --highlight-soft: #3f2d19;
+        --preview-soft: #312419;
+        --checked: #65c08a;
+        --checked-soft: #213126;
+        --edge: #8f8172;
+        --status-informal-stroke: #d69760;
+        --status-informal-fill: #2e221a;
+        --status-candidate-stroke: #f0a64e;
+        --status-candidate-fill: #3f2d18;
+        --status-verified-stroke: #65c08a;
+        --status-verified-fill: #213126;
+        --status-failed-stroke: #dd8a79;
+        --status-failed-fill: #3b2320;
+        --graph-shell-top: rgba(44, 34, 27, 0.98);
+        --graph-shell-bottom: rgba(32, 25, 21, 0.98);
+        --checklist-panel: rgba(36, 29, 24, 0.98);
+        --target-panel: #31261f;
+        --code-surface: #2a231e;
+      }
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(circle at top, #2a211b, var(--bg));
+      }
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .math-text mjx-container {
+      max-width: 100%;
+    }
+    .math-text mjx-container[display="true"] {
+      margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .math-text mjx-container[jax="CHTML"][display="true"] {
+      padding: 0 !important;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--graph-shell-top), var(--graph-shell-bottom));
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+    .graph-frame {
+      width: min(100%, 720px);
+      margin: 0 auto;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 240px;
+      overflow: visible;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 2.8;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-edge.edge-refinement {
+      stroke-dasharray: 7 5;
+      opacity: 0.66;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-box {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-title {
+      fill: var(--ink);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 9.5px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--checklist-panel);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {
+      min-width: 0;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: var(--target-panel);
+    }
+    pre {
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 0.75rem;
+      background: var(--code-surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin: 0.6rem 0;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    code.inline-code {
+      background: var(--code-surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.95em;
+      white-space: break-spaces;
+    }
+    .statement-code {
+      margin-top: 0.35rem;
+    }
+    .statement-code pre,
+    .checklist-code pre {
+      margin-top: 0.35rem;
+      background: var(--code-surface);
+    }
+    .lean-code {
+      color: #2a241f;
+    }
+    .lean-code .tok-keyword {
+      color: #8b2f18;
+      font-weight: 700;
+    }
+    .lean-code .tok-tactic {
+      color: #9d5d17;
+      font-weight: 600;
+    }
+    .lean-code .tok-type {
+      color: #245f7a;
+    }
+    .lean-code .tok-number {
+      color: #7442a8;
+    }
+    .lean-code .tok-comment {
+      color: #6e7a60;
+      font-style: italic;
+    }
+    .lean-code .tok-string {
+      color: #2d7f4d;
+    }
+    @media (prefers-color-scheme: dark) {
+      .lean-code {
+        color: #f2e8dc;
+      }
+      .lean-code .tok-keyword {
+        color: #f08f63;
+      }
+      .lean-code .tok-tactic {
+        color: #f4b35d;
+      }
+      .lean-code .tok-type {
+        color: #73c7ff;
+      }
+      .lean-code .tok-number {
+        color: #be8cff;
+      }
+      .lean-code .tok-comment {
+        color: #97b18b;
+      }
+      .lean-code .tok-string {
+        color: #67d59a;
+      }
+    }
+    
+            .report-root:has(a.node-special_case:hover) .node-special_case.node-card,
+            .report-root:has(#node-special_case:target) a.node-special_case .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-special_case:hover) .node-special_case.node-card,
+            .report-root:has(#node-special_case:target).report-root .node-special_case.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-root:hover) .node-root.node-card,
+            .report-root:has(#node-root:target) a.node-root .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(a.node-root:hover) .node-root.node-card,
+            .report-root:has(#node-root:target).report-root .node-root.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-special_case:hover) a.node-special_case .graph-node-box,
+.report-root:has(.obligation-semantic-match-special_case:hover) .node-special_case.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-special_case:checked) a.node-special_case .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-special_case:checked) .node-special_case.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-special_case:checked) .edge-special_case-root {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-special_case:hover) .obligation-semantic-match-special_case {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-special_case:checked) .obligation-semantic-match-special_case {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-root:hover) a.node-root .graph-node-box,
+.report-root:has(.obligation-semantic-match-root:hover) .node-root.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-root:checked) a.node-root .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-root:checked) .node-root.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-root:checked) .edge-special_case-root {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-root:hover) .obligation-semantic-match-root {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-root:checked) .obligation-semantic-match-root {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="report-root">
+    <section>
+      <h1>Matrix determinant lemma</h1>
+      <div class="math-text">Matrix determinant lemma.
+
+Let \(A\) be an invertible \(n\times n\) matrix over \(\mathbb{R}\) (or over any commutative field), and let \(u,v\in \mathbb{R}^n\) be column vectors. Then
+\[
+\det(A+uv^{T})=\det(A)\bigl(1+v^{T}A^{-1}u\bigr).
+\]
+Equivalently, if one first proves the special case
+\[
+\det(I+uv^{T})=1+v^{T}u,
+\]
+then the general statement follows immediately by factoring
+\[
+A+uv^{T}=A\bigl(I+A^{-1}uv^{T}\bigr)=A\bigl(I+(A^{-1}u)v^{T}\bigr).
+\]
+This is the classical matrix determinant lemma for a rank-one update. It is a concrete finite-dimensional algebraic identity that frequently appears inside larger arguments in matrix analysis, numerical linear algebra, random matrix theory, optimization, and perturbation theory.</div>
+      <p class="meta">Root node: root</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 2</span>
+        <span class="pill">Edges: 1</span>
+        <span class="pill">Informal: 0</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 2</span>
+        <span class="pill">Failed: 0</span>
+      </p>
+      <div class="graph-shell">
+        
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 224" width="420" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-special_case-root" d="M 210.0 201.0 C 210.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path></g>
+        <g>
+    <a class="graph-node-link node-special_case status-formal-verified" href="#node-special_case">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="150" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="165">\(\det(I+uv^T)=1+v^Tu\)</tspan></text>
+      <text class="graph-node-id" x="210.0" y="186">special_case</text>
+    </a>
+    
+
+    <a class="graph-node-link node-root status-formal-verified" href="#node-root">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="20" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="32" r="4.6"></circle>
+      <text class="graph-node-title"><tspan x="210.0" y="47">\(\det(A+uv^T)=\det(A)(1+v^TA^{-1}u)\)</tspan></text>
+      <text class="graph-node-id" x="210.0" y="68">root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+      </div>
+      <p class="graph-caption">
+        Click a node to jump to its detail section.
+      </p>
+      <p class="graph-caption">
+        Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
+      </p>
+      <p class="graph-caption">
+        All arrows point from a claim to one of its dependencies.
+      </p>
+      <p class="graph-caption">
+        Dashed gray arrows mark refinement edges: they are still dependency edges, but they indicate that a narrower claim was carved out from a broader proof step.
+      </p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <p class="graph-caption">The following are sufficient items for a human to check to verify correctness of the proof. Hovering or checking review items highlights related nodes and edges.</p>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-semantic-match-special_case" data-obligation-id="semantic-match-special_case">
+      <label class="checklist-label" for="obligation-check-semantic-match-special_case">
+        <input id="obligation-check-semantic-match-special_case" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;special_case&#x27; (Rank-one determinant identity for the identity matrix) matches the verified Lean statement &#x27;theorem special_case_aristotle
+    (n : ℕ) (u v : Fin n → ℝ) :
+    (1 + replicateCol (Fin 1) u * replicateRow (Fin 1) v).det =
+      1 + v ⬝ᵥ u&#x27;.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> special_case_aristotle
+    (n : <span class="tok-type">ℕ</span>) (u v : Fin n → <span class="tok-type">ℝ</span>) :
+    (<span class="tok-number">1</span> + replicateCol (Fin <span class="tok-number">1</span>) u * replicateRow (Fin <span class="tok-number">1</span>) v).det =
+      <span class="tok-number">1</span> + v ⬝ᵥ u</code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-special_case">special_case</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-root" data-obligation-id="semantic-match-root">
+      <label class="checklist-label" for="obligation-check-semantic-match-root">
+        <input id="obligation-check-semantic-match-root" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;root&#x27; (Matrix determinant lemma) matches the verified Lean statement &#x27;theorem root_aristotle (n : ℕ) (A : Matrix (Fin n) (Fin n) ℝ) (u v : Fin n → ℝ)
+    (hA : IsUnit A.det) :
+    (A + vecMulVec u v).det =
+    A.det * (1 + dotProduct v (A⁻¹.mulVec u))&#x27;.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> root_aristotle (n : <span class="tok-type">ℕ</span>) (A : Matrix (Fin n) (Fin n) <span class="tok-type">ℝ</span>) (u v : Fin n → <span class="tok-type">ℝ</span>)
+    (hA : IsUnit A.det) :
+    (A + vecMulVec u v).det =
+    A.det * (<span class="tok-number">1</span> + dotProduct v (A⁻¹.mulVec u))</code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-root">root</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="nodes-grid">
+        
+    <article class="node-card node-special_case" id="node-special_case" data-node-id="special_case">
+      <h3>Rank-one determinant identity for the identity matrix</h3>
+      <p class="meta">Node id: special_case | Status: formal_verified</p>
+      <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-root">root</a></p>
+      <p class="meta">Display label: \(\det(I+uv^T)=1+v^Tu\)</p>
+      <p class="meta">Formalization priority: 1. Rationale: This is the essential finite-dimensional algebraic core. The multilinearity expansion, vanishing of repeated-u terms, and coordinate evaluation of det(...,u,...) are all concrete, non-trivial steps that Lean must verify explicitly. Once certified, the full lemma reduces to one short algebraic manipulation. Highest-yield formal island in the proof.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For column vectors \(u,v\in\mathbb{R}^n\), \[\det(I+uv^{T})=1+v^{T}u.\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Write the \(j\)-th column of \(I+uv^{T}\) as \(e_j+v_j u\). By multilinearity of the determinant in the columns, \[\det(I+uv^{T})=\det(e_1+v_1 u,\dots,e_n+v_n u)\] expands into a sum over choices of either the \(e_j\) part or the \(v_j u\) part from each column. Any term in which two or more columns contribute the \(u\) part has at least two columns proportional to \(u\), hence is linearly dependent and its determinant vanishes. The surviving terms are: (1) all columns contribute their \(e_j\) part, giving \(\det(e_1,\dots,e_n)=1\); and (2) exactly the \(j\)-th column contributes the \(u\) part, giving \(v_j\det(e_1,\dots,e_{j-1},u,e_{j+1},\dots,e_n)=v_j u_j\), since replacing the \(j\)-th column of the identity matrix by \(u\) yields determinant \(u_j\). Summing over \(j\), \[\det(I+uv^{T})=1+\sum_{j=1}^{n}v_j u_j=1+v^{T}u.\]</div>
+      
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> special_case_aristotle</p>
+        <p><strong>Coverage:</strong> full match</p><p class="meta">The Lean theorem states exactly the target node&#x27;s claim: det(I + uv^T) = 1 + v^T u for column vectors u,v ∈ ℝⁿ. Concretely: <code class="inline-code">1</code> is the n×n identity matrix, <code class="inline-code">replicateCol (Fin 1) u * replicateRow (Fin 1) v</code> encodes the rank-one outer product uv^T, and <code class="inline-code">v ⬝ᵥ u</code> is the dot product v^T u. There is no semantic gap between the Lean statement and the informal target. The prior heuristic downgraded this to &quot;concrete_sublemma / narrower local core,&quot; but that assessment appears to reflect concerns about encoding rather than mathematical content — the two statements are in exact semantic correspondence. Overriding the heuristic: this is a full_match. It certifies the main burden of the node (the determinant identity itself), so no further expansion is warranted.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> special_case_aristotle
+    (n : <span class="tok-type">ℕ</span>) (u v : Fin n → <span class="tok-type">ℝ</span>) :
+    (<span class="tok-number">1</span> + replicateCol (Fin <span class="tok-number">1</span>) u * replicateRow (Fin <span class="tok-number">1</span>) v).det =
+      <span class="tok-number">1</span> + v ⬝ᵥ u</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/special_case_worker_20260406-222601_2f421f9e.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code">/-
+  Rank-one determinant identity for the identity matrix.
+
+  For column vectors u, v ∈ <span class="tok-type">ℝ</span>ⁿ,
+    det(I + u vᵀ) = <span class="tok-number">1</span> + vᵀ u.
+
+  This is the special case A = I of the matrix determinant <span class="tok-keyword">lemma</span>.
+-/
+<span class="tok-keyword">import</span> Mathlib
+
+<span class="tok-keyword">open</span> Matrix
+
+/<span class="tok-comment">--</span>
+**Rank-one determinant identity.**
+For `u v : Fin n → <span class="tok-type">ℝ</span>`,
+`det(I + u vᵀ) = <span class="tok-number">1</span> + vᵀ u`,
+<span class="tok-keyword">where</span> `u vᵀ` is the outer product (rank-one matrix) represented as
+`replicateCol (Fin <span class="tok-number">1</span>) u * replicateRow (Fin <span class="tok-number">1</span>) v`.
+This is the special case `A = I` of the matrix determinant <span class="tok-keyword">lemma</span>.
+-/
+<span class="tok-keyword">theorem</span> special_case_aristotle
+    (n : <span class="tok-type">ℕ</span>) (u v : Fin n → <span class="tok-type">ℝ</span>) :
+    (<span class="tok-number">1</span> + replicateCol (Fin <span class="tok-number">1</span>) u * replicateRow (Fin <span class="tok-number">1</span>) v).det =
+      <span class="tok-number">1</span> + v ⬝ᵥ u :=
+  det_one_add_replicateCol_mul_replicateRow u v</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+</code></pre>
+          </details>
+        
+    </article>
+    
+
+    <article class="node-card node-root" id="node-root" data-node-id="root">
+      <h3>Matrix determinant lemma</h3>
+      <p class="meta">Node id: root | Status: formal_verified</p>
+      <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-special_case">special_case</a></p>
+      <p class="meta">Display label: \(\det(A+uv^T)=\det(A)(1+v^TA^{-1}u)\)</p>
+      <p class="meta">Formalization priority: 2. Rationale: The full matrix determinant lemma is the natural root to formalize end-to-end. Given the special case, its proof is a short chain (factoring, multiplicativity of det, substitution), but formalizing the invertibility-based factorization and applying multiplicativity in Lean carries real but manageable overhead.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \(A\) be an invertible \(n\times n\) matrix over \(\mathbb{R}\) and let \(u,v\in\mathbb{R}^n\). Then \[\det(A+uv^{T})=\det(A)\bigl(1+v^{T}A^{-1}u\bigr).\]</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Since \(A\) is invertible, factor \[A+uv^{T}=A\bigl(I+A^{-1}u\,v^{T}\bigr).\] Set \(w:=A^{-1}u\). By multiplicativity of the determinant, \[\det(A+uv^{T})=\det(A)\det(I+w v^{T}).\] Applying the rank-one identity (special_case) with \(u\mapsto w\), \[\det(I+w v^{T})=1+v^{T}w=1+v^{T}A^{-1}u.\] Hence \(\det(A+uv^{T})=\det(A)\bigl(1+v^{T}A^{-1}u\bigr)\).</div>
+      
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> root_aristotle</p>
+        <p><strong>Coverage:</strong> full match</p><p class="meta">The verified Lean theorem is a direct formalization of the full Matrix Determinant Lemma as stated in the target node. Every component matches: (1) the ambient setting is n×n real matrices over Fin n; (2) invertibility of A is captured by <code class="inline-code">IsUnit A.det</code>, which is the standard Lean/Mathlib encoding of matrix invertibility; (3) <code class="inline-code">vecMulVec u v</code> is precisely the outer product uv^T; (4) <code class="inline-code">A⁻¹.mulVec u</code> is A^{-1}u; (5) <code class="inline-code">dotProduct v (A⁻¹.mulVec u)</code> is v^T A^{-1} u; and (6) the conclusion <code class="inline-code">(A + vecMulVec u v).det = A.det * (1 + dotProduct v (A⁻¹.mulVec u))</code> is exactly det(A + uv^T) = det(A)(1 + v^T A^{-1} u). The prior heuristic classification as <code class="inline-code">concrete_sublemma</code> is overridden: there is no narrowing or restriction here — this is the complete theorem statement faithfully encoded. No expansion is needed.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> root_aristotle (n : <span class="tok-type">ℕ</span>) (A : Matrix (Fin n) (Fin n) <span class="tok-type">ℝ</span>) (u v : Fin n → <span class="tok-type">ℝ</span>)
+    (hA : IsUnit A.det) :
+    (A + vecMulVec u v).det =
+    A.det * (<span class="tok-number">1</span> + dotProduct v (A⁻¹.mulVec u))</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean /Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/root_worker_20260406-222601_4a357947.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+/-!
+# Matrix Determinant Lemma
+
+The **matrix determinant <span class="tok-keyword">lemma</span>** states that for an invertible n×n matrix `A` over <span class="tok-type">ℝ</span>
+and column vectors `u, v ∈ <span class="tok-type">ℝ</span>ⁿ`:
+
+  det(A + u vᵀ) = det(A) · (<span class="tok-number">1</span> + vᵀ A⁻¹ u)
+
+The outer product `u vᵀ` is expressed as `vecMulVec u v`, and the inner product
+`vᵀ A⁻¹ u` is `dotProduct v (A⁻¹.mulVec u)`.
+
+## Proof sketch
+
+Since `A` is invertible, factor `A + u vᵀ = A (I + (A⁻¹ u) vᵀ)`.
+Set `w := A⁻¹ u`. By multiplicativity of the determinant,
+`det(A + u vᵀ) = det(A) · det(I + w vᵀ)`.
+Using `det_one_add_mul_comm` (which gives `det(I + col w · row v) = det(I + row v · col w)`),
+the rank-one identity reduces `det(I + w vᵀ) = <span class="tok-number">1</span> + vᵀ w = <span class="tok-number">1</span> + vᵀ A⁻¹ u`,
+and the result follows.
+-/
+
+<span class="tok-keyword">open</span> Matrix
+
+/<span class="tok-comment">-- **Matrix determinant lemma**: For an invertible n×n real matrix `A` and vectors `u, v`,</span>
+`det(A + u vᵀ) = det(A) · (<span class="tok-number">1</span> + vᵀ A⁻¹ u)`. -/
+<span class="tok-keyword">theorem</span> root_aristotle (n : <span class="tok-type">ℕ</span>) (A : Matrix (Fin n) (Fin n) <span class="tok-type">ℝ</span>) (u v : Fin n → <span class="tok-type">ℝ</span>)
+    (hA : IsUnit A.det) :
+    (A + vecMulVec u v).det =
+    A.det * (<span class="tok-number">1</span> + dotProduct v (A⁻¹.mulVec u)) := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Factor A + uvᵀ = A * (I + (A⁻¹u)vᵀ).</span>
+  <span class="tok-tactic">have</span> h_factor : A + vecMulVec u v = A * (<span class="tok-number">1</span> + vecMulVec (A⁻¹.mulVec u) v) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">norm_num</span> [Matrix.mul_add, mul_vecMulVec]
+    simp_all +decide
+  simp_all +decide [Matrix.vecMulVec]
+  <span class="tok-comment">-- Let w = A⁻¹u.</span>
+  set w := A⁻¹.mulVec u
+  <span class="tok-comment">-- Rewrite 1 + wvᵀ as 1 + M * N where M is n×1 and N is 1×n.</span>
+  set M : Matrix (Fin n) (Fin <span class="tok-number">1</span>) <span class="tok-type">ℝ</span> := <span class="tok-keyword">fun</span> i _ =&gt; w i
+  set N : Matrix (Fin <span class="tok-number">1</span>) (Fin n) <span class="tok-type">ℝ</span> := <span class="tok-keyword">fun</span> _ j =&gt; v j
+  <span class="tok-tactic">have</span> hMN : <span class="tok-number">1</span> + of (<span class="tok-keyword">fun</span> x y =&gt; w x * v y) = <span class="tok-number">1</span> + M * N := <span class="tok-tactic">by</span>
+    ext i j; <span class="tok-tactic">simp</span> +decide [Matrix.mul_apply]; rfl
+  <span class="tok-tactic">rw</span> [hMN, Matrix.det_one_add_mul_comm]
+  <span class="tok-tactic">norm_num</span> [dotProduct, mul_comm]
+  rfl</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+</code></pre>
+          </details>
+        
+    </article>
+    
+      </div>
+    </section>
+  </main>
+</body>
+</html>

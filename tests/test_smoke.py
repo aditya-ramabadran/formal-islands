@@ -497,9 +497,10 @@ def test_build_backend_allows_formalization_timeout_override(tmp_path: Path) -> 
 def test_default_output_dir_for_input_uses_manual_testing_slug() -> None:
     path = Path("examples/manual-testing/run11_two_point_log_sobolev.json")
 
-    assert default_output_dir_for_input(path) == Path(
-        "artifacts/manual-testing/run11-two-point-log-sobolev"
-    )
+    result = default_output_dir_for_input(path)
+    assert result.parts[0] == "artifacts"
+    assert result.parts[1] == "manual-testing"
+    assert result.parts[2].startswith("run11-two-point-log-sobolev-")
 
 
 def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
@@ -571,8 +572,13 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
 
     exit_code = cmd_run_benchmark(
         Namespace(
+            backends=None,
             backend="codex",
             model=None,
+            planning_backend=None,
+            planning_model=None,
+            formalization_backend=None,
+            formalization_model=None,
             input=str(input_path),
             output_dir=None,
             workspace="lean_project",
@@ -583,15 +589,19 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
         )
     )
 
-    expected_output_dir = Path("artifacts/manual-testing/run11-two-point-log-sobolev")
     assert exit_code == 0
-    assert calls == [
-        ("plan", str(expected_output_dir)),
-        ("formalize", str(expected_output_dir)),
-        ("report", str(expected_output_dir)),
-    ]
+    assert len(calls) == 3
+    assert calls[0][0] == "plan"
+    assert calls[1][0] == "formalize"
+    assert calls[2][0] == "report"
+    output_dir_used = calls[0][1]
+    assert Path(output_dir_used).parts[:2] == ("artifacts", "manual-testing")
+    assert Path(output_dir_used).name.startswith("run11-two-point-log-sobolev-")
+    # all three stages share the same output dir
+    assert calls[1][1] == output_dir_used
+    assert calls[2][1] == output_dir_used
     assert seen_timeout == [900.0]
-    progress_log = expected_output_dir / "_progress.log"
+    progress_log = Path(output_dir_used) / "_progress.log"
     assert progress_log.exists()
     log_text = progress_log.read_text(encoding="utf-8")
     assert "running benchmark end-to-end" in log_text

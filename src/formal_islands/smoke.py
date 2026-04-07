@@ -1,9 +1,12 @@
-"""Small smoke-test CLI for the current prototype pipeline."""
+"""Formal Islands CLI."""
 
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
+import re
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -64,7 +67,7 @@ def _log_dependency_direction_warnings(graph: ProofGraph, *, context: str) -> No
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Run the smoke-test CLI."""
+    """Run the Formal Islands CLI."""
 
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -77,7 +80,7 @@ def main(argv: list[str] | None = None) -> int:
 def build_parser() -> argparse.ArgumentParser:
     """Construct the CLI parser."""
 
-    parser = argparse.ArgumentParser(prog="formal-islands-smoke")
+    parser = argparse.ArgumentParser(prog="formal-islands")
     subparsers = parser.add_subparsers(dest="command")
 
     extract_parser = subparsers.add_parser("extract")
@@ -190,65 +193,93 @@ def build_parser() -> argparse.ArgumentParser:
     add_formalization_timeout_arg(run_parser)
     run_parser.set_defaults(func=cmd_run_example)
 
-    benchmark_parser = subparsers.add_parser("run-benchmark")
-    add_backend_args(benchmark_parser)
-    add_input_args(benchmark_parser)
-    benchmark_parser.add_argument(
-        "--output-dir",
-        default=None,
-        help=(
-            "Directory where outputs should be written. Default: "
-            "artifacts/manual-testing/<input-stem-with-hyphens>"
-        ),
-    )
-    benchmark_parser.add_argument(
+    for cmd_name in ("run-benchmark", "run"):
+        bp = subparsers.add_parser(
+            cmd_name,
+            help="Plan and formalize a theorem end-to-end." if cmd_name == "run" else argparse.SUPPRESS,
+        )
+        add_backend_args(bp)
+        add_input_args(bp)
+        bp.add_argument(
+            "--output-dir",
+            default=None,
+            help=(
+                "Directory where outputs should be written. "
+                "Default: auto-derived from input filename, backends, and timestamp."
+            ),
+        )
+        bp.add_argument(
+            "--workspace",
+            default=None,
+            help=(
+                "Path to the local Lean workspace. "
+                "Default: auto-discovered lean_project/ relative to the repo root."
+            ),
+        )
+        bp.add_argument(
+            "--node-id",
+            default="auto",
+            help=(
+                "Candidate node id to formalize. Default 'auto': formalize all candidates in priority order. "
+                "Pass a specific node id to formalize only that one node."
+            ),
+        )
+        bp.add_argument(
+            "--max-attempts",
+            type=int,
+            default=DEFAULT_FORMALIZATION_ATTEMPTS,
+            help=(
+                f"Maximum number of bounded formalization attempts per node. Default: {DEFAULT_FORMALIZATION_ATTEMPTS}."
+            ),
+        )
+        bp.add_argument(
+            "--formalization-mode",
+            choices=["agentic"],
+            default="agentic",
+            help="Formalization execution mode. Agentic is the only supported option.",
+        )
+        add_formalization_timeout_arg(bp)
+        bp.set_defaults(func=cmd_run_benchmark)
+
+    new_parser = subparsers.add_parser("new", help="Interactively enter a theorem and run the pipeline.")
+    add_backend_args(new_parser)
+    new_parser.add_argument(
         "--workspace",
-        default="lean_project",
-        help="Path to the local Lean workspace.",
+        default=None,
+        help="Path to the local Lean workspace. Default: auto-discovered.",
     )
-    benchmark_parser.add_argument(
-        "--node-id",
-        default="auto",
-        help=(
-            "Candidate node id to formalize. Default 'auto': formalize all candidates in priority order. "
-            "Pass a specific node id to formalize only that one node."
-        ),
-    )
-    benchmark_parser.add_argument(
+    new_parser.add_argument(
         "--max-attempts",
         type=int,
         default=DEFAULT_FORMALIZATION_ATTEMPTS,
-        help=(
-            "Maximum number of bounded formalization attempts. Default: "
-            f"{DEFAULT_FORMALIZATION_ATTEMPTS}."
-        ),
+        help=f"Maximum number of formalization attempts. Default: {DEFAULT_FORMALIZATION_ATTEMPTS}.",
     )
-    benchmark_parser.add_argument(
-        "--formalization-mode",
-        choices=["agentic"],
-        default="agentic",
-        help="Formalization execution mode. Agentic is the only supported option.",
-    )
-    add_formalization_timeout_arg(benchmark_parser)
-    benchmark_parser.set_defaults(func=cmd_run_benchmark)
+    add_formalization_timeout_arg(new_parser)
+    new_parser.set_defaults(func=cmd_new)
 
     return parser
 
 
 def add_backend_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
+        "--backends",
+        default=None,
+        metavar="PLANNING/FORMALIZATION",
+        help=(
+            "Shorthand for both backends as 'planning/formalization' (e.g. gemini/aristotle). "
+            "A single name (e.g. claude) uses that backend for both stages."
+        ),
+    )
+    parser.add_argument(
         "--backend",
         choices=["codex", "claude", "gemini"],
         default=None,
-        help=(
-            "Legacy shorthand for the planning backend, and for the formalization backend when the "
-            "split backend flags are not supplied."
-        ),
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--model",
         default=None,
-        help="Legacy shorthand for both planning and formalization model overrides.",
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--planning-backend",
@@ -278,7 +309,11 @@ def add_input_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--input",
         default="examples/nonnegative_sum_input.json",
-        help="JSON file with theorem_title, theorem_statement, and raw_proof_text.",
+        help=(
+            "JSON file with theorem_title, theorem_statement, and raw_proof_text. "
+            "Bare filenames (without path separators) are searched in examples/featured/ "
+            "and examples/manual-testing/ automatically."
+        ),
     )
 
 
@@ -653,14 +688,18 @@ def cmd_run_example(args: argparse.Namespace) -> int:
 def cmd_run_benchmark(args: argparse.Namespace) -> int:
     input_path = Path(args.input)
     output_dir = ensure_output_dir(
-        Path(args.output_dir) if args.output_dir is not None else default_output_dir_for_input(input_path)
+        Path(args.output_dir)
+        if args.output_dir is not None
+        else default_output_dir_for_input(input_path, args)
     )
+    workspace = _resolve_workspace(getattr(args, "workspace", None))
     with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
         try:
             progress("running benchmark end-to-end")
             progress("benchmark planning stage starting")
             cmd_plan(
                 argparse.Namespace(
+                    backends=getattr(args, "backends", None),
                     backend=getattr(args, "backend", None),
                     model=getattr(args, "model", None),
                     planning_backend=getattr(args, "planning_backend", None),
@@ -675,6 +714,7 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
             formalization_backend_name = resolve_backend_name(args, formalization=True)
             formalization_timeout = resolve_formalization_timeout(args, formalization_backend_name)
             common = argparse.Namespace(
+                backends=getattr(args, "backends", None),
                 backend=getattr(args, "backend", None),
                 model=getattr(args, "model", None),
                 planning_backend=getattr(args, "planning_backend", None),
@@ -683,7 +723,7 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
                 formalization_model=getattr(args, "formalization_model", None),
                 graph=str(candidate_graph_path),
                 output_dir=str(output_dir),
-                workspace=args.workspace,
+                workspace=workspace,
                 max_attempts=args.max_attempts,
                 formalization_mode=args.formalization_mode,
                 formalization_timeout_seconds=formalization_timeout,
@@ -702,6 +742,7 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
                 argparse.Namespace(
                     graph=str(formalized_graph_path),
                     output_dir=str(output_dir),
+                    backends=getattr(args, "backends", None),
                     backend=getattr(args, "backend", None),
                     model=getattr(args, "model", None),
                     planning_backend=getattr(args, "planning_backend", None),
@@ -713,6 +754,88 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
         finally:
             _cleanup_archive_artifacts(output_dir)
     return 0
+
+
+def cmd_new(args: argparse.Namespace) -> int:
+    """Interactively prompt for a theorem and run the full pipeline."""
+
+    print("=== Formal Islands — New Theorem ===")
+    print()
+    try:
+        theorem_title = input("Theorem title: ").strip()
+    except EOFError:
+        print("error: interactive input not available", file=sys.stderr)
+        return 1
+    if not theorem_title:
+        print("error: theorem title is required", file=sys.stderr)
+        return 1
+
+    print("Theorem statement (empty line to finish):")
+    statement_lines: list[str] = []
+    while True:
+        try:
+            line = input()
+        except EOFError:
+            break
+        if line == "":
+            break
+        statement_lines.append(line)
+    theorem_statement = "\n".join(statement_lines).strip()
+    if not theorem_statement:
+        print("error: theorem statement is required", file=sys.stderr)
+        return 1
+
+    print("Proof sketch (empty line to finish):")
+    proof_lines: list[str] = []
+    while True:
+        try:
+            line = input()
+        except EOFError:
+            break
+        if line == "":
+            break
+        proof_lines.append(line)
+    raw_proof_text = "\n".join(proof_lines).strip()
+    if not raw_proof_text:
+        print("error: proof sketch is required", file=sys.stderr)
+        return 1
+
+    slug = re.sub(r"[^a-z0-9]+", "_", theorem_title.lower()).strip("_")[:40]
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    run_dir = Path("artifacts/manual-testing") / f"{slug}-{timestamp}"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    input_path = run_dir / "input.json"
+    input_path.write_text(
+        json.dumps(
+            {
+                "theorem_title": theorem_title,
+                "theorem_statement": theorem_statement,
+                "raw_proof_text": raw_proof_text,
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    progress(f"wrote input to {input_path}")
+
+    run_args = argparse.Namespace(
+        backends=getattr(args, "backends", None),
+        backend=getattr(args, "backend", None),
+        model=getattr(args, "model", None),
+        planning_backend=getattr(args, "planning_backend", None),
+        planning_model=getattr(args, "planning_model", None),
+        formalization_backend=getattr(args, "formalization_backend", None),
+        formalization_model=getattr(args, "formalization_model", None),
+        input=str(input_path),
+        output_dir=str(run_dir),
+        workspace=getattr(args, "workspace", None),
+        node_id="auto",
+        max_attempts=args.max_attempts,
+        formalization_mode="agentic",
+        formalization_timeout_seconds=getattr(args, "formalization_timeout_seconds", None),
+    )
+    return cmd_run_benchmark(run_args)
 
 
 def build_backend(
@@ -742,6 +865,13 @@ def build_backend(
 
 
 def resolve_backend_name(args: argparse.Namespace, *, formalization: bool) -> str:
+    backends_shorthand = getattr(args, "backends", None)
+    if backends_shorthand is not None:
+        parts = backends_shorthand.split("/", 1)
+        if len(parts) == 2:
+            return parts[1].strip() if formalization else parts[0].strip()
+        return parts[0].strip()
+
     explicit_name = getattr(
         args,
         "formalization_backend" if formalization else "planning_backend",
@@ -829,14 +959,54 @@ def _backend_failure_outcome(*, graph: ProofGraph, node_id: str, error: BackendE
     return FormalizationOutcome(graph=updated_graph, node_id=node_id, artifact=artifact)
 
 
+def _resolve_input_path(path: Path) -> Path | None:
+    """Resolve an input path, searching featured/ and manual-testing/ for bare filenames."""
+    if path.exists():
+        return path
+    # For bare filenames (no directory separators), search example dirs.
+    if path.parent == Path("."):
+        name = path.name if path.suffix else path.name + ".json"
+        for search_dir in (
+            Path("examples/featured"),
+            Path("examples/manual-testing"),
+        ):
+            candidate = search_dir / name
+            if candidate.exists():
+                return candidate
+    return None
+
+
+def _discover_workspace() -> Path | None:
+    """Walk up from cwd looking for a lean_project/ directory with a lakefile."""
+    for directory in [Path.cwd(), *Path.cwd().parents]:
+        candidate = directory / "lean_project"
+        if candidate.is_dir() and (
+            (candidate / "lakefile.lean").exists()
+            or (candidate / "lakefile.toml").exists()
+        ):
+            return candidate
+    return None
+
+
+def _resolve_workspace(workspace_arg: str | None) -> str:
+    """Resolve the Lean workspace path, auto-discovering if not specified."""
+    if workspace_arg is not None:
+        return workspace_arg
+    discovered = _discover_workspace()
+    if discovered is not None:
+        return str(discovered)
+    return "lean_project"
+
+
 def load_input_payload(path: Path) -> dict[str, Any]:
     """Load theorem input JSON, falling back to the default example if absent."""
 
-    if not path.exists():
+    resolved = _resolve_input_path(path)
+    if resolved is None:
         if path == Path("examples/nonnegative_sum_input.json"):
             return DEFAULT_EXAMPLE_INPUT.copy()
         raise FileNotFoundError(path)
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = json.loads(resolved.read_text(encoding="utf-8"))
     required_keys = {"theorem_statement", "raw_proof_text"}
     missing = sorted(required_keys - set(payload))
     if missing:
@@ -865,10 +1035,16 @@ def ensure_output_dir(path: Path) -> Path:
     return path
 
 
-def default_output_dir_for_input(path: Path) -> Path:
+def default_output_dir_for_input(path: Path, args: argparse.Namespace | None = None) -> Path:
     """Derive a sensible artifact directory from an input JSON path."""
 
-    return Path("artifacts/manual-testing") / path.stem.replace("_", "-")
+    stem = path.stem.replace("_", "-")
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    if args is not None:
+        planning = resolve_backend_name(args, formalization=False)
+        formalization = resolve_backend_name(args, formalization=True)
+        return Path("artifacts/manual-testing") / f"{stem}-{planning}-{formalization}-{timestamp}"
+    return Path("artifacts/manual-testing") / f"{stem}-{timestamp}"
 
 
 def select_candidate_node_id(graph: ProofGraph, requested_node_id: str = "auto") -> str:

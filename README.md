@@ -1,353 +1,175 @@
 # Formal Islands
 
-Formal Islands is a prototype for turning a natural-language theorem proof into a **small proof graph with local Lean-certified islands**.
+**Certified local cores inside natural-language mathematical proofs.**
 
-The goal is not end-to-end autoformalization. The goal is to produce an honest mixed artifact:
-- a readable informal proof graph
-- one or more local Lean-verified nodes when possible
-- a report that shows exactly what was certified and what still needs human review
+Most proofs are written informally. Full formalization in Lean is powerful but expensive — often months of infrastructure work for a single theorem. Formal Islands targets the middle ground: given a theorem and an informal proof, the pipeline finds the steps that are concrete enough to certify *now*, verifies them in Lean, and produces an honest report that shows exactly what was certified and what still needs human review.
 
-This is especially useful for analysis, PDE, and variational arguments where:
-- the global proof is too large or infrastructure-heavy to formalize end to end
-- but some local steps are concrete enough to formalize today
+A **formal island** is a proof node that has been independently verified in Lean — certified in isolation, without requiring the surrounding proof to be formalized first.
 
-## What The System Does
+## Featured Examples
 
-Given:
-- a theorem title
-- a theorem statement
-- a raw informal proof
+Live reports on [GitHub Pages](https://aditya-ramabadran.github.io/formal-islands/):
 
-the current pipeline:
-1. plans a small theorem-level proof graph
-2. marks candidate nodes for formalization
-3. runs one or more candidate formalization attempts with an agentic backend worker
-4. verifies the resulting Lean files locally
-5. produces an HTML report and JSON artifacts
+| Theorem | Verified |
+|---|---|
+| [Two-Point Log-Sobolev Inequality](https://aditya-ramabadran.github.io/formal-islands/reports/two_point_log_sobolev.html) | Scalar inequality + G(u) ≥ 0 core lemma |
+| [Heat Equation Uniqueness](https://aditya-ramabadran.github.io/formal-islands/reports/heat_uniqueness.html) | Energy dissipation lemma + uniqueness core |
+| [Matrix Determinant Lemma](https://aditya-ramabadran.github.io/formal-islands/reports/matrix_determinant_lemma.html) | Both nodes — full formal closure |
+| [Hoeffding's Lemma](https://aditya-ramabadran.github.io/formal-islands/reports/hoeffding_lemma.html) | Convexity bound + log-MGF bound |
 
-The system can distinguish between:
-- full-node formalization
-- a narrower but still concrete certified local core
-- blatant abstraction drift, which is rejected immediately
-- borderline cases, which are reviewed semantically by the planning backend before a final verdict is made
+## Quick Start
 
-The proof graph uses a single canonical dependency direction: `A -> B` means `A` depends on `B`. Ordinary dependency edges are left unlabeled; only special labels like refinement or certified supporting sublemmas are kept.
+```bash
+git clone https://github.com/aditya-ramabadran/formal-islands.git
+cd formal-islands
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[dev]'
+```
 
-## Repository Layout
+Run on your own theorem interactively:
 
-- `/Users/adihaya/GitHub/formal-islands/src/formal_islands`
-  Main Python package.
-- `/Users/adihaya/GitHub/formal-islands/examples/manual-testing`
-  Benchmark inputs.
-- `/Users/adihaya/GitHub/formal-islands/artifacts/manual-testing`
-  Saved benchmark outputs.
-- `/Users/adihaya/GitHub/formal-islands/lean_project`
-  Local Lean/Mathlib workspace used for verification.
-- `/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated`
-  Timestamped worker files, plan files, and scratch artifacts.
+```bash
+formal-islands new --backends claude/aristotle
+```
+
+Or run against a featured example:
+
+```bash
+formal-islands run two_point_log_sobolev --backends claude/aristotle --max-attempts 4
+```
+
+The workspace path and output directory are inferred automatically.
+
+## How It Works
+
+1. **Plan** — a planning backend reads the informal proof and builds a small proof graph (4–8 nodes)
+2. **Select** — candidate nodes for formalization are ranked by how concrete and self-contained they are
+3. **Formalize** — an agentic backend worker attempts to write and verify a Lean theorem for each candidate
+4. **Report** — the pipeline produces an HTML report and JSON artifacts with full verification logs
+
+The report shows exactly what was certified (with Lean code), what failed, and what was never attempted. It includes a review checklist summarizing the gap between the informal proof and the verified fragments.
+
+When all direct children of an informal parent node have been verified, the parent can be promoted into the candidate set for a follow-up assembly attempt — so a successful local core can bootstrap further verification automatically.
 
 ## Setup
 
-Create the virtualenv and install the package:
+### Python package
 
 ```bash
 python3 -m venv .venv
-./.venv/bin/python -m pip install -e '.[dev]'
+.venv/bin/python -m pip install -e '.[dev]'
 ```
 
-Set up the Lean workspace:
+### Lean workspace
 
 ```bash
-cd /Users/adihaya/GitHub/formal-islands/lean_project
+cd lean_project
 lake update
 lake exe cache get
 lake build
-cd /Users/adihaya/GitHub/formal-islands
+cd ..
 ```
 
-Install and authenticate Codex CLI separately:
+This takes a while the first time (Mathlib build cache download). After that, verification runs are fast.
+
+## Backends
+
+The pipeline uses two separate backends: one for **planning** (proof graph construction, semantic review) and one for **formalization** (Lean code generation and repair). These can be the same or different.
+
+**Preferred combination:** `--backends claude/aristotle` or `--backends gemini/aristotle`. Using a strong planning backend alongside Aristotle for formalization gives the best results in practice.
+
+### Claude Code (`--planning-backend claude`)
 
 ```bash
-codex --version
-codex
+npm install -g @anthropic-ai/claude-code
+claude                          # follow the interactive auth flow
+# or: export ANTHROPIC_API_KEY=...
 ```
 
-You should either:
-- sign in interactively through Codex
-- or configure an API key for your environment
-
-Quick auth check:
+### Gemini (`--planning-backend gemini`)
 
 ```bash
-test -f "${CODEX_HOME:-$HOME/.codex}/auth.json" && echo AUTH_OK || echo AUTH_MISSING
+npm install -g @google/gemini-cli
+gemini                          # follow the interactive auth flow
+# or: export GEMINI_API_KEY=...
 ```
 
-## Input Format
-
-Each input is a JSON file with:
-
-```json
-{
-  "theorem_title": "Example theorem",
-  "theorem_statement": "Full theorem statement...",
-  "raw_proof_text": "Raw informal proof..."
-}
-```
-
-Example files live in:
-- `/Users/adihaya/GitHub/formal-islands/examples/manual-testing`
-
-## Fastest Way To Run A Benchmark
-
-The easiest way to run a new benchmark is the new one-command wrapper:
+### Codex (`--planning-backend codex`)
 
 ```bash
-./.venv/bin/formal-islands-smoke run-benchmark \
-  --backend codex \
-  --input /Users/adihaya/GitHub/formal-islands/examples/manual-testing/run11_two_point_log_sobolev.json
+npm install -g @openai/codex
+codex                           # follow the interactive auth flow
+# or: export OPENAI_API_KEY=...
 ```
 
-By default, this writes outputs to:
+### Aristotle (`--formalization-backend aristotle`)
+
+Installed automatically via pip as part of `aristotlelib`. Requires an API key:
 
 ```bash
-/Users/adihaya/GitHub/formal-islands/artifacts/manual-testing/run11-two-point-log-sobolev
+export ARISTOTLE_API_KEY=...
 ```
 
-You can override the output directory explicitly:
+Aristotle is the only supported formalization backend. Planning backends (claude, gemini, codex) do not support formalization.
+
+## All CLI Flags
+
+### `formal-islands run`
+
+Run the full pipeline (plan → formalize → report) on an input file.
+
+```
+formal-islands run <input> [options]
+```
+
+`<input>` can be:
+- A bare filename like `two_point_log_sobolev` — searched in `examples/featured/` then `examples/manual-testing/` automatically
+- A path to any JSON file with `theorem_title`, `theorem_statement`, and `raw_proof_text`
+
+| Flag | Default | Description |
+|---|---|---|
+| `--backends PLANNING/FORMALIZATION` | — | Shorthand, e.g. `gemini/aristotle` or `claude` for both |
+| `--planning-backend` | `codex` | Backend for planning/extraction stages |
+| `--formalization-backend` | `codex` | Backend for formalization; `aristotle` recommended |
+| `--max-attempts N` | `2` | Formalization attempts per node; `4` gives stronger results |
+| `--output-dir PATH` | auto | Auto-derived from input name + backends + timestamp |
+| `--workspace PATH` | auto | Auto-discovered `lean_project/` from repo root |
+| `--node-id ID` | `auto` | Formalize only this node; default formalizes all candidates |
+| `--formalization-timeout-seconds N` | none (Aristotle) | Timeout for the formalization worker |
+
+### `formal-islands new`
+
+Interactive entry point — no input file needed.
+
+```
+formal-islands new --backends claude/aristotle
+```
+
+Prompts for theorem title, statement, and proof sketch, then runs the full pipeline.
+
+### Stage commands
+
+For running individual stages:
 
 ```bash
-./.venv/bin/formal-islands-smoke run-benchmark \
-  --backend codex \
-  --input /Users/adihaya/GitHub/formal-islands/examples/manual-testing/run11_two_point_log_sobolev.json \
-  --output-dir /Users/adihaya/GitHub/formal-islands/artifacts/manual-testing/my-custom-run
+formal-islands plan --input <file> --output-dir <dir> --planning-backend claude
+formal-islands formalize-one --graph <file> --output-dir <dir> --formalization-backend aristotle
+formal-islands report --graph <file> --output-dir <dir> --planning-backend claude
 ```
 
-Useful options:
-
-```bash
---workspace lean_project
---node-id auto
---formalization-mode agentic
---max-attempts 2
---formalization-timeout-seconds 900
---model gpt-5.4
-```
-
-Formalization mode is agentic-only in the CLI. The older structured repair-loop mode is deprecated and no longer exposed as a user-facing option.
-
-You can also split planning and formalization backends:
-
-```bash
-./.venv/bin/formal-islands-smoke run-benchmark \
-  --planning-backend claude \
-  --formalization-backend aristotle \
-  --input /Users/adihaya/GitHub/formal-islands/examples/manual-testing/run11_two_point_log_sobolev.json \
-  --output-dir /Users/adihaya/GitHub/formal-islands/artifacts/manual-testing/run11-two-point-log-sobolev
-```
-
-When `--node-id auto` is used, `run-benchmark` formalizes candidate nodes in priority order and can continue to later candidates after an early success. Use `formalize-one` only if you want exactly one node attempt.
-
-## Stage Commands
-
-If you want to run the stages manually, the CLI also supports:
-
-```bash
-./.venv/bin/formal-islands-smoke plan ...
-./.venv/bin/formal-islands-smoke formalize-one ...
-./.venv/bin/formal-islands-smoke report ...
-```
-
-There is also an older convenience command:
-
-```bash
-./.venv/bin/formal-islands-smoke run-example ...
-```
-
-but `run-benchmark` is the cleaner default for manual theorem/proof JSON inputs.
-
-## Output Files
-
-A normal benchmark run writes:
-
-- `01_extracted_graph.json`
-  The planned informal graph before formalization writeback.
-- `02_candidate_graph.json`
-  The graph with candidate nodes marked.
-- `03_formalized_graph.json`
-  The graph after a formalization attempt.
-- `03_formalization_summary.json`
-  Short summary of the chosen node’s formalization outcome.
-- `04_report_bundle.json`
-  JSON bundle used by the report.
-- `04_report.html`
-  Human-readable HTML report.
-- `_progress.log`
-  Shared run progress log in the output directory. It is append-only, so rerunning later stages like report generation will add to the existing file instead of replacing it. When the graph is generated or materially updated, the log also gets a compact node/edge preview. Planning-backend semantic assessments, parent-promotion assessments, report-stage remaining-proof-burden syntheses, and Aristotle summary markdown files are appended there too.
-  The log also warns if the loaded or planned graph contains an incoming dependency edge into the root theorem, since that usually signals a direction reversal in the extracted proof graph.
-- `_backend_logs/*.json`
-  Logged backend requests/responses, timings, and raw CLI output.
-
-Supported backends:
-- `codex`
-  Uses the local `codex` CLI for structured planning and one-shot agentic formalization.
-- `claude`
-  Uses the local Claude Code CLI for structured planning and one-shot agentic formalization.
-- `gemini`
-  Uses the local Gemini CLI for structured planning and one-shot agentic formalization.
-- `aristotle`
-  Uses Harmonic's Aristotle Python SDK for formalization only. Set `ARISTOTLE_API_KEY` in your environment before using it. Planning still uses the usual local CLI backends. Aristotle runs without a default timeout unless you explicitly pass one.
-
-External Mathlib search helper:
-
-```bash
-./.venv/bin/formal-islands-search --query "Real.log, Real.sqrt" --provider loogle
-```
-
-Use this for highly targeted theorem-shape lookups outside Lean.
-The formalization prompts mention this helper so the agentic worker can use it if needed, but the main pipeline no longer precomputes and injects search bundles by default. The worker is still told to keep any self-directed follow-up search to at most two highly targeted queries.
-
-Agentic formalization also writes into:
-
-- `/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated`
-
-including:
-- timestamped worker files like `<node>_worker_<timestamp>_<suffix>.lean`
-- timestamped plan files like `<node>_worker_<timestamp>_<suffix>_plan.md`
-
-The smoke CLI accepts split backend flags:
-
-- `--planning-backend` for extraction / planning
-- `--formalization-backend` for the formalization worker
-
-If you omit them, the legacy `--backend` flag still acts as the shared default for both stages.
-
-## Reports
-
-The HTML report includes:
-- theorem and graph summary
-- clickable node graph
-- review checklist
-- node-by-node informal statements and proofs
-- Lean code and verification logs when available
-
-The report supports:
-- MathJax-rendered math
-- syntax-highlighted Lean code
-- automatic light/dark mode
-- dashed gray refinement edges for nearby nodes, while every arrow still means a proof dependency
-- result labels that distinguish faithful cores, downstream consequences, dimensional analogues, and other narrower outcomes
-- a report-stage "Remaining proof burden" section on any still-unverified node that has verified children, with the verified child ids linked in the section title
-
-## Current Formalization Behavior
-
-The current default formalization mode is:
-- `agentic`
-
-That means the selected agentic backend gets one bounded full-auto run to:
-- inspect the local Lean workspace
-- write a plan markdown file
-- edit a single Lean scratch file
-- run `lake env lean`
-- revise the same file
-
-The prompt now also includes a lightweight coverage sketch for the target node, so the worker can see which local subclaims the node is really made of.
-
-The formalization prompt also splits nearby nodes into:
-- verified supporting lemmas already certified in this run, which may be relied on as established facts
-- verified direct child lemmas, which are the target node's own already-certified children and are included explicitly as usable context
-- context-only sibling ingredients, which are only there for orientation and should not be assumed
-
-After a formalization verifies, the pipeline asks the planning backend for a combined semantic review of the Lean theorem against the target node. That review can classify the result as a full match, a faithful core, a downstream consequence, a dimensional analogue, or a helper shard, and it controls whether coverage expansion should run.
-
-If every direct child of an informal parent has already verified, the formalization loop may also ask the planning backend whether that parent should now be promoted to `candidate_formal`. This parent-assembly promotion is late and planner-gated: the children have to be done first, the planner has to say the remaining burden is now cheap enough, and then the parent can enter the normal dynamic discovery queue on a later pass.
-
-For Aristotle runs, these follow-up decisions are cached per parent/child snapshot so the same eligible parent is not re-asked repeatedly in the same run unless the child set changes.
-
-At the end of a run, the report stage can also synthesize a short "Remaining proof burden" paragraph for any still-unverified node that has at least one verified direct child. That paragraph is planner-generated, report-only, and describes the delta between the informal proof and the already certified children. The HTML report renders it directly under the node's informal proof, and the section title lists the verified child node ids as links.
-
-The agentic prompt also explicitly reminds the worker where Mathlib lives in this workspace:
-- `.lake/packages/mathlib/Mathlib`
-- not `lean_project/mathlib/Mathlib`
-
-The worker is told to rely on the local `formal-islands-search` helper only if it truly needs extra retrieval, and to commit to a theorem shape sooner rather than wandering through broad library scouting.
-
-The refined-local-claim path is now fallback-driven rather than eager:
-- the loop first tries the best whole node
-- only after a meaningful failure does it consider a smaller subclaim from that same source node
-- trivial substitution-only claims and bare point evaluations are filtered out
-
-Aristotle submissions use a pruned Lean snapshot rather than the entire workspace tree:
-- the committed Lean project skeleton
-- the active scratch file
-- no `.lake` build tree
-- no `Generated` backlog from earlier runs
-- no `test_*.lean` scratch files
-
-The Aristotle prompt uses the same local-proof split in plain text. Verified supporting lemmas are listed with their theorem names and Lean statements when available; the generated Lean code for those lemmas is not auto-imported into the Aristotle snapshot.
-
-The Aristotle prompt itself is plain text, not a bundle of generated Lean source files. It includes:
-- the ambient theorem statement as context only
-- the target node's informal statement and informal proof text
-- a local proof neighborhood split into:
-  - verified supporting lemmas already certified in this run
-  - context-only sibling ingredients in the same proof neighborhood
-
-Verified supporting lemmas are given as text summaries with their Lean theorem name and Lean statement when available. They are treated as established facts for proof planning, but their generated Lean code is not auto-imported into the Aristotle snapshot.
-If Aristotle returns an `ARISTOTLE_SUMMARY_*.md` file, its contents are appended to `_progress.log` so the run log keeps the backend's own plain-text summary without echoing it to the terminal.
-
-When `formalize-all-candidates` uses Aristotle, jobs are submitted in parallel batches so multiple candidate nodes can be worked on at once. Newly promoted parents are then picked up by the next batch.
-Parent promotion is episode-gated: once a promoted parent is formalized into a narrower supporting core, the same verified-child snapshot is not immediately re-promoted again unless the actual child evidence changes.
-
-Every benchmark run also writes a shared progress log to `_progress.log` inside the corresponding output directory.
-
-The system then classifies the result as:
-- full-node success
-- concrete supporting sublemma
-- or failure
-
-The current verification path is a little richer than that summary:
-- the heuristic faithfulness guard now only hard-rejects the most obvious structural mismatches
-- borderline cases such as measure-space, inner-product-space, or dimension-downgrade signals are passed to the planning backend for the final semantic call
-- the planning backend may then refine the result kind and coverage estimate after verification, and can override the heuristic on a borderline case if the theorem is still a faithful core
-- formalization prompts now treat verified direct children as already available and ask only for the remaining parent-level delta, so a promoted parent does not just restate a child theorem in disguise
-- repair retries combine fast Lean-specific heuristics with an optional planning-backend diagnosis
-- if the result is only a concrete supporting sublemma, the pipeline may run one bounded coverage-expansion attempt from the verified file
-- if the result is still a concrete sublemma but the planning backend says it is worth another try, a single bonus retry may be attempted on the main proof path
-
-If the agentic run times out but leaves a usable Lean file behind, the pipeline will try to salvage and locally verify it.
-
-When a verified result is only a concrete supporting sublemma, the pipeline makes one additional bounded coverage-expansion attempt from the verified Lean file. That follow-up is intentionally narrow: it tries to grow the same local claim upward toward the parent node rather than restarting from scratch.
-
-Two more details matter in the current run loop:
-- if a recovered agentic artifact verifies as a concrete sublemma, it still gets the same bounded expansion attempt
-- when all direct children of an informal parent are verified, the parent can be promoted into the candidate set in a later dynamic pass, so a successful local core can feed a follow-up parent-assembly target
-- when the graph is run in auto mode, `run-benchmark` now keeps discovering newly promoted candidates instead of stopping after the first success
-- when the result is only a concrete supporting sublemma, the planning backend can still be used to write the short informal statement/proof summary for that certified local core
-
-Generated worker filenames are timestamped to avoid conflicts:
-- `<node>_worker_<timestamp>_<suffix>.lean`
-- `<node>_worker_<timestamp>_<suffix>_plan.md`
-
-The refined-local-claim ranking also penalizes point-evaluation fragments like `F_q(q) = 0` when they look like isolated snapshot facts rather than a reusable local theorem. That keeps the system from over-valuing tiny algebraic shards over broader claims with real inferential load.
+The `report` command accepts `--planning-backend` optionally; if supplied, it synthesizes a "remaining proof burden" paragraph for any informal node that has verified children.
 
 ## Development
 
-Run tests with:
-
 ```bash
-./.venv/bin/python -m pytest -q
+.venv/bin/python -m pytest -q
 ```
 
-Focused smoke/report tests:
+Focused test subsets:
 
 ```bash
-./.venv/bin/python -m pytest tests/test_smoke.py -q
-./.venv/bin/python -m pytest tests/test_review_and_report.py -q
-./.venv/bin/python -m pytest tests/test_lean_formalization.py -q
+.venv/bin/pytest tests/test_smoke.py -q
+.venv/bin/pytest tests/test_review_and_report.py -q
 ```
 
-## Notes
-
-- This repository is still a prototype.
-- The graph and report are meant to be honest artifacts, not claims of full formalization.
-- Candidate nodes are only formalization opportunities; only nodes with actual Lean artifacts are visually treated as formal in the report graph.
+Developer notes and internal architecture docs are in `dev/`.
