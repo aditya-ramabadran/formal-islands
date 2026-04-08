@@ -5,6 +5,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
+import json
 from pathlib import Path
 from threading import RLock
 from typing import Iterator, TextIO
@@ -13,6 +14,7 @@ from formal_islands.backends.base import StructuredBackend, StructuredBackendReq
 from formal_islands.models import ProofGraph, canonical_dependency_direction_warnings
 
 _PROGRESS_PREFIX = "[formal-islands]"
+_GRAPH_HISTORY_VERSION = 1
 
 
 @dataclass
@@ -23,6 +25,16 @@ class _ProgressLogState:
 
 
 _STATE = _ProgressLogState()
+
+
+@dataclass
+class _GraphHistoryState:
+    path: Path | None = None
+    file: TextIO | None = None
+    depth: int = 0
+
+
+_GRAPH_HISTORY_STATE = _GraphHistoryState()
 _LOCK = RLock()
 
 
@@ -62,6 +74,36 @@ def use_progress_log(path: Path, *, overwrite: bool = False) -> Iterator[Path]:
                 _STATE.file.close()
                 _STATE.file = None
                 _STATE.path = None
+
+
+@contextmanager
+def use_graph_history_log(path: Path, *, overwrite: bool = False) -> Iterator[Path]:
+    """Open a per-run append-only JSONL graph-history log."""
+
+    del overwrite  # append-only behavior is intentional and enforced
+    resolved = Path(path)
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    with _LOCK:
+        if _GRAPH_HISTORY_STATE.depth == 0:
+            _GRAPH_HISTORY_STATE.file = resolved.open("a", encoding="utf-8")
+            _GRAPH_HISTORY_STATE.path = resolved
+        elif _GRAPH_HISTORY_STATE.path != resolved:
+            raise ValueError(
+                "graph history log already open at "
+                f"{_GRAPH_HISTORY_STATE.path}, cannot open a nested log at {resolved}"
+            )
+        _GRAPH_HISTORY_STATE.depth += 1
+    try:
+        yield resolved
+    finally:
+        with _LOCK:
+            if _GRAPH_HISTORY_STATE.depth <= 0:
+                raise RuntimeError("graph history log depth underflow")
+            _GRAPH_HISTORY_STATE.depth -= 1
+            if _GRAPH_HISTORY_STATE.depth == 0 and _GRAPH_HISTORY_STATE.file is not None:
+                _GRAPH_HISTORY_STATE.file.close()
+                _GRAPH_HISTORY_STATE.file = None
+                _GRAPH_HISTORY_STATE.path = None
 
 
 def append_to_progress_log(message: str) -> None:
@@ -114,6 +156,43 @@ def append_graph_summary_to_progress_log(
         lines.append("  (none)")
 
     append_to_progress_log("\n".join(lines))
+
+
+def append_graph_snapshot_to_history_log(
+    graph: ProofGraph,
+    *,
+    label: str,
+    previous_graph: ProofGraph | None = None,
+    event: str = "graph_snapshot",
+    node_id: str | None = None,
+    metadata: dict[str, object] | None = None,
+) -> None:
+    """Append a structured graph snapshot to the active graph-history log."""
+
+    if previous_graph is not None and graph.model_dump(mode="json") == previous_graph.model_dump(mode="json"):
+        return
+
+    with _LOCK:
+        if _GRAPH_HISTORY_STATE.file is None:
+            return
+        timestamp = datetime.now().astimezone().isoformat(timespec="seconds")
+        entry = {
+            "version": _GRAPH_HISTORY_VERSION,
+            "timestamp": timestamp,
+            "event": event,
+            "label": label,
+            "node_id": node_id,
+            "theorem_title": graph.theorem_title,
+            "root_node_id": graph.root_node_id,
+            "node_count": len(graph.nodes),
+            "edge_count": len(graph.edges),
+            "warnings": canonical_dependency_direction_warnings(graph),
+            "diff": _graph_diff_data(previous_graph, graph) if previous_graph is not None else None,
+            "metadata": metadata or {},
+            "graph": graph.model_dump(mode="json"),
+        }
+        _GRAPH_HISTORY_STATE.file.write(json.dumps(entry, ensure_ascii=True) + "\n")
+        _GRAPH_HISTORY_STATE.file.flush()
 
 
 def append_formalization_assessment_to_progress_log(
@@ -238,6 +317,45 @@ def _truncate_error_summary(error: Exception, *, max_length: int = 180) -> str:
 
 
 def _format_graph_diff(previous_graph: ProofGraph, current_graph: ProofGraph) -> list[str]:
+    diff_data = _graph_diff_data(previous_graph, current_graph)
+    added_nodes = diff_data["added_nodes"]
+    removed_nodes = diff_data["removed_nodes"]
+    changed_nodes = diff_data["changed_nodes"]
+    added_edges = diff_data["added_edges"]
+    removed_edges = diff_data["removed_edges"]
+
+    if not any((added_nodes, removed_nodes, changed_nodes, added_edges, removed_edges)):
+        return []
+
+    lines = ["Graph diff:"]
+    if added_nodes:
+        lines.append("  Added nodes:")
+        for node_id in added_nodes:
+            lines.append(f"    + {node_id}")
+    if removed_nodes:
+        lines.append("  Removed nodes:")
+        for node_id in removed_nodes:
+            lines.append(f"    - {node_id}")
+    if changed_nodes:
+        lines.append("  Updated nodes:")
+        for change in changed_nodes:
+            lines.append(
+                f"    ~ [{change['before_status']}] {change['id']} -> [{change['after_status']}] {change['id']}"
+            )
+    if added_edges:
+        lines.append("  Added edges:")
+        for edge in added_edges:
+            label_text = f" [{edge['label']}]" if edge["label"] else ""
+            lines.append(f"    + {edge['source_id']} -> {edge['target_id']}{label_text}")
+    if removed_edges:
+        lines.append("  Removed edges:")
+        for edge in removed_edges:
+            label_text = f" [{edge['label']}]" if edge["label"] else ""
+            lines.append(f"    - {edge['source_id']} -> {edge['target_id']}{label_text}")
+    return lines
+
+
+def _graph_diff_data(previous_graph: ProofGraph, current_graph: ProofGraph) -> dict[str, object]:
     previous_nodes = {node.id: node for node in previous_graph.nodes}
     current_nodes = {node.id: node for node in current_graph.nodes}
     previous_edges = {
@@ -258,33 +376,35 @@ def _format_graph_diff(previous_graph: ProofGraph, current_graph: ProofGraph) ->
     ]
     added_edges = [current_edges[key] for key in sorted(current_edges.keys() - previous_edges.keys())]
     removed_edges = [previous_edges[key] for key in sorted(previous_edges.keys() - current_edges.keys())]
-
-    if not any((added_nodes, removed_nodes, changed_nodes, added_edges, removed_edges)):
-        return []
-
-    lines = ["Graph diff:"]
-    if added_nodes:
-        lines.append("  Added nodes:")
-        for node in added_nodes:
-            lines.append(f"    + [{node.status}] {node.id}")
-    if removed_nodes:
-        lines.append("  Removed nodes:")
-        for node in removed_nodes:
-            lines.append(f"    - [{node.status}] {node.id}")
-    if changed_nodes:
-        lines.append("  Updated nodes:")
-        for before, after in changed_nodes:
-            lines.append(
-                f"    ~ [{before.status}] {before.id} -> [{after.status}] {after.id}"
-            )
-    if added_edges:
-        lines.append("  Added edges:")
-        for edge in added_edges:
-            label_text = f" [{edge.label}]" if edge.label else ""
-            lines.append(f"    + {edge.source_id} -> {edge.target_id}{label_text}")
-    if removed_edges:
-        lines.append("  Removed edges:")
-        for edge in removed_edges:
-            label_text = f" [{edge.label}]" if edge.label else ""
-            lines.append(f"    - {edge.source_id} -> {edge.target_id}{label_text}")
-    return lines
+    return {
+        "added_nodes": [node.id for node in added_nodes],
+        "removed_nodes": [node.id for node in removed_nodes],
+        "changed_nodes": [
+            {
+                "id": after.id,
+                "before_status": str(before.status),
+                "after_status": str(after.status),
+                "before_priority": before.formalization_priority,
+                "after_priority": after.formalization_priority,
+            }
+            for before, after in changed_nodes
+        ],
+        "added_edges": [
+            {
+                "source_id": edge.source_id,
+                "target_id": edge.target_id,
+                "label": edge.label,
+                "explanation": edge.explanation,
+            }
+            for edge in added_edges
+        ],
+        "removed_edges": [
+            {
+                "source_id": edge.source_id,
+                "target_id": edge.target_id,
+                "label": edge.label,
+                "explanation": edge.explanation,
+            }
+            for edge in removed_edges
+        ],
+    }

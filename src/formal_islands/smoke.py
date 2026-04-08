@@ -43,8 +43,10 @@ from formal_islands.report import export_report_bundle, render_html_report
 from formal_islands.report.annotation import synthesize_remaining_proof_burdens
 from formal_islands.review import derive_review_obligations
 from formal_islands.progress import (
+    append_graph_snapshot_to_history_log,
     append_graph_summary_to_progress_log,
     progress,
+    use_graph_history_log,
     use_progress_log,
 )
 
@@ -59,6 +61,7 @@ DEFAULT_BACKEND_TIMEOUT_SECONDS = 360.0
 GEMINI_BACKEND_TIMEOUT_SECONDS = 360.0
 FORMALIZATION_BACKEND_TIMEOUT_SECONDS = 420.0
 PROGRESS_LOG_FILENAME = "_progress.log"
+GRAPH_HISTORY_LOG_FILENAME = "graph_history.jsonl"
 
 
 def _log_dependency_direction_warnings(graph: ProofGraph, *, context: str) -> None:
@@ -369,7 +372,9 @@ def _cleanup_archive_artifacts(output_dir: Path) -> list[Path]:
 def cmd_extract(args: argparse.Namespace) -> int:
     input_payload = load_input_payload(Path(args.input))
     output_dir = ensure_output_dir(Path(args.output_dir))
-    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME), use_graph_history_log(
+        output_dir / GRAPH_HISTORY_LOG_FILENAME
+    ):
         progress("extract stage starting")
         backend = build_backend(
             resolve_backend_name(args, formalization=False),
@@ -385,7 +390,7 @@ def cmd_extract(args: argparse.Namespace) -> int:
         )
         path = output_dir / "01_extracted_graph.json"
         write_graph(graph, path)
-        append_graph_summary_to_progress_log(graph, label="01_extracted_graph.json")
+        _append_graph_logs(graph, label="01_extracted_graph.json", event="extract_stage_output")
         print(path)
     return 0
 
@@ -393,7 +398,9 @@ def cmd_extract(args: argparse.Namespace) -> int:
 def cmd_plan(args: argparse.Namespace) -> int:
     input_payload = load_input_payload(Path(args.input))
     output_dir = ensure_output_dir(Path(args.output_dir))
-    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME), use_graph_history_log(
+        output_dir / GRAPH_HISTORY_LOG_FILENAME
+    ):
         progress("plan stage starting")
         backend = build_backend(
             resolve_backend_name(args, formalization=False),
@@ -410,12 +417,17 @@ def cmd_plan(args: argparse.Namespace) -> int:
         extracted_path = output_dir / "01_extracted_graph.json"
         candidate_path = output_dir / "02_candidate_graph.json"
         write_graph(artifacts.extracted_graph, extracted_path)
-        append_graph_summary_to_progress_log(artifacts.extracted_graph, label="01_extracted_graph.json")
+        _append_graph_logs(
+            artifacts.extracted_graph,
+            label="01_extracted_graph.json",
+            event="plan_stage_extracted_graph",
+        )
         write_graph(artifacts.candidate_graph, candidate_path)
-        append_graph_summary_to_progress_log(
+        _append_graph_logs(
             artifacts.candidate_graph,
             label="02_candidate_graph.json",
             previous_graph=artifacts.extracted_graph,
+            event="plan_stage_candidate_graph",
         )
         print(extracted_path)
         print(candidate_path)
@@ -424,7 +436,9 @@ def cmd_plan(args: argparse.Namespace) -> int:
 
 def cmd_select_candidates(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
-    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME), use_graph_history_log(
+        output_dir / GRAPH_HISTORY_LOG_FILENAME
+    ):
         progress("candidate selection stage starting")
         backend = build_backend(
             resolve_backend_name(args, formalization=False),
@@ -437,10 +451,11 @@ def cmd_select_candidates(args: argparse.Namespace) -> int:
         updated_graph = select_formalization_candidates(backend=backend, graph=graph)
         path = output_dir / "02_candidate_graph.json"
         write_graph(updated_graph, path)
-        append_graph_summary_to_progress_log(
+        _append_graph_logs(
             updated_graph,
             label="02_candidate_graph.json",
             previous_graph=graph,
+            event="candidate_selection_output",
         )
         print(path)
     return 0
@@ -449,7 +464,9 @@ def cmd_select_candidates(args: argparse.Namespace) -> int:
 def cmd_formalize_one(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
     cleanup_archives = getattr(args, "cleanup_archives", True)
-    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME), use_graph_history_log(
+        output_dir / GRAPH_HISTORY_LOG_FILENAME
+    ):
         progress("formalization stage starting")
         planning_backend_name = resolve_backend_name(args, formalization=False)
         planning_backend = build_backend(
@@ -477,10 +494,12 @@ def cmd_formalize_one(args: argparse.Namespace) -> int:
         def write_progress(outcome) -> None:
             nonlocal latest_graph
             write_graph(outcome.graph, graph_path)
-            append_graph_summary_to_progress_log(
+            _append_graph_logs(
                 outcome.graph,
                 label=f"03_formalized_graph.json ({outcome.node_id})",
                 previous_graph=latest_graph,
+                event="formalization_update",
+                node_id=outcome.node_id,
             )
             latest_graph = outcome.graph
             _write_formalization_summary(summary_path, outcome)
@@ -515,7 +534,9 @@ def cmd_formalize_one(args: argparse.Namespace) -> int:
 def cmd_formalize_all_candidates(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
     cleanup_archives = getattr(args, "cleanup_archives", True)
-    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME), use_graph_history_log(
+        output_dir / GRAPH_HISTORY_LOG_FILENAME
+    ):
         try:
             progress("formalization stage starting")
             planning_backend_name = resolve_backend_name(args, formalization=False)
@@ -545,10 +566,12 @@ def cmd_formalize_all_candidates(args: argparse.Namespace) -> int:
             def write_progress(outcome) -> None:
                 nonlocal latest_graph
                 write_graph(outcome.graph, graph_path)
-                append_graph_summary_to_progress_log(
+                _append_graph_logs(
                     outcome.graph,
                     label=f"03_formalized_graph.json ({outcome.node_id})",
                     previous_graph=latest_graph,
+                    event="formalization_update",
+                    node_id=outcome.node_id,
                 )
                 latest_graph = outcome.graph
 
@@ -563,12 +586,14 @@ def cmd_formalize_all_candidates(args: argparse.Namespace) -> int:
             )
 
             write_graph(outcomes.graph, graph_path)
-            append_graph_summary_to_progress_log(
+            _append_graph_logs(
                 outcomes.graph,
                 label="03_formalized_graph.json",
                 previous_graph=latest_graph,
+                event="formalization_stage_output",
             )
             for outcome in outcomes.outcomes:
+                outcome_node = next((node for node in outcomes.graph.nodes if node.id == outcome.node_id), None)
                 summaries.append(
                     {
                         "node_id": outcome.node_id,
@@ -578,6 +603,16 @@ def cmd_formalize_all_candidates(args: argparse.Namespace) -> int:
                         "stderr": outcome.artifact.verification.stderr,
                         "faithfulness_classification": outcome.artifact.faithfulness_classification,
                         "lean_theorem_name": outcome.artifact.lean_theorem_name,
+                        "node_status_after_attempt": outcome_node.status if outcome_node is not None else None,
+                        "last_formalization_outcome": (
+                            outcome_node.last_formalization_outcome if outcome_node is not None else None
+                        ),
+                        "last_formalization_attempt_count": (
+                            outcome_node.last_formalization_attempt_count if outcome_node is not None else None
+                        ),
+                        "last_formalization_note": (
+                            outcome_node.last_formalization_note if outcome_node is not None else None
+                        ),
                     }
                 )
             summary_path.write_text(json.dumps(summaries, indent=2) + "\n", encoding="utf-8")
@@ -591,9 +626,12 @@ def cmd_formalize_all_candidates(args: argparse.Namespace) -> int:
 
 def cmd_report(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
-    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME), use_graph_history_log(
+        output_dir / GRAPH_HISTORY_LOG_FILENAME
+    ):
         progress("report stage starting")
         graph = load_graph(Path(args.graph))
+        original_graph = graph
         _log_dependency_direction_warnings(graph, context="report stage")
         planning_backend_name = getattr(args, "planning_backend", None)
         legacy_backend_name = getattr(args, "backend", None)
@@ -613,6 +651,12 @@ def cmd_report(args: argparse.Namespace) -> int:
                 graph=graph,
                 planning_backend=planning_backend,
             )
+        _append_graph_logs(
+            graph,
+            label="04_report_graph",
+            previous_graph=original_graph,
+            event="report_stage_graph",
+        )
         obligations = derive_review_obligations(graph)
         bundle = export_report_bundle(graph, obligations)
         html = render_html_report(graph, obligations)
@@ -628,7 +672,9 @@ def cmd_report(args: argparse.Namespace) -> int:
 
 def cmd_run_example(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
-    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME), use_graph_history_log(
+        output_dir / GRAPH_HISTORY_LOG_FILENAME
+    ):
         try:
             progress("running example end-to-end")
             formalization_backend_name = resolve_backend_name(args, formalization=True)
@@ -693,7 +739,9 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
         else default_output_dir_for_input(input_path, args)
     )
     workspace = _resolve_workspace(getattr(args, "workspace", None))
-    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME), use_graph_history_log(
+        output_dir / GRAPH_HISTORY_LOG_FILENAME
+    ):
         try:
             progress("running benchmark end-to-end")
             progress("benchmark planning stage starting")
@@ -909,6 +957,7 @@ def resolve_formalization_timeout(args: argparse.Namespace, backend_name: str) -
 
 
 def _write_formalization_summary(path: Path, outcome) -> None:
+    outcome_node = next((node for node in outcome.graph.nodes if node.id == outcome.node_id), None)
     path.write_text(
         json.dumps(
             {
@@ -919,6 +968,16 @@ def _write_formalization_summary(path: Path, outcome) -> None:
                 "stderr": outcome.artifact.verification.stderr,
                 "faithfulness_classification": outcome.artifact.faithfulness_classification,
                 "lean_theorem_name": outcome.artifact.lean_theorem_name,
+                "node_status_after_attempt": outcome_node.status if outcome_node is not None else None,
+                "last_formalization_outcome": (
+                    outcome_node.last_formalization_outcome if outcome_node is not None else None
+                ),
+                "last_formalization_attempt_count": (
+                    outcome_node.last_formalization_attempt_count if outcome_node is not None else None
+                ),
+                "last_formalization_note": (
+                    outcome_node.last_formalization_note if outcome_node is not None else None
+                ),
             },
             indent=2,
         )
@@ -1026,6 +1085,30 @@ def write_graph(graph: ProofGraph, path: Path) -> None:
     """Write a graph JSON file."""
 
     path.write_text(json.dumps(graph.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8")
+
+
+def _append_graph_logs(
+    graph: ProofGraph,
+    *,
+    label: str,
+    previous_graph: ProofGraph | None = None,
+    event: str = "graph_snapshot",
+    node_id: str | None = None,
+    metadata: dict[str, object] | None = None,
+) -> None:
+    append_graph_summary_to_progress_log(
+        graph,
+        label=label,
+        previous_graph=previous_graph,
+    )
+    append_graph_snapshot_to_history_log(
+        graph,
+        label=label,
+        previous_graph=previous_graph,
+        event=event,
+        node_id=node_id,
+        metadata=metadata,
+    )
 
 
 def ensure_output_dir(path: Path) -> Path:

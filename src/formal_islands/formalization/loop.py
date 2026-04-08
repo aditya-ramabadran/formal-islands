@@ -2351,6 +2351,7 @@ def _formalize_candidate_nodes_aristotle_parallel(
     current_graph = graph
     outcomes: list[FormalizationOutcome] = []
     attempted_ids: set[str] = set()
+    wave_index = 0
 
     while True:
         batch_base_graph = current_graph
@@ -2363,7 +2364,7 @@ def _formalize_candidate_nodes_aristotle_parallel(
                 if node.id == node_id and node.status == "candidate_formal"
             ]
         else:
-            batch_nodes = [
+            remaining_nodes = [
                 node
                 for node in sorted(
                     current_graph.nodes,
@@ -2371,12 +2372,19 @@ def _formalize_candidate_nodes_aristotle_parallel(
                 )
                 if node.status == "candidate_formal" and node.id not in attempted_ids
             ]
+            batch_nodes = _select_dependency_aware_aristotle_wave(
+                graph=current_graph,
+                remaining_nodes=remaining_nodes,
+                attempted_ids=attempted_ids,
+            )
         if not batch_nodes:
             break
 
+        wave_index += 1
         _progress(
-            "Aristotle batch submitting "
-            f"{len(batch_nodes)} candidate node(s): " + ", ".join(node.id for node in batch_nodes)
+            "Aristotle dependency-aware wave "
+            f"{wave_index}: submitting {len(batch_nodes)} candidate node(s): "
+            + ", ".join(node.id for node in batch_nodes)
         )
         batch_outcomes: list[FormalizationOutcome] = []
         with ThreadPoolExecutor(max_workers=len(batch_nodes)) as executor:
@@ -2430,6 +2438,37 @@ def _formalize_candidate_nodes_aristotle_parallel(
             break
 
     return MultiFormalizationOutcome(graph=current_graph, outcomes=outcomes)
+
+
+def _select_dependency_aware_aristotle_wave(
+    *,
+    graph: ProofGraph,
+    remaining_nodes: list[ProofNode],
+    attempted_ids: set[str],
+) -> list[ProofNode]:
+    """Return the next parallel Aristotle wave, favoring dependency leaves first."""
+
+    if not remaining_nodes:
+        return []
+
+    pending_ids = {node.id for node in remaining_nodes if node.id not in attempted_ids}
+    ready_nodes = [
+        node
+        for node in remaining_nodes
+        if not any(
+            edge.source_id == node.id
+            and edge.target_id in pending_ids
+            for edge in graph.edges
+        )
+    ]
+    if ready_nodes:
+        return ready_nodes
+
+    _progress(
+        "Aristotle dependency-aware scheduler: no leaf-ready candidates found; "
+        "falling back to the remaining candidate frontier"
+    )
+    return remaining_nodes
 
 
 def _build_coverage_expansion_feedback(*, node: ProofNode, artifact: FormalArtifact) -> str:

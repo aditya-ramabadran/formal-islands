@@ -16,7 +16,12 @@ from formal_islands.backends import (
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.formalization import FormalizationOutcome, formalize_candidate_nodes
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
-from formal_islands.progress import progress, use_progress_log
+from formal_islands.progress import (
+    append_graph_snapshot_to_history_log,
+    progress,
+    use_graph_history_log,
+    use_progress_log,
+)
 from formal_islands.review import derive_review_obligations
 from formal_islands.progress import append_graph_summary_to_progress_log
 from formal_islands.smoke import (
@@ -191,6 +196,61 @@ def test_graph_summary_logging_records_nodes_and_edges(tmp_path: Path) -> None:
     assert "[uses]" not in log_text
     assert "[candidate_formal] n2" in log_text
     assert "stmt: A." in log_text
+
+
+def test_graph_history_logging_records_jsonl_snapshots(tmp_path: Path) -> None:
+    history_log = tmp_path / "graph_history.jsonl"
+    before = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="A implies B.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Root",
+                informal_statement="A implies B.",
+                informal_proof_text="Use n1.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Leaf",
+                informal_statement="A.",
+                informal_proof_text="Given.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1")],
+    )
+    after = before.model_copy(
+        update={
+            "nodes": [
+                node.model_copy(
+                    update={
+                        "status": "formal_verified",
+                    }
+                )
+                if node.id == "n1"
+                else node
+                for node in before.nodes
+            ]
+        }
+    )
+
+    with use_graph_history_log(history_log):
+        append_graph_snapshot_to_history_log(before, label="02_candidate_graph.json")
+        append_graph_snapshot_to_history_log(
+            after,
+            label="03_formalized_graph.json (n1)",
+            previous_graph=before,
+            event="formalization_update",
+            node_id="n1",
+        )
+
+    entries = [json.loads(line) for line in history_log.read_text(encoding="utf-8").splitlines()]
+    assert len(entries) == 2
+    assert entries[0]["label"] == "02_candidate_graph.json"
+    assert entries[1]["event"] == "formalization_update"
+    assert entries[1]["node_id"] == "n1"
+    assert entries[1]["diff"]["changed_nodes"][0]["id"] == "n1"
 
 
 def test_cleanup_archive_artifacts_deletes_tarballs_and_logs(tmp_path: Path) -> None:
@@ -770,6 +830,9 @@ def test_formalize_all_candidates_runs_aristotle_jobs_in_parallel_and_preserves_
                 title="Root",
                 informal_statement="B.",
                 informal_proof_text="Use both leaves.",
+                status="candidate_formal",
+                formalization_priority=3,
+                formalization_rationale="Parent assembly attempt.",
             ),
             ProofNode(
                 id="n1",
@@ -821,16 +884,6 @@ def test_formalize_all_candidates_runs_aristotle_jobs_in_parallel_and_preserves_
                                     artifact_path="test.lean",
                                 ),
                             ),
-                        }
-                    )
-                )
-            elif node.id == "n0" and node_id == "n1":
-                updated_nodes.append(
-                    node.model_copy(
-                        update={
-                            "status": "candidate_formal",
-                            "formalization_priority": 3,
-                            "formalization_rationale": "Promoted by n1.",
                         }
                     )
                 )
@@ -950,3 +1003,5 @@ def test_cmd_formalize_all_candidates_writes_batch_summary(
     summaries = json.loads((output_dir / "03_formalization_summaries.json").read_text(encoding="utf-8"))
     assert exit_code == 0
     assert [item["node_id"] for item in summaries] == ["n1", "n2"]
+    assert all("node_status_after_attempt" in item for item in summaries)
+    assert all("last_formalization_outcome" in item for item in summaries)

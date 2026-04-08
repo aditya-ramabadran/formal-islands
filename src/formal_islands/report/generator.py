@@ -536,10 +536,14 @@ def _render_node_section(node: ProofNode, graph: ProofGraph) -> str:
     )
     candidate_block = ""
     if node.formalization_priority is not None and node.formalization_rationale is not None:
+        followup_sentence = ""
+        if node.status == "candidate_formal" and node.last_formalization_outcome is not None:
+            followup_sentence = " This node remains eligible for a future broader formalization attempt."
         candidate_block = (
             "<p class=\"meta\">"
             f"Formalization priority: {node.formalization_priority}. "
             f"Rationale: {_render_inline_code_html(node.formalization_rationale)}"
+            f"{escape(followup_sentence)}"
             "</p>"
         )
     attempt_block = _render_formalization_attempt_block(node)
