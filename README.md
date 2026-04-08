@@ -4,6 +4,8 @@
 
 Formal Islands turns a theorem statement plus informal proof into a proof graph with Lean-verified nodes and a human-readable report. The output is a mixed artifact that makes the formally checked pieces, the remaining informal gaps, and the review burden explicit.
 
+**Research prototype / experimental.** The system is useful, but it is still actively evolving and should be treated as a research artifact rather than a polished production tool.
+
 ## What Is This?
 
 Current AI-for-math systems face a real bottleneck from two directions at once.
@@ -22,6 +24,16 @@ A **formal island** is a proof node independently verified in Lean, certified in
 - **It can only get better over time.** As Mathlib expands, the same pipeline can certify larger and larger portions of proofs, eventually approaching full formalization where that becomes realistic.
 
 Even when the formalization backend proves something that compiles in Lean, there is no guarantee the formal statement actually matches the intended informal theorem. The pipeline uses a series of heuristic checks and LLM-assisted semantic review to guard against drift, but the ultimate check is always left to a human, and the report makes the remaining burden explicit.
+
+### What Files Get Produced?
+
+Each run writes a small set of stage artifacts:
+
+- `01_extracted_graph.json`: the extracted theorem graph from the planning stage
+- `03_formalized_graph.json`: the graph after formalization attempts and verification results
+- `04_report.html`: the human-facing report with the proof graph, logs, and review checklist
+
+Depending on the command, you may also see `02_candidate_graph.json` and `04_report_bundle.json` in the output directory.
 
 <p align="center">
   <img src="docs/assets/heat_uniqueness.png" width="480" alt="Proof graph for heat equation uniqueness: one informal root node with two formally verified child nodes">

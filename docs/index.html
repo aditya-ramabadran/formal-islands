@@ -140,6 +140,96 @@ p:last-child { margin-bottom: 0; }
   font-size: 0.95rem;
 }
 
+/* ── Featured spotlight ─────────────────────────────────────── */
+.spotlight-card {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.2fr);
+  gap: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-top: 1.4rem;
+}
+
+.spotlight-thumb {
+  display: flex;
+  align-self: stretch;
+  justify-content: center;
+  align-items: center;
+  background: #f7f4ec;
+  border-right: 1px solid var(--border);
+  min-height: 100%;
+  overflow: hidden;
+  padding: 0.75rem;
+}
+
+.spotlight-thumb img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  height: auto;
+  object-fit: contain;
+  object-position: center center;
+}
+
+.spotlight-body {
+  padding: 1rem 1.1rem 1.05rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.spotlight-kicker {
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.spotlight-title {
+  font-size: 1.08rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: var(--text);
+}
+
+.spotlight-statement {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.45;
+  margin-bottom: 0.65rem;
+}
+
+.spotlight-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-bottom: 0.7rem;
+}
+
+.spotlight-actions {
+  margin-top: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .spotlight-thumb { background: #221e16; }
+}
+
+@media (max-width: 760px) {
+  .spotlight-card {
+    grid-template-columns: 1fr;
+  }
+
+  .spotlight-thumb {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    min-height: 240px;
+  }
+}
+
 /* ── Value bullets ──────────────────────────────────────────── */
 .value-list {
   list-style: none;
@@ -378,12 +468,31 @@ footer {
 </header>
 
 <section>
-  <h2>What Formal Islands Produces</h2>
   <p>
-    Give the system a theorem statement and an informal proof, and it produces a proof graph with
+    Given a theorem statement and an informal proof, <strong> Formal Islands </strong> produces a proof graph with
     Lean-verified nodes plus a report that shows which parts are certified and which parts still need
     human review. 
   </p>
+  <div class="spotlight-card">
+    <a class="spotlight-thumb" target="_blank" rel="noopener noreferrer" href="reports/two_point_log_sobolev.html">
+      <img src="assets/two_point_log_sobolev.png" alt="Proof graph for the two-point log-Sobolev inequality">
+    </a>
+    <div class="spotlight-body">
+      <div class="spotlight-kicker">Featured Example</div>
+      <div class="spotlight-title">Two-Point Log-Sobolev Inequality</div>
+      <div class="spotlight-statement">
+        Entropy of a function on the two-point space {−1,1} is bounded by its discrete gradient energy.
+      </div>
+      <span class="verified-badge">✓ 2 of 3 nodes formally verified, 1 informal</span>
+      <div class="spotlight-desc">
+        The scalar log-Sobolev inequality and the key one-dimensional non-negativity lemma
+        G(u) ≥ 0 are both independently certified in Lean. 
+      </div>
+      <div class="spotlight-actions">
+        <a class="card-link" target="_blank" href="reports/two_point_log_sobolev.html">View report →</a>
+      </div>
+    </div>
+  </div>
 </section>
 
 <section>
@@ -476,27 +585,9 @@ footer {
 </section>
 
 <section>
-  <h2>Featured Examples</h2>
+  <h2>More Examples</h2>
   <p style="margin-bottom: 1.25rem;">Each of these reports was produced entirely by this system. Given only the theorem statement and an informal proof as input, the pipeline planned the proof graph, selected candidates, ran Lean verification, and generated the report automatically. <strong>Green nodes</strong> are formally verified in Lean.</p>
   <div class="gallery">
-
-    <div class="card">
-      <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/two_point_log_sobolev.html">
-        <img src="assets/two_point_log_sobolev.png" alt="Proof graph for the two-point log-Sobolev inequality">
-      </a>
-      <div class="card-body">
-        <div class="card-title">Two-Point Log-Sobolev Inequality</div>
-        <div class="card-statement">
-          Entropy of a function on the two-point space {−1,1} is bounded by its discrete gradient energy.
-        </div>
-        <span class="verified-badge">✓ 2 of 3 nodes formally verified, 1 informal</span>
-        <div class="card-desc">
-          The scalar log-Sobolev inequality and the key one-dimensional non-negativity lemma
-          G(u) ≥ 0 are both independently certified in Lean.
-        </div>
-        <a class="card-link" target="_blank" href="reports/two_point_log_sobolev.html">View report →</a>
-      </div>
-    </div>
 
     <div class="card">
       <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/heat_uniqueness.html">
