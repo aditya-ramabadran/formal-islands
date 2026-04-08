@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import re
 import json
+import re
 import shutil
 import tarfile
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 from formal_islands.backends.aristotle import AristotleBackend
@@ -21,6 +22,20 @@ from formal_islands.formalization.pipeline import (
 )
 from formal_islands.models import FormalArtifact, ProofGraph
 from formal_islands.progress import append_to_progress_log, progress
+
+
+@dataclass(frozen=True)
+class VerifiedChildSupportFile:
+    """A verified direct-child artifact materialized into the Aristotle snapshot."""
+
+    child_id: str
+    child_title: str
+    theorem_name: str
+    lean_statement: str
+    relative_path: Path
+    import_path: str
+    source_artifact_path: str | None
+    lean_code: str
 
 
 def request_aristotle_formalization(
@@ -50,6 +65,8 @@ def request_aristotle_formalization(
     desired_theorem_name = _desired_aristotle_theorem_name(node_id)
     relative_scratch_path = scratch_path.relative_to(workspace_root)
 
+    support_files = _build_verified_child_support_files(graph=graph, node_id=node_id)
+
     with tempfile.TemporaryDirectory(prefix="formal-islands-aristotle-") as temp_dir_name:
         snapshot_root = Path(temp_dir_name)
         shutil.copytree(
@@ -57,6 +74,10 @@ def request_aristotle_formalization(
             snapshot_root,
             dirs_exist_ok=True,
             ignore=_aristotle_snapshot_ignore,
+        )
+        _materialize_verified_child_support_files(
+            snapshot_root=snapshot_root,
+            support_files=support_files,
         )
 
         snapshot_scratch_path = snapshot_root / relative_scratch_path
@@ -70,6 +91,7 @@ def request_aristotle_formalization(
                     node=node,
                     desired_theorem_name=desired_theorem_name,
                     relative_scratch_path=relative_scratch_path,
+                    verified_child_support_files=support_files,
                 ),
                 encoding="utf-8",
             )
@@ -79,6 +101,7 @@ def request_aristotle_formalization(
             node=node,
             desired_theorem_name=desired_theorem_name,
             relative_scratch_path=relative_scratch_path,
+            verified_child_support_files=support_files,
             faithfulness_feedback=faithfulness_feedback,
             previous_lean_code=previous_lean_code,
             compiler_feedback=compiler_feedback,
@@ -162,6 +185,7 @@ def build_aristotle_formalization_prompt(
     node,
     desired_theorem_name: str,
     relative_scratch_path: Path,
+    verified_child_support_files: list[VerifiedChildSupportFile] | None = None,
     faithfulness_feedback: str | None = None,
     previous_lean_code: str | None = None,
     compiler_feedback: str | None = None,
@@ -182,6 +206,7 @@ def build_aristotle_formalization_prompt(
         for child in graph.nodes
         if child.id in children and child.formal_artifact is not None
     ]
+    promoted_parent_attempt = _is_promoted_parent_attempt(node)
     prompt_parts = [
         f"Theorem title: {graph.theorem_title}",
         (
@@ -214,6 +239,16 @@ def build_aristotle_formalization_prompt(
         (
             "These verified children are already available. The theorem should prove only the remaining "
             "parent-level delta, not a restatement of any verified child or a close corollary that duplicates it."
+        ),
+        (
+            "If you use the verified child results, treat them as helper lemmas for the current node. "
+            "Your main theorem must be a new theorem for the current parent target, not just a resubmission "
+            "of one child theorem under a new filename."
+        ),
+        (
+            "Prefer a self-contained final scratch file. You may inspect the materialized support files and copy "
+            "or adapt small helper lemmas from them, but avoid making the final artifact depend on cross-file "
+            "imports unless there is a compelling need."
         ),
         (
             "Dependency direction note: the verified child lemmas are outgoing dependencies of the target node. "
@@ -260,6 +295,46 @@ def build_aristotle_formalization_prompt(
             "over-shrunk theorem."
         ),
     ]
+    if verified_child_support_files:
+        prompt_parts.extend(
+            [
+                "Materialized verified support files already placed in this Aristotle snapshot:",
+                json.dumps(
+                    [
+                        {
+                            "child_id": support.child_id,
+                            "child_title": support.child_title,
+                            "theorem_name": support.theorem_name,
+                            "lean_statement": support.lean_statement,
+                            "snapshot_file": str(support.relative_path),
+                            "import_path": support.import_path,
+                            "source_artifact_path": support.source_artifact_path,
+                        }
+                        for support in verified_child_support_files
+                    ],
+                    indent=2,
+                ),
+                (
+                    "You may import these support files or copy helper lemmas from them, but the designated main theorem "
+                    f"must still be `{desired_theorem_name}` and must certify the current node's parent-level delta."
+                ),
+                (
+                    "Prefer copying or adapting the minimal helper material you need into the scratch file so that the "
+                    "final certified artifact stays self-contained."
+                ),
+            ]
+        )
+    if promoted_parent_attempt and verified_child_support_files:
+        prompt_parts.extend(
+            [
+                "This is a promoted parent-assembly attempt.",
+                (
+                    "Start from the verified support theorem(s) above, reuse them aggressively as helpers, and prove the "
+                    "missing parent-level assembly or enlargement step. Do not submit a file whose only substantial theorem "
+                    "is one of the support theorems unchanged."
+                ),
+            ]
+        )
     if faithfulness_feedback:
         prompt_parts.extend(
             [
@@ -297,12 +372,12 @@ def _render_aristotle_scratch_header(
     node,
     desired_theorem_name: str,
     relative_scratch_path: Path,
+    verified_child_support_files: list[VerifiedChildSupportFile] | None = None,
 ) -> str:
     sketch = build_node_coverage_sketch(node)
     local_context = build_local_proof_context(graph, node.id)
     direct_child_context = build_verified_direct_child_context(graph, node.id)
-    return "\n".join(
-        [
+    lines = [
             "/--",
             "Aristotle formalization target.",
             f"Target theorem name: {desired_theorem_name}",
@@ -335,6 +410,8 @@ def _render_aristotle_scratch_header(
             "",
             "These verified children are already available. The theorem should prove only the remaining parent-level delta,",
             "not a restatement of any verified child or a close corollary that duplicates it.",
+            "If you use them, treat them as helper lemmas for a new theorem for the current node.",
+            "Prefer a self-contained final file: inspect the support files and copy or adapt only the minimal helper material you need.",
             "",
             "Dependency direction note: the verified child lemmas are outgoing dependencies of the target node.",
             "Treat them as already established support, not as parents or as claims that depend on the target.",
@@ -346,13 +423,89 @@ def _render_aristotle_scratch_header(
             "- Do not make a major shrink in the mathematical setting, dimension, ambient structure, or variable scope.",
             "- Keep theorem headers and binders ASCII-safe. Lean treats `λ` as a reserved keyword in declarations, so do not use Unicode binder names like `λ₁`; use plain names such as `lambda1` or `lambda_1` instead.",
             "- Prefer the most concrete faithful theorem you can manage.",
+            "- The designated main theorem in this file must be a new theorem for the current node, not just a copied child theorem.",
             "- Avoid sorrys and avoid unrelated abstraction.",
             "- Use any imports you need, but prefer specific imports to broad ones like `import Mathlib`.",
             "- If a smaller theorem is the best reachable core, it must still be genuinely nontrivial and carry meaningful inferential load.",
             "- If you cannot produce a genuinely nontrivial fallback, fail rather than returning a trivial shrink.",
-            "-/",
-        ]
-    )
+    ]
+    if verified_child_support_files:
+        lines.extend(
+            [
+                "",
+                "Materialized verified support files in this snapshot:",
+            ]
+        )
+        for support in verified_child_support_files:
+            lines.extend(
+                [
+                    f"- child id: {support.child_id}",
+                    f"  theorem: {support.theorem_name}",
+                    f"  statement: {support.lean_statement}",
+                    f"  snapshot file: {support.relative_path}",
+                    f"  import path: {support.import_path}",
+                ]
+            )
+    if _is_promoted_parent_attempt(node) and verified_child_support_files:
+        lines.extend(
+            [
+                "",
+                "This is a promoted parent-assembly attempt.",
+                "Reuse the support theorem(s) above as helpers and prove the parent-level enlargement or assembly step.",
+                "Do not leave the file with only a support theorem copied unchanged.",
+            ]
+        )
+    lines.append("-/")
+    return "\n".join(lines)
+
+
+def _build_verified_child_support_files(
+    *,
+    graph: ProofGraph,
+    node_id: str,
+) -> list[VerifiedChildSupportFile]:
+    children = {edge.target_id for edge in graph.edges if edge.source_id == node_id}
+    support_files: list[VerifiedChildSupportFile] = []
+    for child in sorted((node for node in graph.nodes if node.id in children), key=lambda node: node.id):
+        artifact = child.formal_artifact
+        if child.status != "formal_verified" or artifact is None:
+            continue
+        module_stem = _sanitize_file_stem(child.id)
+        relative_path = Path("FormalIslands") / "Generated" / "Support" / f"{module_stem}.lean"
+        import_path = ".".join(relative_path.with_suffix("").parts)
+        support_files.append(
+            VerifiedChildSupportFile(
+                child_id=child.id,
+                child_title=child.title,
+                theorem_name=artifact.lean_theorem_name,
+                lean_statement=artifact.lean_statement,
+                relative_path=relative_path,
+                import_path=import_path,
+                source_artifact_path=artifact.verification.artifact_path,
+                lean_code=artifact.lean_code,
+            )
+        )
+    return support_files
+
+
+def _materialize_verified_child_support_files(
+    *,
+    snapshot_root: Path,
+    support_files: list[VerifiedChildSupportFile],
+) -> None:
+    for support in support_files:
+        destination = snapshot_root / support.relative_path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        source_path = Path(support.source_artifact_path).expanduser().resolve() if support.source_artifact_path else None
+        if source_path is not None and source_path.is_file():
+            shutil.copy2(source_path, destination)
+        else:
+            destination.write_text(support.lean_code, encoding="utf-8")
+
+
+def _is_promoted_parent_attempt(node) -> bool:
+    rationale = (node.formalization_rationale or "").lower()
+    return "promoted after all direct children were verified" in rationale
 
 
 def _desired_aristotle_theorem_name(node_id: str) -> str:

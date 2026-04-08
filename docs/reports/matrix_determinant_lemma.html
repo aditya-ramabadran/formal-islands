@@ -554,7 +554,7 @@ This is the classical matrix determinant lemma for a rank-one update. It is a co
             <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
           </marker>
         </defs>
-        <g><path class="graph-edge edge-special_case-root" d="M 210.0 201.0 C 210.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path></g>
+        <g><path class="graph-edge edge-special_case-root" d="M 210.0 201.0 C 210.0 129.8, 210.0 76.4, 210.0 23.0" marker-end="url(#graph-arrow)"></path></g>
         <g>
     <a class="graph-node-link node-special_case status-formal-verified" href="#node-special_case">
       <rect class="graph-node-box status-formal-verified" x="144.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
@@ -602,10 +602,7 @@ This is the classical matrix determinant lemma for a rank-one update. It is a co
         <input id="obligation-check-semantic-match-special_case" type="checkbox" />
         <span>
           <span class="checklist-kind">formal_semantic_match_check</span><br />
-          Check that node &#x27;special_case&#x27; (Rank-one determinant identity for the identity matrix) matches the verified Lean statement &#x27;theorem special_case_aristotle
-    (n : ℕ) (u v : Fin n → ℝ) :
-    (1 + replicateCol (Fin 1) u * replicateRow (Fin 1) v).det =
-      1 + v ⬝ᵥ u&#x27;.
+          Check that node &#x27;special_case&#x27; (Rank-one determinant identity for the identity matrix) matches the verified Lean theorem for this node.
           <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> special_case_aristotle
     (n : <span class="tok-type">ℕ</span>) (u v : Fin n → <span class="tok-type">ℝ</span>) :
     (<span class="tok-number">1</span> + replicateCol (Fin <span class="tok-number">1</span>) u * replicateRow (Fin <span class="tok-number">1</span>) v).det =
@@ -621,10 +618,7 @@ This is the classical matrix determinant lemma for a rank-one update. It is a co
         <input id="obligation-check-semantic-match-root" type="checkbox" />
         <span>
           <span class="checklist-kind">formal_semantic_match_check</span><br />
-          Check that node &#x27;root&#x27; (Matrix determinant lemma) matches the verified Lean statement &#x27;theorem root_aristotle (n : ℕ) (A : Matrix (Fin n) (Fin n) ℝ) (u v : Fin n → ℝ)
-    (hA : IsUnit A.det) :
-    (A + vecMulVec u v).det =
-    A.det * (1 + dotProduct v (A⁻¹.mulVec u))&#x27;.
+          Check that node &#x27;root&#x27; (Matrix determinant lemma) matches the verified Lean theorem for this node.
           <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> root_aristotle (n : <span class="tok-type">ℕ</span>) (A : Matrix (Fin n) (Fin n) <span class="tok-type">ℝ</span>) (u v : Fin n → <span class="tok-type">ℝ</span>)
     (hA : IsUnit A.det) :
     (A + vecMulVec u v).det =
@@ -646,6 +640,7 @@ This is the classical matrix determinant lemma for a rank-one update. It is a co
       <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-root">root</a></p>
       <p class="meta">Display label: \(\det(I+uv^T)=1+v^Tu\)</p>
       <p class="meta">Formalization priority: 1. Rationale: This is the essential finite-dimensional algebraic core. The multilinearity expansion, vanishing of repeated-u terms, and coordinate evaluation of det(...,u,...) are all concrete, non-trivial steps that Lean must verify explicitly. Once certified, the full lemma reduces to one short algebraic manipulation. Highest-yield formal island in the proof.</p>
+      
       <p><strong>Informal statement:</strong></p>
       <div class="math-text">For column vectors \(u,v\in\mathbb{R}^n\), \[\det(I+uv^{T})=1+v^{T}u.\]</div>
       <p><strong>Informal proof:</strong></p>
@@ -710,6 +705,7 @@ stderr:
       <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-special_case">special_case</a></p>
       <p class="meta">Display label: \(\det(A+uv^T)=\det(A)(1+v^TA^{-1}u)\)</p>
       <p class="meta">Formalization priority: 2. Rationale: The full matrix determinant lemma is the natural root to formalize end-to-end. Given the special case, its proof is a short chain (factoring, multiplicativity of det, substitution), but formalizing the invertibility-based factorization and applying multiplicativity in Lean carries real but manageable overhead.</p>
+      
       <p><strong>Informal statement:</strong></p>
       <div class="math-text">Let \(A\) be an invertible \(n\times n\) matrix over \(\mathbb{R}\) and let \(u,v\in\mathbb{R}^n\). Then \[\det(A+uv^{T})=\det(A)\bigl(1+v^{T}A^{-1}u\bigr).\]</div>
       <p><strong>Informal proof:</strong></p>

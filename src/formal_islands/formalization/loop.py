@@ -34,7 +34,14 @@ from formal_islands.formalization.pipeline import (
     request_repair_assessment,
     request_node_formalization,
 )
-from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode, VerificationResult
+from formal_islands.models import (
+    FormalArtifact,
+    NodeFormalizationOutcome,
+    ProofEdge,
+    ProofGraph,
+    ProofNode,
+    VerificationResult,
+)
 from formal_islands.progress import (
     append_formalization_assessment_to_progress_log,
     append_parent_promotion_assessment_to_progress_log,
@@ -372,6 +379,7 @@ def _formalize_candidate_node_structured(
             verification_status=verification.status,
             parent_promotion_cache=parent_promotion_cache,
             enable_parent_promotion=enable_parent_promotion,
+            blocked_parent_ids={node_id},
         )
         _emit_update(current_graph, node_id, latest_artifact, on_update)
 
@@ -595,6 +603,7 @@ def _formalize_candidate_node_aristotle(
             verification_status=verification.status,
             parent_promotion_cache=parent_promotion_cache,
             enable_parent_promotion=enable_parent_promotion,
+            blocked_parent_ids={node_id},
         )
         _progress(f"node {node_id}: integrated Aristotle result into graph")
         _emit_update(current_graph, node_id, latest_artifact, on_update)
@@ -698,6 +707,7 @@ def _formalize_candidate_node_agentic(
                     verification_status=salvaged_artifact.verification.status,
                     parent_promotion_cache=parent_promotion_cache,
                     enable_parent_promotion=enable_parent_promotion,
+                    blocked_parent_ids={node_id},
                 )
                 _emit_update(updated_graph, node_id, salvaged_artifact, on_update)
                 _progress(
@@ -841,6 +851,7 @@ def _formalize_candidate_node_agentic(
             verification_status=verification.status,
             parent_promotion_cache=parent_promotion_cache,
             enable_parent_promotion=enable_parent_promotion,
+            blocked_parent_ids={node_id},
         )
         _emit_update(updated_graph, node_id, artifact, on_update)
         _progress(
@@ -1200,6 +1211,34 @@ def _update_node(
     return graph.model_copy(update={"nodes": updated_nodes})
 
 
+def _record_node_formalization_episode(
+    *,
+    graph: ProofGraph,
+    node_id: str,
+    attempt_count: int | None,
+    outcome: NodeFormalizationOutcome,
+    note: str,
+) -> ProofGraph:
+    attempt_text = f" after {attempt_count} Lean verification attempt(s)" if attempt_count else ""
+    _progress(
+        f"node {node_id}: recorded formalization episode outcome={outcome}{attempt_text} "
+        f"note={_truncate_progress_summary(note, max_length=160)}"
+    )
+    updated_nodes = [
+        node.model_copy(
+            update={
+                "last_formalization_attempt_count": attempt_count if attempt_count and attempt_count > 0 else None,
+                "last_formalization_outcome": outcome,
+                "last_formalization_note": note.strip() or None,
+            }
+        )
+        if node.id == node_id
+        else node
+        for node in graph.nodes
+    ]
+    return graph.model_copy(update={"nodes": updated_nodes})
+
+
 def _integrate_successful_formalization(
     *,
     graph: ProofGraph,
@@ -1210,18 +1249,35 @@ def _integrate_successful_formalization(
     verification_status: str,
     parent_promotion_cache: ParentPromotionCache | None = None,
     enable_parent_promotion: bool = True,
+    blocked_parent_ids: set[str] | None = None,
 ) -> ProofGraph:
     if verification_status != "verified":
-        return _update_node(graph, node_id, "formal_failed", artifact)
+        updated = _update_node(graph, node_id, "formal_failed", artifact)
+        return _record_node_formalization_episode(
+            graph=updated,
+            node_id=node_id,
+            attempt_count=artifact.verification.attempt_count,
+            outcome=NodeFormalizationOutcome.FAILED,
+            note="Most recent formalization attempt failed local Lean verification.",
+        )
 
     if artifact.faithfulness_classification == FaithfulnessClassification.FULL_NODE:
         updated = _update_node(graph, node_id, "formal_verified", artifact)
+        updated = _record_node_formalization_episode(
+            graph=updated,
+            node_id=node_id,
+            attempt_count=artifact.verification.attempt_count,
+            outcome=NodeFormalizationOutcome.VERIFIED_FULL_NODE,
+            note="Most recent formalization attempt verified the full parent node.",
+        )
+        updated = _swallow_supporting_formal_cores(graph=updated, parent_node_id=node_id)
         if enable_parent_promotion:
             updated = _promote_followup_candidates_after_verified_node(
                 graph=updated,
                 planning_backend=planning_backend,
                 verified_node_id=node_id,
                 parent_promotion_cache=parent_promotion_cache,
+                blocked_parent_ids=blocked_parent_ids,
             )
         return updated
 
@@ -1232,6 +1288,16 @@ def _integrate_successful_formalization(
             backend=planning_backend if planning_backend is not None else backend,
             parent_node_id=node_id,
             artifact=artifact,
+        )
+        updated = _record_node_formalization_episode(
+            graph=updated,
+            node_id=node_id,
+            attempt_count=artifact.verification.attempt_count,
+            outcome=NodeFormalizationOutcome.PRODUCED_SUPPORTING_CORE,
+            note=(
+                f"Most recent formalization attempt produced the verified supporting core "
+                f"'{support_child_id}' rather than a full-node theorem."
+            ),
         )
         consumed = _consume_parent_promotion_episode(
             parent_promotion_cache=parent_promotion_cache,
@@ -1249,10 +1315,62 @@ def _integrate_successful_formalization(
                 planning_backend=planning_backend,
                 verified_node_id=None,
                 parent_promotion_cache=parent_promotion_cache,
+                blocked_parent_ids=blocked_parent_ids,
             )
         return updated
 
-    return _update_node(graph, node_id, "formal_failed", artifact)
+    updated = _update_node(graph, node_id, "formal_failed", artifact)
+    return _record_node_formalization_episode(
+        graph=updated,
+        node_id=node_id,
+        attempt_count=artifact.verification.attempt_count,
+        outcome=NodeFormalizationOutcome.FAILED,
+        note="Most recent formalization attempt failed the faithfulness guard.",
+    )
+
+
+def _swallow_supporting_formal_cores(*, graph: ProofGraph, parent_node_id: str) -> ProofGraph:
+    """Remove direct formal-core support children once their parent is fully verified."""
+
+    outgoing_support_edges = [
+        edge
+        for edge in graph.edges
+        if edge.source_id == parent_node_id and edge.label == "formal_sublemma_for"
+    ]
+    if not outgoing_support_edges:
+        return graph
+
+    node_by_id = {node.id: node for node in graph.nodes}
+    absorbable_child_ids: set[str] = set()
+    for edge in outgoing_support_edges:
+        child = node_by_id.get(edge.target_id)
+        if child is None or child.status != "formal_verified" or child.formal_artifact is None:
+            continue
+        child_incoming = [candidate for candidate in graph.edges if candidate.target_id == child.id]
+        child_outgoing = [candidate for candidate in graph.edges if candidate.source_id == child.id]
+        if child_outgoing:
+            continue
+        if any(
+            candidate.label != "formal_sublemma_for" or candidate.source_id != parent_node_id
+            for candidate in child_incoming
+        ):
+            continue
+        absorbable_child_ids.add(child.id)
+
+    if not absorbable_child_ids:
+        return graph
+
+    _progress(
+        f"node {parent_node_id}: swallowing supporting formal core(s) "
+        f"{', '.join(sorted(absorbable_child_ids))}"
+    )
+    updated_nodes = [node for node in graph.nodes if node.id not in absorbable_child_ids]
+    updated_edges = [
+        edge
+        for edge in graph.edges
+        if edge.source_id not in absorbable_child_ids and edge.target_id not in absorbable_child_ids
+    ]
+    return graph.model_copy(update={"nodes": updated_nodes, "edges": updated_edges})
 
 
 def _promote_followup_candidates_after_verified_node(
@@ -1261,12 +1379,14 @@ def _promote_followup_candidates_after_verified_node(
     planning_backend: StructuredBackend | None,
     verified_node_id: str | None,
     parent_promotion_cache: ParentPromotionCache | None,
+    blocked_parent_ids: set[str] | None = None,
 ) -> ProofGraph:
     updated = graph
     updated = _promote_informal_parents_with_verified_children(
         graph=updated,
         planning_backend=planning_backend,
         parent_promotion_cache=parent_promotion_cache,
+        blocked_parent_ids=blocked_parent_ids,
     )
     return updated
 
@@ -1407,6 +1527,7 @@ def _promote_informal_parents_with_verified_children(
     graph: ProofGraph,
     planning_backend: StructuredBackend | None,
     parent_promotion_cache: ParentPromotionCache | None,
+    blocked_parent_ids: set[str] | None = None,
 ) -> ProofGraph:
     if planning_backend is None:
         return graph
@@ -1424,6 +1545,11 @@ def _promote_informal_parents_with_verified_children(
     node_index = {node.id: index for index, node in enumerate(updated_nodes)}
 
     for parent_id in eligible_parent_ids:
+        if blocked_parent_ids is not None and parent_id in blocked_parent_ids:
+            _progress(
+                f"node {parent_id}: skipping parent promotion because this node was already formalized in the current pass"
+            )
+            continue
         parent = next(node for node in updated_nodes if node.id == parent_id)
         current_verified_child_ids = _current_verified_direct_child_ids(graph, parent_id)
         if _has_consumed_parent_promotion_episode(

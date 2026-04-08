@@ -13,7 +13,11 @@ from formal_islands.formalization.agentic import (
     build_agentic_formalization_request,
     recover_agentic_artifact_from_scratch_file,
 )
-from formal_islands.formalization.aristotle import build_aristotle_formalization_prompt
+from formal_islands.formalization.aristotle import (
+    _build_verified_child_support_files,
+    _materialize_verified_child_support_files,
+    build_aristotle_formalization_prompt,
+)
 from formal_islands.formalization.aristotle import _append_aristotle_summary_files
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.formalization.loop import (
@@ -216,7 +220,9 @@ def test_build_agentic_formalization_request_includes_all_verified_direct_childr
     assert "verified direct child lemmas" in lowered
     assert "a_nonneg" in request.prompt
     assert "b_nonneg" in request.prompt
+    assert "artifact_path" in request.prompt
     assert "dependency direction note" in lowered
+    assert "self-contained final scratch file" in lowered
 
 
 def test_build_aristotle_formalization_prompt_marks_ambient_theorem_as_context_only(tmp_path: Path) -> None:
@@ -269,6 +275,74 @@ def test_build_aristotle_formalization_prompt_includes_all_verified_direct_child
     assert "b_nonneg" in prompt
     assert "remaining parent-level delta" in lowered
     assert "dependency direction note" in lowered
+    assert "self-contained final scratch file" in lowered
+
+
+def test_build_aristotle_formalization_prompt_for_promoted_parent_mentions_new_parent_theorem(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+    scratch_path = workspace.prepare_worker_file("n0")
+    graph = build_two_child_candidate_graph()
+    support_files = _build_verified_child_support_files(graph=graph, node_id="n0")
+    node = next(node for node in graph.nodes if node.id == "n0").model_copy(
+        update={
+            "formalization_rationale": "Promoted after all direct children were verified; remaining work is parent assembly."
+        }
+    )
+
+    prompt = build_aristotle_formalization_prompt(
+        graph=graph.model_copy(
+            update={"nodes": [node if candidate.id == "n0" else candidate for candidate in graph.nodes]}
+        ),
+        node=node,
+        desired_theorem_name="n0_aristotle",
+        relative_scratch_path=scratch_path.relative_to(workspace.root),
+        verified_child_support_files=support_files,
+    )
+
+    lowered = prompt.lower()
+    assert "materialized verified support files" in lowered
+    assert "this is a promoted parent-assembly attempt" in lowered
+    assert "must still be `n0_aristotle`" in prompt
+    assert "not just a resubmission of one child theorem" in lowered
+    assert "FormalIslands/Generated/Support" in prompt
+    assert "prefer copying or adapting the minimal helper material" in lowered
+
+
+def test_materialize_verified_child_support_files_copies_existing_artifacts(tmp_path: Path) -> None:
+    artifact_dir = tmp_path / "existing"
+    artifact_dir.mkdir()
+    artifact_path = artifact_dir / "a_nonneg.lean"
+    artifact_path.write_text("theorem a_nonneg : 0 ≤ a := by\n  sorry\n", encoding="utf-8")
+
+    graph = build_two_child_graph()
+    updated_nodes = [
+        node.model_copy(
+            update={
+                "formal_artifact": node.formal_artifact.model_copy(
+                    update={
+                        "verification": node.formal_artifact.verification.model_copy(
+                            update={"artifact_path": str(artifact_path)}
+                        )
+                    }
+                )
+            }
+        )
+        if node.id == "n1"
+        else node
+        for node in graph.nodes
+    ]
+    support_files = _build_verified_child_support_files(
+        graph=graph.model_copy(update={"nodes": updated_nodes}),
+        node_id="n0",
+    )
+    snapshot_root = tmp_path / "snapshot"
+    _materialize_verified_child_support_files(snapshot_root=snapshot_root, support_files=support_files)
+
+    first_support = next(support for support in support_files if support.child_id == "n1")
+    copied = snapshot_root / first_support.relative_path
+    assert copied.read_text(encoding="utf-8") == artifact_path.read_text(encoding="utf-8")
 
 
 def test_parent_promotion_assessment_is_cached_and_promotes_parent(tmp_path: Path) -> None:
@@ -394,6 +468,65 @@ def test_parent_promotion_episode_prevents_immediate_repromotion(tmp_path: Path)
     assert planning_backend.requests[1].task_name == "summarize_concrete_sublemma"
     log_text = progress_log.read_text(encoding="utf-8")
     assert "skipping parent promotion because this verified child set already came from a prior parent-assembly episode" in log_text
+
+
+def test_full_node_verification_swallows_direct_supporting_formal_core() -> None:
+    artifact = FormalArtifact(
+        lean_theorem_name="n0_full",
+        lean_statement="theorem n0_full : True",
+        lean_code="theorem n0_full : True := by trivial",
+        faithfulness_classification="full_node",
+        verification=VerificationResult(status="verified", command="lake env lean"),
+    )
+    support_artifact = FormalArtifact(
+        lean_theorem_name="n0_core",
+        lean_statement="theorem n0_core : True",
+        lean_code="theorem n0_core : True := by trivial",
+        faithfulness_classification="concrete_sublemma",
+        verification=VerificationResult(status="verified", command="lake env lean"),
+    )
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Main claim",
+                informal_statement="Main claim.",
+                informal_proof_text="Use the certified local core.",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Parent assembly target.",
+            ),
+            ProofNode(
+                id="n0__formal_core",
+                title="Certified local core for Main claim",
+                informal_statement="Local core.",
+                informal_proof_text="Certified local core.",
+                status="formal_verified",
+                formal_artifact=support_artifact,
+            ),
+        ],
+        edges=[
+            ProofEdge(source_id="n0", target_id="n0__formal_core", label="formal_sublemma_for")
+        ],
+    )
+
+    updated = _integrate_successful_formalization(
+        graph=graph,
+        backend=None,
+        planning_backend=None,
+        node_id="n0",
+        artifact=artifact,
+        verification_status="verified",
+        enable_parent_promotion=False,
+    )
+
+    root = next(node for node in updated.nodes if node.id == "n0")
+    assert root.status == "formal_verified"
+    assert all(node.id != "n0__formal_core" for node in updated.nodes)
+    assert not updated.edges
 
 
 def test_faithfulness_feedback_locks_theorem_family_for_setting_fix() -> None:

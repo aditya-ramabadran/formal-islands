@@ -25,6 +25,8 @@ A **formal island** is a proof node independently verified in Lean, certified in
 
 Even when the formalization backend proves something that compiles in Lean, there is no guarantee the formal statement actually matches the intended informal theorem. The pipeline uses a series of heuristic checks and LLM-assisted semantic review to guard against drift, but the ultimate check is always left to a human, and the report makes the remaining burden explicit.
 
+The pipeline classifies each result as a full-node match, a faithful local core, or a narrower sublemma, and surfaces any remaining semantic gap explicitly in the report.
+
 ### What Files Get Produced?
 
 Each run writes a small set of stage artifacts:
@@ -115,6 +117,8 @@ The pipeline uses two separate backends: one for **planning** (proof graph const
 
 **Formalization backends** are given a Lean workspace and act as autonomous agentic workers: they can read files, edit a scratch Lean file, run `lake env lean`, and iterate. Claude Code, Gemini, and Codex all work this way. Aristotle (Harmonic's API) is also supported as a formalization backend and tends to give the best Lean results.
 
+Aristotle is Harmonic's Lean-specialized formalization API, used here as a project-based backend for formalization tasks.
+
 **Preferred combination:** `--backends claude/aristotle` or `--backends gemini/aristotle`. A strong reasoning model for planning, Aristotle for formalization.
 
 ### Claude Code (`--planning-backend claude` / `--formalization-backend claude`)
@@ -149,7 +153,7 @@ Installed automatically via pip as part of `aristotlelib`. Requires an API key:
 export ARISTOTLE_API_KEY=...
 ```
 
-Aristotle can only be used as a formalization backend, not for planning. It tends to produce the best Lean results.
+[Aristotle](https://aristotle.harmonic.fun/) is Harmonic's Lean-specialized formalization API, and can only be used as a formalization backend, not for planning. It tends to produce the best Lean results.
 
 ## All CLI Flags
 

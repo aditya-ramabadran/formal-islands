@@ -176,6 +176,50 @@ def test_render_html_report_shows_remaining_proof_burden_for_verified_children()
     assert "final parent-level rewrite" in html
 
 
+def test_render_html_report_shows_most_recent_formalization_episode_for_informal_parent() -> None:
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Parent theorem",
+                informal_statement="Show the parent theorem.",
+                informal_proof_text="Use n0__formal_core.",
+                last_formalization_attempt_count=1,
+                last_formalization_outcome="produced_supporting_core",
+                last_formalization_note=(
+                    "Most recent formalization attempt produced the verified supporting core "
+                    "`n0__formal_core` rather than a full-node theorem."
+                ),
+            ),
+            ProofNode(
+                id="n0__formal_core",
+                title="Certified local core for Parent theorem",
+                informal_statement="Core statement.",
+                informal_proof_text="Core proof.",
+                status="formal_verified",
+                formal_artifact=FormalArtifact(
+                    lean_theorem_name="n0_core",
+                    lean_statement="theorem n0_core : True",
+                    lean_code="theorem n0_core : True := by trivial",
+                    faithfulness_classification="concrete_sublemma",
+                ),
+            ),
+        ],
+        edges=[
+            ProofEdge(source_id="n0", target_id="n0__formal_core", label="formal_sublemma_for"),
+        ],
+    )
+    obligations = derive_review_obligations(graph)
+
+    html = render_html_report(graph, obligations)
+
+    assert "Most recent formalization episode: produced a verified supporting core after 1 Lean verification attempt." in html
+    assert "n0__formal_core" in html
+
+
 def test_synthesize_remaining_proof_burdens_uses_planner_and_updates_graph() -> None:
     artifact = FormalArtifact(
         lean_theorem_name="child_core",

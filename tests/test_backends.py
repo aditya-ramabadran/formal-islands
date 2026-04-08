@@ -255,6 +255,41 @@ def test_gemini_backend_parses_json_response_wrapper() -> None:
     assert response.payload == {"nodes": []}
 
 
+def test_gemini_backend_repairs_fenced_json_with_tex_backslashes() -> None:
+    backend = GeminiCLIBackend(model="gemini-2.5-flash")
+    request = StructuredBackendRequest(
+        prompt="Return the remaining proof burden.",
+        system_prompt="Return JSON only.",
+        json_schema={"type": "object"},
+    )
+
+    completed = subprocess.CompletedProcess(
+        args=[],
+        returncode=0,
+        stdout=json.dumps(
+            {
+                "response": (
+                    "```json\n"
+                    '{\n  "remaining_proof_burden": "Use the verified derivative inequality and check the final '
+                    'assembly step, including the condition E\'(t) \\\\le 0 and the zero-energy conclusion."\n}\n'
+                    "```"
+                ),
+                "stats": {"output_tokens": 12},
+                "error": None,
+            }
+        ),
+        stderr="",
+    )
+
+    with patch("shutil.which", return_value="/usr/bin/gemini"), patch(
+        "subprocess.run", return_value=completed
+    ):
+        response = backend.run_structured(request)
+
+    assert "remaining_proof_burden" in response.payload
+    assert "\\le 0" in response.payload["remaining_proof_burden"]
+
+
 def test_gemini_backend_defaults_to_360_second_timeout() -> None:
     backend = GeminiCLIBackend()
 

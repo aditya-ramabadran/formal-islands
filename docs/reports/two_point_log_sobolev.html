@@ -659,8 +659,8 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
             <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
           </marker>
         </defs>
-        <g><path class="graph-edge edge-root-scalar_ineq" d="M 210.0 83.0 C 210.0 106.2, 210.0 117.8, 210.0 141.0" marker-end="url(#graph-arrow)"></path>
-<path class="graph-edge edge-scalar_ineq-core_1d" d="M 210.0 201.0 C 210.0 224.2, 210.0 235.8, 210.0 259.0" marker-end="url(#graph-arrow)"></path></g>
+        <g><path class="graph-edge edge-root-scalar_ineq" d="M 210.0 83.0 C 210.0 106.2, 210.0 123.6, 210.0 141.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-scalar_ineq-core_1d" d="M 210.0 201.0 C 210.0 224.2, 210.0 241.6, 210.0 259.0" marker-end="url(#graph-arrow)"></path></g>
         <g>
     <a class="graph-node-link node-root status-informal" href="#node-root">
       <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
@@ -731,9 +731,7 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
         <input id="obligation-check-semantic-match-scalar_ineq" type="checkbox" />
         <span>
           <span class="checklist-kind">formal_semantic_match_check</span><br />
-          Check that node &#x27;scalar_ineq&#x27; (Scalar two-point log-Sobolev inequality) matches the verified Lean statement &#x27;theorem scalar_ineq_aristotle (a b : ℝ) :
-    a ^ 2 <em> log (a ^ 2) + b ^ 2 </em> log (b ^ 2) -
-    (a ^ 2 + b ^ 2) * log ((a ^ 2 + b ^ 2) / 2) ≤ (a - b) ^ 2&#x27;.
+          Check that node &#x27;scalar_ineq&#x27; (Scalar two-point log-Sobolev inequality) matches the verified Lean theorem for this node.
           <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> scalar_ineq_aristotle (a b : <span class="tok-type">ℝ</span>) :
     a ^ <span class="tok-number">2</span> * log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * log (b ^ <span class="tok-number">2</span>) -
     (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) ≤ (a - b) ^ <span class="tok-number">2</span></code></pre></div>
@@ -748,7 +746,7 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
         <input id="obligation-check-semantic-match-core_1d" type="checkbox" />
         <span>
           <span class="checklist-kind">formal_semantic_match_check</span><br />
-          Check that node &#x27;core_1d&#x27; (Core one-dimensional inequality \(G(u)\ge 0\)) matches the verified Lean statement &#x27;theorem core_1d_aristotle (u : ℝ) (hu0 : 0 ≤ u) (hu2 : u ≤ 2) : 0 ≤ G u&#x27;.
+          Check that node &#x27;core_1d&#x27; (Core one-dimensional inequality \(G(u)\ge 0\)) matches the verified Lean theorem for this node.
           <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> core_1d_aristotle (u : <span class="tok-type">ℝ</span>) (hu0 : <span class="tok-number">0</span> ≤ u) (hu2 : u ≤ <span class="tok-number">2</span>) : <span class="tok-number">0</span> ≤ G u</code></pre></div>
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-core_1d">core_1d</a></div>
         </span>
@@ -780,13 +778,14 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
       <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-scalar_ineq">scalar_ineq</a></p>
       <p class="meta">Display label: Two-point log-Sobolev inequality</p>
       
+      
       <p><strong>Informal statement:</strong></p>
       <div class="math-text">For every \(f:\{-1,1\}\to\mathbb{R}\), \(\operatorname{Ent}_{\mu}(f^2)\le\tfrac{1}{2}(f(1)-f(-1))^2\), where \(\mu\) is the uniform measure on \(\{-1,1\}\).</div>
       <p><strong>Informal proof:</strong></p>
       <div class="math-text">Set \(a:=f(1)\) and \(b:=f(-1)\). Since \(\mu\) is uniform, \(\mathbb{E}_\mu[f^2]=(a^2+b^2)/2\) and \(\mathbb{E}_\mu[f^2\log f^2]=(a^2\log(a^2)+b^2\log(b^2))/2\). Multiplying both sides of \(\operatorname{Ent}_\mu(f^2)\le\tfrac12(a-b)^2\) by 2 shows the claim is equivalent to the scalar inequality \(a^2\log(a^2)+b^2\log(b^2)-(a^2+b^2)\log\!\bigl(\tfrac{a^2+b^2}{2}\bigr)\le(a-b)^2\) for all \(a,b\in\mathbb{R}\). That scalar inequality is established in the node below.</div>
       
       <p><strong>Remaining proof burden (assuming results of <a class="node-jump" href="#node-scalar_ineq">scalar_ineq</a>):</strong></p>
-      <div class="math-text">Assuming <code class="inline-code">scalar_ineq_aristotle</code>, the parent theorem reduces to a short assembly argument that has not yet been formally certified. Specifically, one must (i) unfold the definition of the entropy functional Ent_μ(f²) under the uniform measure on {−1,1} to obtain Ent_μ(f²) = (a²log(a²)+b²log(b²))/2 − ((a²+b²)/2)·log((a²+b²)/2), where a = f(1) and b = f(−1); (ii) perform the algebraic rewrite showing this equals exactly ½·[a²log(a²)+b²log(b²)−(a²+b²)log((a²+b²)/2)], i.e., one-half the left-hand side of the scalar inequality; and (iii) apply <code class="inline-code">scalar_ineq_aristotle</code> and divide by 2 to conclude Ent_μ(f²) ≤ ½(a−b)². The main residual obligation is thus a definitional unfolding of the discrete entropy and the ×½ scaling step that connects the scalar child to the parent; no new analytic inequality is needed, making this essentially a parent-level assembly theorem.</div>
+      <div class="math-text">With <code class="inline-code">scalar_ineq_aristotle</code> in hand, the parent theorem reduces to a purely definitional/assembly argument. A human still needs to: (1) unfold the definition of entropy Ent_μ(f²) under the uniform measure on {−1,1}, explicitly computing E_μ[f²] = (a²+b²)/2 and E_μ[f² log f²] = (a² log(a²)+b² log(b²))/2 where a = f(1), b = f(−1); (2) verify the algebraic rewrite that shows Ent_μ(f²) ≤ ½(a−b)² is exactly equivalent (after multiplying both sides by 2) to the scalar inequality a²log(a²)+b²log(b²)−(a²+b²)log((a²+b²)/2) ≤ (a−b)²; and (3) conclude by invoking <code class="inline-code">scalar_ineq_aristotle</code>. The residual work is entirely parent-level assembly and definitional bookkeeping — no new analytic content remains.</div>
     
       
     </article>
@@ -798,6 +797,7 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
       <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-root">root</a> &nbsp;|&nbsp; Depends on (child nodes): <a class="node-jump" href="#node-core_1d">core_1d</a></p>
       <p class="meta">Display label: Scalar inequality</p>
       <p class="meta">Formalization priority: 2. Rationale: The sign reduction (using (|a|-|b|)^2 &lt;= (a-b)^2) and the homogeneity normalization are nontrivial algebraic steps. The cancellation of log(c^2) cross-terms in the scaling argument merits formal verification. Lower priority than the core 1D node because these steps are more routine once the framework is in place.</p>
+      
       <p><strong>Informal statement:</strong></p>
       <div class="math-text">For all \(a,b\in\mathbb{R}\), \[a^2\log(a^2)+b^2\log(b^2)-(a^2+b^2)\log\!\left(\frac{a^2+b^2}{2}\right)\le(a-b)^2.\]</div>
       <p><strong>Informal proof:</strong></p>
@@ -1064,6 +1064,7 @@ stderr:
       <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-scalar_ineq">scalar_ineq</a></p>
       <p class="meta">Display label: Core 1D inequality \(G(u)\ge 0\)</p>
       <p class="meta">Formalization priority: 1. Rationale: The concrete one-variable function G(u) and its convexity proof (G&#x27;&#x27; &gt;= 0 via u(2-u) &lt;= 1, global min at u=1) is the technically richest and most self-contained part of the argument. The explicit derivative computations and the AM-GM-type bound u(2-u) &lt;= 1 are directly formalizable, making this the highest-yield candidate.</p>
+      
       <p><strong>Informal statement:</strong></p>
       <div class="math-text">Define \(G(u):=\bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2 - u\log u-(2-u)\log(2-u)\) for \(u\in[0,2]\) (with \(0\log 0:=0\)). Then \(G(u)\ge 0\) for all \(u\in[0,2]\).</div>
       <p><strong>Informal proof:</strong></p>

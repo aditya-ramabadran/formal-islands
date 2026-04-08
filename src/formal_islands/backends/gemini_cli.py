@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import time
@@ -574,16 +575,54 @@ class GeminiCLIBackend:
         if not isinstance(value, str):
             return value
         stripped = value.strip()
-        if stripped.startswith("```") and stripped.endswith("```"):
-            inner = stripped.strip("`")
-            first_newline = inner.find("\n")
-            if first_newline >= 0:
-                inner = inner[first_newline + 1 :]
-            stripped = inner.strip()
+        fence_match = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", stripped, flags=re.DOTALL | re.IGNORECASE)
+        if fence_match is not None:
+            stripped = fence_match.group(1).strip()
         try:
             return json.loads(stripped)
         except json.JSONDecodeError:
+            repaired = GeminiCLIBackend._escape_invalid_json_backslashes(stripped)
+            if repaired != stripped:
+                try:
+                    return json.loads(repaired)
+                except json.JSONDecodeError:
+                    return None
             return None
+
+    @staticmethod
+    def _escape_invalid_json_backslashes(text: str) -> str:
+        """Best-effort repair for model responses that contain lone TeX-style backslashes in JSON strings."""
+
+        out: list[str] = []
+        in_string = False
+        i = 0
+        while i < len(text):
+            ch = text[i]
+            if not in_string:
+                out.append(ch)
+                if ch == '"':
+                    in_string = True
+                i += 1
+                continue
+
+            if ch == "\\":
+                if i + 1 >= len(text):
+                    out.append("\\\\")
+                    i += 1
+                    continue
+                nxt = text[i + 1]
+                if nxt in {'"', "\\", "/", "b", "f", "n", "r", "t", "u"}:
+                    out.append("\\")
+                else:
+                    out.append("\\\\")
+                i += 1
+                continue
+
+            out.append(ch)
+            if ch == '"':
+                in_string = False
+            i += 1
+        return "".join(out)
 
     @staticmethod
     def _looks_like_stream_event(value: dict[str, Any]) -> bool:

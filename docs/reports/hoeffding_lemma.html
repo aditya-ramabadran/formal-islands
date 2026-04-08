@@ -610,8 +610,8 @@ This is the classical Hoeffding moment-generating-function bound for a centered 
             <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
           </marker>
         </defs>
-        <g><path class="graph-edge edge-convexity_expectation-hoeffdings_lemma" d="M 126.0 201.0 C 126.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path>
-<path class="graph-edge edge-log_mgf_bound-hoeffdings_lemma" d="M 294.0 201.0 C 294.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path></g>
+        <g><path class="graph-edge edge-convexity_expectation-hoeffdings_lemma" d="M 126.0 201.0 C 126.0 129.8, 184.8 76.4, 210.0 23.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-log_mgf_bound-hoeffdings_lemma" d="M 294.0 201.0 C 294.0 129.8, 235.2 76.4, 210.0 23.0" marker-end="url(#graph-arrow)"></path></g>
         <g>
     <a class="graph-node-link node-hoeffdings_lemma status-informal" href="#node-hoeffdings_lemma">
       <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
@@ -682,17 +682,7 @@ This is the classical Hoeffding moment-generating-function bound for a centered 
         <input id="obligation-check-semantic-match-convexity_expectation" type="checkbox" />
         <span>
           <span class="checklist-kind">formal_semantic_match_check</span><br />
-          Check that node &#x27;convexity_expectation&#x27; (Expectation bound via convexity) matches the verified Lean statement &#x27;theorem convexity_expectation_aristotle
-    (μ : Measure ℝ) [IsProbabilityMeasure μ]
-    (a b s : ℝ) (hab : a &lt; b)
-    (hint : Integrable id μ)
-    (hexp_int : Integrable (fun x =&gt; exp (s <em> x)) μ)
-    (hmean : ∫ x, x ∂μ = 0)
-    (hlower : ∀ᵐ x ∂μ, a ≤ x)
-    (hupper : ∀ᵐ x ∂μ, x ≤ b) :
-    ∫ x, exp (s </em> x) ∂μ ≤
-      exp (-(-a / (b - a)) <em> (s </em> (b - a))) <em>
-        (b / (b - a) + -a / (b - a) </em> exp (s * (b - a)))&#x27;.
+          Check that node &#x27;convexity_expectation&#x27; (Expectation bound via convexity) matches the verified Lean theorem for this node.
           <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> convexity_expectation_aristotle
     (μ : Measure <span class="tok-type">ℝ</span>) [IsProbabilityMeasure μ]
     (a b s : <span class="tok-type">ℝ</span>) (hab : a &lt; b)
@@ -715,8 +705,7 @@ This is the classical Hoeffding moment-generating-function bound for a centered 
         <input id="obligation-check-semantic-match-log_mgf_bound" type="checkbox" />
         <span>
           <span class="checklist-kind">formal_semantic_match_check</span><br />
-          Check that node &#x27;log_mgf_bound&#x27; (Log-MGF function bound) matches the verified Lean statement &#x27;theorem log_mgf_bound_aristotle (p q : ℝ) (hp : 0 ≤ p) (hq : 0 ≤ q) (hpq : p + q = 1)
-    (u : ℝ) : -p <em> u + Real.log (q + p </em> Real.exp u) ≤ u ^ 2 / 8&#x27;.
+          Check that node &#x27;log_mgf_bound&#x27; (Log-MGF function bound) matches the verified Lean theorem for this node.
           <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> log_mgf_bound_aristotle (p q : <span class="tok-type">ℝ</span>) (hp : <span class="tok-number">0</span> ≤ p) (hq : <span class="tok-number">0</span> ≤ q) (hpq : p + q = <span class="tok-number">1</span>)
     (u : <span class="tok-type">ℝ</span>) : -p * u + Real.log (q + p * Real.exp u) ≤ u ^ <span class="tok-number">2</span> / <span class="tok-number">8</span></code></pre></div>
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-log_mgf_bound">log_mgf_bound</a></div>
@@ -734,6 +723,7 @@ This is the classical Hoeffding moment-generating-function bound for a centered 
       <h3>Hoeffding&#x27;s lemma</h3>
       <p class="meta">Node id: hoeffdings_lemma | Status: informal</p>
       <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-convexity_expectation">convexity_expectation</a>, <a class="node-jump" href="#node-log_mgf_bound">log_mgf_bound</a></p>
+      
       
       
       <p><strong>Informal statement:</strong></p>
@@ -771,6 +761,7 @@ which proves Hoeffding&#x27;s lemma.</div>
       <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-hoeffdings_lemma">hoeffdings_lemma</a></p>
       
       <p class="meta">Formalization priority: 2. Rationale: An excellent intermediate probabilistic step that isolates the use of convexity and linearity of expectation to bound the MGF, separating it from the final algebraic/calculus arguments.</p>
+      
       <p><strong>Informal statement:</strong></p>
       <div class="math-text">Let \(X\) be a real-valued random variable with \(\mathbb{E}[X]=0\) and \(a \le X \le b\) almost surely. Let \(s\) be a real number, \(p := \frac{-a}{b-a}\), \(q := \frac{b}{b-a}\), and \(u := s(b-a)\). Then \(\mathbb{E}[e^{sX}] \le e^{-pu}(q+p e^u)\).</div>
       <p><strong>Informal proof:</strong></p>
@@ -939,7 +930,7 @@ Try this:
   The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
     
   Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
-lean_project/FormalIslands/Generated/convexity_expectation_worker_20260407-083404_466fef88.lean:44:33: warning: unused variable `hab`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/convexity_expectation_worker_20260407-083404_466fef88.lean:44:33: warning: unused variable `hab`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
 Try this:
@@ -954,7 +945,7 @@ Try this:
   The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
     
   Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
-lean_project/FormalIslands/Generated/convexity_expectation_worker_20260407-083404_466fef88.lean:83:23: warning: This simp argument is unused:
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/convexity_expectation_worker_20260407-083404_466fef88.lean:83:23: warning: This simp argument is unused:
   MeasureTheory.integral_div
 
 Hint: Omit it from the simp argument list.
@@ -976,6 +967,7 @@ stderr:
       <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-hoeffdings_lemma">hoeffdings_lemma</a></p>
       
       <p class="meta">Formalization priority: 1. Rationale: A completely self-contained, purely real-analytic bound. It packages the Taylor expansion and derivative calculations into an elegant, isolated calculus problem, independent of probability.</p>
+      
       <p><strong>Informal statement:</strong></p>
       <div class="math-text">Let \(p, q \ge 0\) such that \(p+q=1\). Define \(g(u) := -pu + \log(q+p e^u)\). Then \(g(u) \le \frac{u^2}{8}\) for all \(u \in \mathbb{R}\).</div>
       <p><strong>Informal proof:</strong></p>

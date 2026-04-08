@@ -77,6 +77,11 @@ def build_agentic_formalization_request(
             "id": child.id,
             "title": child.title,
             "informal_statement": child.informal_statement,
+            "artifact_path": (
+                child.formal_artifact.verification.artifact_path
+                if child.formal_artifact and child.formal_artifact.verification is not None
+                else None
+            ),
             "formal_artifact": (
                 child.formal_artifact.model_dump(mode="json") if child.formal_artifact else None
             ),
@@ -84,6 +89,9 @@ def build_agentic_formalization_request(
         for child in graph.nodes
         if child.id in children and child.formal_artifact is not None
     ]
+    promoted_parent_attempt = "promoted after all direct children were verified" in (
+        (node.formalization_rationale or "").lower()
+    )
     local_context = build_local_proof_context(graph, node_id)
     direct_child_context = build_verified_direct_child_context(graph, node_id)
 
@@ -125,6 +133,10 @@ def build_agentic_formalization_request(
         (
             "These verified children are already available. Your theorem should capture only the remaining "
             "parent-level delta, not a restatement of any verified child or a near-equivalent corollary."
+        ),
+        (
+            "If you use verified child results, treat them as helper lemmas for the current node. The designated "
+            "main theorem for this run must target the current node's theorem burden, not simply re-submit a child theorem unchanged."
         ),
         (
             "Dependency direction note: the verified child lemmas are outgoing dependencies of the target node. "
@@ -224,6 +236,14 @@ def build_agentic_formalization_request(
             "assumptions."
         ),
         (
+            "If verified child artifact paths are listed above, inspect those files directly when useful so you can build upward "
+            "from already certified code rather than re-deriving the same helper theorem from scratch."
+        ),
+        (
+            "Prefer a self-contained final scratch file. You may inspect verified child artifacts and copy or adapt "
+            "small helper lemmas from them, but avoid leaving the final result split across multiple Lean files unless that is truly necessary."
+        ),
+        (
             "Do not replace a concrete statement with a generic measure-space or arbitrary ambient-type theorem "
             "unless the original node is already phrased in that abstract setting."
         ),
@@ -244,6 +264,16 @@ def build_agentic_formalization_request(
             "the plan markdown path above."
         ),
     ]
+    if promoted_parent_attempt and child_summaries:
+        prompt_parts.extend(
+            [
+                "This is a promoted parent-assembly attempt.",
+                (
+                    "Start from the verified child theorem(s) above, reuse them as helper lemmas, and prove the missing "
+                    "parent-level enlargement or assembly step. Do not finish with only a child theorem copied or lightly renamed."
+                ),
+            ]
+        )
     if faithfulness_feedback:
         prompt_parts.extend(
             [

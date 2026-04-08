@@ -2,7 +2,10 @@ from pydantic import ValidationError
 import pytest
 
 from formal_islands.backends import MockBackend
-from formal_islands.formalization.loop import _should_attempt_refinement_after_failure
+from formal_islands.formalization.loop import (
+    _integrate_successful_formalization,
+    _should_attempt_refinement_after_failure,
+)
 from formal_islands.formalization.pipeline import (
     FaithfulnessClassification,
     FormalizationFaithfulnessError,
@@ -23,7 +26,7 @@ from formal_islands.formalization.pipeline import (
     request_parent_promotion_assessment,
     request_repair_assessment,
 )
-from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode
+from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode, VerificationResult
 from formal_islands.progress import use_progress_log
 
 
@@ -276,6 +279,9 @@ def test_build_parent_promotion_assessment_request_mentions_verified_children() 
     assert "recommended_priority" in request.prompt
     assert "a_nonneg" in request.prompt
     assert "b_nonneg" in request.prompt
+    assert "direct child inventory" in lowered
+    assert "absorb a supporting formal-core child" in lowered
+    assert "pure duplication" in lowered
 
 
 def test_request_parent_promotion_assessment_returns_priority_and_reason() -> None:
@@ -779,3 +785,72 @@ def test_assess_formalization_faithfulness_marks_broad_multistep_node_as_sublemm
     assessment = assess_formalization_faithfulness(node=node, artifact=artifact)
 
     assert assessment.classification == FaithfulnessClassification.CONCRETE_SUBLEMMA
+
+
+def test_integrate_concrete_sublemma_records_attempt_and_skips_immediate_repromotion() -> None:
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Main theorem",
+                informal_statement="Assemble the final theorem.",
+                informal_proof_text="Use n1.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Parent step",
+                informal_statement="Prove the parent step.",
+                informal_proof_text="This is the target node.",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Top candidate.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1")],
+    )
+    artifact = FormalArtifact(
+        lean_theorem_name="n1_core",
+        lean_statement="theorem n1_core : True",
+        lean_code="theorem n1_core : True := by trivial",
+        faithfulness_classification="concrete_sublemma",
+        verification=VerificationResult(
+            status="verified",
+            command="lake env lean test.lean",
+            attempt_count=1,
+            artifact_path="test.lean",
+        ),
+    )
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "informal_statement": "Core statement.",
+                "informal_proof_text": "Core proof.",
+            },
+            {
+                "promote_parent": True,
+                "recommended_priority": 1,
+                "reason": "This parent would usually be worth retrying later.",
+            },
+        ]
+    )
+
+    updated = _integrate_successful_formalization(
+        graph=graph,
+        backend=backend,
+        planning_backend=backend,
+        node_id="n1",
+        artifact=artifact,
+        verification_status="verified",
+        blocked_parent_ids={"n1"},
+    )
+
+    parent = next(node for node in updated.nodes if node.id == "n1")
+    assert parent.status == "informal"
+    assert parent.last_formalization_outcome == "produced_supporting_core"
+    assert parent.last_formalization_attempt_count == 1
+    assert parent.formalization_priority is None
+    assert parent.formal_artifact is None
+    assert any(node.id == "n1__formal_core" for node in updated.nodes)

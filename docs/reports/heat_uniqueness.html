@@ -607,8 +607,8 @@ Then \(u=v\) on \([0,L]\times[0,T]\).</div>
             <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
           </marker>
         </defs>
-        <g><path class="graph-edge edge-energy_dissipation-main_theorem" d="M 126.0 201.0 C 126.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path>
-<path class="graph-edge edge-main_theorem__formal_core-main_theorem" d="M 294.0 201.0 C 294.0 129.8, 210.0 94.2, 210.0 23.0" marker-end="url(#graph-arrow)"></path></g>
+        <g><path class="graph-edge edge-energy_dissipation-main_theorem" d="M 126.0 201.0 C 126.0 129.8, 184.8 76.4, 210.0 23.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-main_theorem__formal_core-main_theorem" d="M 294.0 201.0 C 294.0 129.8, 235.2 76.4, 210.0 23.0" marker-end="url(#graph-arrow)"></path></g>
         <g>
     <a class="graph-node-link node-main_theorem status-informal" href="#node-main_theorem">
       <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
@@ -679,30 +679,7 @@ Then \(u=v\) on \([0,L]\times[0,T]\).</div>
         <input id="obligation-check-semantic-match-energy_dissipation" type="checkbox" />
         <span>
           <span class="checklist-kind">formal_semantic_match_check</span><br />
-          Check that node &#x27;energy_dissipation&#x27; (Energy Dissipation Lemma) matches the verified Lean statement &#x27;theorem energy_dissipation_aristotle
-    (w : ℝ → ℝ → ℝ)
-    (L : ℝ) (hL : 0 &lt; L)
-    (t : ℝ)
-    -- The heat equation: w_t(x,t) = w_xx(x,t) for x ∈ [0,L]
-    (heat_eq : ∀ x ∈ Icc 0 L,
-      deriv (w x) t = deriv (deriv (fun x&#x27; =&gt; w x&#x27; t)) x)
-    -- Dirichlet boundary conditions
-    (bc_left  : w 0 t = 0)
-    (bc_right : w L t = 0)
-    -- Regularity assumption 1: Leibniz integral rule
-    -- &quot;We may differentiate E under the integral sign&quot;
-    (hLeibniz : HasDerivAt (energy w L)
-        (∫ x in (0 : ℝ)..L, w x t <em> deriv (w x) t) t)
-    -- Regularity assumption 2: integration by parts
-    -- ∫₀ᴸ w · w_xx dx = [w · w_x]₀ᴸ − ∫₀ᴸ (w_x)² dx
-    (hIBP : ∫ x in (0 : ℝ)..L, w x t </em> deriv (deriv (fun x&#x27; =&gt; w x&#x27; t)) x =
-        w L t <em> deriv (fun x&#x27; =&gt; w x&#x27; t) L -
-        w 0 t </em> deriv (fun x&#x27; =&gt; w x&#x27; t) 0 -
-          ∫ x in (0 : ℝ)..L, (deriv (fun x&#x27; =&gt; w x&#x27; t) x) ^ 2) :
-    -- Conclusion: E&#x27;(t) = −∫₀ᴸ (w_x)² dx  AND  this derivative is ≤ 0
-    HasDerivAt (energy w L)
-        (-(∫ x in (0 : ℝ)..L, (deriv (fun x&#x27; =&gt; w x&#x27; t) x) ^ 2)) t
-      ∧ -(∫ x in (0 : ℝ)..L, (deriv (fun x&#x27; =&gt; w x&#x27; t) x) ^ 2) ≤ 0&#x27;.
+          Check that node &#x27;energy_dissipation&#x27; (Energy Dissipation Lemma) matches the verified Lean theorem for this node.
           <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> energy_dissipation_aristotle
     (w : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>)
     (L : <span class="tok-type">ℝ</span>) (hL : <span class="tok-number">0</span> &lt; L)
@@ -738,25 +715,7 @@ Then \(u=v\) on \([0,L]\times[0,T]\).</div>
         <input id="obligation-check-semantic-match-main_theorem__formal_core" type="checkbox" />
         <span>
           <span class="checklist-kind">formal_semantic_match_check</span><br />
-          Check that node &#x27;main_theorem__formal_core&#x27; (Certified local core for Uniqueness for the heat equation) honestly represents a narrower verified Lean supporting sublemma with statement &#x27;theorem main_theorem_aristotle
-    (L T : ℝ) (hL : 0 &lt; L) (hT : 0 &lt; T)
-    (u v : ℝ → ℝ → ℝ)
-    -- Continuity of u and v (as functions of (x, t))
-    (hu_cont : Continuous (fun p : ℝ × ℝ =&gt; u p.1 p.2))
-    (hv_cont : Continuous (fun p : ℝ × ℝ =&gt; v p.1 p.2))
-    -- Same initial data
-    (h_init : ∀ x ∈ Icc 0 L, u x 0 = v x 0)
-    -- Homogeneous Dirichlet boundary conditions
-    (hu_bc0 : ∀ t ∈ Icc 0 T, u 0 t = 0)
-    (hu_bcL : ∀ t ∈ Icc 0 T, u L t = 0)
-    (hv_bc0 : ∀ t ∈ Icc 0 T, v 0 t = 0)
-    (hv_bcL : ∀ t ∈ Icc 0 T, v L t = 0)
-    -- Energy dissipation: E(t) = ∫₀ᴸ (u-v)²dx is nonincreasing
-    -- (follows from E&#x27;(t) = -2∫₀ᴸ (u_x - v_x)² dx ≤ 0 for heat equation solutions)
-    (h_energy_noninc : ∀ t₁ t₂, t₁ ∈ Icc 0 T → t₂ ∈ Icc 0 T → t₁ ≤ t₂ →
-      ∫ x in (0:ℝ)..L, (u x t₂ - v x t₂) ^ 2 ≤
-      ∫ x in (0:ℝ)..L, (u x t₁ - v x t₁) ^ 2) :
-    ∀ x ∈ Icc 0 L, ∀ t ∈ Icc 0 T, u x t = v x t&#x27;, rather than overclaiming full coverage of its parent informal step.
+          Check that node &#x27;main_theorem__formal_core&#x27; (Certified local core for Uniqueness for the heat equation) honestly represents a narrower verified Lean supporting sublemma, rather than overclaiming full coverage of its parent informal step.
           <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> main_theorem_aristotle
     (L T : <span class="tok-type">ℝ</span>) (hL : <span class="tok-number">0</span> &lt; L) (hT : <span class="tok-number">0</span> &lt; T)
     (u v : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>)
@@ -791,6 +750,7 @@ Then \(u=v\) on \([0,L]\times[0,T]\).</div>
       <h3>Uniqueness for the heat equation</h3>
       <p class="meta">Node id: main_theorem | Status: informal</p>
       <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-energy_dissipation">energy_dissipation</a>, <a class="node-jump" href="#node-main_theorem__formal_core">main_theorem__formal_core</a></p>
+      
       
       
       <p><strong>Informal statement:</strong></p>
@@ -840,6 +800,7 @@ for all \(t\), so \(w(x,t)=0\) for all \(x,t\). Hence \(u=v\).</div>
       <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-main_theorem">main_theorem</a></p>
       
       <p class="meta">Formalization priority: 1. Rationale: The energy dissipation inequality contains the core calculus steps: differentiation under the integral sign and integration by parts. It isolates the most technically demanding part of the proof into a highly concrete, well-scoped formal island.</p>
+      
       <p><strong>Informal statement:</strong></p>
       <div class="math-text">Let \(w\) be a sufficiently regular solution to \(w_t = w_{xx}\) on \((0,L)\times(0,T)\) with boundary conditions \(w(0,t)=w(L,t)=0\). Define the energy \[
 E(t)=\frac12\int_0^L w(x,t)^2\,dx.
@@ -993,6 +954,7 @@ stderr:
       <p class="meta">Node id: main_theorem__formal_core | Status: formal_verified</p>
       <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-main_theorem">main_theorem</a></p>
       <p class="meta">Display label: Certified core</p>
+      
       
       <p><strong>Informal statement:</strong></p>
       <div class="math-text">Let \(L, T &gt; 0\) and \(u, v : \mathbb{R}^2 \to \mathbb{R}\) be continuous functions. Suppose \(u(x,0) = v(x,0)\) for all \(x \in [0, L]\) and both functions satisfy homogeneous Dirichlet boundary conditions \(u(0,t)=v(0,t)=0\) and \(u(L,t)=v(L,t)=0\) for all \(t \in [0, T]\). Assume that the energy of the difference, given by \(\int_0^L (u(x,t) - v(x,t))^2 \, dx\), is nonincreasing for \(t \in [0, T]\). Then \(u(x,t) = v(x,t)\) for all \(x \in [0, L]\) and \(t \in [0, T]\).</div>

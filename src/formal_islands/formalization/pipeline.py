@@ -887,6 +887,30 @@ def build_parent_promotion_assessment_request(
     local_context = build_local_proof_context(graph, parent_node_id)
     sketch = build_node_coverage_sketch(parent)
     verified_children = build_verified_direct_child_context(graph, parent_node_id)
+    direct_child_records = []
+    node_by_id = {node.id: node for node in graph.nodes}
+    for edge in sorted(
+        (candidate for candidate in graph.edges if candidate.source_id == parent_node_id),
+        key=lambda candidate: (candidate.target_id, candidate.label or ""),
+    ):
+        child = node_by_id.get(edge.target_id)
+        if child is None:
+            continue
+        direct_child_records.append(
+            {
+                "id": child.id,
+                "title": child.title,
+                "status": child.status,
+                "edge_label": edge.label,
+                "is_supporting_formal_core": edge.label == "formal_sublemma_for",
+                "lean_theorem_name": (
+                    child.formal_artifact.lean_theorem_name if child.formal_artifact else None
+                ),
+                "lean_statement": (
+                    child.formal_artifact.lean_statement if child.formal_artifact else None
+                ),
+            }
+        )
     prompt = "\n\n".join(
         [
             f"Theorem title: {graph.theorem_title}",
@@ -901,6 +925,8 @@ def build_parent_promotion_assessment_request(
             ),
             "Verified direct child lemmas already available:",
             format_verified_direct_child_context(verified_children),
+            "Direct child inventory (use this to understand whether promotion would absorb a supporting core or simply duplicate it):",
+            json.dumps(direct_child_records, indent=2),
             "Parent coverage sketch:",
             _format_coverage_sketch_for_prompt(sketch),
             "Local proof neighborhood:",
@@ -908,22 +934,25 @@ def build_parent_promotion_assessment_request(
             (
                 "The target node is still informal, but all of its direct children are already verified. Decide whether "
                 "the parent is now reasonable to formalize as a parent-assembly theorem, or whether it should remain "
-                "informal for now. Be conservative: if the remaining work is still the main burden, if the parent is "
-                "really a different theorem family, or if the would-be formal theorem would mostly restate a verified "
-                "child or a trivial corollary of one, do not promote it."
+                "informal for now. Distinguish pure duplication from worthwhile closure: if promoting the parent would "
+                "mainly certify a clean parent-level assembly, packaging, or representational enlargement theorem and "
+                "would likely absorb a supporting formal-core child into a cleaner final graph, that is a real reason "
+                "to promote it."
             ),
             (
                 "If you do promote it, return a recommended_priority from 1 to 3, where 1 means it should be tried "
                 "very soon and 3 means it can wait behind other candidates. If you do not promote it, return null for "
-                "recommended_priority. Do not promote the parent if the strongest likely formal statement would "
-                "overlap a verified child almost verbatim, invert the dependency direction, or package a child "
-                "result as a fake parent theorem."
+                "recommended_priority. Do not promote the parent if the strongest likely formal statement would be a "
+                "pure duplicate or near-verbatim restatement of one verified child, invert the dependency direction, "
+                "or package a child result as a fake parent theorem without adding any real parent-level closure."
             ),
             (
                 "Focus on whether the verified children now cover the hard proof burden, leaving only parent-level "
-                "assembly, rewriting, or side-condition discharge. Do not promote a parent if the children merely "
-                "suggest an analogue, if the remaining work is still the main theorem, or if the strongest likely "
-                "formal statement would overlap one verified child almost verbatim."
+                "assembly, rewriting, side-condition discharge, packaging into the parent statement, or a short "
+                "representational translation. If the remaining work is still the main burden, or the children merely "
+                "suggest an analogue in a different theorem family, do not promote it. But if the remaining delta "
+                "looks like a short concrete closure theorem that would turn the parent into a meaningful full-node "
+                "result, prefer promotion even when the mathematics overlaps heavily with the support core."
             ),
             "Return JSON with keys promote_parent, recommended_priority, and reason.",
         ]
@@ -931,7 +960,8 @@ def build_parent_promotion_assessment_request(
     return StructuredBackendRequest(
         prompt=prompt,
         system_prompt=(
-            "You are a conservative proof-graph planner deciding whether an informal parent should now be promoted. "
+            "You are a proof-graph planner deciding whether an informal parent should now be promoted. "
+            "Bias toward promotion when the remaining work is a short, concrete parent-level closure theorem that would simplify the final artifact. "
             "Return only JSON matching the schema."
         ),
         json_schema={

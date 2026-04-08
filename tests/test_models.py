@@ -163,6 +163,21 @@ def test_candidate_metadata_must_be_complete() -> None:
         raise AssertionError("expected partial candidate metadata to fail validation")
 
 
+def test_proof_node_accepts_last_formalization_episode_metadata() -> None:
+    node = ProofNode(
+        id="n1",
+        title="Parent theorem",
+        informal_statement="Show the theorem.",
+        informal_proof_text="Use a certified core.",
+        last_formalization_attempt_count=1,
+        last_formalization_outcome="produced_supporting_core",
+        last_formalization_note="Most recent formalization attempt produced a verified supporting core.",
+    )
+
+    assert node.last_formalization_attempt_count == 1
+    assert node.last_formalization_outcome == "produced_supporting_core"
+
+
 def test_review_obligation_requires_kind_text_and_nodes() -> None:
     obligation = ReviewObligation(
         id="review-1",

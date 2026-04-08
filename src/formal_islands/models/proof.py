@@ -33,6 +33,14 @@ class FaithfulnessClassification(StrEnum):
     OVER_ABSTRACT = "over_abstract"
 
 
+class NodeFormalizationOutcome(StrEnum):
+    """Summary of the most recent node-level formalization episode."""
+
+    VERIFIED_FULL_NODE = "verified_full_node"
+    PRODUCED_SUPPORTING_CORE = "produced_supporting_core"
+    FAILED = "failed"
+
+
 class ReviewObligationKind(StrEnum):
     """Deterministic review-check categories."""
 
@@ -84,6 +92,9 @@ class ProofNode(StrictModel):
     formalization_priority: int | None = Field(default=None, ge=1, le=3)
     formalization_rationale: str | None = None
     remaining_proof_burden: str | None = None
+    last_formalization_attempt_count: int | None = Field(default=None, ge=1)
+    last_formalization_outcome: NodeFormalizationOutcome | None = None
+    last_formalization_note: str | None = None
     formal_artifact: FormalArtifact | None = None
 
     @model_validator(mode="after")

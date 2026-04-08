@@ -509,6 +509,7 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
 ) -> None:
     calls: list[tuple[str, str]] = []
     seen_timeout: list[float] = []
+    monkeypatch.chdir(tmp_path)
     input_path = tmp_path / "run11_two_point_log_sobolev.json"
     input_path.write_text(
         json.dumps(

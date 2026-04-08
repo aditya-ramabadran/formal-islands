@@ -542,6 +542,7 @@ def _render_node_section(node: ProofNode, graph: ProofGraph) -> str:
             f"Rationale: {_render_inline_code_html(node.formalization_rationale)}"
             "</p>"
         )
+    attempt_block = _render_formalization_attempt_block(node)
 
     # Build dependency-neighbor links.
     # Edges go source → target where source depends on target.
@@ -618,6 +619,7 @@ stderr:
       {neighbor_block}
       {display_label}
       {candidate_block}
+      {attempt_block}
       <p><strong>Informal statement:</strong></p>
       {_render_math_text(node.informal_statement)}
       <p><strong>Informal proof:</strong></p>
@@ -626,6 +628,34 @@ stderr:
       {formal_block}
     </article>
     """
+
+
+def _render_formalization_attempt_block(node: ProofNode) -> str:
+    if node.last_formalization_outcome is None:
+        return ""
+
+    labels = {
+        "verified_full_node": "verified the full parent node",
+        "produced_supporting_core": "produced a verified supporting core",
+        "failed": "failed to produce a verified formalization",
+    }
+    outcome_label = labels.get(str(node.last_formalization_outcome), str(node.last_formalization_outcome))
+    count_text = ""
+    if node.last_formalization_attempt_count is not None:
+        plural = "s" if node.last_formalization_attempt_count != 1 else ""
+        count_text = (
+            f" after {node.last_formalization_attempt_count} Lean verification attempt{plural}"
+        )
+    note_text = (
+        f" {_render_inline_code_html(node.last_formalization_note)}"
+        if node.last_formalization_note
+        else ""
+    )
+    return (
+        "<p class=\"meta\">"
+        f"Most recent formalization episode: {escape(outcome_label)}{count_text}.{note_text}"
+        "</p>"
+    )
 
 
 def _render_remaining_proof_burden_section(node: ProofNode, graph: ProofGraph) -> str:
@@ -896,12 +926,15 @@ def _render_edge(edge: ProofEdge, layout: dict) -> str:
     # Connect from the bottom of the source node to the top of the target node.
     start_y = y1 + NODE_HEIGHT / 2 - 3
     end_y = y2 - NODE_HEIGHT / 2 + 3
-    # Cubic bezier with vertical tangents at both endpoints.  Control points share
-    # x with their respective anchor so the curve enters/exits each node vertically,
-    # producing smooth dependency arcs in the direction source -> target.
+    dx = x2 - x1
     span = end_y - start_y
+    # Vertical exit tangent from source (ctrl1 shares x with source).
     ctrl1_x, ctrl1_y = x1, start_y + span * 0.4
-    ctrl2_x, ctrl2_y = x2, end_y - span * 0.4
+    # Natural angled entry tangent at target: ctrl2 is placed along the line
+    # from source to target, so the arrowhead follows the edge direction instead
+    # of always pointing straight down.
+    ctrl2_x = x2 - dx * 0.3
+    ctrl2_y = end_y - span * 0.3
     edge_class = _edge_class(edge.source_id, edge.target_id)
     refinement_class = " edge-refinement" if edge.label in REFINEMENT_EDGE_LABELS else ""
     return (
