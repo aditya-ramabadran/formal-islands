@@ -302,6 +302,13 @@ def _formalize_candidate_node_structured(
                 attempt_history=attempt_history,
             )
             current_graph = _update_node(current_graph, node_id, "formal_failed", latest_artifact)
+            current_graph = _record_node_formalization_episode(
+                graph=current_graph,
+                node_id=node_id,
+                attempt_count=verification.attempt_count,
+                outcome=NodeFormalizationOutcome.FAILED,
+                note="Most recent formalization attempt failed before the backend returned a usable Lean artifact.",
+            )
             _emit_update(current_graph, node_id, latest_artifact, on_update)
             break
         except FormalizationFaithfulnessError as exc:
@@ -475,6 +482,13 @@ def _formalize_candidate_node_aristotle(
                 attempt_history=attempt_history,
             )
             current_graph = _update_node(current_graph, node_id, "formal_failed", latest_artifact)
+            current_graph = _record_node_formalization_episode(
+                graph=current_graph,
+                node_id=node_id,
+                attempt_count=verification.attempt_count,
+                outcome=NodeFormalizationOutcome.FAILED,
+                note="Most recent formalization attempt failed before the Aristotle backend returned a usable Lean artifact.",
+            )
             _emit_update(current_graph, node_id, latest_artifact, on_update)
             if attempt_number >= attempt_limit:
                 break
@@ -736,6 +750,13 @@ def _formalize_candidate_node_agentic(
                 attempt_history=attempt_history,
             )
             updated_graph = _update_node(current_graph, node_id, "formal_failed", artifact)
+            updated_graph = _record_node_formalization_episode(
+                graph=updated_graph,
+                node_id=node_id,
+                attempt_count=verification.attempt_count,
+                outcome=NodeFormalizationOutcome.FAILED,
+                note="Most recent formalization attempt failed before the backend returned a usable Lean artifact.",
+            )
             _emit_update(updated_graph, node_id, artifact, on_update)
             _progress(f"node {node_id}: formalization failed after backend error")
             if attempt_number >= attempt_limit:
@@ -1145,7 +1166,31 @@ def _build_repair_feedback(
     )
     if extra_guidance:
         parts.append(extra_guidance)
+    parts.extend(_packaging_specific_repair_lines(previous_result))
     return "\n\n".join(parts)
+
+
+def _packaging_specific_repair_lines(previous_result: VerificationResult) -> list[str]:
+    text = "\n".join(
+        part for part in (previous_result.stderr, previous_result.stdout) if part.strip()
+    ).lower()
+    if "object file" not in text and ".olean" not in text:
+        return []
+    return [
+        (
+            "This failure is about a missing imported module object file (.olean), not about the theorem "
+            "mathematics. Rewrite the file to be self-contained instead of depending on a generated support-module "
+            "import."
+        ),
+        (
+            "If the current file imports `FormalIslands.Generated.Support.*` or another generated helper module, "
+            "remove that import and inline or copy/adapt the minimal helper theorem(s) needed into the scratch file."
+        ),
+        (
+            "Do not keep retrying the same cross-file packaging pattern. Preserve the main theorem statement and "
+            "rebuild the helper support locally inside the file."
+        ),
+    ]
 
 
 def _build_agentic_faithfulness_feedback(

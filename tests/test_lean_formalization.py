@@ -308,6 +308,9 @@ def test_build_aristotle_formalization_prompt_for_promoted_parent_mentions_new_p
     assert "not just a resubmission of one child theorem" in lowered
     assert "FormalIslands/Generated/Support" in prompt
     assert "prefer copying or adapting the minimal helper material" in lowered
+    assert "reference material" in lowered
+    assert "do not rely on `formalislands.generated.support.*` imports in the final artifact" in lowered
+    assert "do not import a generated support file in the final artifact" in lowered
 
 
 def test_materialize_verified_child_support_files_copies_existing_artifacts(tmp_path: Path) -> None:
@@ -1838,4 +1841,9 @@ def test_formalize_candidate_node_records_backend_failure_and_emits_update(tmp_p
     assert updated_node.formal_artifact is not None
     assert updated_node.formal_artifact.verification.command == "backend_request"
     assert "Codex timed out" in updated_node.formal_artifact.verification.stderr
+    assert updated_node.last_formalization_outcome == "failed"
+    assert updated_node.last_formalization_attempt_count == 1
+    assert "failed before the backend returned a usable lean artifact" in (
+        updated_node.last_formalization_note or ""
+    ).lower()
     assert len(updates) == 1

@@ -246,9 +246,9 @@ def build_aristotle_formalization_prompt(
             "of one child theorem under a new filename."
         ),
         (
-            "Prefer a self-contained final scratch file. You may inspect the materialized support files and copy "
-            "or adapt small helper lemmas from them, but avoid making the final artifact depend on cross-file "
-            "imports unless there is a compelling need."
+            "Prefer a self-contained final scratch file. Treat the materialized support files as reference material "
+            "to inspect, then copy or adapt the minimal helper lemmas you need into the scratch file itself. "
+            "Do not make the final artifact depend on cross-file generated-support imports."
         ),
         (
             "Dependency direction note: the verified child lemmas are outgoing dependencies of the target node. "
@@ -315,12 +315,14 @@ def build_aristotle_formalization_prompt(
                     indent=2,
                 ),
                 (
-                    "You may import these support files or copy helper lemmas from them, but the designated main theorem "
-                    f"must still be `{desired_theorem_name}` and must certify the current node's parent-level delta."
+                    "Use these support files primarily as reference material to inspect and copy from. "
+                    "The designated main theorem must still be "
+                    f"`{desired_theorem_name}` and must certify the current node's parent-level delta."
                 ),
                 (
                     "Prefer copying or adapting the minimal helper material you need into the scratch file so that the "
-                    "final certified artifact stays self-contained."
+                    "final certified artifact stays self-contained. Do not import a generated support file in the final "
+                    "artifact; copy or adapt what you need into the scratch file."
                 ),
             ]
         )
@@ -332,6 +334,10 @@ def build_aristotle_formalization_prompt(
                     "Start from the verified support theorem(s) above, reuse them aggressively as helpers, and prove the "
                     "missing parent-level assembly or enlargement step. Do not submit a file whose only substantial theorem "
                     "is one of the support theorems unchanged."
+                ),
+                (
+                    "Default to a self-contained parent file that copies or adapts helper lemmas from the support material. "
+                    "Do not rely on `FormalIslands.Generated.Support.*` imports in the final artifact."
                 ),
             ]
         )
@@ -412,6 +418,7 @@ def _render_aristotle_scratch_header(
             "not a restatement of any verified child or a close corollary that duplicates it.",
             "If you use them, treat them as helper lemmas for a new theorem for the current node.",
             "Prefer a self-contained final file: inspect the support files and copy or adapt only the minimal helper material you need.",
+            "Treat the support files as reference material first, not as modules that should be imported in the final artifact.",
             "",
             "Dependency direction note: the verified child lemmas are outgoing dependencies of the target node.",
             "Treat them as already established support, not as parents or as claims that depend on the target.",
@@ -453,6 +460,7 @@ def _render_aristotle_scratch_header(
                 "This is a promoted parent-assembly attempt.",
                 "Reuse the support theorem(s) above as helpers and prove the parent-level enlargement or assembly step.",
                 "Do not leave the file with only a support theorem copied unchanged.",
+                "Copy or adapt the needed helper material into this scratch file instead of importing generated support modules.",
             ]
         )
     lines.append("-/")
