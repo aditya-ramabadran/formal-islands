@@ -474,22 +474,23 @@ footer {
     human review. 
   </p>
   <div class="spotlight-card">
-    <a class="spotlight-thumb" target="_blank" rel="noopener noreferrer" href="reports/two_point_log_sobolev.html">
-      <img src="assets/two_point_log_sobolev.png" alt="Proof graph for the two-point log-Sobolev inequality">
+    <a class="spotlight-thumb" target="_blank" rel="noopener noreferrer" href="reports/heat_uniqueness.html">
+      <img src="assets/heat_uniqueness.png" alt="Proof graph for heat equation uniqueness">
     </a>
     <div class="spotlight-body">
       <div class="spotlight-kicker">Featured Example</div>
-      <div class="spotlight-title">Two-Point Log-Sobolev Inequality</div>
+      <div class="spotlight-title">Heat Equation Uniqueness</div>
       <div class="spotlight-statement">
-        Entropy of a function on the two-point space {−1,1} is bounded by its discrete gradient energy.
+        Two solutions of the heat equation on (0,L) with matching initial and boundary
+        data must be identical.
       </div>
       <span class="verified-badge">✓ 2 of 3 nodes formally verified, 1 informal</span>
       <div class="spotlight-desc">
-        The scalar log-Sobolev inequality and the key one-dimensional non-negativity lemma
-        G(u) ≥ 0 are both independently certified in Lean. 
+        The energy dissipation lemma is fully verified, along with a certified local
+        core for the final uniqueness deduction.
       </div>
       <div class="spotlight-actions">
-        <a class="card-link" target="_blank" href="reports/two_point_log_sobolev.html">View report →</a>
+        <a class="card-link" target="_blank" href="reports/heat_uniqueness.html">View report →</a>
       </div>
     </div>
   </div>
@@ -590,22 +591,22 @@ footer {
   <div class="gallery">
 
     <div class="card">
-      <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/heat_uniqueness.html">
-        <img src="assets/heat_uniqueness.png" alt="Proof graph for heat equation uniqueness">
+      <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/two_point_log_sobolev.html">
+        <img src="assets/two_point_log_sobolev.png" alt="Proof graph for the two-point log-Sobolev inequality">
       </a>
       <div class="card-body">
-        <div class="card-title">Heat Equation Uniqueness</div>
+        <div class="card-title">Two-Point Log-Sobolev Inequality</div>
         <div class="card-statement">
-          Two solutions of the heat equation on (0,L) with matching initial and boundary
-          data must be identical.
+          Entropy of a function on the two-point space {−1,1} is bounded by its
+          discrete gradient energy.
         </div>
-        <span class="verified-badge">✓ 2 of 3 nodes formally verified, 1 informal</span>
+        <span class="verified-badge">✓ 3 of 3 nodes formally verified</span>
         <div class="card-desc">
-          The energy dissipation lemma (showing the energy of the difference solution is
-          non-increasing) is fully verified, along with a certified local core
-          for the uniqueness conclusion itself.
+          The normalized one-variable inequality, the scalar inequality, and the
+          final root theorem are all formally verified in Lean in a clean
+          bottom-up proof graph.
         </div>
-        <a class="card-link" target="_blank" href="reports/heat_uniqueness.html">View report →</a>
+        <a class="card-link" target="_blank" href="reports/two_point_log_sobolev.html">View report →</a>
       </div>
     </div>
 

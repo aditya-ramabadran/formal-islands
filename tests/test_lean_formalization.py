@@ -19,14 +19,18 @@ from formal_islands.formalization.aristotle import (
     build_aristotle_formalization_prompt,
 )
 from formal_islands.formalization.aristotle import _append_aristotle_summary_files
+from formal_islands.formalization.pipeline import CombinedFormalizationAssessment
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.formalization.loop import (
+    _formalize_candidate_nodes_aristotle_parallel,
     _attempt_agentic_coverage_expansion,
     _build_agentic_faithfulness_feedback,
     _build_aristotle_faithfulness_feedback,
     _integrate_successful_formalization,
     _promote_informal_parents_with_verified_children,
+    _should_run_bonus_retry,
     _summarize_compiler_feedback,
+    FormalizationOutcome,
     formalize_candidate_node,
     ParentPromotionCache,
     RepairAssessment,
@@ -471,6 +475,144 @@ def test_parent_promotion_episode_prevents_immediate_repromotion(tmp_path: Path)
     assert planning_backend.requests[1].task_name == "summarize_concrete_sublemma"
     log_text = progress_log.read_text(encoding="utf-8")
     assert "skipping parent promotion because this verified child set already came from a prior parent-assembly episode" in log_text
+
+
+def test_bonus_retry_runs_for_faithful_core_when_expansion_is_warranted() -> None:
+    graph = build_graph().model_copy(
+        update={
+            "nodes": [
+                node.model_copy(update={"formalization_priority": 1})
+                if node.id == "n2"
+                else node
+                for node in build_graph().nodes
+            ]
+        }
+    )
+    assessment = CombinedFormalizationAssessment(
+        result_kind="faithful_core",
+        certifies_main_burden=True,
+        coverage_score=8,
+        expansion_warranted=True,
+        worth_retrying_later=True,
+        reason="The current theorem proves the main burden but still omits the parent-level packaging.",
+    )
+
+    assert _should_run_bonus_retry(
+        graph=graph,
+        node_id="n2",
+        assessment=assessment,
+    )
+
+
+def test_aristotle_batch_does_not_immediately_repromote_attempted_parent_after_support_core(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import formal_islands.formalization.loop as loop_module
+
+    graph = build_graph().model_copy(
+        update={
+            "nodes": [
+                node.model_copy(
+                    update={
+                        "status": "candidate_formal",
+                        "formalization_priority": 2 if node.id == "n1" else 1,
+                        "formalization_rationale": "Initial planned candidate.",
+                    }
+                )
+                for node in build_graph().nodes
+            ]
+        }
+    )
+    planning_backend = MockBackend(
+        queued_payloads=[
+            {
+                "informal_statement": "Lean verifies a narrower concrete local core supporting this parent step.",
+                "informal_proof_text": "The supporting theorem certifies the main local burden but not the full parent.",
+            },
+            {
+                "promote_parent": True,
+                "recommended_priority": 1,
+                "reason": "This would have been promoted again without the attempted-node guard.",
+            },
+        ]
+    )
+    cache = ParentPromotionCache(decisions={}, lock=RLock())
+    progress_log = tmp_path / "_progress.log"
+
+    def fake_formalize_candidate_node(**kwargs: object) -> FormalizationOutcome:
+        node_id = kwargs["node_id"]
+        current_graph = kwargs["graph"]
+        if node_id == "n2":
+            artifact = FormalArtifact(
+                lean_theorem_name="n2_full",
+                lean_statement="theorem n2_full : True",
+                lean_code="theorem n2_full : True := by trivial",
+                faithfulness_classification="full_node",
+                verification=VerificationResult(
+                    status="verified",
+                    command="lake env lean fake_n2.lean",
+                    attempt_count=1,
+                ),
+            )
+            updated_graph = _integrate_successful_formalization(
+                graph=current_graph,
+                backend=None,
+                planning_backend=planning_backend,
+                node_id="n2",
+                artifact=artifact,
+                verification_status="verified",
+                parent_promotion_cache=cache,
+                enable_parent_promotion=False,
+            )
+            return FormalizationOutcome(graph=updated_graph, node_id="n2", artifact=artifact)
+
+        artifact = FormalArtifact(
+            lean_theorem_name="n1_core",
+            lean_statement="theorem n1_core : True",
+            lean_code="theorem n1_core : True := by trivial",
+            faithfulness_classification="concrete_sublemma",
+            verification=VerificationResult(
+                status="verified",
+                command="lake env lean fake_n1.lean",
+                attempt_count=1,
+            ),
+        )
+        updated_graph = _integrate_successful_formalization(
+            graph=current_graph,
+            backend=None,
+            planning_backend=planning_backend,
+            node_id="n1",
+            artifact=artifact,
+            verification_status="verified",
+            parent_promotion_cache=cache,
+            enable_parent_promotion=False,
+        )
+        return FormalizationOutcome(graph=updated_graph, node_id="n1", artifact=artifact)
+
+    monkeypatch.setattr(loop_module, "formalize_candidate_node", fake_formalize_candidate_node)
+
+    with use_progress_log(progress_log):
+        outcome = _formalize_candidate_nodes_aristotle_parallel(
+            backend=None,  # type: ignore[arg-type]
+            planning_backend=planning_backend,
+            verifier=None,  # type: ignore[arg-type]
+            graph=graph,
+            node_ids=None,
+            max_attempts=2,
+            on_update=None,
+            mode="agentic",
+            parent_promotion_cache=cache,
+            enable_parent_promotion=True,
+        )
+
+    root = next(node for node in outcome.graph.nodes if node.id == "n1")
+    assert root.status == "informal"
+    assert root.last_formalization_outcome == "produced_supporting_core"
+    assert len(planning_backend.requests) == 1
+    assert planning_backend.requests[0].task_name == "summarize_concrete_sublemma"
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "skipping parent promotion because this node was already formalized in the current pass" in log_text
 
 
 def test_full_node_verification_swallows_direct_supporting_formal_core() -> None:

@@ -418,38 +418,38 @@
             }
             
 
-            .report-root:has(a.node-scalar_ineq:hover) .node-scalar_ineq.node-card,
-            .report-root:has(#node-scalar_ineq:target) a.node-scalar_ineq .graph-node-box {
+            .report-root:has(a.node-scalar_inequality:hover) .node-scalar_inequality.node-card,
+            .report-root:has(#node-scalar_inequality:target) a.node-scalar_inequality .graph-node-box {
               border-color: var(--highlight);
               stroke: var(--highlight);
               background: var(--highlight-soft);
               fill: var(--highlight-soft);
             }
-            .report-root:has(a.node-scalar_ineq:hover) .node-scalar_ineq.node-card,
-            .report-root:has(#node-scalar_ineq:target).report-root .node-scalar_ineq.node-card {
+            .report-root:has(a.node-scalar_inequality:hover) .node-scalar_inequality.node-card,
+            .report-root:has(#node-scalar_inequality:target).report-root .node-scalar_inequality.node-card {
               border-color: var(--highlight);
               box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
               background: var(--target-panel);
             }
             
 
-            .report-root:has(a.node-core_1d:hover) .node-core_1d.node-card,
-            .report-root:has(#node-core_1d:target) a.node-core_1d .graph-node-box {
+            .report-root:has(a.node-normalized_inequality:hover) .node-normalized_inequality.node-card,
+            .report-root:has(#node-normalized_inequality:target) a.node-normalized_inequality .graph-node-box {
               border-color: var(--highlight);
               stroke: var(--highlight);
               background: var(--highlight-soft);
               fill: var(--highlight-soft);
             }
-            .report-root:has(a.node-core_1d:hover) .node-core_1d.node-card,
-            .report-root:has(#node-core_1d:target).report-root .node-core_1d.node-card {
+            .report-root:has(a.node-normalized_inequality:hover) .node-normalized_inequality.node-card,
+            .report-root:has(#node-normalized_inequality:target).report-root .node-normalized_inequality.node-card {
               border-color: var(--highlight);
               box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
               background: var(--target-panel);
             }
             
 
-                .report-root:has(.obligation-informal-proof-root:hover) a.node-root .graph-node-box,
-.report-root:has(.obligation-informal-proof-root:hover) .node-root.node-card {
+                .report-root:has(.obligation-semantic-match-root:hover) a.node-root .graph-node-box,
+.report-root:has(.obligation-semantic-match-root:hover) .node-root.node-card {
                   border-color: var(--highlight);
                   stroke: var(--highlight);
                   stroke-width: 2.8;
@@ -459,8 +459,8 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-root:checked) a.node-root .graph-node-box,
-.report-root:has(#obligation-check-informal-proof-root:checked) .node-root.node-card {
+                .report-root:has(#obligation-check-semantic-match-root:checked) a.node-root .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-root:checked) .node-root.node-card {
                   border-color: var(--checked);
                   stroke: var(--checked);
                   stroke-width: 2.9;
@@ -469,24 +469,24 @@
                 }
                 
 
-                .report-root:has(#obligation-check-informal-proof-root:checked) .edge-root-scalar_ineq {
+                .report-root:has(#obligation-check-semantic-match-root:checked) .edge-root-scalar_inequality {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
                 
 
-            .report-root:has(.obligation-informal-proof-root:hover) .obligation-informal-proof-root {
+            .report-root:has(.obligation-semantic-match-root:hover) .obligation-semantic-match-root {
               border-color: var(--highlight);
               background: var(--preview-soft);
             }
-            .report-root:has(#obligation-check-informal-proof-root:checked) .obligation-informal-proof-root {
+            .report-root:has(#obligation-check-semantic-match-root:checked) .obligation-semantic-match-root {
               border-color: var(--checked);
               background: var(--checked-soft);
             }
             
 
-                .report-root:has(.obligation-semantic-match-scalar_ineq:hover) a.node-scalar_ineq .graph-node-box,
-.report-root:has(.obligation-semantic-match-scalar_ineq:hover) .node-scalar_ineq.node-card {
+                .report-root:has(.obligation-semantic-match-scalar_inequality:hover) a.node-scalar_inequality .graph-node-box,
+.report-root:has(.obligation-semantic-match-scalar_inequality:hover) .node-scalar_inequality.node-card {
                   border-color: var(--highlight);
                   stroke: var(--highlight);
                   stroke-width: 2.8;
@@ -496,8 +496,8 @@
                 }
                 
 
-                .report-root:has(#obligation-check-semantic-match-scalar_ineq:checked) a.node-scalar_ineq .graph-node-box,
-.report-root:has(#obligation-check-semantic-match-scalar_ineq:checked) .node-scalar_ineq.node-card {
+                .report-root:has(#obligation-check-semantic-match-scalar_inequality:checked) a.node-scalar_inequality .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-scalar_inequality:checked) .node-scalar_inequality.node-card {
                   border-color: var(--checked);
                   stroke: var(--checked);
                   stroke-width: 2.9;
@@ -506,25 +506,25 @@
                 }
                 
 
-                .report-root:has(#obligation-check-semantic-match-scalar_ineq:checked) .edge-root-scalar_ineq,
-.report-root:has(#obligation-check-semantic-match-scalar_ineq:checked) .edge-scalar_ineq-core_1d {
+                .report-root:has(#obligation-check-semantic-match-scalar_inequality:checked) .edge-root-scalar_inequality,
+.report-root:has(#obligation-check-semantic-match-scalar_inequality:checked) .edge-scalar_inequality-normalized_inequality {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
                 
 
-            .report-root:has(.obligation-semantic-match-scalar_ineq:hover) .obligation-semantic-match-scalar_ineq {
+            .report-root:has(.obligation-semantic-match-scalar_inequality:hover) .obligation-semantic-match-scalar_inequality {
               border-color: var(--highlight);
               background: var(--preview-soft);
             }
-            .report-root:has(#obligation-check-semantic-match-scalar_ineq:checked) .obligation-semantic-match-scalar_ineq {
+            .report-root:has(#obligation-check-semantic-match-scalar_inequality:checked) .obligation-semantic-match-scalar_inequality {
               border-color: var(--checked);
               background: var(--checked-soft);
             }
             
 
-                .report-root:has(.obligation-semantic-match-core_1d:hover) a.node-core_1d .graph-node-box,
-.report-root:has(.obligation-semantic-match-core_1d:hover) .node-core_1d.node-card {
+                .report-root:has(.obligation-semantic-match-normalized_inequality:hover) a.node-normalized_inequality .graph-node-box,
+.report-root:has(.obligation-semantic-match-normalized_inequality:hover) .node-normalized_inequality.node-card {
                   border-color: var(--highlight);
                   stroke: var(--highlight);
                   stroke-width: 2.8;
@@ -534,8 +534,8 @@
                 }
                 
 
-                .report-root:has(#obligation-check-semantic-match-core_1d:checked) a.node-core_1d .graph-node-box,
-.report-root:has(#obligation-check-semantic-match-core_1d:checked) .node-core_1d.node-card {
+                .report-root:has(#obligation-check-semantic-match-normalized_inequality:checked) a.node-normalized_inequality .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-normalized_inequality:checked) .node-normalized_inequality.node-card {
                   border-color: var(--checked);
                   stroke: var(--checked);
                   stroke-width: 2.9;
@@ -544,59 +544,17 @@
                 }
                 
 
-                .report-root:has(#obligation-check-semantic-match-core_1d:checked) .edge-scalar_ineq-core_1d {
+                .report-root:has(#obligation-check-semantic-match-normalized_inequality:checked) .edge-scalar_inequality-normalized_inequality {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
                 
 
-            .report-root:has(.obligation-semantic-match-core_1d:hover) .obligation-semantic-match-core_1d {
+            .report-root:has(.obligation-semantic-match-normalized_inequality:hover) .obligation-semantic-match-normalized_inequality {
               border-color: var(--highlight);
               background: var(--preview-soft);
             }
-            .report-root:has(#obligation-check-semantic-match-core_1d:checked) .obligation-semantic-match-core_1d {
-              border-color: var(--checked);
-              background: var(--checked-soft);
-            }
-            
-
-                .report-root:has(.obligation-boundary-root-scalar_ineq:hover) a.node-root .graph-node-box,
-.report-root:has(.obligation-boundary-root-scalar_ineq:hover) a.node-scalar_ineq .graph-node-box,
-.report-root:has(.obligation-boundary-root-scalar_ineq:hover) .node-root.node-card,
-.report-root:has(.obligation-boundary-root-scalar_ineq:hover) .node-scalar_ineq.node-card {
-                  border-color: var(--highlight);
-                  stroke: var(--highlight);
-                  stroke-width: 2.8;
-                  background: var(--preview-soft);
-                  fill: var(--preview-soft);
-                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
-                }
-                
-
-                .report-root:has(#obligation-check-boundary-root-scalar_ineq:checked) a.node-root .graph-node-box,
-.report-root:has(#obligation-check-boundary-root-scalar_ineq:checked) a.node-scalar_ineq .graph-node-box,
-.report-root:has(#obligation-check-boundary-root-scalar_ineq:checked) .node-root.node-card,
-.report-root:has(#obligation-check-boundary-root-scalar_ineq:checked) .node-scalar_ineq.node-card {
-                  border-color: var(--checked);
-                  stroke: var(--checked);
-                  stroke-width: 2.9;
-                  background: var(--checked-soft);
-                  fill: var(--checked-soft);
-                }
-                
-
-                .report-root:has(#obligation-check-boundary-root-scalar_ineq:checked) .edge-root-scalar_ineq,
-.report-root:has(#obligation-check-boundary-root-scalar_ineq:checked) .edge-scalar_ineq-core_1d {
-                  stroke: var(--checked);
-                  stroke-width: 4.5;
-                }
-                
-
-            .report-root:has(.obligation-boundary-root-scalar_ineq:hover) .obligation-boundary-root-scalar_ineq {
-              border-color: var(--highlight);
-              background: var(--preview-soft);
-            }
-            .report-root:has(#obligation-check-boundary-root-scalar_ineq:checked) .obligation-boundary-root-scalar_ineq {
+            .report-root:has(#obligation-check-semantic-match-normalized_inequality:checked) .obligation-semantic-match-normalized_inequality {
               border-color: var(--checked);
               background: var(--checked-soft);
             }
@@ -645,9 +603,9 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
       <p>
         <span class="pill">Nodes: 3</span>
         <span class="pill">Edges: 2</span>
-        <span class="pill">Informal: 1</span>
+        <span class="pill">Informal: 0</span>
         <span class="pill">Candidates: 0</span>
-        <span class="pill">Verified: 2</span>
+        <span class="pill">Verified: 3</span>
         <span class="pill">Failed: 0</span>
       </p>
       <div class="graph-shell">
@@ -659,36 +617,36 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
             <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
           </marker>
         </defs>
-        <g><path class="graph-edge edge-root-scalar_ineq" d="M 210.0 83.0 C 210.0 106.2, 210.0 123.6, 210.0 141.0" marker-end="url(#graph-arrow)"></path>
-<path class="graph-edge edge-scalar_ineq-core_1d" d="M 210.0 201.0 C 210.0 224.2, 210.0 241.6, 210.0 259.0" marker-end="url(#graph-arrow)"></path></g>
+        <g><path class="graph-edge edge-root-scalar_inequality" d="M 210.0 83.0 C 210.0 106.2, 210.0 123.6, 210.0 141.0" marker-end="url(#graph-arrow)"></path>
+<path class="graph-edge edge-scalar_inequality-normalized_inequality" d="M 210.0 201.0 C 210.0 224.2, 210.0 241.6, 210.0 259.0" marker-end="url(#graph-arrow)"></path></g>
         <g>
-    <a class="graph-node-link node-root status-informal" href="#node-root">
-      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
+    <a class="graph-node-link node-root status-formal-verified" href="#node-root">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="20" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="32" r="4.6"></circle>
       <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
-        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Two-point log-Sobolev inequality</div>
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Two-point logarithmic Sobolev inequality</div>
       </foreignObject>
       <text class="graph-node-id" x="210.0" y="68">root</text>
     </a>
     
 
-    <a class="graph-node-link node-scalar_ineq status-formal-verified" href="#node-scalar_ineq">
+    <a class="graph-node-link node-scalar_inequality status-formal-verified" href="#node-scalar_inequality">
       <rect class="graph-node-box status-formal-verified" x="144.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
       <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="150" r="4.6"></circle>
       <foreignObject x="148.0" y="142" width="124" height="44" overflow="visible">
-        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Scalar inequality</div>
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Two-point LSI scalar inequality</div>
       </foreignObject>
-      <text class="graph-node-id" x="210.0" y="186">scalar_ineq</text>
+      <text class="graph-node-id" x="210.0" y="186">scalar_inequality</text>
     </a>
     
 
-    <a class="graph-node-link node-core_1d status-formal-verified" href="#node-core_1d">
+    <a class="graph-node-link node-normalized_inequality status-formal-verified" href="#node-normalized_inequality">
       <rect class="graph-node-box status-formal-verified" x="144.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
       <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="268" r="4.6"></circle>
       <foreignObject x="148.0" y="260" width="124" height="44" overflow="visible">
-        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Core 1D inequality \(G(u)\ge 0\)</div>
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Normalized scalar inequality</div>
       </foreignObject>
-      <text class="graph-node-id" x="210.0" y="304">core_1d</text>
+      <text class="graph-node-id" x="210.0" y="304">normalized_inequality</text>
     </a>
     </g>
       </svg>
@@ -713,55 +671,47 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
       <p class="graph-caption">The following are sufficient items for a human to check to verify correctness of the proof. Hovering or checking review items highlights related nodes and edges.</p>
       <ul class="checklist">
         
-    <li class="checklist-item obligation-informal-proof-root" data-obligation-id="informal-proof-root">
-      <label class="checklist-label" for="obligation-check-informal-proof-root">
-        <input id="obligation-check-informal-proof-root" type="checkbox" />
+    <li class="checklist-item obligation-semantic-match-root" data-obligation-id="semantic-match-root">
+      <label class="checklist-label" for="obligation-check-semantic-match-root">
+        <input id="obligation-check-semantic-match-root" type="checkbox" />
         <span>
-          <span class="checklist-kind">informal_proof_check</span><br />
-          Check that node &#x27;root&#x27; (Two-point logarithmic Sobolev inequality) has an informal proof that establishes its informal statement, assuming its child dependencies.
-          
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;root&#x27; (Two-point logarithmic Sobolev inequality) matches the verified Lean theorem for this node.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> root_aristotle (f : TwoPoint → <span class="tok-type">ℝ</span>) :
+    twoPointEntropy (<span class="tok-keyword">fun</span> x =&gt; f x ^ <span class="tok-number">2</span>) ≤
+    (<span class="tok-number">1</span> / <span class="tok-number">2</span>) * (f true - f false) ^ <span class="tok-number">2</span></code></pre></div>
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-root">root</a></div>
         </span>
       </label>
     </li>
     
 
-    <li class="checklist-item obligation-semantic-match-scalar_ineq" data-obligation-id="semantic-match-scalar_ineq">
-      <label class="checklist-label" for="obligation-check-semantic-match-scalar_ineq">
-        <input id="obligation-check-semantic-match-scalar_ineq" type="checkbox" />
+    <li class="checklist-item obligation-semantic-match-scalar_inequality" data-obligation-id="semantic-match-scalar_inequality">
+      <label class="checklist-label" for="obligation-check-semantic-match-scalar_inequality">
+        <input id="obligation-check-semantic-match-scalar_inequality" type="checkbox" />
         <span>
           <span class="checklist-kind">formal_semantic_match_check</span><br />
-          Check that node &#x27;scalar_ineq&#x27; (Scalar two-point log-Sobolev inequality) matches the verified Lean theorem for this node.
-          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> scalar_ineq_aristotle (a b : <span class="tok-type">ℝ</span>) :
-    a ^ <span class="tok-number">2</span> * log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * log (b ^ <span class="tok-number">2</span>) -
-    (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) ≤ (a - b) ^ <span class="tok-number">2</span></code></pre></div>
-          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-scalar_ineq">scalar_ineq</a></div>
+          Check that node &#x27;scalar_inequality&#x27; (Two-point LSI scalar inequality) matches the verified Lean theorem for this node.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> scalar_inequality_aristotle (a b : <span class="tok-type">ℝ</span>) :
+    a ^ <span class="tok-number">2</span> * Real.log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * Real.log (b ^ <span class="tok-number">2</span>) -
+    (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * Real.log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) ≤
+    (a - b) ^ <span class="tok-number">2</span></code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-scalar_inequality">scalar_inequality</a></div>
         </span>
       </label>
     </li>
     
 
-    <li class="checklist-item obligation-semantic-match-core_1d" data-obligation-id="semantic-match-core_1d">
-      <label class="checklist-label" for="obligation-check-semantic-match-core_1d">
-        <input id="obligation-check-semantic-match-core_1d" type="checkbox" />
+    <li class="checklist-item obligation-semantic-match-normalized_inequality" data-obligation-id="semantic-match-normalized_inequality">
+      <label class="checklist-label" for="obligation-check-semantic-match-normalized_inequality">
+        <input id="obligation-check-semantic-match-normalized_inequality" type="checkbox" />
         <span>
           <span class="checklist-kind">formal_semantic_match_check</span><br />
-          Check that node &#x27;core_1d&#x27; (Core one-dimensional inequality \(G(u)\ge 0\)) matches the verified Lean theorem for this node.
-          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> core_1d_aristotle (u : <span class="tok-type">ℝ</span>) (hu0 : <span class="tok-number">0</span> ≤ u) (hu2 : u ≤ <span class="tok-number">2</span>) : <span class="tok-number">0</span> ≤ G u</code></pre></div>
-          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-core_1d">core_1d</a></div>
-        </span>
-      </label>
-    </li>
-    
-
-    <li class="checklist-item obligation-boundary-root-scalar_ineq" data-obligation-id="boundary-root-scalar_ineq">
-      <label class="checklist-label" for="obligation-check-boundary-root-scalar_ineq">
-        <input id="obligation-check-boundary-root-scalar_ineq" type="checkbox" />
-        <span>
-          <span class="checklist-kind">boundary_interface_check</span><br />
-          Check that formal child &#x27;scalar_ineq&#x27; proves exactly what informal parent &#x27;root&#x27; depends on across their dependency boundary.
-          
-          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-root">root</a>, <a class="node-jump" href="#node-scalar_ineq">scalar_ineq</a></div>
+          Check that node &#x27;normalized_inequality&#x27; (Normalized scalar inequality) matches the verified Lean theorem for this node.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> normalized_inequality_aristotle (u : <span class="tok-type">ℝ</span>) (hu0 : <span class="tok-number">0</span> ≤ u) (hu2 : u ≤ <span class="tok-number">2</span>) :
+    u * Real.log u + (<span class="tok-number">2</span> - u) * Real.log (<span class="tok-number">2</span> - u) ≤
+    (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span></code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-normalized_inequality">normalized_inequality</a></div>
         </span>
       </label>
     </li>
@@ -774,197 +724,216 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
         
     <article class="node-card node-root" id="node-root" data-node-id="root">
       <h3>Two-point logarithmic Sobolev inequality</h3>
-      <p class="meta">Node id: root | Status: informal</p>
-      <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-scalar_ineq">scalar_ineq</a></p>
-      <p class="meta">Display label: Two-point log-Sobolev inequality</p>
+      <p class="meta">Node id: root | Status: formal_verified</p>
+      <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-scalar_inequality">scalar_inequality</a></p>
       
-      
+      <p class="meta">Formalization priority: 1. Rationale: Promoted after all direct children were verified; The hard analytic work is fully captured by the verified <code class="inline-code">scalar_inequality</code> child. The remaining work for the parent node consists of defining the entropy and expectation for a function on…</p>
+      <p class="meta">Most recent formalization episode: verified the full parent node after 1 Lean verification attempt. Most recent formalization attempt verified the full parent node.</p>
       <p><strong>Informal statement:</strong></p>
-      <div class="math-text">For every \(f:\{-1,1\}\to\mathbb{R}\), \(\operatorname{Ent}_{\mu}(f^2)\le\tfrac{1}{2}(f(1)-f(-1))^2\), where \(\mu\) is the uniform measure on \(\{-1,1\}\).</div>
+      <div class="math-text">Let \(\mu\) be the uniform probability measure on the two-point space \(\{-1,1\}\). For a function \(f : \{-1,1\} \to \mathbb{R}\), we have
+\[
+\operatorname{Ent}_{\mu}(f^2)
+\le
+\frac{1}{2}\bigl(f(1)-f(-1)\bigr)^2.
+\]</div>
       <p><strong>Informal proof:</strong></p>
-      <div class="math-text">Set \(a:=f(1)\) and \(b:=f(-1)\). Since \(\mu\) is uniform, \(\mathbb{E}_\mu[f^2]=(a^2+b^2)/2\) and \(\mathbb{E}_\mu[f^2\log f^2]=(a^2\log(a^2)+b^2\log(b^2))/2\). Multiplying both sides of \(\operatorname{Ent}_\mu(f^2)\le\tfrac12(a-b)^2\) by 2 shows the claim is equivalent to the scalar inequality \(a^2\log(a^2)+b^2\log(b^2)-(a^2+b^2)\log\!\bigl(\tfrac{a^2+b^2}{2}\bigr)\le(a-b)^2\) for all \(a,b\in\mathbb{R}\). That scalar inequality is established in the node below.</div>
-      
-      <p><strong>Remaining proof burden (assuming results of <a class="node-jump" href="#node-scalar_ineq">scalar_ineq</a>):</strong></p>
-      <div class="math-text">With <code class="inline-code">scalar_ineq_aristotle</code> in hand, the parent theorem reduces to a purely definitional/assembly argument. A human still needs to: (1) unfold the definition of entropy Ent_μ(f²) under the uniform measure on {−1,1}, explicitly computing E_μ[f²] = (a²+b²)/2 and E_μ[f² log f²] = (a² log(a²)+b² log(b²))/2 where a = f(1), b = f(−1); (2) verify the algebraic rewrite that shows Ent_μ(f²) ≤ ½(a−b)² is exactly equivalent (after multiplying both sides by 2) to the scalar inequality a²log(a²)+b²log(b²)−(a²+b²)log((a²+b²)/2) ≤ (a−b)²; and (3) conclude by invoking <code class="inline-code">scalar_ineq_aristotle</code>. The residual work is entirely parent-level assembly and definitional bookkeeping — no new analytic content remains.</div>
-    
-      
-    </article>
-    
-
-    <article class="node-card node-scalar_ineq" id="node-scalar_ineq" data-node-id="scalar_ineq">
-      <h3>Scalar two-point log-Sobolev inequality</h3>
-      <p class="meta">Node id: scalar_ineq | Status: formal_verified</p>
-      <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-root">root</a> &nbsp;|&nbsp; Depends on (child nodes): <a class="node-jump" href="#node-core_1d">core_1d</a></p>
-      <p class="meta">Display label: Scalar inequality</p>
-      <p class="meta">Formalization priority: 2. Rationale: The sign reduction (using (|a|-|b|)^2 &lt;= (a-b)^2) and the homogeneity normalization are nontrivial algebraic steps. The cancellation of log(c^2) cross-terms in the scaling argument merits formal verification. Lower priority than the core 1D node because these steps are more routine once the framework is in place.</p>
-      
-      <p><strong>Informal statement:</strong></p>
-      <div class="math-text">For all \(a,b\in\mathbb{R}\), \[a^2\log(a^2)+b^2\log(b^2)-(a^2+b^2)\log\!\left(\frac{a^2+b^2}{2}\right)\le(a-b)^2.\]</div>
-      <p><strong>Informal proof:</strong></p>
-      <div class="math-text"><em>Step 1 (sign reduction).</em> The left-hand side depends only on \(a^2\) and \(b^2\), so replacing \((a,b)\) by \((|a|,|b|)\) leaves the LHS unchanged. The reverse triangle inequality gives \((|a|-|b|)^2\le(a-b)^2\), so it suffices to prove the inequality for \(a,b\ge 0\).
-
-<em>Step 2 (homogeneity normalization).</em> Replacing \((a,b)\) by \((ca,cb)\) multiplies both sides by \(c^2\) (the \(\log(c^2)\) cross-terms cancel on the left). Hence the inequality is homogeneous of degree 2. If \(a=b=0\) the claim is trivial; otherwise scale by \(c=\sqrt{2/(a^2+b^2)}\) to reduce to \(a^2+b^2=2\). Under this normalization the desired inequality becomes \(a^2\log(a^2)+b^2\log(b^2)\le(a-b)^2\).
-
-<em>Step 3 (one-variable substitution).</em> With \(a,b\ge0\) and \(a^2+b^2=2\), set \(u=a^2\in[0,2]\) so \(b^2=2-u\), \(a=\sqrt{u}\), \(b=\sqrt{2-u}\). The inequality becomes \(u\log u+(2-u)\log(2-u)\le(\sqrt{u}-\sqrt{2-u})^2\), i.e., the core one-dimensional inequality \(G(u)\ge0\) established in the next node.</div>
+      <div class="math-text">Write
+\[
+a := f(1), \qquad b := f(-1).
+\]
+Because \(\mu\) is the uniform measure on two points,
+\[
+\mathbb{E}_{\mu}[f^2] = \frac{a^2+b^2}{2}
+\]
+and
+\[
+\mathbb{E}_{\mu}[f^2\log f^2] = \frac{a^2\log(a^2)+b^2\log(b^2)}{2}.
+\]
+Therefore the entropy inequality
+\[
+\operatorname{Ent}_{\mu}(f^2) \le \frac12 (a-b)^2
+\]
+is exactly equivalent, after multiplying both sides by \(2\), to
+\[
+a^2 \log(a^2) + b^2 \log(b^2)
+-
+(a^2+b^2)\log\!\left(\frac{a^2+b^2}{2}\right)
+\le
+(a-b)^2.
+\]
+By the scalar inequality lemma, this holds for all real \(a,b\). Dividing by \(2\) yields the claimed logarithmic Sobolev inequality.</div>
       
       
         <h4>Formal Artifact</h4>
-        <p><strong>Lean theorem name:</strong> scalar_ineq_aristotle</p>
-        <p><strong>Coverage:</strong> full match</p><p class="meta">The Lean theorem <code class="inline-code">scalar_ineq_aristotle</code> states exactly the target node&#x27;s inequality: for all a, b : ℝ, a²·log(a²) + b²·log(b²) − (a²+b²)·log((a²+b²)/2) ≤ (a−b)². The quantifier (all reals), the LHS expression (including the normalization factor of 2 in the logarithm), and the RHS (a−b)² are a verbatim match of the informal statement. Since this is a verified Lean theorem covering the full statement of the target node without any restrictions or weakening, this is a full match with complete coverage of the proof burden. No further expansion is warranted.</p>
+        <p><strong>Lean theorem name:</strong> root_aristotle</p>
+        <p><strong>Coverage:</strong> full match</p><p class="meta">The verified Lean theorem <code class="inline-code">root_aristotle</code> exactly matches the informal statement of the Two-point logarithmic Sobolev inequality. The two-point space is naturally modeled by a two-point type (with <code class="inline-code">true</code> and <code class="inline-code">false</code> mapping to 1 and -1), and the entropy and right-hand side expressions precisely mirror the target node&#x27;s mathematical content. The prior heuristic&#x27;s classification of <code class="inline-code">concrete_sublemma</code> is explicitly overridden because the formalization captures the full scope of the root theorem without any loss of generality or need for further expansion.</p>
         <div class="statement-code">
           <strong>Lean statement:</strong>
-          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> scalar_ineq_aristotle (a b : <span class="tok-type">ℝ</span>) :
-    a ^ <span class="tok-number">2</span> * log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * log (b ^ <span class="tok-number">2</span>) -
-    (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) ≤ (a - b) ^ <span class="tok-number">2</span></code></pre>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> root_aristotle (f : TwoPoint → <span class="tok-type">ℝ</span>) :
+    twoPointEntropy (<span class="tok-keyword">fun</span> x =&gt; f x ^ <span class="tok-number">2</span>) ≤
+    (<span class="tok-number">1</span> / <span class="tok-number">2</span>) * (f true - f false) ^ <span class="tok-number">2</span></code></pre>
         </div>
         <p><strong>Verification status:</strong> verified</p>
-        <p><strong>Verification command:</strong> <code>lake env lean lean_project/FormalIslands/Generated/scalar_ineq_worker_20260406-160206_d0937542.lean</code></p>
+        <p><strong>Verification command:</strong> <code>lake env lean lean_project/FormalIslands/Generated/root_worker_20260408-172856_abef1e6a.lean</code></p>
         <details>
           <summary>Lean code</summary>
           <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
 
-/-!
-# Scalar two-point log-Sobolev inequality
-
-For all a, b ∈ <span class="tok-type">ℝ</span>,
-  a² log(a²) + b² log(b²) - (a² + b²) log((a² + b²) / <span class="tok-number">2</span>) ≤ (a - b)²
-
-We use the convention that <span class="tok-number">0</span> * log <span class="tok-number">0</span> = <span class="tok-number">0</span>, which is consistent <span class="tok-keyword">with</span> `Real.log <span class="tok-number">0</span> = <span class="tok-number">0</span>` <span class="tok-keyword">in</span> Mathlib.
--/
+<span class="tok-keyword">open</span> Real
 
 noncomputable <span class="tok-keyword">section</span>
 
-<span class="tok-keyword">open</span> Real
+/-!
+# Two-point logarithmic Sobolev inequality
 
-/-
-The core one-dimensional inequality: for u ∈ [<span class="tok-number">0</span>, <span class="tok-number">2</span>],
-  u * log u + (<span class="tok-number">2</span> - u) * log (<span class="tok-number">2</span> - u) ≤ (√u - √(<span class="tok-number">2</span> - u))²
+We prove the logarithmic Sobolev inequality on the two-point Bernoulli space {-<span class="tok-number">1</span>, <span class="tok-number">1</span>}
+<span class="tok-keyword">with</span> the uniform measure μ:
 
-This is the fundamental analytic inequality underlying the two-point log-Sobolev inequality.
-The proof uses the second-derivative test: defining
-  φ(t) = <span class="tok-number">2</span>(<span class="tok-number">1</span> - √(<span class="tok-number">1</span>-t²)) - (<span class="tok-number">1</span>+t)log(<span class="tok-number">1</span>+t) - (<span class="tok-number">1</span>-t)log(<span class="tok-number">1</span>-t)
-<span class="tok-keyword">with</span> the substitution u = <span class="tok-number">1</span> + t, one checks φ(<span class="tok-number">0</span>) = <span class="tok-number">0</span>, φ&#x27;(<span class="tok-number">0</span>) = <span class="tok-number">0</span>, and
-φ&#x27;&#x27;(t) = <span class="tok-number">2</span>/(<span class="tok-number">1</span>-t²)^{<span class="tok-number">3</span>/<span class="tok-number">2</span>} - <span class="tok-number">2</span>/(<span class="tok-number">1</span>-t²) ≥ <span class="tok-number">0</span>, so φ ≥ <span class="tok-number">0</span>.
+  Ent_μ(f²) ≤ (<span class="tok-number">1</span>/<span class="tok-number">2</span>) · (f(<span class="tok-number">1</span>) - f(-<span class="tok-number">1</span>))²
+
+The proof proceeds <span class="tok-tactic">by</span> reducing to the scalar inequality
+  a² log(a²) + b² log(b²) - (a²+b²) log((a²+b²)/<span class="tok-number">2</span>) ≤ (a-b)²
+which is established via a calculus argument.
 -/
-set_option maxHeartbeats <span class="tok-number">400000</span> <span class="tok-keyword">in</span>
-<span class="tok-keyword">theorem</span> core_1d_ineq (u : <span class="tok-type">ℝ</span>) (hu0 : <span class="tok-number">0</span> ≤ u) (hu2 : u ≤ <span class="tok-number">2</span>) :
-    u * log u + (<span class="tok-number">2</span> - u) * log (<span class="tok-number">2</span> - u) ≤ (√u - √(<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
-  <span class="tok-comment">-- By symmetry (φ(t) = φ(-t)), WLOG t ∈ [0, 1]. Define φ(t) = 2(1 - √(1-t²)) - (1+t)log(1+t) - (1-t)log(1-t). We need φ(t) ≥ 0 for t ∈ [0, 1].</span>
-  suffices h_wlog : ∀ t ∈ Set.Icc <span class="tok-number">0</span> <span class="tok-number">1</span>, <span class="tok-number">2</span> * (<span class="tok-number">1</span> - Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>)) ≥ (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) + (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t) <span class="tok-tactic">by</span>
-    by_cases hu : u ≤ <span class="tok-number">1</span>;
-    · convert h_wlog ( <span class="tok-number">1</span> - u ) ⟨ <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span>, <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ⟩ |&gt; <span class="tok-keyword">fun</span> x =&gt; x.le using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">ring</span>;
-      <span class="tok-tactic">rw</span> [ Real.sq_sqrt ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ), Real.sq_sqrt ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ] ; <span class="tok-tactic">rw</span> [ ← Real.sqrt_mul ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ] ; <span class="tok-tactic">ring</span>;
-    · convert h_wlog ( u - <span class="tok-number">1</span> ) ⟨ <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span>, <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ⟩ |&gt; <span class="tok-keyword">fun</span> h =&gt; h.trans ?_ using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">ring</span>;
-      <span class="tok-tactic">rw</span> [ Real.sq_sqrt ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ), Real.sq_sqrt ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ] ; <span class="tok-tactic">rw</span> [ ← Real.sqrt_mul ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ] ; ring_nf ; <span class="tok-tactic">norm_num</span>;
-  <span class="tok-comment">-- Let&#x27;s choose any $t \in [0, 1]$.</span>
-  <span class="tok-tactic">intro</span> t ht
-  by_cases ht1 : t = <span class="tok-number">1</span>;
-  · <span class="tok-tactic">norm_num</span> [ ht1 ];
-    <span class="tok-tactic">linarith</span> [ Real.log_le_sub_one_of_pos zero_lt_two ];
-  · <span class="tok-comment">-- Since $\phi&#x27;&#x27;(t) \geq 0$, $\phi&#x27;(t)$ is nondecreasing on $[0, 1)$.</span>
-    <span class="tok-tactic">have</span> h_phi_prime_nonneg : ∀ t ∈ Set.Ioo <span class="tok-number">0</span> <span class="tok-number">1</span>, deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> * (<span class="tok-number">1</span> - Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>)) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t)) t ≥ <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
-      <span class="tok-comment">-- Let&#x27;s calculate the derivative of $\phi(t)$.</span>
-      <span class="tok-tactic">have</span> h_phi_prime : ∀ t ∈ Set.Ioo <span class="tok-number">0</span> <span class="tok-number">1</span>, deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> * (<span class="tok-number">1</span> - Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>)) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t)) t = <span class="tok-number">2</span> * t / Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) - Real.log (<span class="tok-number">1</span> + t) + Real.log (<span class="tok-number">1</span> - t) := <span class="tok-tactic">by</span>
-        <span class="tok-tactic">intro</span> t ht;
-        convert HasDerivAt.deriv ( HasDerivAt.sub ( HasDerivAt.sub ( HasDerivAt.const_mul <span class="tok-number">2</span> &lt;| HasDerivAt.const_sub <span class="tok-number">1</span> &lt;| HasDerivAt.sqrt ( HasDerivAt.const_sub <span class="tok-number">1</span> &lt;| hasDerivAt_pow <span class="tok-number">2</span> t ) ?_ ) &lt;| HasDerivAt.mul ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_add <span class="tok-number">1</span> ) &lt;| HasDerivAt.log ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_add <span class="tok-number">1</span> ) ?_ ) &lt;| HasDerivAt.mul ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_sub <span class="tok-number">1</span> ) &lt;| HasDerivAt.log ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_sub <span class="tok-number">1</span> ) ?_ ) using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span> &lt;;&gt; <span class="tok-tactic">ring</span> &lt;;&gt; try nlinarith [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ;
-        grind;
-      <span class="tok-comment">-- Since $\phi&#x27;&#x27;(t) \geq 0$, $\phi&#x27;(t)$ is nondecreasing on $[0, 1)$, and $\phi&#x27;(0) = 0$, we have $\phi&#x27;(t) \geq 0$ for all $t \in [0, 1)$.</span>
-      <span class="tok-tactic">have</span> h_phi_prime_nonneg : ∀ t ∈ Set.Ioo <span class="tok-number">0</span> <span class="tok-number">1</span>, deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> * t / Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) - Real.log (<span class="tok-number">1</span> + t) + Real.log (<span class="tok-number">1</span> - t)) t ≥ <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
-        <span class="tok-tactic">intro</span> t ht
-        <span class="tok-tactic">have</span> h_phi_prime_deriv : deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> * t / Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) - Real.log (<span class="tok-number">1</span> + t) + Real.log (<span class="tok-number">1</span> - t)) t = <span class="tok-number">2</span> / (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) ^ (<span class="tok-number">3</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span>) - <span class="tok-number">2</span> / (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) := <span class="tok-tactic">by</span>
-          apply_rules [ HasDerivAt.deriv ];
-          convert HasDerivAt.add ( HasDerivAt.sub ( HasDerivAt.div ( HasDerivAt.const_mul <span class="tok-number">2</span> ( hasDerivAt_id&#x27; t ) ) ( HasDerivAt.sqrt ( HasDerivAt.const_sub <span class="tok-number">1</span> ( hasDerivAt_pow <span class="tok-number">2</span> t ) ) ( <span class="tok-tactic">by</span> nlinarith [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ) ( ne_of_gt ( Real.sqrt_pos.mpr ( <span class="tok-tactic">by</span> nlinarith [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ) ) ) ( HasDerivAt.log ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_add <span class="tok-number">1</span> ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ) ) ( HasDerivAt.log ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_sub <span class="tok-number">1</span> ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ) using <span class="tok-number">1</span> ; <span class="tok-tactic">ring</span>;
-          <span class="tok-tactic">rw</span> [ <span class="tok-tactic">show</span> ( <span class="tok-number">1</span> - t ^ <span class="tok-number">2</span> ) ^ ( <span class="tok-number">3</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span> ) = ( Real.sqrt ( <span class="tok-number">1</span> - t ^ <span class="tok-number">2</span> ) ) ^ <span class="tok-number">3</span> <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ Real.sqrt_eq_rpow, ← Real.rpow_natCast _ <span class="tok-number">3</span>, ← Real.rpow_mul ( <span class="tok-tactic">by</span> nlinarith [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ] ; <span class="tok-tactic">norm_num</span> ] ; <span class="tok-tactic">norm_num</span> [ pow_three, pow_two, mul_assoc, ne_of_gt ( Real.sqrt_pos.mpr ( <span class="tok-tactic">show</span> <span class="tok-number">0</span> &lt; <span class="tok-number">1</span> - t ^ <span class="tok-number">2</span> <span class="tok-tactic">by</span> nlinarith [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ) ] ; <span class="tok-tactic">ring</span>;
-          field_simp;
-          grind;
-        <span class="tok-tactic">rw</span> [ h_phi_prime_deriv, ge_iff_le, sub_nonneg ];
-        gcongr &lt;;&gt; <span class="tok-tactic">norm_num</span> at *;
-        · <span class="tok-tactic">exact</span> Real.rpow_pos_of_pos ( <span class="tok-tactic">by</span> nlinarith ) _;
-        · <span class="tok-tactic">exact</span> le_trans ( Real.rpow_le_rpow_of_exponent_ge ( <span class="tok-tactic">by</span> nlinarith ) ( <span class="tok-tactic">by</span> nlinarith ) ( <span class="tok-tactic">show</span> ( <span class="tok-number">3</span> : <span class="tok-type">ℝ</span> ) / <span class="tok-number">2</span> ≥ <span class="tok-number">1</span> <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> );
-      <span class="tok-comment">-- Since $\phi&#x27;&#x27;(t) \geq 0$, $\phi&#x27;(t)$ is nondecreasing on $[0, 1)$, and $\phi&#x27;(0) = 0$, we have $\phi&#x27;(t) \geq 0$ for all $t \in [0, 1)$ by the Mean Value Theorem.</span>
-      <span class="tok-tactic">intros</span> t ht
-      <span class="tok-tactic">have</span> h_mvt : ∃ c ∈ Set.Ioo <span class="tok-number">0</span> t, deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> * t / Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) - Real.log (<span class="tok-number">1</span> + t) + Real.log (<span class="tok-number">1</span> - t)) c = (<span class="tok-number">2</span> * t / Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) - Real.log (<span class="tok-number">1</span> + t) + Real.log (<span class="tok-number">1</span> - t) - (<span class="tok-number">2</span> * <span class="tok-number">0</span> / Real.sqrt (<span class="tok-number">1</span> - <span class="tok-number">0</span> ^ <span class="tok-number">2</span>) - Real.log (<span class="tok-number">1</span> + <span class="tok-number">0</span>) + Real.log (<span class="tok-number">1</span> - <span class="tok-number">0</span>))) / (t - <span class="tok-number">0</span>) := <span class="tok-tactic">by</span>
-        apply_rules [ exists_deriv_eq_slope ];
-        · <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span> ];
-        · <span class="tok-tactic">exact</span> continuousOn_of_forall_continuousAt <span class="tok-keyword">fun</span> x hx =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> ContinuousAt.add ( ContinuousAt.sub ( ContinuousAt.div ( continuousAt_const.mul continuousAt_id ) ( Real.continuous_sqrt.continuousAt.comp &lt;| continuousAt_const.sub &lt;| continuousAt_id.pow <span class="tok-number">2</span> ) &lt;| ne_of_gt &lt;| Real.sqrt_pos.mpr &lt;| <span class="tok-tactic">by</span> nlinarith [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span>, ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) &lt;| ContinuousAt.log ( continuousAt_const.add continuousAt_id ) &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span>, ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) &lt;| ContinuousAt.log ( continuousAt_const.sub continuousAt_id ) &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span>, ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ;
-        · <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> x hx =&gt; DifferentiableAt.differentiableWithinAt ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> DifferentiableAt.add ( DifferentiableAt.sub ( DifferentiableAt.div ( differentiableAt_id.const_mul _ ) ( DifferentiableAt.sqrt ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ( <span class="tok-tactic">by</span> nlinarith [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span>, ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ) ( ne_of_gt ( Real.sqrt_pos.mpr ( <span class="tok-tactic">by</span> nlinarith [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span>, ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ) ) ) ( DifferentiableAt.log ( differentiableAt_id.const_add _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span>, ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ) ) ( DifferentiableAt.log ( differentiableAt_id.const_sub _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span>, ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ) );
-      <span class="tok-tactic">simp</span> +zetaDelta at *;
-      <span class="tok-tactic">exact</span> h_phi_prime t ht.<span class="tok-number">1</span> ht.<span class="tok-number">2</span> ▸ <span class="tok-tactic">by</span> <span class="tok-tactic">obtain</span> ⟨ c, ⟨ hc1, hc2 ⟩, hc3 ⟩ := h_mvt; <span class="tok-tactic">have</span> := h_phi_prime_nonneg c hc1 ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ; <span class="tok-tactic">rw</span> [ hc3, le_div_iff₀ ] at this &lt;;&gt; <span class="tok-tactic">linarith</span>;
-    <span class="tok-comment">-- Since $\phi&#x27;(t)$ is nondecreasing on $[0, 1)$ and $\phi&#x27;(0) = 0$, we have $\phi(t) \geq \phi(0)$ for all $t \in [0, 1)$.</span>
-    <span class="tok-tactic">have</span> h_phi_ge_phi0 : ∀ t ∈ Set.Ioo <span class="tok-number">0</span> <span class="tok-number">1</span>, <span class="tok-number">2</span> * (<span class="tok-number">1</span> - Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>)) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t) ≥ <span class="tok-number">2</span> * (<span class="tok-number">1</span> - Real.sqrt (<span class="tok-number">1</span> - <span class="tok-number">0</span> ^ <span class="tok-number">2</span>)) - (<span class="tok-number">1</span> + <span class="tok-number">0</span>) * Real.log (<span class="tok-number">1</span> + <span class="tok-number">0</span>) - (<span class="tok-number">1</span> - <span class="tok-number">0</span>) * Real.log (<span class="tok-number">1</span> - <span class="tok-number">0</span>) := <span class="tok-tactic">by</span>
-      <span class="tok-tactic">intro</span> t ht
-      <span class="tok-tactic">have</span> h_mean_val : ∃ c ∈ Set.Ioo <span class="tok-number">0</span> t, deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> * (<span class="tok-number">1</span> - Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>)) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t)) c = (<span class="tok-number">2</span> * (<span class="tok-number">1</span> - Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>)) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t) - (<span class="tok-number">2</span> * (<span class="tok-number">1</span> - Real.sqrt (<span class="tok-number">1</span> - <span class="tok-number">0</span> ^ <span class="tok-number">2</span>)) - (<span class="tok-number">1</span> + <span class="tok-number">0</span>) * Real.log (<span class="tok-number">1</span> + <span class="tok-number">0</span>) - (<span class="tok-number">1</span> - <span class="tok-number">0</span>) * Real.log (<span class="tok-number">1</span> - <span class="tok-number">0</span>))) / (t - <span class="tok-number">0</span>) := <span class="tok-tactic">by</span>
-        apply_rules [ exists_deriv_eq_slope ];
-        · <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span> ];
-        · <span class="tok-tactic">exact</span> ContinuousOn.sub ( ContinuousOn.sub ( continuousOn_const.mul ( continuousOn_const.sub ( Real.continuous_sqrt.comp_continuousOn ( continuousOn_const.sub ( continuousOn_pow <span class="tok-number">2</span> ) ) ) ) ) ( ContinuousOn.mul ( continuousOn_const.add continuousOn_id ) ( ContinuousOn.log ( continuousOn_const.add continuousOn_id ) <span class="tok-keyword">fun</span> x hx =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">1</span> ] ) ) ) ( ContinuousOn.mul ( continuousOn_const.sub continuousOn_id ) ( ContinuousOn.log ( continuousOn_const.sub continuousOn_id ) <span class="tok-keyword">fun</span> x hx =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">2</span>, ht.<span class="tok-number">2</span> ] ) );
-        · <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> x hx =&gt; DifferentiableAt.differentiableWithinAt ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> DifferentiableAt.sub ( DifferentiableAt.sub ( DifferentiableAt.mul ( differentiableAt_const _ ) ( DifferentiableAt.sub ( differentiableAt_const _ ) ( DifferentiableAt.sqrt ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ( <span class="tok-tactic">by</span> nlinarith [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span>, ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ) ) ) ( DifferentiableAt.mul ( differentiableAt_id.const_add _ ) ( DifferentiableAt.log ( differentiableAt_id.const_add _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span>, ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ) ) ) ( DifferentiableAt.mul ( differentiableAt_id.const_sub _ ) ( DifferentiableAt.log ( differentiableAt_id.const_sub _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span>, ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ) ) ) );
-      <span class="tok-tactic">obtain</span> ⟨ c, hc₁, hc₂ ⟩ := h_mean_val; <span class="tok-tactic">have</span> := h_phi_prime_nonneg c ⟨ <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hc₁.<span class="tok-number">1</span>, ht.<span class="tok-number">1</span> ], <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hc₁.<span class="tok-number">2</span>, ht.<span class="tok-number">2</span> ] ⟩ ; <span class="tok-tactic">rw</span> [ hc₂, ge_iff_le ] at this; <span class="tok-tactic">rw</span> [ le_div_iff₀ ] at this &lt;;&gt; <span class="tok-tactic">linarith</span> [ hc₁.<span class="tok-number">1</span>, hc₁.<span class="tok-number">2</span>, ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] ;
-    <span class="tok-tactic">cases</span> eq_or_lt_of_le ht.<span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">cases</span> eq_or_lt_of_le ht.<span class="tok-number">2</span> &lt;;&gt; <span class="tok-tactic">norm_num</span> at * ; <span class="tok-tactic">aesop</span>;
-    · subst_vars; <span class="tok-tactic">norm_num</span>;
-    · contradiction;
-    · <span class="tok-tactic">linarith</span> [ h_phi_ge_phi0 t ‹_› ‹_› ]
 
-/-
-Auxiliary: the LHS of the log-Sobolev inequality depends only on a² and b².
-That is, replacing a <span class="tok-tactic">by</span> |a| and b <span class="tok-tactic">by</span> |b| does not change the LHS.
--/
-<span class="tok-keyword">lemma</span> lhs_abs_eq (a b : <span class="tok-type">ℝ</span>) :
-    a ^ <span class="tok-number">2</span> * log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * log (b ^ <span class="tok-number">2</span>) -
-    (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) =
-    |a| ^ <span class="tok-number">2</span> * log (|a| ^ <span class="tok-number">2</span>) + |b| ^ <span class="tok-number">2</span> * log (|b| ^ <span class="tok-number">2</span>) -
-    (|a| ^ <span class="tok-number">2</span> + |b| ^ <span class="tok-number">2</span>) * log ((|a| ^ <span class="tok-number">2</span> + |b| ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) := <span class="tok-tactic">by</span>
-  <span class="tok-tactic">norm_num</span>
+/<span class="tok-comment">-- The two-point space {-1, 1}, modeled as `Bool`. -/</span>
+abbrev TwoPoint := <span class="tok-type">Bool</span>
 
-/-
-The reverse triangle inequality: (|a| - |b|)² ≤ (a - b)².
--/
-<span class="tok-keyword">lemma</span> sq_abs_sub_le (a b : <span class="tok-type">ℝ</span>) : (|a| - |b|) ^ <span class="tok-number">2</span> ≤ (a - b) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+/<span class="tok-comment">-- Expectation under the uniform measure on {-1, 1}.</span>
+    We represent a function on {-<span class="tok-number">1</span>, <span class="tok-number">1</span>} as f : <span class="tok-type">Bool</span> → <span class="tok-type">ℝ</span>,
+    <span class="tok-keyword">where</span> `false` corresponds to -<span class="tok-number">1</span> and `true` corresponds to <span class="tok-number">1</span>. -/
+<span class="tok-keyword">def</span> twoPointExpect (g : TwoPoint → <span class="tok-type">ℝ</span>) : <span class="tok-type">ℝ</span> :=
+  (g false + g true) / <span class="tok-number">2</span>
+
+/<span class="tok-comment">-- Entropy of a nonneg function g under the uniform measure on {-1, 1}:</span>
+    Ent_μ(g) = E_μ[g log g] - E_μ[g] log(E_μ[g]) -/
+<span class="tok-keyword">def</span> twoPointEntropy (g : TwoPoint → <span class="tok-type">ℝ</span>) : <span class="tok-type">ℝ</span> :=
+  twoPointExpect (<span class="tok-keyword">fun</span> x =&gt; g x * Real.log (g x)) -
+  twoPointExpect g * Real.log (twoPointExpect g)
+
+/-! ## Helper lemmas for the scalar inequality -/
+
+private <span class="tok-keyword">lemma</span> sqrt_one_add_sq_le (x : <span class="tok-type">ℝ</span>) : sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>) ≤ <span class="tok-number">1</span> + x ^ <span class="tok-number">2</span> / <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">exact</span> Real.sqrt_le_iff.mpr ⟨ <span class="tok-tactic">by</span> positivity, <span class="tok-tactic">by</span> nlinarith ⟩
+
+private <span class="tok-keyword">lemma</span> add_sqrt_le_exp (x : <span class="tok-type">ℝ</span>) (hx : <span class="tok-number">0</span> ≤ x) : x + sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>) ≤ exp x := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> exp_bound : Real.exp x ≥ <span class="tok-number">1</span> + x + x ^ <span class="tok-number">2</span> / <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> quadratic_le_exp_of_nonneg hx;
+  nlinarith [ Real.mul_self_sqrt ( <span class="tok-tactic">by</span> positivity : <span class="tok-number">0</span> ≤ <span class="tok-number">1</span> + x ^ <span class="tok-number">2</span> ) ]
+
+private <span class="tok-keyword">lemma</span> log_add_sqrt_le (x : <span class="tok-type">ℝ</span>) (hx : <span class="tok-number">0</span> ≤ x) : log (x + sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>)) ≤ x := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">exact</span> Real.log_le_iff_le_exp ( <span class="tok-tactic">by</span> positivity ) |&gt;.<span class="tok-number">2</span> ( add_sqrt_le_exp x hx )
+
+private <span class="tok-keyword">lemma</span> log_div_le (t : <span class="tok-type">ℝ</span>) (ht0 : <span class="tok-number">0</span> ≤ t) (ht1 : t &lt; <span class="tok-number">1</span>) :
+    log ((<span class="tok-number">1</span> + t) / (<span class="tok-number">1</span> - t)) ≤ <span class="tok-number">2</span> * t / sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) := <span class="tok-tactic">by</span>
+  set x := t / Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) <span class="tok-keyword">with</span> hx;
+  <span class="tok-tactic">have</span> h_sqrt : Real.sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>) = <span class="tok-number">1</span> / Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">rw</span> [ hx, div_pow, Real.sq_sqrt &lt;| <span class="tok-tactic">by</span> nlinarith ];
+    <span class="tok-tactic">rw</span> [ one_add_div ] &lt;;&gt; <span class="tok-tactic">norm_num</span> ; nlinarith
+  <span class="tok-tactic">have</span> h_expr : x + Real.sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>) = Real.sqrt ((<span class="tok-number">1</span> + t) / (<span class="tok-number">1</span> - t)) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">rw</span> [ h_sqrt, <span class="tok-tactic">show</span> ( <span class="tok-number">1</span> + t ) / ( <span class="tok-number">1</span> - t ) = ( ( <span class="tok-number">1</span> + t ) / Real.sqrt ( <span class="tok-number">1</span> - t ^ <span class="tok-number">2</span> ) ) ^ <span class="tok-number">2</span> <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ div_pow, Real.sq_sqrt &lt;| <span class="tok-tactic">by</span> nlinarith ] ; <span class="tok-tactic">rw</span> [ div_eq_div_iff ] &lt;;&gt; nlinarith, Real.sqrt_sq &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> div_nonneg ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) &lt;| Real.sqrt_nonneg _ ] ; <span class="tok-tactic">ring</span>;
+  <span class="tok-tactic">have</span> h_log : Real.log (x + Real.sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>)) ≤ x := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> log_add_sqrt_le x ( <span class="tok-tactic">by</span> positivity );
+  <span class="tok-tactic">rw</span> [ h_expr, Real.log_sqrt ( div_nonneg ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ) ] at h_log ; ring_nf at * ; <span class="tok-tactic">linarith</span>
+
+private <span class="tok-keyword">lemma</span> entropy_le (t : <span class="tok-type">ℝ</span>) (ht0 : <span class="tok-number">0</span> ≤ t) (ht1 : t ≤ <span class="tok-number">1</span>) :
+    (<span class="tok-number">1</span> + t) * log (<span class="tok-number">1</span> + t) + (<span class="tok-number">1</span> - t) * log (<span class="tok-number">1</span> - t) ≤ <span class="tok-number">2</span> - <span class="tok-number">2</span> * sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_deriv_nonneg : ∀ t ∈ Set.Ioo <span class="tok-number">0</span> <span class="tok-number">1</span>, <span class="tok-number">0</span> ≤ deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t)) t := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h_deriv : ∀ t ∈ Set.Ioo <span class="tok-number">0</span> <span class="tok-number">1</span>, deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t)) t = <span class="tok-number">2</span> * t / Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - Real.log ((<span class="tok-number">1</span> + t) / (<span class="tok-number">1</span> - t)) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intro</span> t ht; <span class="tok-tactic">refine</span>&#x27; HasDerivAt.deriv _;
+      convert HasDerivAt.sub ( HasDerivAt.sub ( HasDerivAt.sub ( hasDerivAt_const _ _ ) ( HasDerivAt.mul ( hasDerivAt_const _ _ ) ( HasDerivAt.sqrt ( HasDerivAt.sub ( hasDerivAt_const _ _ ) ( hasDerivAt_pow <span class="tok-number">2</span> t ) ) _ ) ) ) ( HasDerivAt.mul ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_add _ ) ( HasDerivAt.log ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_add _ ) _ ) ) ) ( HasDerivAt.mul ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_sub _ ) ( HasDerivAt.log ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_sub _ ) _ ) ) using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+      · <span class="tok-tactic">rw</span> [ Real.log_div ] &lt;;&gt; <span class="tok-tactic">ring</span> &lt;;&gt; nlinarith [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span>, mul_inv_cancel₀ ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] : ( <span class="tok-number">1</span> + t ) ≠ <span class="tok-number">0</span> ), mul_inv_cancel₀ ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] : ( <span class="tok-number">1</span> - t ) ≠ <span class="tok-number">0</span> ) ];
+      · nlinarith [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ];
+      · <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ];
+      · <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ];
+    <span class="tok-tactic">intros</span> t ht
+    <span class="tok-tactic">rw</span> [h_deriv t ht]
+    <span class="tok-tactic">apply</span> sub_nonneg_of_le
+    <span class="tok-tactic">apply</span> log_div_le t ht.<span class="tok-number">1</span>.le ht.<span class="tok-number">2</span>;
+  by_contra h_contra;
+  <span class="tok-tactic">obtain</span> ⟨c, hc⟩ : ∃ c ∈ Set.Ioo <span class="tok-number">0</span> t, deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t)) c = (<span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t) - (<span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - <span class="tok-number">0</span>^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + <span class="tok-number">0</span>) * Real.log (<span class="tok-number">1</span> + <span class="tok-number">0</span>) - (<span class="tok-number">1</span> - <span class="tok-number">0</span>) * Real.log (<span class="tok-number">1</span> - <span class="tok-number">0</span>))) / (t - <span class="tok-number">0</span>) := <span class="tok-tactic">by</span>
+    apply_rules [ exists_deriv_eq_slope ];
+    · <span class="tok-tactic">exact</span> ht0.lt_of_ne ( <span class="tok-tactic">by</span> <span class="tok-tactic">rintro</span> rfl; <span class="tok-tactic">norm_num</span> at h_contra );
+    · fun_prop;
+    · <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> x hx =&gt; DifferentiableAt.differentiableWithinAt ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> DifferentiableAt.sub ( DifferentiableAt.sub ( DifferentiableAt.sub ( differentiableAt_const _ ) ( DifferentiableAt.mul ( differentiableAt_const _ ) ( DifferentiableAt.sqrt ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ( <span class="tok-tactic">by</span> nlinarith [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span> ] ) ) ) ) ( DifferentiableAt.mul ( differentiableAt_id.const_add _ ) ( DifferentiableAt.log ( differentiableAt_id.const_add _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span> ] ) ) ) ) ( DifferentiableAt.mul ( differentiableAt_id.const_sub _ ) ( DifferentiableAt.log ( differentiableAt_id.const_sub _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span> ] ) ) ) );
+  <span class="tok-tactic">have</span> := h_deriv_nonneg c ⟨ hc.<span class="tok-number">1.1</span>, hc.<span class="tok-number">1.2</span>.trans_le ht1 ⟩ ; <span class="tok-tactic">rw</span> [ hc.<span class="tok-number">2</span>, le_div_iff₀ ] at this &lt;;&gt; <span class="tok-tactic">norm_num</span> at * &lt;;&gt; <span class="tok-tactic">linarith</span>;
+
+private <span class="tok-keyword">theorem</span> normalized_inequality (u : <span class="tok-type">ℝ</span>) (hu0 : <span class="tok-number">0</span> ≤ u) (hu2 : u ≤ <span class="tok-number">2</span>) :
+    u * Real.log u + (<span class="tok-number">2</span> - u) * Real.log (<span class="tok-number">2</span> - u) ≤
+    (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_subst : ∃ t ∈ Set.Icc <span class="tok-number">0</span> <span class="tok-number">1</span>, u = <span class="tok-number">1</span> + t ∨ u = <span class="tok-number">1</span> - t := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> ⟨ |u - <span class="tok-number">1</span>|, ⟨ abs_nonneg _, abs_le.mpr ⟨ <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span>, <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ⟩ ⟩, <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> abs_cases ( u - <span class="tok-number">1</span> ) &lt;;&gt; first | left; <span class="tok-tactic">linarith</span> | right; <span class="tok-tactic">linarith</span> ⟩;
+  <span class="tok-tactic">have</span> h_rhs : (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span> = <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (u * (<span class="tok-number">2</span> - u)) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">rw</span> [ Real.sqrt_mul ] &lt;;&gt; nlinarith [ Real.mul_self_sqrt hu0, Real.mul_self_sqrt ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> : <span class="tok-number">0</span> ≤ <span class="tok-number">2</span> - u ) ];
+  rcases h_subst <span class="tok-keyword">with</span> ⟨ t, ⟨ ht0, ht1 ⟩, rfl | rfl ⟩ &lt;;&gt; ( <span class="tok-tactic">have</span> := entropy_le t ht0 ht1; ring_nf at * ; <span class="tok-tactic">aesop</span>; )
+
+/<span class="tok-comment">-- The LHS of the two-point LSI, as a function of a² and b². -/</span>
+private <span class="tok-keyword">def</span> lsi_lhs (p q : <span class="tok-type">ℝ</span>) : <span class="tok-type">ℝ</span> :=
+  p * Real.log p + q * Real.log q - (p + q) * Real.log ((p + q) / <span class="tok-number">2</span>)
+
+private <span class="tok-keyword">lemma</span> lsi_lhs_scaling (p q : <span class="tok-type">ℝ</span>) (hp : <span class="tok-number">0</span> ≤ p) (hq : <span class="tok-number">0</span> ≤ q) (hs : <span class="tok-number">0</span> &lt; p + q) :
+    lsi_lhs p q = ((p + q) / <span class="tok-number">2</span>) *
+      (<span class="tok-number">2</span> * p / (p + q) * Real.log (<span class="tok-number">2</span> * p / (p + q)) +
+       (<span class="tok-number">2</span> - <span class="tok-number">2</span> * p / (p + q)) * Real.log (<span class="tok-number">2</span> - <span class="tok-number">2</span> * p / (p + q))) := <span class="tok-tactic">by</span>
+  unfold lsi_lhs;
+  by_cases hp&#x27; : p = <span class="tok-number">0</span> &lt;;&gt; by_cases hq&#x27; : q = <span class="tok-number">0</span> &lt;;&gt; simp_all +decide [ hs.ne&#x27;, mul_div_cancel₀, mul_assoc, mul_comm, mul_left_comm ];
+  · <span class="tok-tactic">rw</span> [ Real.log_div ] &lt;;&gt; <span class="tok-tactic">ring</span> &lt;;&gt; positivity;
+  · <span class="tok-tactic">rw</span> [ Real.log_div ] &lt;;&gt; <span class="tok-tactic">ring</span> &lt;;&gt; positivity;
+  · field_simp;
+    <span class="tok-tactic">rw</span> [ Real.log_div, Real.log_div ] &lt;;&gt; try positivity;
+    <span class="tok-tactic">rw</span> [ Real.log_div, Real.log_mul, Real.log_mul ] &lt;;&gt; <span class="tok-tactic">ring</span> &lt;;&gt; positivity
+
+private <span class="tok-keyword">lemma</span> rhs_scaling (a b : <span class="tok-type">ℝ</span>) (ha : <span class="tok-number">0</span> ≤ a) (hb : <span class="tok-number">0</span> ≤ b) (hs : <span class="tok-number">0</span> &lt; a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) :
+    ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) *
+      (Real.sqrt (<span class="tok-number">2</span> * a ^ <span class="tok-number">2</span> / (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>)) -
+       Real.sqrt (<span class="tok-number">2</span> - <span class="tok-number">2</span> * a ^ <span class="tok-number">2</span> / (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>))) ^ <span class="tok-number">2</span> = (a - b) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">rw</span> [ <span class="tok-tactic">show</span> <span class="tok-number">2</span> - <span class="tok-number">2</span> * a ^ <span class="tok-number">2</span> / ( a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> ) = <span class="tok-number">2</span> * b ^ <span class="tok-number">2</span> / ( a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> ) <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ sub_div&#x27; ] &lt;;&gt; <span class="tok-tactic">ring</span> ; positivity ];
+  <span class="tok-tactic">norm_num</span> [ ha, hb ];
+  grind +splitImp
+
+private <span class="tok-keyword">lemma</span> abs_sub_sq_le (a b : <span class="tok-type">ℝ</span>) : (|a| - |b|) ^ <span class="tok-number">2</span> ≤ (a - b) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
   <span class="tok-tactic">cases</span> abs_cases a &lt;;&gt; <span class="tok-tactic">cases</span> abs_cases b &lt;;&gt; nlinarith
 
-/-
-The scalar two-point log-Sobolev inequality for nonneg a, b <span class="tok-keyword">with</span> a² + b² = <span class="tok-number">2</span>.
-After normalization, the inequality reduces to
-  a² log(a²) + b² log(b²) ≤ (a - b)².
--/
-<span class="tok-keyword">lemma</span> scalar_ineq_normalized (a b : <span class="tok-type">ℝ</span>) (ha : <span class="tok-number">0</span> ≤ a) (hb : <span class="tok-number">0</span> ≤ b)
-    (hab : a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> = <span class="tok-number">2</span>) :
-    a ^ <span class="tok-number">2</span> * log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * log (b ^ <span class="tok-number">2</span>) ≤ (a - b) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
-  <span class="tok-tactic">have</span> := @core_1d_ineq ( a ^ <span class="tok-number">2</span> ) ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> nlinarith );
-  convert this using <span class="tok-number">2</span> &lt;;&gt; <span class="tok-tactic">norm_num</span> [ <span class="tok-tactic">show</span> <span class="tok-number">2</span> - a ^ <span class="tok-number">2</span> = b ^ <span class="tok-number">2</span> <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span>, ha, hb ]
+/<span class="tok-comment">-- The two-point LSI scalar inequality:</span>
+    For any real a, b,
+    a² log(a²) + b² log(b²) - (a²+b²) log((a²+b²)/<span class="tok-number">2</span>) ≤ (a-b)². -/
+<span class="tok-keyword">theorem</span> scalar_inequality_aristotle (a b : <span class="tok-type">ℝ</span>) :
+    a ^ <span class="tok-number">2</span> * Real.log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * Real.log (b ^ <span class="tok-number">2</span>) -
+    (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * Real.log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) ≤
+    (a - b) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_cases : a ^ <span class="tok-number">2</span> * Real.log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * Real.log (b ^ <span class="tok-number">2</span>) - (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * Real.log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) ≤ (|a| - |b|) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+    by_cases h : a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> = <span class="tok-number">0</span> &lt;;&gt; simp_all +decide;
+    · <span class="tok-tactic">norm_num</span> [ <span class="tok-tactic">show</span> a = <span class="tok-number">0</span> <span class="tok-tactic">by</span> nlinarith, <span class="tok-tactic">show</span> b = <span class="tok-number">0</span> <span class="tok-tactic">by</span> nlinarith ];
+    · set u : <span class="tok-type">ℝ</span> := <span class="tok-number">2</span> * a ^ <span class="tok-number">2</span> / (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>)
+      <span class="tok-tactic">have</span> lsi_lhs_eq : a ^ <span class="tok-number">2</span> * Real.log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * Real.log (b ^ <span class="tok-number">2</span>) - (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * Real.log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) = (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span> * (u * Real.log u + (<span class="tok-number">2</span> - u) * Real.log (<span class="tok-number">2</span> - u)) := <span class="tok-tactic">by</span>
+        convert lsi_lhs_scaling ( a ^ <span class="tok-number">2</span> ) ( b ^ <span class="tok-number">2</span> ) ( sq_nonneg a ) ( sq_nonneg b ) ( <span class="tok-tactic">by</span> positivity ) using <span class="tok-number">1</span>;
+      <span class="tok-tactic">have</span> normalized_ineq : u * Real.log u + (<span class="tok-number">2</span> - u) * Real.log (<span class="tok-number">2</span> - u) ≤ (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">apply</span> normalized_inequality;
+        · positivity;
+        · <span class="tok-tactic">exact</span> div_le_of_le_mul₀ ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> nlinarith );
+      <span class="tok-tactic">have</span> rhs_eq : (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span> * (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span> = (|a| - |b|) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+        convert rhs_scaling ( |a| ) ( |b| ) ( abs_nonneg a ) ( abs_nonneg b ) ?_ using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span> [ abs_mul, h ];
+        · rfl;
+        · positivity;
+      <span class="tok-tactic">norm_num</span> at *; nlinarith [ <span class="tok-tactic">show</span> <span class="tok-number">0</span> &lt; a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> <span class="tok-tactic">by</span> positivity ] ;
+  <span class="tok-tactic">exact</span> h_cases.trans ( <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> abs_cases a &lt;;&gt; <span class="tok-tactic">cases</span> abs_cases b &lt;;&gt; nlinarith )
 
-/-
-The scalar two-point log-Sobolev inequality for nonneg a, b.
--/
-<span class="tok-keyword">lemma</span> scalar_ineq_nonneg (a b : <span class="tok-type">ℝ</span>) (ha : <span class="tok-number">0</span> ≤ a) (hb : <span class="tok-number">0</span> ≤ b) :
-    a ^ <span class="tok-number">2</span> * log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * log (b ^ <span class="tok-number">2</span>) -
-    (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) ≤ (a - b) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
-  <span class="tok-comment">-- Consider the case when $a^2 + b^2 = 0$. In this case, $a = 0$ and $b = 0$, and the inequality becomes $0 \leq 0$, which is true.</span>
-  by_cases h : a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> = <span class="tok-number">0</span>;
-  · <span class="tok-tactic">norm_num</span> [ <span class="tok-tactic">show</span> a = <span class="tok-number">0</span> <span class="tok-tactic">by</span> nlinarith, <span class="tok-tactic">show</span> b = <span class="tok-number">0</span> <span class="tok-tactic">by</span> nlinarith ];
-  · <span class="tok-tactic">have</span> := core_1d_ineq ( <span class="tok-number">2</span> * a^<span class="tok-number">2</span> / ( a^<span class="tok-number">2</span> + b^<span class="tok-number">2</span> ) ) ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ div_le_iff₀ ( <span class="tok-tactic">by</span> positivity ) ] ; nlinarith );
-    <span class="tok-tactic">rw</span> [ <span class="tok-tactic">show</span> ( <span class="tok-number">2</span> - <span class="tok-number">2</span> * a ^ <span class="tok-number">2</span> / ( a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> ) ) = ( <span class="tok-number">2</span> * b ^ <span class="tok-number">2</span> / ( a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> ) ) <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ sub_div&#x27; ] &lt;;&gt; <span class="tok-tactic">ring</span> ; positivity ] at this;
-    convert mul_le_mul_of_nonneg_left this ( <span class="tok-tactic">show</span> <span class="tok-number">0</span> ≤ ( a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> ) / <span class="tok-number">2</span> <span class="tok-tactic">by</span> positivity ) using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span> [ Real.log_div, Real.log_mul, h, ha, hb ] ; <span class="tok-tactic">ring</span>;
-    · by_cases ha0 : a = <span class="tok-number">0</span> &lt;;&gt; by_cases hb0 : b = <span class="tok-number">0</span> &lt;;&gt; simp_all +decide [ Real.log_mul, Real.log_div, ne_of_gt ( <span class="tok-tactic">show</span> <span class="tok-number">0</span> &lt; a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> from <span class="tok-tactic">by</span> positivity ) ];
-      · grind;
-      · grind +splitIndPred;
-      · <span class="tok-comment">-- Combine like terms and simplify the expression.</span>
-        field_simp
-        <span class="tok-tactic">ring</span>;
-    · field_simp;
-      <span class="tok-tactic">rw</span> [ Real.sq_sqrt &lt;| <span class="tok-tactic">by</span> positivity, Real.sq_sqrt &lt;| <span class="tok-tactic">by</span> positivity ] ; <span class="tok-tactic">ring</span>
+/-! ## Main <span class="tok-keyword">theorem</span>: Two-point logarithmic Sobolev inequality -/
 
-/<span class="tok-comment">-- **Scalar two-point log-Sobolev inequality.**</span>
-For all a, b ∈ <span class="tok-type">ℝ</span>,
-  a² log(a²) + b² log(b²) - (a² + b²) log((a² + b²) / <span class="tok-number">2</span>) ≤ (a - b)² -/
-<span class="tok-keyword">theorem</span> scalar_ineq_aristotle (a b : <span class="tok-type">ℝ</span>) :
-    a ^ <span class="tok-number">2</span> * log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * log (b ^ <span class="tok-number">2</span>) -
-    (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) ≤ (a - b) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
-  <span class="tok-tactic">calc</span> a ^ <span class="tok-number">2</span> * log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * log (b ^ <span class="tok-number">2</span>) -
-      (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>)
-      = |a| ^ <span class="tok-number">2</span> * log (|a| ^ <span class="tok-number">2</span>) + |b| ^ <span class="tok-number">2</span> * log (|b| ^ <span class="tok-number">2</span>) -
-        (|a| ^ <span class="tok-number">2</span> + |b| ^ <span class="tok-number">2</span>) * log ((|a| ^ <span class="tok-number">2</span> + |b| ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) := lhs_abs_eq a b
-    _ ≤ (|a| - |b|) ^ <span class="tok-number">2</span> := scalar_ineq_nonneg |a| |b| (abs_nonneg a) (abs_nonneg b)
-    _ ≤ (a - b) ^ <span class="tok-number">2</span> := sq_abs_sub_le a b
+/<span class="tok-comment">-- **Two-point logarithmic Sobolev inequality.**</span>
+
+Let μ be the uniform probability measure on the two-point space {-<span class="tok-number">1</span>, <span class="tok-number">1</span>}.
+For a function f : {-<span class="tok-number">1</span>, <span class="tok-number">1</span>} → <span class="tok-type">ℝ</span>, the entropy of f² satisfies
+
+  Ent_μ(f²) ≤ (<span class="tok-number">1</span>/<span class="tok-number">2</span>) · (f(<span class="tok-number">1</span>) - f(-<span class="tok-number">1</span>))²
+
+<span class="tok-keyword">where</span> Ent_μ(f²) = E_μ[f² log f²] - E_μ[f²] log(E_μ[f²]). -/
+<span class="tok-keyword">theorem</span> root_aristotle (f : TwoPoint → <span class="tok-type">ℝ</span>) :
+    twoPointEntropy (<span class="tok-keyword">fun</span> x =&gt; f x ^ <span class="tok-number">2</span>) ≤
+    (<span class="tok-number">1</span> / <span class="tok-number">2</span>) * (f true - f false) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+      convert scalar_inequality_aristotle ( f true ) ( f false ) |&gt; <span class="tok-keyword">fun</span> h =&gt; mul_le_mul_of_nonneg_left h ( <span class="tok-tactic">show</span> <span class="tok-number">0</span> ≤ ( <span class="tok-number">1</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span> ) <span class="tok-tactic">by</span> norm_num1 ) using <span class="tok-number">1</span>;
+      unfold twoPointEntropy;
+      unfold twoPointExpect; <span class="tok-tactic">ring</span>;
 
 <span class="tok-keyword">end</span></code></pre>
         </details>
@@ -1049,6 +1018,48 @@ Try this:
   The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
     
   Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/root_worker_20260408-172856_abef1e6a.lean:100:71: warning: This simp argument is unused:
+  hs.ne&#x27;
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide [ ̵h̵s̵.̵n̵e̵&#x27;̵,̵ ̵mul_div_cancel₀, mul_assoc,
+  ̲  ̲ ̲ ̲mul_comm, mul_left_comm ̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/root_worker_20260408-172856_abef1e6a.lean:100:79: warning: This simp argument is unused:
+  mul_div_cancel₀
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide [̵ ̵h̵s̵.̵n̵e̵&#x27;̵,̵ ̵m̵u̵l̵_̵d̵i̵v̵_̵c̵a̵n̵c̵e̵l̵₀̵,̵[̲h̲s̲.̲n̲e̲&#x27;̲,̲ mul_assoc, mul_comm,
+  ̲  ̲ ̲ ̲m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵ ̵]̵m̲u̲l̲_̲l̲e̲f̲t̲_̲c̲o̲m̲m̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/root_worker_20260408-172856_abef1e6a.lean:100:96: warning: This simp argument is unused:
+  mul_assoc
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide [̵ ̵h̵s̵.̵n̵e̵&#x27;̵,̵[̲h̲s̲.̲n̲e̲&#x27;̲,̲ mul_div_cancel₀,
+  ̲  ̲ ̲ ̲m̵u̵l̵_̵a̵s̵s̵o̵c̵,̵ ̵mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵ ̵]̵m̲u̲l̲_̲l̲e̲f̲t̲_̲c̲o̲m̲m̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
 
 
 stderr:
@@ -1058,122 +1069,570 @@ stderr:
     </article>
     
 
-    <article class="node-card node-core_1d" id="node-core_1d" data-node-id="core_1d">
-      <h3>Core one-dimensional inequality \(G(u)\ge 0\)</h3>
-      <p class="meta">Node id: core_1d | Status: formal_verified</p>
-      <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-scalar_ineq">scalar_ineq</a></p>
-      <p class="meta">Display label: Core 1D inequality \(G(u)\ge 0\)</p>
-      <p class="meta">Formalization priority: 1. Rationale: The concrete one-variable function G(u) and its convexity proof (G&#x27;&#x27; &gt;= 0 via u(2-u) &lt;= 1, global min at u=1) is the technically richest and most self-contained part of the argument. The explicit derivative computations and the AM-GM-type bound u(2-u) &lt;= 1 are directly formalizable, making this the highest-yield candidate.</p>
+    <article class="node-card node-scalar_inequality" id="node-scalar_inequality" data-node-id="scalar_inequality">
+      <h3>Two-point LSI scalar inequality</h3>
+      <p class="meta">Node id: scalar_inequality | Status: formal_verified</p>
+      <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-root">root</a> &nbsp;|&nbsp; Depends on (child nodes): <a class="node-jump" href="#node-normalized_inequality">normalized_inequality</a></p>
       
+      <p class="meta">Formalization priority: 2. Rationale: A standard algebraic reduction involving homogeneity and symmetry, making it a good modular candidate for formalization.</p>
+      <p class="meta">Most recent formalization episode: verified the full parent node after 1 Lean verification attempt. Most recent formalization attempt verified the full parent node.</p>
       <p><strong>Informal statement:</strong></p>
-      <div class="math-text">Define \(G(u):=\bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2 - u\log u-(2-u)\log(2-u)\) for \(u\in[0,2]\) (with \(0\log 0:=0\)). Then \(G(u)\ge 0\) for all \(u\in[0,2]\).</div>
+      <div class="math-text">For any real numbers \(a, b\),
+\[
+a^2 \log(a^2) + b^2 \log(b^2)
+-
+(a^2+b^2)\log\!\left(\frac{a^2+b^2}{2}\right)
+\le
+(a-b)^2.
+\]</div>
       <p><strong>Informal proof:</strong></p>
-      <div class="math-text"><em>Symmetry and base value.</em> \(G\) is symmetric under \(u\mapsto 2-u\). At \(u=1\): \((\sqrt1-\sqrt1)^2=0\) and \(1\cdot\log 1+1\cdot\log 1=0\), so \(G(1)=0\).
+      <div class="math-text">We first reduce to the case \(a,b\ge 0\). The left-hand side depends only on \(a^2\) and \(b^2\), so replacing \(a,b\) by \(|a|,|b|\) leaves it unchanged. On the other hand,
+\[
+(|a|-|b|)^2 \le (a-b)^2
+\]
+by the reverse triangle inequality. Thus if the inequality holds for nonnegative values \(|a|,|b|\), then it also holds for the original \(a,b\). Hence we may assume from now on that \(a,b\ge 0\).
 
-<em>First derivative.</em> Using \((\sqrt{u}-\sqrt{2-u})^2=2-2\sqrt{u(2-u)}\), \[G&#x27;(u)=\frac{2(u-1)}{\sqrt{u(2-u)}}-\log\!\left(\frac{u}{2-u}\right),\qquad 0&lt;u&lt;2.\] In particular \(G&#x27;(1)=0\) by symmetry.
-
-<em>Second derivative.</em> Differentiating, \[G&#x27;&#x27;(u)=\frac{2}{(u(2-u))^{3/2}}-\frac{2}{u(2-u)}=\frac{2\bigl(1-\sqrt{u(2-u)}\bigr)}{(u(2-u))^{3/2}}.\] For \(u\in[0,2]\): \(u(2-u)=1-(u-1)^2\le 1\), hence \(\sqrt{u(2-u)}\le 1\), so \(G&#x27;&#x27;(u)\ge 0\).
-
-<em>Conclusion.</em> \(G\) is convex on \((0,2)\), hence on \([0,2]\) by continuity. Since \(G&#x27;(1)=0\), the point \(u=1\) is a global minimizer of the convex function \(G\). Therefore \(G(u)\ge G(1)=0\) for all \(u\in[0,2]\).</div>
+Next we use homogeneity to normalize. If we replace \((a,b)\) by \((ca,cb)\) with \(c\ge 0\), then the left-hand side is multiplied by \(c^2\): indeed,
+\[
+(ca)^2\log((ca)^2) + (cb)^2\log((cb)^2)
+-
+\bigl((ca)^2+(cb)^2\bigr)
+\log\!\left(\frac{(ca)^2+(cb)^2}{2}\right)
+\]
+expands to
+\[
+c^2\Bigl(a^2\log(a^2)+b^2\log(b^2)-(a^2+b^2)\log\!\left(\frac{a^2+b^2}{2}\right)\Bigr),
+\]
+because the extra \(\log(c^2)\) terms cancel. The right-hand side \((ca-cb)^2\) is also multiplied by \(c^2\). Therefore the inequality is homogeneous of degree two. If \(a=b=0\), the claim is trivial. Otherwise let
+\[
+c = \sqrt{\frac{2}{a^2+b^2}}.
+\]
+After scaling by \(c\), we may therefore assume
+\[
+a^2+b^2=2.
+\]
+Under this normalization, the desired inequality becomes
+\[
+a^2\log(a^2)+b^2\log(b^2) \le (a-b)^2.
+\]
+Since \(a,b\ge 0\) and \(a^2+b^2=2\), there exists \(u\in[0,2]\) such that
+\[
+u = a^2, \qquad b^2 = 2-u,
+\]
+so that
+\[
+a = \sqrt{u}, \qquad b = \sqrt{2-u}.
+\]
+Thus it remains to prove that for every \(u\in[0,2]\),
+\[
+u\log u + (2-u)\log(2-u)
+\le
+\bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2.
+\]
+This normalized inequality is proved in a separate lemma.</div>
       
       
         <h4>Formal Artifact</h4>
-        <p><strong>Lean theorem name:</strong> core_1d_aristotle</p>
-        <p><strong>Coverage:</strong> full match</p><p class="meta">The Lean theorem <code class="inline-code">core_1d_aristotle</code> states exactly <code class="inline-code">0 ≤ G u</code> for all <code class="inline-code">u : ℝ</code> with <code class="inline-code">0 ≤ u</code> and <code class="inline-code">u ≤ 2</code>, which is a verbatim formalization of the target node&#x27;s claim: G(u) ≥ 0 for all u ∈ [0,2]. The function G is presumably defined matching the informal definition (√u − √(2−u))² − u·log u − (2−u)·log(2−u). The statement covers the entire proof burden of the node — the setup, the domain constraints, and the non-negativity conclusion — with no gaps requiring further expansion. This is a full match.</p>
+        <p><strong>Lean theorem name:</strong> scalar_inequality_aristotle</p>
+        <p><strong>Coverage:</strong> full match</p><p class="meta">The formalized Lean theorem is an exact translation of the target node&#x27;s informal statement, capturing the complete inequality for all real numbers a and b. I am overriding the prior heuristic assessment of &#x27;concrete_sublemma&#x27;, as the theorem does not represent a narrower local core or sub-case, but rather perfectly matches and certifies the full explicit claim of the target node.</p>
         <div class="statement-code">
           <strong>Lean statement:</strong>
-          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> core_1d_aristotle (u : <span class="tok-type">ℝ</span>) (hu0 : <span class="tok-number">0</span> ≤ u) (hu2 : u ≤ <span class="tok-number">2</span>) : <span class="tok-number">0</span> ≤ G u</code></pre>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> scalar_inequality_aristotle (a b : <span class="tok-type">ℝ</span>) :
+    a ^ <span class="tok-number">2</span> * Real.log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * Real.log (b ^ <span class="tok-number">2</span>) -
+    (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * Real.log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) ≤
+    (a - b) ^ <span class="tok-number">2</span></code></pre>
         </div>
         <p><strong>Verification status:</strong> verified</p>
-        <p><strong>Verification command:</strong> <code>lake env lean lean_project/FormalIslands/Generated/core_1d_worker_20260406-160206_c8841335.lean</code></p>
+        <p><strong>Verification command:</strong> <code>lake env lean lean_project/FormalIslands/Generated/scalar_inequality_worker_20260408-165246_729f8ef8.lean</code></p>
         <details>
           <summary>Lean code</summary>
           <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
 
-<span class="tok-keyword">open</span> Real Set
+<span class="tok-keyword">open</span> Real
 
-/<span class="tok-comment">-- G(u) = (√u - √(2-u))² - u·log(u) - (2-u)·log(2-u) -/</span>
-noncomputable <span class="tok-keyword">def</span> G (u : <span class="tok-type">ℝ</span>) : <span class="tok-type">ℝ</span> :=
-  (sqrt u - sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span> - u * log u - (<span class="tok-number">2</span> - u) * log (<span class="tok-number">2</span> - u)
-
-<span class="tok-keyword">lemma</span> G_at_one : G <span class="tok-number">1</span> = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
-  unfold G; <span class="tok-tactic">norm_num</span>;
-
-<span class="tok-keyword">lemma</span> G_convexOn : ConvexOn <span class="tok-type">ℝ</span> (Icc <span class="tok-number">0</span> <span class="tok-number">2</span>) G := <span class="tok-tactic">by</span>
-  <span class="tok-tactic">apply</span> convexOn_of_hasDerivWithinAt2_nonneg;
-  <span class="tok-tactic">exact</span> convex_Icc _ _;
-  case f&#x27; =&gt; <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> x =&gt; <span class="tok-number">2</span> * ( x - <span class="tok-number">1</span> ) / Real.sqrt ( x * ( <span class="tok-number">2</span> - x ) ) - Real.log x + Real.log ( <span class="tok-number">2</span> - x );
-  case f&#x27;&#x27; =&gt; <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> x =&gt; <span class="tok-number">2</span> / ( x * ( <span class="tok-number">2</span> - x ) ) ^ ( <span class="tok-number">3</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span> ) - <span class="tok-number">2</span> / ( x * ( <span class="tok-number">2</span> - x ) );
-  · <span class="tok-tactic">refine</span>&#x27; ContinuousOn.sub _ _;
-    · <span class="tok-tactic">exact</span> ContinuousOn.sub ( ContinuousOn.pow ( ContinuousOn.sub ( Real.continuous_sqrt.continuousOn ) ( Real.continuous_sqrt.comp_continuousOn ( continuousOn_const.sub continuousOn_id ) ) ) _ ) ( Real.continuous_mul_log.continuousOn );
-    · <span class="tok-tactic">exact</span> Continuous.continuousOn ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> Real.continuous_mul_log.comp ( continuous_const.sub continuous_id&#x27; ) );
-  · <span class="tok-tactic">intro</span> x hx;
-    convert HasDerivAt.hasDerivWithinAt &lt;| HasDerivAt.congr_of_eventuallyEq _ ?_ using <span class="tok-number">1</span>;
-    <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> u =&gt; <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt ( u * ( <span class="tok-number">2</span> - u ) ) - u * Real.log u - ( <span class="tok-number">2</span> - u ) * Real.log ( <span class="tok-number">2</span> - u );
-    · convert HasDerivAt.sub ( HasDerivAt.sub ( HasDerivAt.sub ( hasDerivAt_const _ _ ) ( HasDerivAt.mul ( hasDerivAt_const _ _ ) ( HasDerivAt.sqrt ( HasDerivAt.mul ( hasDerivAt_id&#x27; x ) ( hasDerivAt_id&#x27; x |&gt; HasDerivAt.const_sub _ ) ) _ ) ) ) ( HasDerivAt.mul ( hasDerivAt_id&#x27; x ) ( Real.hasDerivAt_log _ ) ) ) ( HasDerivAt.mul ( hasDerivAt_id&#x27; x |&gt; HasDerivAt.const_sub _ ) ( HasDerivAt.log ( hasDerivAt_id&#x27; x |&gt; HasDerivAt.const_sub _ ) _ ) ) using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span> at *;
-      · grind;
-      · <span class="tok-tactic">constructor</span> &lt;;&gt; <span class="tok-tactic">linarith</span>;
-      · <span class="tok-tactic">linarith</span>;
-      · <span class="tok-tactic">linarith</span>;
-    · filter_upwards [ Ioo_mem_nhds ( <span class="tok-tactic">show</span> <span class="tok-number">0</span> &lt; x from lt_of_le_of_ne ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ Set.mem_Icc.mp ( interior_subset hx ) ] ) ( Ne.symm &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">rintro</span> rfl; <span class="tok-tactic">norm_num</span> at hx ) ) ( <span class="tok-tactic">show</span> x &lt; <span class="tok-number">2</span> from lt_of_le_of_ne ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ Set.mem_Icc.mp ( interior_subset hx ) ] ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">rintro</span> rfl; <span class="tok-tactic">norm_num</span> at hx ) ) ] <span class="tok-keyword">with</span> u hu ; unfold G ; <span class="tok-tactic">rw</span> [ Real.sqrt_mul hu.<span class="tok-number">1</span>.le ] ; <span class="tok-tactic">ring</span>;
-      <span class="tok-tactic">rw</span> [ Real.sq_sqrt hu.<span class="tok-number">1</span>.le, Real.sq_sqrt ( sub_nonneg.<span class="tok-number">2</span> hu.<span class="tok-number">2</span>.le ) ] ; <span class="tok-tactic">ring</span>;
-  · <span class="tok-tactic">intro</span> x hx; convert HasDerivAt.hasDerivWithinAt &lt;| HasDerivAt.add ( HasDerivAt.sub ( HasDerivAt.div ( HasDerivAt.const_mul <span class="tok-number">2</span> &lt;| HasDerivAt.sub ( hasDerivAt_id&#x27; x ) &lt;| hasDerivAt_const _ _ ) ( HasDerivAt.sqrt ( HasDerivAt.mul ( hasDerivAt_id&#x27; x ) &lt;| HasDerivAt.sub ( hasDerivAt_const _ _ ) &lt;| hasDerivAt_id&#x27; x ) _ ) _ ) &lt;| HasDerivAt.log ( hasDerivAt_id&#x27; x ) _ ) &lt;| HasDerivAt.log ( HasDerivAt.sub ( hasDerivAt_const _ _ ) &lt;| hasDerivAt_id&#x27; x ) _ using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span> at *;
-    · <span class="tok-tactic">rw</span> [ <span class="tok-tactic">show</span> ( x * ( <span class="tok-number">2</span> - x ) ) ^ ( <span class="tok-number">3</span> / <span class="tok-number">2</span> : <span class="tok-type">ℝ</span> ) = ( x * ( <span class="tok-number">2</span> - x ) ) * Real.sqrt ( x * ( <span class="tok-number">2</span> - x ) ) <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ Real.sqrt_eq_rpow, ← Real.rpow_one_add&#x27; ] &lt;;&gt; <span class="tok-tactic">norm_num</span> ; nlinarith ] ; <span class="tok-tactic">ring</span>;
-      grind;
-    · <span class="tok-tactic">constructor</span> &lt;;&gt; <span class="tok-tactic">linarith</span>;
-    · <span class="tok-tactic">exact</span> ne_of_gt &lt;| Real.sqrt_pos.<span class="tok-number">2</span> &lt;| mul_pos hx.<span class="tok-number">1</span> &lt;| sub_pos.<span class="tok-number">2</span> hx.<span class="tok-number">2</span>;
-    · <span class="tok-tactic">linarith</span>;
-    · <span class="tok-tactic">linarith</span>;
-  · <span class="tok-tactic">norm_num</span> +zetaDelta at *;
-    <span class="tok-tactic">intro</span> x hx₁ hx₂; gcongr;
-    · <span class="tok-tactic">exact</span> Real.rpow_pos_of_pos ( mul_pos hx₁ ( sub_pos.mpr hx₂ ) ) _;
-    · <span class="tok-tactic">exact</span> le_trans ( Real.rpow_le_rpow_of_exponent_ge ( <span class="tok-tactic">by</span> nlinarith ) ( <span class="tok-tactic">by</span> nlinarith [ sq_nonneg ( x - <span class="tok-number">1</span> ) ] ) ( <span class="tok-tactic">show</span> ( <span class="tok-number">3</span> : <span class="tok-type">ℝ</span> ) / <span class="tok-number">2</span> ≥ <span class="tok-number">1</span> <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> )
-
-<span class="tok-keyword">lemma</span> G_differentiableAt_one : DifferentiableAt <span class="tok-type">ℝ</span> G <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
-  <span class="tok-tactic">refine</span>&#x27; DifferentiableAt.sub ( DifferentiableAt.sub _ _ ) _ &lt;;&gt; <span class="tok-tactic">norm_num</span> [ G ] at *;
-  · <span class="tok-tactic">exact</span> DifferentiableAt.pow ( DifferentiableAt.sub ( DifferentiableAt.sqrt ( differentiableAt_id ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ) ( DifferentiableAt.sqrt ( differentiableAt_id.const_sub _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ) ) _;
-  · <span class="tok-tactic">exact</span> DifferentiableAt.mul ( differentiableAt_id.const_sub _ ) ( DifferentiableAt.log ( differentiableAt_id.const_sub _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) )
-
-<span class="tok-keyword">lemma</span> G_deriv_one : deriv G <span class="tok-number">1</span> = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
-  by_contra h_contra;
-  <span class="tok-comment">-- By definition of $G$, we know that its derivative at $u=1$ is given by the sum of the derivatives of its components.</span>
-  <span class="tok-tactic">have</span> h_deriv : deriv G <span class="tok-number">1</span> = deriv (<span class="tok-keyword">fun</span> u =&gt; (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span>) <span class="tok-number">1</span> - deriv (<span class="tok-keyword">fun</span> u =&gt; u * Real.log u + (<span class="tok-number">2</span> - u) * Real.log (<span class="tok-number">2</span> - u)) <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
-    <span class="tok-tactic">rw</span> [ ← deriv_sub ];
-    · <span class="tok-tactic">exact</span> Filter.EventuallyEq.deriv_eq ( <span class="tok-tactic">by</span> filter_upwards [ lt_mem_nhds zero_lt_one ] <span class="tok-keyword">with</span> u hu using <span class="tok-tactic">by</span> unfold G; <span class="tok-tactic">norm_num</span> [ Real.sqrt_eq_rpow, hu.ne&#x27; ] ; <span class="tok-tactic">ring</span> );
-    · <span class="tok-tactic">exact</span> DifferentiableAt.pow ( DifferentiableAt.sub ( DifferentiableAt.sqrt ( differentiableAt_id ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ) ( DifferentiableAt.sqrt ( differentiableAt_id.const_sub _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ) ) _;
-    · <span class="tok-tactic">exact</span> DifferentiableAt.add ( differentiableAt_id.mul ( Real.differentiableAt_log ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ) ) ( DifferentiableAt.mul ( differentiableAt_id.const_sub _ ) ( DifferentiableAt.log ( differentiableAt_id.const_sub _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ) );
-  convert h_contra ?_;
-  convert h_deriv using <span class="tok-number">1</span>;
-  <span class="tok-tactic">norm_num</span> [ Real.sqrt_eq_rpow, sub_eq_add_neg ];
-  erw [ deriv_comp _ ( <span class="tok-tactic">show</span> DifferentiableAt <span class="tok-type">ℝ</span> ( <span class="tok-keyword">fun</span> u : <span class="tok-type">ℝ</span> =&gt; u ^ <span class="tok-number">2</span> ) _ from differentiableAt_pow _ ) ] &lt;;&gt; <span class="tok-tactic">norm_num</span> [ Real.sqrt_eq_rpow, add_comm ];
-  · convert HasDerivAt.deriv ( HasDerivAt.add ( HasDerivAt.mul ( hasDerivAt_id ( <span class="tok-number">1</span> : <span class="tok-type">ℝ</span> ) ) ( Real.hasDerivAt_log one_ne_zero ) ) ( HasDerivAt.mul ( HasDerivAt.add ( hasDerivAt_neg ( <span class="tok-number">1</span> : <span class="tok-type">ℝ</span> ) ) ( hasDerivAt_const _ _ ) ) ( HasDerivAt.log ( HasDerivAt.add ( hasDerivAt_neg ( <span class="tok-number">1</span> : <span class="tok-type">ℝ</span> ) ) ( hasDerivAt_const _ _ ) ) _ ) ) ) using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span>;
-  · <span class="tok-tactic">exact</span> DifferentiableAt.rpow ( differentiableAt_id.neg.add_const _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> )
+noncomputable <span class="tok-keyword">section</span>
 
 /-
-Core one-dimensional inequality: G(u) ≥ <span class="tok-number">0</span> for u ∈ [<span class="tok-number">0</span>,<span class="tok-number">2</span>].
-
-The proof uses convexity of G on [<span class="tok-number">0</span>,<span class="tok-number">2</span>] and the fact that u = <span class="tok-number">1</span> is a critical point
-(deriv G <span class="tok-number">1</span> = <span class="tok-number">0</span>) <span class="tok-keyword">with</span> G(<span class="tok-number">1</span>) = <span class="tok-number">0</span>. For a convex function, a critical point is a global
-minimizer.
+**Normalized scalar inequality (Two-point logarithmic Sobolev).**
+For every `u ∈ [<span class="tok-number">0</span>, <span class="tok-number">2</span>]`,
+  `u * log u + (<span class="tok-number">2</span> - u) * log (<span class="tok-number">2</span> - u) ≤ (√u - √(<span class="tok-number">2</span> - u))²`,
+<span class="tok-keyword">with</span> the convention `<span class="tok-number">0</span> * log <span class="tok-number">0</span> = <span class="tok-number">0</span>` (which holds <span class="tok-keyword">in</span> Mathlib since `Real.log <span class="tok-number">0</span> = <span class="tok-number">0</span>`).
 -/
-<span class="tok-keyword">theorem</span> core_1d_aristotle (u : <span class="tok-type">ℝ</span>) (hu0 : <span class="tok-number">0</span> ≤ u) (hu2 : u ≤ <span class="tok-number">2</span>) : <span class="tok-number">0</span> ≤ G u := <span class="tok-tactic">by</span>
-  by_cases hu1 : u &lt; <span class="tok-number">1</span>;
-  · <span class="tok-tactic">have</span> := @ConvexOn.slope_le_deriv;
-    contrapose! this;
-    <span class="tok-tactic">refine</span>&#x27; ⟨ Set.Icc <span class="tok-number">0</span> <span class="tok-number">2</span>, G, u, <span class="tok-number">1</span>, _, _, _, _, _ ⟩ &lt;;&gt;
-      <span class="tok-tactic">norm_num</span> [ G_at_one, G_convexOn, G_differentiableAt_one, G_deriv_one ];
-    · <span class="tok-tactic">constructor</span> &lt;;&gt; <span class="tok-tactic">linarith</span>;
-    · <span class="tok-tactic">linarith</span>;
-    · <span class="tok-tactic">exact</span> mul_pos ( inv_pos.mpr ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> [ G_at_one ] ; <span class="tok-tactic">linarith</span> );
-  · by_cases hu1 : u &gt; <span class="tok-number">1</span>;
-    · <span class="tok-tactic">have</span> := G_deriv_one ▸ ConvexOn.deriv_le_slope ( G_convexOn ) ( <span class="tok-tactic">show</span> <span class="tok-number">1</span> ∈ Set.Icc <span class="tok-number">0</span> <span class="tok-number">2</span> <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ( <span class="tok-tactic">show</span> u ∈ Set.Icc <span class="tok-number">0</span> <span class="tok-number">2</span> <span class="tok-tactic">by</span> <span class="tok-tactic">constructor</span> &lt;;&gt; <span class="tok-tactic">linarith</span> ) hu1 ( G_differentiableAt_one );
-      <span class="tok-tactic">rw</span> [ slope_def_field ] at this;
-      <span class="tok-tactic">rw</span> [ le_div_iff₀ ] at this &lt;;&gt; <span class="tok-tactic">linarith</span> [ G_at_one ];
-    · <span class="tok-tactic">norm_num</span> [ <span class="tok-tactic">show</span> u = <span class="tok-number">1</span> <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span>, G ]</code></pre>
+
+<span class="tok-keyword">lemma</span> sqrt_one_add_sq_le (x : <span class="tok-type">ℝ</span>) : sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>) ≤ <span class="tok-number">1</span> + x ^ <span class="tok-number">2</span> / <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">exact</span> Real.sqrt_le_iff.mpr ⟨ <span class="tok-tactic">by</span> positivity, <span class="tok-tactic">by</span> nlinarith ⟩
+
+<span class="tok-keyword">lemma</span> add_sqrt_le_exp (x : <span class="tok-type">ℝ</span>) (hx : <span class="tok-number">0</span> ≤ x) : x + sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>) ≤ exp x := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> exp_bound : Real.exp x ≥ <span class="tok-number">1</span> + x + x ^ <span class="tok-number">2</span> / <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> quadratic_le_exp_of_nonneg hx;
+  nlinarith [ Real.mul_self_sqrt ( <span class="tok-tactic">by</span> positivity : <span class="tok-number">0</span> ≤ <span class="tok-number">1</span> + x ^ <span class="tok-number">2</span> ) ]
+
+<span class="tok-keyword">lemma</span> log_add_sqrt_le (x : <span class="tok-type">ℝ</span>) (hx : <span class="tok-number">0</span> ≤ x) : log (x + sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>)) ≤ x := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">exact</span> Real.log_le_iff_le_exp ( <span class="tok-tactic">by</span> positivity ) |&gt;.<span class="tok-number">2</span> ( add_sqrt_le_exp x hx )
+
+<span class="tok-keyword">lemma</span> log_div_le (t : <span class="tok-type">ℝ</span>) (ht0 : <span class="tok-number">0</span> ≤ t) (ht1 : t &lt; <span class="tok-number">1</span>) :
+    log ((<span class="tok-number">1</span> + t) / (<span class="tok-number">1</span> - t)) ≤ <span class="tok-number">2</span> * t / sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) := <span class="tok-tactic">by</span>
+  set x := t / Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) <span class="tok-keyword">with</span> hx;
+  <span class="tok-tactic">have</span> h_sqrt : Real.sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>) = <span class="tok-number">1</span> / Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">rw</span> [ hx, div_pow, Real.sq_sqrt &lt;| <span class="tok-tactic">by</span> nlinarith ];
+    <span class="tok-tactic">rw</span> [ one_add_div ] &lt;;&gt; <span class="tok-tactic">norm_num</span> ; nlinarith
+  <span class="tok-tactic">have</span> h_expr : x + Real.sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>) = Real.sqrt ((<span class="tok-number">1</span> + t) / (<span class="tok-number">1</span> - t)) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">rw</span> [ h_sqrt, <span class="tok-tactic">show</span> ( <span class="tok-number">1</span> + t ) / ( <span class="tok-number">1</span> - t ) = ( ( <span class="tok-number">1</span> + t ) / Real.sqrt ( <span class="tok-number">1</span> - t ^ <span class="tok-number">2</span> ) ) ^ <span class="tok-number">2</span> <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ div_pow, Real.sq_sqrt &lt;| <span class="tok-tactic">by</span> nlinarith ] ; <span class="tok-tactic">rw</span> [ div_eq_div_iff ] &lt;;&gt; nlinarith, Real.sqrt_sq &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> div_nonneg ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) &lt;| Real.sqrt_nonneg _ ] ; <span class="tok-tactic">ring</span>;
+  <span class="tok-tactic">have</span> h_log : Real.log (x + Real.sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>)) ≤ x := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> log_add_sqrt_le x ( <span class="tok-tactic">by</span> positivity );
+  <span class="tok-tactic">rw</span> [ h_expr, Real.log_sqrt ( div_nonneg ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ) ] at h_log ; ring_nf at * ; <span class="tok-tactic">linarith</span>
+
+<span class="tok-keyword">lemma</span> entropy_le (t : <span class="tok-type">ℝ</span>) (ht0 : <span class="tok-number">0</span> ≤ t) (ht1 : t ≤ <span class="tok-number">1</span>) :
+    (<span class="tok-number">1</span> + t) * log (<span class="tok-number">1</span> + t) + (<span class="tok-number">1</span> - t) * log (<span class="tok-number">1</span> - t) ≤ <span class="tok-number">2</span> - <span class="tok-number">2</span> * sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_deriv_nonneg : ∀ t ∈ Set.Ioo <span class="tok-number">0</span> <span class="tok-number">1</span>, <span class="tok-number">0</span> ≤ deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t)) t := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h_deriv : ∀ t ∈ Set.Ioo <span class="tok-number">0</span> <span class="tok-number">1</span>, deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t)) t = <span class="tok-number">2</span> * t / Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - Real.log ((<span class="tok-number">1</span> + t) / (<span class="tok-number">1</span> - t)) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intro</span> t ht; <span class="tok-tactic">refine</span>&#x27; HasDerivAt.deriv _;
+      convert HasDerivAt.sub ( HasDerivAt.sub ( HasDerivAt.sub ( hasDerivAt_const _ _ ) ( HasDerivAt.mul ( hasDerivAt_const _ _ ) ( HasDerivAt.sqrt ( HasDerivAt.sub ( hasDerivAt_const _ _ ) ( hasDerivAt_pow <span class="tok-number">2</span> t ) ) _ ) ) ) ( HasDerivAt.mul ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_add _ ) ( HasDerivAt.log ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_add _ ) _ ) ) ) ( HasDerivAt.mul ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_sub _ ) ( HasDerivAt.log ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_sub _ ) _ ) ) using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+      · <span class="tok-tactic">rw</span> [ Real.log_div ] &lt;;&gt; <span class="tok-tactic">ring</span> &lt;;&gt; nlinarith [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span>, mul_inv_cancel₀ ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] : ( <span class="tok-number">1</span> + t ) ≠ <span class="tok-number">0</span> ), mul_inv_cancel₀ ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] : ( <span class="tok-number">1</span> - t ) ≠ <span class="tok-number">0</span> ) ];
+      · nlinarith [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ];
+      · <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ];
+      · <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ];
+    <span class="tok-tactic">intros</span> t ht
+    <span class="tok-tactic">rw</span> [h_deriv t ht]
+    <span class="tok-tactic">apply</span> sub_nonneg_of_le
+    <span class="tok-tactic">apply</span> log_div_le t ht.<span class="tok-number">1</span>.le ht.<span class="tok-number">2</span>;
+  by_contra h_contra;
+  <span class="tok-tactic">obtain</span> ⟨c, hc⟩ : ∃ c ∈ Set.Ioo <span class="tok-number">0</span> t, deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t)) c = (<span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t) - (<span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - <span class="tok-number">0</span>^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + <span class="tok-number">0</span>) * Real.log (<span class="tok-number">1</span> + <span class="tok-number">0</span>) - (<span class="tok-number">1</span> - <span class="tok-number">0</span>) * Real.log (<span class="tok-number">1</span> - <span class="tok-number">0</span>))) / (t - <span class="tok-number">0</span>) := <span class="tok-tactic">by</span>
+    apply_rules [ exists_deriv_eq_slope ];
+    · <span class="tok-tactic">exact</span> ht0.lt_of_ne ( <span class="tok-tactic">by</span> <span class="tok-tactic">rintro</span> rfl; <span class="tok-tactic">norm_num</span> at h_contra );
+    · fun_prop;
+    · <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> x hx =&gt; DifferentiableAt.differentiableWithinAt ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> DifferentiableAt.sub ( DifferentiableAt.sub ( DifferentiableAt.sub ( differentiableAt_const _ ) ( DifferentiableAt.mul ( differentiableAt_const _ ) ( DifferentiableAt.sqrt ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ( <span class="tok-tactic">by</span> nlinarith [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span> ] ) ) ) ) ( DifferentiableAt.mul ( differentiableAt_id.const_add _ ) ( DifferentiableAt.log ( differentiableAt_id.const_add _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span> ] ) ) ) ) ( DifferentiableAt.mul ( differentiableAt_id.const_sub _ ) ( DifferentiableAt.log ( differentiableAt_id.const_sub _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span> ] ) ) ) );
+  <span class="tok-tactic">have</span> := h_deriv_nonneg c ⟨ hc.<span class="tok-number">1.1</span>, hc.<span class="tok-number">1.2</span>.trans_le ht1 ⟩ ; <span class="tok-tactic">rw</span> [ hc.<span class="tok-number">2</span>, le_div_iff₀ ] at this &lt;;&gt; <span class="tok-tactic">norm_num</span> at * &lt;;&gt; <span class="tok-tactic">linarith</span>;
+
+<span class="tok-keyword">theorem</span> normalized_inequality_aristotle (u : <span class="tok-type">ℝ</span>) (hu0 : <span class="tok-number">0</span> ≤ u) (hu2 : u ≤ <span class="tok-number">2</span>) :
+    u * Real.log u + (<span class="tok-number">2</span> - u) * Real.log (<span class="tok-number">2</span> - u) ≤
+    (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_subst : ∃ t ∈ Set.Icc <span class="tok-number">0</span> <span class="tok-number">1</span>, u = <span class="tok-number">1</span> + t ∨ u = <span class="tok-number">1</span> - t := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> ⟨ |u - <span class="tok-number">1</span>|, ⟨ abs_nonneg _, abs_le.mpr ⟨ <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span>, <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ⟩ ⟩, <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> abs_cases ( u - <span class="tok-number">1</span> ) &lt;;&gt; first | left; <span class="tok-tactic">linarith</span> | right; <span class="tok-tactic">linarith</span> ⟩;
+  <span class="tok-tactic">have</span> h_rhs : (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span> = <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (u * (<span class="tok-number">2</span> - u)) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">rw</span> [ Real.sqrt_mul ] &lt;;&gt; nlinarith [ Real.mul_self_sqrt hu0, Real.mul_self_sqrt ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> : <span class="tok-number">0</span> ≤ <span class="tok-number">2</span> - u ) ];
+  rcases h_subst <span class="tok-keyword">with</span> ⟨ t, ⟨ ht0, ht1 ⟩, rfl | rfl ⟩ &lt;;&gt; ( <span class="tok-tactic">have</span> := entropy_le t ht0 ht1; ring_nf at * ; <span class="tok-tactic">aesop</span>; )
+
+/-
+**Two-point LSI scalar inequality.**
+For any real numbers a, b:
+  a² log(a²) + b² log(b²) - (a²+b²) log((a²+b²)/<span class="tok-number">2</span>) ≤ (a-b)²
+-/
+
+/<span class="tok-comment">-- The LHS of the two-point LSI, as a function of a² and b². -/</span>
+private <span class="tok-keyword">def</span> lsi_lhs (p q : <span class="tok-type">ℝ</span>) : <span class="tok-type">ℝ</span> :=
+  p * Real.log p + q * Real.log q - (p + q) * Real.log ((p + q) / <span class="tok-number">2</span>)
+
+/<span class="tok-comment">-- For p, q ≥ 0 with s = p + q &gt; 0, setting u = 2p/s:</span>
+    lsi_lhs p q = (s/<span class="tok-number">2</span>) * (u * log u + (<span class="tok-number">2</span>-u) * log(<span class="tok-number">2</span>-u)) -/
+<span class="tok-keyword">lemma</span> lsi_lhs_scaling (p q : <span class="tok-type">ℝ</span>) (hp : <span class="tok-number">0</span> ≤ p) (hq : <span class="tok-number">0</span> ≤ q) (hs : <span class="tok-number">0</span> &lt; p + q) :
+    lsi_lhs p q = ((p + q) / <span class="tok-number">2</span>) *
+      (<span class="tok-number">2</span> * p / (p + q) * Real.log (<span class="tok-number">2</span> * p / (p + q)) +
+       (<span class="tok-number">2</span> - <span class="tok-number">2</span> * p / (p + q)) * Real.log (<span class="tok-number">2</span> - <span class="tok-number">2</span> * p / (p + q))) := <span class="tok-tactic">by</span>
+  unfold lsi_lhs;
+  by_cases hp&#x27; : p = <span class="tok-number">0</span> &lt;;&gt; by_cases hq&#x27; : q = <span class="tok-number">0</span> &lt;;&gt; simp_all +decide [ hs.ne&#x27;, mul_div_cancel₀, mul_assoc, mul_comm, mul_left_comm ];
+  · <span class="tok-tactic">rw</span> [ Real.log_div ] &lt;;&gt; <span class="tok-tactic">ring</span> &lt;;&gt; positivity;
+  · <span class="tok-tactic">rw</span> [ Real.log_div ] &lt;;&gt; <span class="tok-tactic">ring</span> &lt;;&gt; positivity;
+  · field_simp;
+    <span class="tok-tactic">rw</span> [ Real.log_div, Real.log_div ] &lt;;&gt; try positivity;
+    <span class="tok-tactic">rw</span> [ Real.log_div, Real.log_mul, Real.log_mul ] &lt;;&gt; <span class="tok-tactic">ring</span> &lt;;&gt; positivity
+
+/<span class="tok-comment">-- For a, b ≥ 0 with s = a² + b² &gt; 0, setting u = 2a²/s:</span>
+    (s/<span class="tok-number">2</span>) * (√u - √(<span class="tok-number">2</span>-u))² = (a - b)² -/
+<span class="tok-keyword">lemma</span> rhs_scaling (a b : <span class="tok-type">ℝ</span>) (ha : <span class="tok-number">0</span> ≤ a) (hb : <span class="tok-number">0</span> ≤ b) (hs : <span class="tok-number">0</span> &lt; a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) :
+    ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) *
+      (Real.sqrt (<span class="tok-number">2</span> * a ^ <span class="tok-number">2</span> / (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>)) -
+       Real.sqrt (<span class="tok-number">2</span> - <span class="tok-number">2</span> * a ^ <span class="tok-number">2</span> / (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>))) ^ <span class="tok-number">2</span> = (a - b) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">rw</span> [ <span class="tok-tactic">show</span> <span class="tok-number">2</span> - <span class="tok-number">2</span> * a ^ <span class="tok-number">2</span> / ( a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> ) = <span class="tok-number">2</span> * b ^ <span class="tok-number">2</span> / ( a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> ) <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ sub_div&#x27; ] &lt;;&gt; <span class="tok-tactic">ring</span> ; positivity ];
+  <span class="tok-tactic">norm_num</span> [ ha, hb ];
+  grind +splitImp
+
+/<span class="tok-comment">-- (|a| - |b|)² ≤ (a - b)² -/</span>
+<span class="tok-keyword">lemma</span> abs_sub_sq_le (a b : <span class="tok-type">ℝ</span>) : (|a| - |b|) ^ <span class="tok-number">2</span> ≤ (a - b) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">cases</span> abs_cases a &lt;;&gt; <span class="tok-tactic">cases</span> abs_cases b &lt;;&gt; nlinarith
+
+/<span class="tok-comment">-- The two-point LSI scalar inequality:</span>
+    For any real a, b,
+    a² log(a²) + b² log(b²) - (a²+b²) log((a²+b²)/<span class="tok-number">2</span>) ≤ (a-b)². -/
+<span class="tok-keyword">theorem</span> scalar_inequality_aristotle (a b : <span class="tok-type">ℝ</span>) :
+    a ^ <span class="tok-number">2</span> * Real.log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * Real.log (b ^ <span class="tok-number">2</span>) -
+    (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * Real.log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) ≤
+    (a - b) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_cases : a ^ <span class="tok-number">2</span> * Real.log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * Real.log (b ^ <span class="tok-number">2</span>) - (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * Real.log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) ≤ (|a| - |b|) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+    by_cases h : a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> = <span class="tok-number">0</span> &lt;;&gt; simp_all +decide;
+    · <span class="tok-tactic">norm_num</span> [ <span class="tok-tactic">show</span> a = <span class="tok-number">0</span> <span class="tok-tactic">by</span> nlinarith, <span class="tok-tactic">show</span> b = <span class="tok-number">0</span> <span class="tok-tactic">by</span> nlinarith ];
+    · set u : <span class="tok-type">ℝ</span> := <span class="tok-number">2</span> * a ^ <span class="tok-number">2</span> / (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>)
+      <span class="tok-tactic">have</span> lsi_lhs_eq : a ^ <span class="tok-number">2</span> * Real.log (a ^ <span class="tok-number">2</span>) + b ^ <span class="tok-number">2</span> * Real.log (b ^ <span class="tok-number">2</span>) - (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) * Real.log ((a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span>) = (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span> * (u * Real.log u + (<span class="tok-number">2</span> - u) * Real.log (<span class="tok-number">2</span> - u)) := <span class="tok-tactic">by</span>
+        convert lsi_lhs_scaling ( a ^ <span class="tok-number">2</span> ) ( b ^ <span class="tok-number">2</span> ) ( sq_nonneg a ) ( sq_nonneg b ) ( <span class="tok-tactic">by</span> positivity ) using <span class="tok-number">1</span>;
+      <span class="tok-tactic">have</span> normalized_ineq : u * Real.log u + (<span class="tok-number">2</span> - u) * Real.log (<span class="tok-number">2</span> - u) ≤ (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">apply</span> normalized_inequality_aristotle;
+        · positivity;
+        · <span class="tok-tactic">exact</span> div_le_of_le_mul₀ ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> nlinarith );
+      <span class="tok-tactic">have</span> rhs_eq : (a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span>) / <span class="tok-number">2</span> * (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span> = (|a| - |b|) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+        convert rhs_scaling ( |a| ) ( |b| ) ( abs_nonneg a ) ( abs_nonneg b ) ?_ using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span> [ abs_mul, h ];
+        · rfl;
+        · positivity;
+      <span class="tok-tactic">norm_num</span> at *; nlinarith [ <span class="tok-tactic">show</span> <span class="tok-number">0</span> &lt; a ^ <span class="tok-number">2</span> + b ^ <span class="tok-number">2</span> <span class="tok-tactic">by</span> positivity ] ;
+  <span class="tok-tactic">exact</span> h_cases.trans ( <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> abs_cases a &lt;;&gt; <span class="tok-tactic">cases</span> abs_cases b &lt;;&gt; nlinarith )
+
+<span class="tok-keyword">end</span></code></pre>
         </details>
         <details>
           <summary>Verification logs</summary>
           <pre><code>stdout:
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/scalar_inequality_worker_20260408-165246_729f8ef8.lean:85:71: warning: This simp argument is unused:
+  hs.ne&#x27;
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide [ ̵h̵s̵.̵n̵e̵&#x27;̵,̵ ̵mul_div_cancel₀, mul_assoc,
+  ̲  ̲ ̲ ̲mul_comm, mul_left_comm ̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/scalar_inequality_worker_20260408-165246_729f8ef8.lean:85:79: warning: This simp argument is unused:
+  mul_div_cancel₀
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide [̵ ̵h̵s̵.̵n̵e̵&#x27;̵,̵ ̵m̵u̵l̵_̵d̵i̵v̵_̵c̵a̵n̵c̵e̵l̵₀̵,̵[̲h̲s̲.̲n̲e̲&#x27;̲,̲ mul_assoc, mul_comm,
+  ̲  ̲ ̲ ̲m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵ ̵]̵m̲u̲l̲_̲l̲e̲f̲t̲_̲c̲o̲m̲m̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/scalar_inequality_worker_20260408-165246_729f8ef8.lean:85:96: warning: This simp argument is unused:
+  mul_assoc
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide [̵ ̵h̵s̵.̵n̵e̵&#x27;̵,̵[̲h̲s̲.̲n̲e̲&#x27;̲,̲ mul_div_cancel₀,
+  ̲  ̲ ̲ ̲m̵u̵l̵_̵a̵s̵s̵o̵c̵,̵ ̵mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵ ̵]̵m̲u̲l̲_̲l̲e̲f̲t̲_̲c̲o̲m̲m̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+
+
+stderr:
+</code></pre>
+          </details>
+        
+    </article>
+    
+
+    <article class="node-card node-normalized_inequality" id="node-normalized_inequality" data-node-id="normalized_inequality">
+      <h3>Normalized scalar inequality</h3>
+      <p class="meta">Node id: normalized_inequality | Status: formal_verified</p>
+      <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-scalar_inequality">scalar_inequality</a></p>
+      
+      <p class="meta">Formalization priority: 1. Rationale: A highly concrete, real-analytic inequality involving convex functions and derivatives; forms a perfect standalone formal island.</p>
+      <p class="meta">Most recent formalization episode: verified the full parent node after 3 Lean verification attempts. Most recent formalization attempt verified the full parent node.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For every \(u\in[0,2]\),
+\[
+u\log u + (2-u)\log(2-u)
+\le
+\bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2,
+\]
+with the convention \(0\log 0 = 0\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Define
+\[
+G(u) := \bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2 - u\log u - (2-u)\log(2-u)
+\qquad (0\le u\le 2),
+\]
+with the convention \(0\log 0 = 0\). We will show that \(G(u)\ge 0\) on \([0,2]\).
+
+First note that \(G\) is continuous on \([0,2]\): the square-root term is continuous, and the function \(x\mapsto x\log x\) extends continuously to \(x=0\) with value \(0\). On \((0,2)\) the function is smooth. Also \(G\) is symmetric under \(u\mapsto 2-u\), because both terms in its definition are symmetric. In particular,
+\[
+G(1)=0,
+\]
+since
+\[
+\bigl(\sqrt1-\sqrt1\bigr)^2 = 0
+\quad\text{and}\quad
+1\log1 + 1\log1 = 0.
+\]
+Now compute derivatives for \(0&lt;u&lt;2\). Since
+\[
+\bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2 = 2 - 2\sqrt{u(2-u)},
+\]
+we obtain
+\[
+\frac{d}{du}\bigl(\sqrt{u}-\sqrt{2-u}\bigr)^2
+= \frac{2(u-1)}{\sqrt{u(2-u)}}.
+\]
+Also,
+\[
+\frac{d}{du}\bigl(u\log u + (2-u)\log(2-u)\bigr)
+= \log\!\left(\frac{u}{2-u}\right).
+\]
+Hence
+\[
+G&#x27;(u)= \frac{2(u-1)}{\sqrt{u(2-u)}} - \log\!\left(\frac{u}{2-u}\right).
+\]
+Differentiating again gives
+\[
+\frac{d}{du}\left(\frac{2(u-1)}{\sqrt{u(2-u)}}\right)
+= \frac{2}{\bigl(u(2-u)\bigr)^{3/2}},
+\]
+while
+\[
+\frac{d}{du}\log\!\left(\frac{u}{2-u}\right)
+= \frac1u + \frac{1}{2-u}
+= \frac{2}{u(2-u)}.
+\]
+Therefore
+\[
+G&#x27;&#x27;(u)
+=
+\frac{2}{\bigl(u(2-u)\bigr)^{3/2}} - \frac{2}{u(2-u)}
+=
+\frac{2\bigl(1-\sqrt{u(2-u)}\bigr)}{\bigl(u(2-u)\bigr)^{3/2}}.
+\]
+Now for \(u\in[0,2]\), we have
+\[
+u(2-u)=1-(u-1)^2 \le 1,
+\]
+so \(\sqrt{u(2-u)}\le 1\). Hence
+\[
+G&#x27;&#x27;(u)\ge 0
+\qquad (0&lt;u&lt;2).
+\]
+Thus \(G\) is convex on \((0,2)\), and therefore on \([0,2]\) by continuity. Since \(G\) is symmetric under \(u\mapsto 2-u\), the point \(u=1\) is its center of symmetry; equivalently, one checks from the formula above that \(G&#x27;(1)=0\). Because a convex function with vanishing derivative at a point has a global minimum there, \(u=1\) is a global minimizer of \(G\). Therefore
+\[
+G(u)\ge G(1)=0
+\qquad\text{for all }u\in[0,2].
+\]
+This proves the inequality.</div>
+      
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> normalized_inequality_aristotle</p>
+        <p><strong>Coverage:</strong> full match</p><p class="meta">The Lean theorem exactly matches the informal statement of the target node, including the bounds on u and the precise inequality. Lean&#x27;s definition of Real.log naturally satisfies the 0 log 0 = 0 convention since Real.log 0 = 0. The heuristic&#x27;s downgrade is overridden because this theorem completely captures the mathematical content of the specified node.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> normalized_inequality_aristotle (u : <span class="tok-type">ℝ</span>) (hu0 : <span class="tok-number">0</span> ≤ u) (hu2 : u ≤ <span class="tok-number">2</span>) :
+    u * Real.log u + (<span class="tok-number">2</span> - u) * Real.log (<span class="tok-number">2</span> - u) ≤
+    (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span></code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean lean_project/FormalIslands/Generated/normalized_inequality_worker_20260408-150114_8795afd2.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+<span class="tok-keyword">open</span> Real
+
+/-
+**Normalized scalar inequality (Two-point logarithmic Sobolev).**
+For every `u ∈ [<span class="tok-number">0</span>, <span class="tok-number">2</span>]`,
+  `u * log u + (<span class="tok-number">2</span> - u) * log (<span class="tok-number">2</span> - u) ≤ (√u - √(<span class="tok-number">2</span> - u))²`,
+<span class="tok-keyword">with</span> the convention `<span class="tok-number">0</span> * log <span class="tok-number">0</span> = <span class="tok-number">0</span>` (which holds <span class="tok-keyword">in</span> Mathlib since `Real.log <span class="tok-number">0</span> = <span class="tok-number">0</span>`).
+
+**Proof strategy:**
+We reduce to showing `(<span class="tok-number">1</span>+t) log(<span class="tok-number">1</span>+t) + (<span class="tok-number">1</span>-t) log(<span class="tok-number">1</span>-t) ≤ <span class="tok-number">2</span> - <span class="tok-number">2</span>√(<span class="tok-number">1</span>-t²)` for `t ∈ [<span class="tok-number">0</span>,<span class="tok-number">1</span>]`
+via substitution `t = u - <span class="tok-number">1</span>`. The key chain of lemmas is:
+
+<span class="tok-number">1</span>. `√(<span class="tok-number">1</span>+x²) ≤ <span class="tok-number">1</span> + x²/<span class="tok-number">2</span>`  (squaring both sides)
+<span class="tok-number">2</span>. `x + √(<span class="tok-number">1</span>+x²) ≤ exp x`  for `x ≥ <span class="tok-number">0</span>`  (from exp ≥ <span class="tok-number">1</span>+x+x²/<span class="tok-number">2</span> and step <span class="tok-number">1</span>)
+<span class="tok-number">3</span>. `log(x + √(<span class="tok-number">1</span>+x²)) ≤ x`  for `x ≥ <span class="tok-number">0</span>`  (log of step <span class="tok-number">2</span>)
+<span class="tok-number">4</span>. `log((<span class="tok-number">1</span>+t)/(<span class="tok-number">1</span>-t)) ≤ <span class="tok-number">2</span>t/√(<span class="tok-number">1</span>-t²)`  for `t ∈ [<span class="tok-number">0</span>,<span class="tok-number">1</span>)`  (substitution <span class="tok-keyword">in</span> step <span class="tok-number">3</span>)
+<span class="tok-number">5</span>. `(<span class="tok-number">1</span>+t) log(<span class="tok-number">1</span>+t) + (<span class="tok-number">1</span>-t) log(<span class="tok-number">1</span>-t) ≤ <span class="tok-number">2</span> - <span class="tok-number">2</span>√(<span class="tok-number">1</span>-t²)` (MVT + step <span class="tok-number">4</span>)
+-/
+
+noncomputable <span class="tok-keyword">section</span>
+
+/-
+√(<span class="tok-number">1</span> + x²) ≤ <span class="tok-number">1</span> + x²/<span class="tok-number">2</span> for all real x.
+-/
+<span class="tok-keyword">lemma</span> sqrt_one_add_sq_le (x : <span class="tok-type">ℝ</span>) : sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>) ≤ <span class="tok-number">1</span> + x ^ <span class="tok-number">2</span> / <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">exact</span> Real.sqrt_le_iff.mpr ⟨ <span class="tok-tactic">by</span> positivity, <span class="tok-tactic">by</span> nlinarith ⟩
+
+/-
+For x ≥ <span class="tok-number">0</span>, x + √(<span class="tok-number">1</span>+x²) ≤ exp x.
+Proof: exp x ≥ <span class="tok-number">1</span> + x + x²/<span class="tok-number">2</span> and √(<span class="tok-number">1</span>+x²) ≤ <span class="tok-number">1</span> + x²/<span class="tok-number">2</span>, so
+x + √(<span class="tok-number">1</span>+x²) ≤ x + <span class="tok-number">1</span> + x²/<span class="tok-number">2</span> ≤ exp x.
+-/
+<span class="tok-keyword">lemma</span> add_sqrt_le_exp (x : <span class="tok-type">ℝ</span>) (hx : <span class="tok-number">0</span> ≤ x) : x + sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>) ≤ exp x := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Use the fact that $e^x \geq 1 + x + x^2 / 2$ for all $x \geq 0$.</span>
+  <span class="tok-tactic">have</span> exp_bound : Real.exp x ≥ <span class="tok-number">1</span> + x + x ^ <span class="tok-number">2</span> / <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> quadratic_le_exp_of_nonneg hx;
+  nlinarith [ Real.mul_self_sqrt ( <span class="tok-tactic">by</span> positivity : <span class="tok-number">0</span> ≤ <span class="tok-number">1</span> + x ^ <span class="tok-number">2</span> ) ]
+
+/-
+For x ≥ <span class="tok-number">0</span>, log(x + √(<span class="tok-number">1</span>+x²)) ≤ x.
+Follows from add_sqrt_le_exp <span class="tok-tactic">by</span> taking log of both sides.
+-/
+<span class="tok-keyword">lemma</span> log_add_sqrt_le (x : <span class="tok-type">ℝ</span>) (hx : <span class="tok-number">0</span> ≤ x) : log (x + sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>)) ≤ x := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">exact</span> Real.log_le_iff_le_exp ( <span class="tok-tactic">by</span> positivity ) |&gt;.<span class="tok-number">2</span> ( add_sqrt_le_exp x hx )
+
+/-
+For <span class="tok-number">0</span> ≤ t &lt; <span class="tok-number">1</span>: log((<span class="tok-number">1</span>+t)/(<span class="tok-number">1</span>-t)) ≤ <span class="tok-number">2</span>t/√(<span class="tok-number">1</span>-t²).
+Proof: Set x = t/√(<span class="tok-number">1</span>-t²) ≥ <span class="tok-number">0</span>. Then √(<span class="tok-number">1</span>+x²) = <span class="tok-number">1</span>/√(<span class="tok-number">1</span>-t²), and
+x + √(<span class="tok-number">1</span>+x²) = (t+<span class="tok-number">1</span>)/√(<span class="tok-number">1</span>-t²) = √((<span class="tok-number">1</span>+t)/(<span class="tok-number">1</span>-t)).
+So log(x+√(<span class="tok-number">1</span>+x²)) = ½ log((<span class="tok-number">1</span>+t)/(<span class="tok-number">1</span>-t)) ≤ x = t/√(<span class="tok-number">1</span>-t²) <span class="tok-tactic">by</span> log_add_sqrt_le.
+Multiply <span class="tok-tactic">by</span> <span class="tok-number">2</span>.
+-/
+<span class="tok-keyword">lemma</span> log_div_le (t : <span class="tok-type">ℝ</span>) (ht0 : <span class="tok-number">0</span> ≤ t) (ht1 : t &lt; <span class="tok-number">1</span>) :
+    log ((<span class="tok-number">1</span> + t) / (<span class="tok-number">1</span> - t)) ≤ <span class="tok-number">2</span> * t / sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Set x = t / √(1-t²). Since 0 ≤ t &lt; 1, we have 1 - t² &gt; 0, so √(1-t²) &gt; 0 and x ≥ 0.</span>
+  set x := t / Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) <span class="tok-keyword">with</span> hx;
+  <span class="tok-comment">-- Then √(1+x²) = 1/√(1-t²), and x + √(1+x²) = (t+1)/√(1-t²) = √((1+t)/(1-t)).</span>
+  <span class="tok-tactic">have</span> h_sqrt : Real.sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>) = <span class="tok-number">1</span> / Real.sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">rw</span> [ hx, div_pow, Real.sq_sqrt &lt;| <span class="tok-tactic">by</span> nlinarith ];
+    <span class="tok-tactic">rw</span> [ one_add_div ] &lt;;&gt; <span class="tok-tactic">norm_num</span> ; nlinarith
+  <span class="tok-tactic">have</span> h_expr : x + Real.sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>) = Real.sqrt ((<span class="tok-number">1</span> + t) / (<span class="tok-number">1</span> - t)) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">rw</span> [ h_sqrt, <span class="tok-tactic">show</span> ( <span class="tok-number">1</span> + t ) / ( <span class="tok-number">1</span> - t ) = ( ( <span class="tok-number">1</span> + t ) / Real.sqrt ( <span class="tok-number">1</span> - t ^ <span class="tok-number">2</span> ) ) ^ <span class="tok-number">2</span> <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ div_pow, Real.sq_sqrt &lt;| <span class="tok-tactic">by</span> nlinarith ] ; <span class="tok-tactic">rw</span> [ div_eq_div_iff ] &lt;;&gt; nlinarith, Real.sqrt_sq &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> div_nonneg ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) &lt;| Real.sqrt_nonneg _ ] ; <span class="tok-tactic">ring</span>;
+  <span class="tok-comment">-- So log(x+√(1+x²)) = ½ log((1+t)/(1-t)) ≤ x = t/√(1-t²) by log_add_sqrt_le.</span>
+  <span class="tok-tactic">have</span> h_log : Real.log (x + Real.sqrt (<span class="tok-number">1</span> + x ^ <span class="tok-number">2</span>)) ≤ x := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> log_add_sqrt_le x ( <span class="tok-tactic">by</span> positivity );
+  <span class="tok-tactic">rw</span> [ h_expr, Real.log_sqrt ( div_nonneg ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ) ] at h_log ; ring_nf at * ; <span class="tok-tactic">linarith</span>
+
+/-
+For <span class="tok-number">0</span> ≤ t ≤ <span class="tok-number">1</span>: (<span class="tok-number">1</span>+t) log(<span class="tok-number">1</span>+t) + (<span class="tok-number">1</span>-t) log(<span class="tok-number">1</span>-t) ≤ <span class="tok-number">2</span> - <span class="tok-number">2</span>√(<span class="tok-number">1</span>-t²).
+This is proved <span class="tok-tactic">by</span> showing the function
+  h(t) = <span class="tok-number">2</span> - <span class="tok-number">2</span>√(<span class="tok-number">1</span>-t²) - (<span class="tok-number">1</span>+t)log(<span class="tok-number">1</span>+t) - (<span class="tok-number">1</span>-t)log(<span class="tok-number">1</span>-t)
+satisfies h(<span class="tok-number">0</span>) = <span class="tok-number">0</span> and h&#x27;(t) = <span class="tok-number">2</span>t/√(<span class="tok-number">1</span>-t²) - log((<span class="tok-number">1</span>+t)/(<span class="tok-number">1</span>-t)) ≥ <span class="tok-number">0</span> for t ∈ (<span class="tok-number">0</span>,<span class="tok-number">1</span>),
+hence h is nondecreasing on [<span class="tok-number">0</span>,<span class="tok-number">1</span>). At t=<span class="tok-number">1</span> separately: <span class="tok-number">2</span> log <span class="tok-number">2</span> ≤ <span class="tok-number">2</span>.
+-/
+<span class="tok-keyword">lemma</span> entropy_le (t : <span class="tok-type">ℝ</span>) (ht0 : <span class="tok-number">0</span> ≤ t) (ht1 : t ≤ <span class="tok-number">1</span>) :
+    (<span class="tok-number">1</span> + t) * log (<span class="tok-number">1</span> + t) + (<span class="tok-number">1</span> - t) * log (<span class="tok-number">1</span> - t) ≤ <span class="tok-number">2</span> - <span class="tok-number">2</span> * sqrt (<span class="tok-number">1</span> - t ^ <span class="tok-number">2</span>) := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- We&#x27;ll use the fact that $h(t)$ is differentiable and apply the mean value theorem.</span>
+  <span class="tok-tactic">have</span> h_deriv_nonneg : ∀ t ∈ Set.Ioo <span class="tok-number">0</span> <span class="tok-number">1</span>, <span class="tok-number">0</span> ≤ deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t)) t := <span class="tok-tactic">by</span>
+    <span class="tok-comment">-- Let&#x27;s calculate the derivative of $h(t)$ using the sum and chain rules.</span>
+    <span class="tok-tactic">have</span> h_deriv : ∀ t ∈ Set.Ioo <span class="tok-number">0</span> <span class="tok-number">1</span>, deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t)) t = <span class="tok-number">2</span> * t / Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - Real.log ((<span class="tok-number">1</span> + t) / (<span class="tok-number">1</span> - t)) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intro</span> t ht; <span class="tok-tactic">refine</span>&#x27; HasDerivAt.deriv _;
+      convert HasDerivAt.sub ( HasDerivAt.sub ( HasDerivAt.sub ( hasDerivAt_const _ _ ) ( HasDerivAt.mul ( hasDerivAt_const _ _ ) ( HasDerivAt.sqrt ( HasDerivAt.sub ( hasDerivAt_const _ _ ) ( hasDerivAt_pow <span class="tok-number">2</span> t ) ) _ ) ) ) ( HasDerivAt.mul ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_add _ ) ( HasDerivAt.log ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_add _ ) _ ) ) ) ( HasDerivAt.mul ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_sub _ ) ( HasDerivAt.log ( hasDerivAt_id&#x27; t |&gt; HasDerivAt.const_sub _ ) _ ) ) using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+      · <span class="tok-tactic">rw</span> [ Real.log_div ] &lt;;&gt; <span class="tok-tactic">ring</span> &lt;;&gt; nlinarith [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span>, mul_inv_cancel₀ ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] : ( <span class="tok-number">1</span> + t ) ≠ <span class="tok-number">0</span> ), mul_inv_cancel₀ ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ] : ( <span class="tok-number">1</span> - t ) ≠ <span class="tok-number">0</span> ) ];
+      · nlinarith [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ];
+      · <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ];
+      · <span class="tok-tactic">linarith</span> [ ht.<span class="tok-number">1</span>, ht.<span class="tok-number">2</span> ];
+    <span class="tok-comment">-- Apply the lemma log_div_le to conclude that the derivative is non-negative.</span>
+    <span class="tok-tactic">intros</span> t ht
+    <span class="tok-tactic">rw</span> [h_deriv t ht]
+    <span class="tok-tactic">apply</span> sub_nonneg_of_le
+    <span class="tok-tactic">apply</span> log_div_le t ht.<span class="tok-number">1</span>.le ht.<span class="tok-number">2</span>;
+  by_contra h_contra;
+  <span class="tok-comment">-- Apply the mean value theorem to the interval $[0, t]$.</span>
+  <span class="tok-tactic">obtain</span> ⟨c, hc⟩ : ∃ c ∈ Set.Ioo <span class="tok-number">0</span> t, deriv (<span class="tok-keyword">fun</span> t =&gt; <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t)) c = (<span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - t^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + t) * Real.log (<span class="tok-number">1</span> + t) - (<span class="tok-number">1</span> - t) * Real.log (<span class="tok-number">1</span> - t) - (<span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (<span class="tok-number">1</span> - <span class="tok-number">0</span>^<span class="tok-number">2</span>) - (<span class="tok-number">1</span> + <span class="tok-number">0</span>) * Real.log (<span class="tok-number">1</span> + <span class="tok-number">0</span>) - (<span class="tok-number">1</span> - <span class="tok-number">0</span>) * Real.log (<span class="tok-number">1</span> - <span class="tok-number">0</span>))) / (t - <span class="tok-number">0</span>) := <span class="tok-tactic">by</span>
+    apply_rules [ exists_deriv_eq_slope ];
+    · <span class="tok-tactic">exact</span> ht0.lt_of_ne ( <span class="tok-tactic">by</span> <span class="tok-tactic">rintro</span> rfl; <span class="tok-tactic">norm_num</span> at h_contra );
+    · fun_prop;
+    · <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> x hx =&gt; DifferentiableAt.differentiableWithinAt ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> DifferentiableAt.sub ( DifferentiableAt.sub ( DifferentiableAt.sub ( differentiableAt_const _ ) ( DifferentiableAt.mul ( differentiableAt_const _ ) ( DifferentiableAt.sqrt ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> ) ( <span class="tok-tactic">by</span> nlinarith [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span> ] ) ) ) ) ( DifferentiableAt.mul ( differentiableAt_id.const_add _ ) ( DifferentiableAt.log ( differentiableAt_id.const_add _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span> ] ) ) ) ) ( DifferentiableAt.mul ( differentiableAt_id.const_sub _ ) ( DifferentiableAt.log ( differentiableAt_id.const_sub _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ hx.<span class="tok-number">1</span>, hx.<span class="tok-number">2</span> ] ) ) ) );
+  <span class="tok-tactic">have</span> := h_deriv_nonneg c ⟨ hc.<span class="tok-number">1.1</span>, hc.<span class="tok-number">1.2</span>.trans_le ht1 ⟩ ; <span class="tok-tactic">rw</span> [ hc.<span class="tok-number">2</span>, le_div_iff₀ ] at this &lt;;&gt; <span class="tok-tactic">norm_num</span> at * &lt;;&gt; <span class="tok-tactic">linarith</span>;
+
+/-
+The main normalized inequality: for u ∈ [<span class="tok-number">0</span>, <span class="tok-number">2</span>],
+  u log u + (<span class="tok-number">2</span>-u) log(<span class="tok-number">2</span>-u) ≤ (√u - √(<span class="tok-number">2</span>-u))².
+Proof: substitute t = |u - <span class="tok-number">1</span>| so t ∈ [<span class="tok-number">0</span>, <span class="tok-number">1</span>], and <span class="tok-tactic">apply</span> entropy_le.
+-/
+<span class="tok-keyword">theorem</span> normalized_inequality_aristotle (u : <span class="tok-type">ℝ</span>) (hu0 : <span class="tok-number">0</span> ≤ u) (hu2 : u ≤ <span class="tok-number">2</span>) :
+    u * Real.log u + (<span class="tok-number">2</span> - u) * Real.log (<span class="tok-number">2</span> - u) ≤
+    (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span> := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Substitute $t = |u - 1|$ so $t \in [0, 1]$, and apply entropy_le.</span>
+  <span class="tok-tactic">have</span> h_subst : ∃ t ∈ Set.Icc <span class="tok-number">0</span> <span class="tok-number">1</span>, u = <span class="tok-number">1</span> + t ∨ u = <span class="tok-number">1</span> - t := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> ⟨ |u - <span class="tok-number">1</span>|, ⟨ abs_nonneg _, abs_le.mpr ⟨ <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span>, <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ⟩ ⟩, <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> abs_cases ( u - <span class="tok-number">1</span> ) &lt;;&gt; first | left; <span class="tok-tactic">linarith</span> | right; <span class="tok-tactic">linarith</span> ⟩;
+  <span class="tok-comment">-- For the RHS, expand (√u - √(2-u))² = u + (2-u) - 2√(u(2-u)) = 2 - 2√(u(2-u)) and show u(2-u) = 1 - (u-1)² = 1 - t².</span>
+  <span class="tok-tactic">have</span> h_rhs : (Real.sqrt u - Real.sqrt (<span class="tok-number">2</span> - u)) ^ <span class="tok-number">2</span> = <span class="tok-number">2</span> - <span class="tok-number">2</span> * Real.sqrt (u * (<span class="tok-number">2</span> - u)) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">rw</span> [ Real.sqrt_mul ] &lt;;&gt; nlinarith [ Real.mul_self_sqrt hu0, Real.mul_self_sqrt ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> : <span class="tok-number">0</span> ≤ <span class="tok-number">2</span> - u ) ];
+  rcases h_subst <span class="tok-keyword">with</span> ⟨ t, ⟨ ht0, ht1 ⟩, rfl | rfl ⟩ &lt;;&gt; ( <span class="tok-tactic">have</span> := entropy_le t ht0 ht1; ring_nf at * ; <span class="tok-tactic">aesop</span>; )
+
+
+<span class="tok-keyword">end</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
 Try this:
   [apply] ring_nf
   

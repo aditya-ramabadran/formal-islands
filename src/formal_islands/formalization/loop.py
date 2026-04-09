@@ -1878,18 +1878,22 @@ def _should_run_bonus_retry(
 ) -> bool:
     if assessment is None:
         return False
-    if assessment.result_kind in {"full_match", "faithful_core"}:
-        return False
-    if assessment.certifies_main_burden:
-        return False
-    if assessment.coverage_score > 6:
+    if assessment.result_kind == "full_match":
         return False
     if not assessment.worth_retrying_later:
+        return False
+    if not assessment.expansion_warranted:
         return False
     if not _node_is_on_main_proof_path(graph, node_id):
         return False
     node = next((candidate for candidate in graph.nodes if candidate.id == node_id), None)
     if node is None or node.formalization_priority not in {1, 2}:
+        return False
+    if assessment.result_kind == "faithful_core":
+        return True
+    if assessment.certifies_main_burden:
+        return False
+    if assessment.coverage_score > 6:
         return False
     return True
 
@@ -1897,11 +1901,12 @@ def _should_run_bonus_retry(
 def _build_bonus_retry_feedback(*, assessment: CombinedFormalizationAssessment) -> str:
     return "\n\n".join(
         [
-            "Planning backend bonus-retry guidance:",
+            "Planning backend upgrade-from-core guidance:",
             f"[{RepairCategory.TRY_LARGER_CORE.value}] {assessment.reason}",
             (
-                "Try a broader concrete core in the same mathematical setting. Keep the same proof path and "
-                "expand toward the missing parent burden rather than changing to an easier analogue."
+                "Starting from the already verified theorem, try one broader concrete theorem in the same "
+                "mathematical setting. Keep the same proof path and expand toward the missing parent burden "
+                "rather than changing to an easier analogue."
             ),
         ]
     )
@@ -1920,7 +1925,7 @@ def _attempt_bonus_retry(
 ) -> FormalArtifact | None:
     bonus_feedback = _build_bonus_retry_feedback(assessment=assessment)
     original_code = artifact.lean_code
-    _progress(f"node {node_id}: starting bonus larger-core retry")
+    _progress(f"node {node_id}: starting explicit upgrade-from-verified-core retry")
     try:
         if isinstance(backend, AristotleBackend):
             bonus = request_aristotle_formalization(
@@ -1952,13 +1957,15 @@ def _attempt_bonus_retry(
                 attempt_number=(artifact.verification.attempt_count or 1) + 1,
             )
     except (BackendError, FormalizationFaithfulnessError):
-        _progress(f"node {node_id}: bonus larger-core retry failed before verification")
+        _progress(f"node {node_id}: upgrade-from-core retry failed before verification")
         scratch_path.write_text(original_code, encoding="utf-8")
         return None
 
-    _progress(f"node {node_id}: running local Lean verification for bonus retry")
+    _progress(f"node {node_id}: running local Lean verification for upgrade-from-core retry")
     if verification.status != "verified":
-        _progress(f"node {node_id}: bonus retry verification failed with status {verification.status}")
+        _progress(
+            f"node {node_id}: upgrade-from-core retry verification failed with status {verification.status}"
+        )
         scratch_path.write_text(original_code, encoding="utf-8")
         return None
 
@@ -1969,11 +1976,13 @@ def _attempt_bonus_retry(
         }
     )
     if bonus.faithfulness_classification == FaithfulnessClassification.FULL_NODE:
-        _progress(f"node {node_id}: bonus retry produced a full-node theorem")
+        _progress(f"node {node_id}: upgrade-from-core retry produced a full-node theorem")
         return bonus
 
     scratch_path.write_text(original_code, encoding="utf-8")
-    _progress(f"node {node_id}: bonus retry remained a concrete sublemma; restoring original code")
+    _progress(
+        f"node {node_id}: upgrade-from-core retry remained narrower than full-node; restoring original code"
+    )
     return None
 
 
@@ -2472,6 +2481,7 @@ def _formalize_candidate_nodes_aristotle_parallel(
                     graph=current_graph,
                     planning_backend=planning_backend,
                     parent_promotion_cache=parent_promotion_cache,
+                    blocked_parent_ids=attempted_ids,
                 )
             _emit_update(current_graph, outcome.node_id, outcome.artifact, on_update)
             _progress(
