@@ -192,6 +192,9 @@
       cursor: pointer;
       text-decoration: none;
     }
+    .graph-node-link.graph-node-dimmed {
+      opacity: 0.22;
+    }
     .graph-node-box {
       fill: var(--status-informal-fill);
       stroke: var(--status-informal-stroke);
@@ -205,9 +208,9 @@
       stroke-dasharray: 5 4;
     }
     .graph-node-box.status-candidate-formal {
-      fill: var(--status-informal-fill);
-      stroke: var(--status-informal-stroke);
-      stroke-dasharray: 5 4;
+      fill: var(--status-candidate-fill);
+      stroke: var(--status-candidate-stroke);
+      stroke-dasharray: 8 4;
     }
     .graph-node-box.status-formal-verified {
       fill: var(--status-verified-fill);
@@ -250,7 +253,7 @@
       fill: var(--status-informal-stroke);
     }
     .graph-node-badge.status-candidate-formal {
-      fill: var(--status-informal-stroke);
+      fill: var(--status-candidate-stroke);
     }
     .graph-node-badge.status-formal-verified {
       fill: var(--status-verified-stroke);
@@ -262,6 +265,65 @@
       margin-top: 0.7rem;
       color: var(--muted);
       font-size: 0.95rem;
+    }
+    .graph-history-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.65rem;
+    }
+    .graph-history-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+    .graph-history-button {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 10px;
+      min-width: 2.4rem;
+      padding: 0.36rem 0.7rem;
+      font: inherit;
+      cursor: pointer;
+      transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+    }
+    .graph-history-button:hover:not(:disabled) {
+      border-color: var(--highlight);
+      background: var(--highlight-soft);
+    }
+    .graph-history-button:disabled {
+      opacity: 0.42;
+      cursor: default;
+    }
+    .graph-history-status {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .graph-history-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .graph-history-caption {
+      margin-top: 0;
+      margin-bottom: 0.65rem;
+      color: var(--ink);
+      font-size: 0.96rem;
+      line-height: 1.45;
+    }
+    .graph-history-meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+    .graph-history-frame[hidden] {
+      display: none;
     }
     .checklist {
       list-style: none;
@@ -317,6 +379,46 @@
     .nodes-grid {
       display: grid;
       gap: 1rem;
+    }
+    .node-navigation {
+      display: grid;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .node-search {
+      display: grid;
+      gap: 0.35rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .node-search input {
+      width: min(100%, 28rem);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem 0.75rem;
+      font: inherit;
+      color: var(--ink);
+      background: var(--panel);
+    }
+    .node-filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      align-items: center;
+    }
+    .node-filter-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.32rem 0.65rem;
+      font-size: 0.9rem;
+      background: var(--panel);
+      color: var(--ink);
+    }
+    .node-filter-reset {
+      min-width: auto;
     }
     .node-card {
       scroll-margin-top: 1rem;
@@ -403,14 +505,12 @@
       }
     }
     
-            .report-root:has(a.node-root:hover) .node-root.node-card,
-            .report-root:has(#node-root:target) a.node-root .graph-node-box {
+            .report-root:has(a.node-root:hover) a.node-root .graph-node-box {
               border-color: var(--highlight);
               stroke: var(--highlight);
               background: var(--highlight-soft);
               fill: var(--highlight-soft);
             }
-            .report-root:has(a.node-root:hover) .node-root.node-card,
             .report-root:has(#node-root:target).report-root .node-root.node-card {
               border-color: var(--highlight);
               box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
@@ -418,14 +518,12 @@
             }
             
 
-            .report-root:has(a.node-scalar_inequality:hover) .node-scalar_inequality.node-card,
-            .report-root:has(#node-scalar_inequality:target) a.node-scalar_inequality .graph-node-box {
+            .report-root:has(a.node-scalar_inequality:hover) a.node-scalar_inequality .graph-node-box {
               border-color: var(--highlight);
               stroke: var(--highlight);
               background: var(--highlight-soft);
               fill: var(--highlight-soft);
             }
-            .report-root:has(a.node-scalar_inequality:hover) .node-scalar_inequality.node-card,
             .report-root:has(#node-scalar_inequality:target).report-root .node-scalar_inequality.node-card {
               border-color: var(--highlight);
               box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
@@ -433,14 +531,12 @@
             }
             
 
-            .report-root:has(a.node-normalized_inequality:hover) .node-normalized_inequality.node-card,
-            .report-root:has(#node-normalized_inequality:target) a.node-normalized_inequality .graph-node-box {
+            .report-root:has(a.node-normalized_inequality:hover) a.node-normalized_inequality .graph-node-box {
               border-color: var(--highlight);
               stroke: var(--highlight);
               background: var(--highlight-soft);
               fill: var(--highlight-soft);
             }
-            .report-root:has(a.node-normalized_inequality:hover) .node-normalized_inequality.node-card,
             .report-root:has(#node-normalized_inequality:target).report-root .node-normalized_inequality.node-card {
               border-color: var(--highlight);
               box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
@@ -567,7 +663,7 @@
   </style>
 </head>
 <body>
-  <div class="fi-attribution">Created by <a href="https://github.com/aditya-ramabadran/formal-islands" target="_blank">Formal Islands</a></div>
+  <div class="fi-attribution">Created by <a href="https://formal-islands.github.io/formal-islands/" target="_blank">Formal Islands</a> &bull; <a href="https://github.com/aditya-ramabadran/formal-islands" target="_blank">GitHub</a></div>
   <main class="report-root">
     <section>
       <h1>Two-point logarithmic Sobolev inequality</h1>
@@ -610,19 +706,37 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
       </p>
       <div class="graph-shell">
         
+    <div class="graph-history" data-graph-history data-history-default-collection="visual">
+      <div class="graph-history-controls">
+        <div class="graph-history-buttons">
+          <button type="button" class="graph-history-button" data-history-action="start" aria-label="Go to first graph snapshot">|&lt;</button>
+          <button type="button" class="graph-history-button" data-history-action="prev" aria-label="Go to previous graph snapshot">&lt;</button>
+          <button type="button" class="graph-history-button" data-history-action="next" aria-label="Go to next graph snapshot">&gt;</button>
+          <button type="button" class="graph-history-button" data-history-action="end" aria-label="Go to latest graph snapshot">&gt;|</button>
+        </div>
+        
+        <div class="graph-history-status">
+          Snapshot <span data-history-index>5</span> of <span data-history-count>5</span>
+        </div>
+      </div>
+      <p class="graph-history-caption" data-history-caption>Node <code class="inline-code">root</code> was successfully formalized, status upgraded from <code class="inline-code">candidate_formal</code> to <code class="inline-code">formal_verified</code>.</p>
+      <p class="graph-history-meta" data-history-meta>03_formalized_graph.json (root) · 2026-04-08T17:46:58-07:00</p>
+      
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Initial extracted proof graph." data-label="01_extracted_graph.json" data-timestamp="2026-04-08T15:01:14-07:00" hidden>
+          
     <div class="graph-frame">
       <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
         <defs>
-          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+          <marker id="graph-arrow-history-visual-0" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
             <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
           </marker>
         </defs>
-        <g><path class="graph-edge edge-root-scalar_inequality" d="M 210.0 83.0 C 210.0 106.2, 210.0 123.6, 210.0 141.0" marker-end="url(#graph-arrow)"></path>
-<path class="graph-edge edge-scalar_inequality-normalized_inequality" d="M 210.0 201.0 C 210.0 224.2, 210.0 241.6, 210.0 259.0" marker-end="url(#graph-arrow)"></path></g>
+        <g><path class="graph-edge edge-root-scalar_inequality" d="M 210.0 83.0 C 210.0 106.2, 210.0 123.6, 210.0 141.0" marker-end="url(#graph-arrow-history-visual-0)"></path>
+<path class="graph-edge edge-scalar_inequality-normalized_inequality" d="M 210.0 201.0 C 210.0 224.2, 210.0 241.6, 210.0 259.0" marker-end="url(#graph-arrow-history-visual-0)"></path></g>
         <g>
-    <a class="graph-node-link node-root status-formal-verified" href="#node-root">
-      <rect class="graph-node-box status-formal-verified" x="144.0" y="20" rx="28" ry="28" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="32" r="4.6"></circle>
+    <a class="graph-node-link node-root status-informal" href="#node-root" data-graph-node-id="root" data-graph-node-status="informal" data-graph-node-title="Two-point logarithmic Sobolev inequality">
+      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
       <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
         <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Two-point logarithmic Sobolev inequality</div>
       </foreignObject>
@@ -630,9 +744,9 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
     </a>
     
 
-    <a class="graph-node-link node-scalar_inequality status-formal-verified" href="#node-scalar_inequality">
-      <rect class="graph-node-box status-formal-verified" x="144.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
-      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="150" r="4.6"></circle>
+    <a class="graph-node-link node-scalar_inequality status-informal" href="#node-scalar_inequality" data-graph-node-id="scalar_inequality" data-graph-node-status="informal" data-graph-node-title="Two-point LSI scalar inequality">
+      <rect class="graph-node-box status-informal" x="144.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="150" r="4.6"></circle>
       <foreignObject x="148.0" y="142" width="124" height="44" overflow="visible">
         <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Two-point LSI scalar inequality</div>
       </foreignObject>
@@ -640,7 +754,101 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
     </a>
     
 
-    <a class="graph-node-link node-normalized_inequality status-formal-verified" href="#node-normalized_inequality">
+    <a class="graph-node-link node-normalized_inequality status-informal" href="#node-normalized_inequality" data-graph-node-id="normalized_inequality" data-graph-node-status="informal" data-graph-node-title="Normalized scalar inequality">
+      <rect class="graph-node-box status-informal" x="144.0" y="256" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="268" r="4.6"></circle>
+      <foreignObject x="148.0" y="260" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Normalized scalar inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="304">normalized_inequality</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Candidate selection marked &lt;code class=&quot;inline-code&quot;&gt;normalized_inequality&lt;/code&gt;, &lt;code class=&quot;inline-code&quot;&gt;scalar_inequality&lt;/code&gt; for formalization." data-label="02_candidate_graph.json" data-timestamp="2026-04-08T15:01:14-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-1" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-root-scalar_inequality" d="M 210.0 83.0 C 210.0 106.2, 210.0 123.6, 210.0 141.0" marker-end="url(#graph-arrow-history-visual-1)"></path>
+<path class="graph-edge edge-scalar_inequality-normalized_inequality" d="M 210.0 201.0 C 210.0 224.2, 210.0 241.6, 210.0 259.0" marker-end="url(#graph-arrow-history-visual-1)"></path></g>
+        <g>
+    <a class="graph-node-link node-root status-informal" href="#node-root" data-graph-node-id="root" data-graph-node-status="informal" data-graph-node-title="Two-point logarithmic Sobolev inequality">
+      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
+      <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Two-point logarithmic Sobolev inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="68">root</text>
+    </a>
+    
+
+    <a class="graph-node-link node-scalar_inequality status-candidate-formal" href="#node-scalar_inequality" data-graph-node-id="scalar_inequality" data-graph-node-status="candidate_formal" data-graph-node-title="Two-point LSI scalar inequality">
+      <rect class="graph-node-box status-candidate-formal" x="144.0" y="138" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="150" r="4.6"></circle>
+      <foreignObject x="148.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Two-point LSI scalar inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="186">scalar_inequality</text>
+    </a>
+    
+
+    <a class="graph-node-link node-normalized_inequality status-candidate-formal" href="#node-normalized_inequality" data-graph-node-id="normalized_inequality" data-graph-node-status="candidate_formal" data-graph-node-title="Normalized scalar inequality">
+      <rect class="graph-node-box status-candidate-formal" x="144.0" y="256" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="268" r="4.6"></circle>
+      <foreignObject x="148.0" y="260" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Normalized scalar inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="304">normalized_inequality</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;normalized_inequality&lt;/code&gt; was successfully formalized, status upgraded from &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;formal_verified&lt;/code&gt;." data-label="03_formalized_graph.json (normalized_inequality)" data-timestamp="2026-04-08T16:52:46-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-2" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-root-scalar_inequality" d="M 210.0 83.0 C 210.0 106.2, 210.0 123.6, 210.0 141.0" marker-end="url(#graph-arrow-history-visual-2)"></path>
+<path class="graph-edge edge-scalar_inequality-normalized_inequality" d="M 210.0 201.0 C 210.0 224.2, 210.0 241.6, 210.0 259.0" marker-end="url(#graph-arrow-history-visual-2)"></path></g>
+        <g>
+    <a class="graph-node-link node-root status-informal" href="#node-root" data-graph-node-id="root" data-graph-node-status="informal" data-graph-node-title="Two-point logarithmic Sobolev inequality">
+      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
+      <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Two-point logarithmic Sobolev inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="68">root</text>
+    </a>
+    
+
+    <a class="graph-node-link node-scalar_inequality status-candidate-formal" href="#node-scalar_inequality" data-graph-node-id="scalar_inequality" data-graph-node-status="candidate_formal" data-graph-node-title="Two-point LSI scalar inequality">
+      <rect class="graph-node-box status-candidate-formal" x="144.0" y="138" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="150" r="4.6"></circle>
+      <foreignObject x="148.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Two-point LSI scalar inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="186">scalar_inequality</text>
+    </a>
+    
+
+    <a class="graph-node-link node-normalized_inequality status-formal-verified" href="#node-normalized_inequality" data-graph-node-id="normalized_inequality" data-graph-node-status="formal_verified" data-graph-node-title="Normalized scalar inequality">
       <rect class="graph-node-box status-formal-verified" x="144.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
       <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="268" r="4.6"></circle>
       <foreignObject x="148.0" y="260" width="124" height="44" overflow="visible">
@@ -652,12 +860,110 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
       </svg>
     </div>
     
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;scalar_inequality&lt;/code&gt; was successfully formalized, status upgraded from &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;formal_verified&lt;/code&gt;." data-label="03_formalized_graph.json (scalar_inequality)" data-timestamp="2026-04-08T17:28:56-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-3" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-root-scalar_inequality" d="M 210.0 83.0 C 210.0 106.2, 210.0 123.6, 210.0 141.0" marker-end="url(#graph-arrow-history-visual-3)"></path>
+<path class="graph-edge edge-scalar_inequality-normalized_inequality" d="M 210.0 201.0 C 210.0 224.2, 210.0 241.6, 210.0 259.0" marker-end="url(#graph-arrow-history-visual-3)"></path></g>
+        <g>
+    <a class="graph-node-link node-root status-candidate-formal" href="#node-root" data-graph-node-id="root" data-graph-node-status="candidate_formal" data-graph-node-title="Two-point logarithmic Sobolev inequality">
+      <rect class="graph-node-box status-candidate-formal" x="144.0" y="20" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="32" r="4.6"></circle>
+      <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Two-point logarithmic Sobolev inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="68">root</text>
+    </a>
+    
+
+    <a class="graph-node-link node-scalar_inequality status-formal-verified" href="#node-scalar_inequality" data-graph-node-id="scalar_inequality" data-graph-node-status="formal_verified" data-graph-node-title="Two-point LSI scalar inequality">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="150" r="4.6"></circle>
+      <foreignObject x="148.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Two-point LSI scalar inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="186">scalar_inequality</text>
+    </a>
+    
+
+    <a class="graph-node-link node-normalized_inequality status-formal-verified" href="#node-normalized_inequality" data-graph-node-id="normalized_inequality" data-graph-node-status="formal_verified" data-graph-node-title="Normalized scalar inequality">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="268" r="4.6"></circle>
+      <foreignObject x="148.0" y="260" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Normalized scalar inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="304">normalized_inequality</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;root&lt;/code&gt; was successfully formalized, status upgraded from &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;formal_verified&lt;/code&gt;." data-label="03_formalized_graph.json (root)" data-timestamp="2026-04-08T17:46:58-07:00" >
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-4" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-root-scalar_inequality" d="M 210.0 83.0 C 210.0 106.2, 210.0 123.6, 210.0 141.0" marker-end="url(#graph-arrow-history-visual-4)"></path>
+<path class="graph-edge edge-scalar_inequality-normalized_inequality" d="M 210.0 201.0 C 210.0 224.2, 210.0 241.6, 210.0 259.0" marker-end="url(#graph-arrow-history-visual-4)"></path></g>
+        <g>
+    <a class="graph-node-link node-root status-formal-verified" href="#node-root" data-graph-node-id="root" data-graph-node-status="formal_verified" data-graph-node-title="Two-point logarithmic Sobolev inequality">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="20" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="32" r="4.6"></circle>
+      <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Two-point logarithmic Sobolev inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="68">root</text>
+    </a>
+    
+
+    <a class="graph-node-link node-scalar_inequality status-formal-verified" href="#node-scalar_inequality" data-graph-node-id="scalar_inequality" data-graph-node-status="formal_verified" data-graph-node-title="Two-point LSI scalar inequality">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="150" r="4.6"></circle>
+      <foreignObject x="148.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Two-point LSI scalar inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="186">scalar_inequality</text>
+    </a>
+    
+
+    <a class="graph-node-link node-normalized_inequality status-formal-verified" href="#node-normalized_inequality" data-graph-node-id="normalized_inequality" data-graph-node-status="formal_verified" data-graph-node-title="Normalized scalar inequality">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="268" r="4.6"></circle>
+      <foreignObject x="148.0" y="260" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Normalized scalar inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="304">normalized_inequality</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+    </div>
+    
       </div>
       <p class="graph-caption">
-        Click a node to jump to its detail section.
+        Use the timeline controls to step through how the proof graph changed over the run. The latest graph is shown by default.
       </p>
       <p class="graph-caption">
-        Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
+        Informal nodes use dashed brown outlines. Candidate formal nodes use dashed gold outlines, verified formal nodes use green, and failed formal nodes use red.
       </p>
       <p class="graph-caption">
         All arrows point from a claim to one of its dependencies.
@@ -720,9 +1026,22 @@ This is the logarithmic Sobolev inequality on the two-point Bernoulli space, and
     </section>
     <section>
       <h2>Nodes</h2>
-      <div class="nodes-grid">
+      <div class="node-navigation">
+        <label class="node-search">
+          <span>Filter nodes</span>
+          <input type="search" placeholder="Search by node id or title" data-node-search />
+        </label>
+        <div class="node-filter-pills">
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="informal" checked /> Informal</label>
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="candidate_formal" checked /> Candidate</label>
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="formal_verified" checked /> Verified</label>
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="formal_failed" checked /> Failed</label>
+          <button type="button" class="graph-history-button node-filter-reset" data-node-filter-reset>Reset</button>
+        </div>
+      </div>
+      <div class="nodes-grid" data-node-grid>
         
-    <article class="node-card node-root" id="node-root" data-node-id="root">
+    <article class="node-card node-root" id="node-root" data-node-id="root" data-node-title="Two-point logarithmic Sobolev inequality" data-node-status="formal_verified">
       <h3>Two-point logarithmic Sobolev inequality</h3>
       <p class="meta">Node id: root | Status: formal_verified</p>
       <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-scalar_inequality">scalar_inequality</a></p>
@@ -1069,7 +1388,7 @@ stderr:
     </article>
     
 
-    <article class="node-card node-scalar_inequality" id="node-scalar_inequality" data-node-id="scalar_inequality">
+    <article class="node-card node-scalar_inequality" id="node-scalar_inequality" data-node-id="scalar_inequality" data-node-title="Two-point LSI scalar inequality" data-node-status="formal_verified">
       <h3>Two-point LSI scalar inequality</h3>
       <p class="meta">Node id: scalar_inequality | Status: formal_verified</p>
       <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-root">root</a> &nbsp;|&nbsp; Depends on (child nodes): <a class="node-jump" href="#node-normalized_inequality">normalized_inequality</a></p>
@@ -1403,7 +1722,7 @@ stderr:
     </article>
     
 
-    <article class="node-card node-normalized_inequality" id="node-normalized_inequality" data-node-id="normalized_inequality">
+    <article class="node-card node-normalized_inequality" id="node-normalized_inequality" data-node-id="normalized_inequality" data-node-title="Normalized scalar inequality" data-node-status="formal_verified">
       <h3>Normalized scalar inequality</h3>
       <p class="meta">Node id: normalized_inequality | Status: formal_verified</p>
       <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-scalar_inequality">scalar_inequality</a></p>
@@ -1656,5 +1975,131 @@ stderr:
       </div>
     </section>
   </main>
+  
+  <script>
+    document.querySelectorAll('[data-graph-history]').forEach((root) => {
+      const collections = {
+        visual: Array.from(root.querySelectorAll('[data-history-frame][data-history-collection="visual"]')),
+        all: Array.from(root.querySelectorAll('[data-history-frame][data-history-collection="all"]')),
+      };
+      const showAllToggle = root.querySelector('[data-history-show-all]');
+      const captionEl = root.querySelector('[data-history-caption]');
+      const metaEl = root.querySelector('[data-history-meta]');
+      const indexEl = root.querySelector('[data-history-index]');
+      const countEl = root.querySelector('[data-history-count]');
+      const startBtn = root.querySelector('[data-history-action="start"]');
+      const prevBtn = root.querySelector('[data-history-action="prev"]');
+      const nextBtn = root.querySelector('[data-history-action="next"]');
+      const endBtn = root.querySelector('[data-history-action="end"]');
+      let collection = (root.dataset.historyDefaultCollection || 'visual');
+      const indexes = {
+        visual: Math.max(collections.visual.length - 1, 0),
+        all: Math.max(collections.all.length - 1, 0),
+      };
+
+      const activeFrames = () => {
+        const frames = collections[collection] || [];
+        return frames.length > 0 ? frames : collections.visual;
+      };
+
+      const update = () => {
+        Object.entries(collections).forEach(([key, frames]) => {
+          frames.forEach((frame, frameIndex) => {
+            const active = key === collection && frameIndex === indexes[collection];
+            frame.hidden = !active;
+          });
+        });
+        const frames = activeFrames();
+        const safeIndex = Math.min(indexes[collection], frames.length - 1);
+        indexes[collection] = Math.max(safeIndex, 0);
+        const active = frames[indexes[collection]];
+        if (!active) return;
+        if (captionEl) captionEl.innerHTML = active.dataset.captionHtml || '';
+        if (metaEl) {
+          const label = active.dataset.label || '';
+          const timestamp = active.dataset.timestamp || '';
+          metaEl.textContent = label && timestamp ? `${label} · ${timestamp}` : (label || timestamp);
+        }
+        if (indexEl) indexEl.textContent = String(indexes[collection] + 1);
+        if (countEl) countEl.textContent = String(frames.length);
+        if (startBtn) startBtn.disabled = indexes[collection] === 0;
+        if (prevBtn) prevBtn.disabled = indexes[collection] === 0;
+        if (nextBtn) nextBtn.disabled = indexes[collection] === frames.length - 1;
+        if (endBtn) endBtn.disabled = indexes[collection] === frames.length - 1;
+      };
+
+      startBtn?.addEventListener('click', () => {
+        indexes[collection] = 0;
+        update();
+      });
+      prevBtn?.addEventListener('click', () => {
+        if (indexes[collection] > 0) {
+          indexes[collection] -= 1;
+          update();
+        }
+      });
+      nextBtn?.addEventListener('click', () => {
+        const frames = activeFrames();
+        if (indexes[collection] < frames.length - 1) {
+          indexes[collection] += 1;
+          update();
+        }
+      });
+      endBtn?.addEventListener('click', () => {
+        const frames = activeFrames();
+        indexes[collection] = Math.max(frames.length - 1, 0);
+        update();
+      });
+      showAllToggle?.addEventListener('change', () => {
+        collection = showAllToggle.checked && collections.all.length > 0 ? 'all' : 'visual';
+        update();
+      });
+
+      update();
+    });
+  </script>
+    
+  
+  <script>
+    document.querySelectorAll('.report-root').forEach((root) => {
+      const searchInput = root.querySelector('[data-node-search]');
+      const resetButton = root.querySelector('[data-node-filter-reset]');
+      const statusInputs = Array.from(root.querySelectorAll('[data-node-filter-status]'));
+      const cards = Array.from(root.querySelectorAll('[data-node-id]'));
+      const graphNodes = Array.from(root.querySelectorAll('[data-graph-node-id]'));
+      if (!searchInput || cards.length === 0) return;
+
+      const update = () => {
+        const query = searchInput.value.trim().toLowerCase();
+        const allowedStatuses = new Set(
+          statusInputs.filter((input) => input.checked).map((input) => input.dataset.nodeFilterStatus)
+        );
+        cards.forEach((card) => {
+          const nodeId = (card.dataset.nodeId || '').toLowerCase();
+          const title = (card.dataset.nodeTitle || '').toLowerCase();
+          const status = card.dataset.nodeStatus || '';
+          const matchesQuery = query === '' || nodeId.includes(query) || title.includes(query);
+          const matchesStatus = allowedStatuses.has(status);
+          const visible = matchesQuery && matchesStatus;
+          card.hidden = !visible;
+        });
+        graphNodes.forEach((node) => {
+          const nodeId = node.dataset.graphNodeId || '';
+          const linkedCard = root.querySelector(`[data-node-id="${CSS.escape(nodeId)}"]`);
+          node.classList.toggle('graph-node-dimmed', !!linkedCard && linkedCard.hidden);
+        });
+      };
+
+      statusInputs.forEach((input) => input.addEventListener('change', update));
+      searchInput.addEventListener('input', update);
+      resetButton?.addEventListener('click', () => {
+        searchInput.value = '';
+        statusInputs.forEach((input) => { input.checked = true; });
+        update();
+      });
+      update();
+    });
+  </script>
+    
 </body>
 </html>

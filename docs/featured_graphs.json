@@ -1,0 +1,29 @@
+{
+  "examples": [
+    {
+      "id": "heat_uniqueness",
+      "report_url": "reports/heat_uniqueness.html",
+      "graph_json": "artifacts/manual-testing/run4-heat-uniqueness-gemini-aristotle-11/03_formalized_graph.json"
+    },
+    {
+      "id": "two_point_log_sobolev",
+      "report_url": "reports/two_point_log_sobolev.html",
+      "graph_json": "artifacts/manual-testing/run11-two-point-log-sobolev-gemini-aristotle-6/03_formalized_graph.json"
+    },
+    {
+      "id": "matrix_determinant_lemma",
+      "report_url": "reports/matrix_determinant_lemma.html",
+      "graph_json": "artifacts/manual-testing/run15-matrix-determinant-lemma-claude-aristotle-2/03_formalized_graph.json"
+    },
+    {
+      "id": "hoeffding_lemma",
+      "report_url": "reports/hoeffding_lemma.html",
+      "graph_json": "artifacts/manual-testing/run16-hoeffding-lemma-gemini-aristotle-7/03_formalized_graph.json"
+    },
+    {
+      "id": "gershgorin_circle",
+      "report_url": "reports/gershgorin_circle.html",
+      "graph_json": "artifacts/manual-testing/run17-gershgorin-circle-gemini-aristotle-5/03_formalized_graph.json"
+    }
+  ]
+}

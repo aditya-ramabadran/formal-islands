@@ -5,6 +5,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
+from enum import StrEnum
 import json
 from pathlib import Path
 from threading import RLock
@@ -36,6 +37,75 @@ class _GraphHistoryState:
 
 _GRAPH_HISTORY_STATE = _GraphHistoryState()
 _LOCK = RLock()
+
+
+class GraphHistoryEventKind(StrEnum):
+    """Canonical event kinds for graph-history snapshots."""
+
+    GRAPH_SNAPSHOT = "graph_snapshot"
+    EXTRACT_STAGE_OUTPUT = "extract_stage_output"
+    PLAN_STAGE_EXTRACTED_GRAPH = "plan_stage_extracted_graph"
+    CANDIDATE_SELECTION_OUTPUT = "candidate_selection_output"
+    PLAN_STAGE_CANDIDATE_GRAPH = "plan_stage_candidate_graph"
+    FORMALIZATION_UPDATE = "formalization_update"
+    PARENT_PROMOTION = "parent_promotion"
+    REPORT_STAGE_GRAPH = "report_stage_graph"
+
+
+@dataclass(frozen=True)
+class GraphHistoryEntry:
+    """Typed graph-history entry used by the report layer."""
+
+    version: int
+    timestamp: str
+    event_kind: GraphHistoryEventKind
+    label: str
+    node_id: str | None
+    theorem_title: str
+    root_node_id: str
+    node_count: int
+    edge_count: int
+    warnings: list[str]
+    diff: dict[str, object] | None
+    metadata: dict[str, object]
+    graph: ProofGraph
+
+
+def parse_graph_history_entry(payload: object) -> GraphHistoryEntry | None:
+    """Best-effort parse for backward-compatible JSONL history entries."""
+
+    if not isinstance(payload, dict):
+        return None
+    graph_payload = payload.get("graph")
+    if not isinstance(graph_payload, dict):
+        return None
+    try:
+        graph = ProofGraph.model_validate(graph_payload)
+    except Exception:
+        return None
+    raw_kind = payload.get("event_kind") or payload.get("event") or GraphHistoryEventKind.GRAPH_SNAPSHOT
+    try:
+        event_kind = GraphHistoryEventKind(str(raw_kind))
+    except ValueError:
+        event_kind = GraphHistoryEventKind.GRAPH_SNAPSHOT
+    diff = payload.get("diff")
+    metadata = payload.get("metadata")
+    warnings = payload.get("warnings")
+    return GraphHistoryEntry(
+        version=int(payload.get("version") or _GRAPH_HISTORY_VERSION),
+        timestamp=str(payload.get("timestamp") or ""),
+        event_kind=event_kind,
+        label=str(payload.get("label") or ""),
+        node_id=(str(payload.get("node_id")) if payload.get("node_id") else None),
+        theorem_title=str(payload.get("theorem_title") or graph.theorem_title),
+        root_node_id=str(payload.get("root_node_id") or graph.root_node_id),
+        node_count=int(payload.get("node_count") or len(graph.nodes)),
+        edge_count=int(payload.get("edge_count") or len(graph.edges)),
+        warnings=[str(item) for item in warnings] if isinstance(warnings, list) else [],
+        diff=diff if isinstance(diff, dict) else None,
+        metadata=metadata if isinstance(metadata, dict) else {},
+        graph=graph,
+    )
 
 
 def progress(message: str) -> None:
@@ -176,10 +246,15 @@ def append_graph_snapshot_to_history_log(
         if _GRAPH_HISTORY_STATE.file is None:
             return
         timestamp = datetime.now().astimezone().isoformat(timespec="seconds")
+        try:
+            event_kind = GraphHistoryEventKind(event)
+        except ValueError:
+            event_kind = GraphHistoryEventKind.GRAPH_SNAPSHOT
         entry = {
             "version": _GRAPH_HISTORY_VERSION,
             "timestamp": timestamp,
             "event": event,
+            "event_kind": event_kind,
             "label": label,
             "node_id": node_id,
             "theorem_title": graph.theorem_title,
@@ -386,6 +461,28 @@ def _graph_diff_data(previous_graph: ProofGraph, current_graph: ProofGraph) -> d
                 "after_status": str(after.status),
                 "before_priority": before.formalization_priority,
                 "after_priority": after.formalization_priority,
+                "before_last_formalization_outcome": (
+                    str(before.last_formalization_outcome)
+                    if before.last_formalization_outcome is not None
+                    else None
+                ),
+                "after_last_formalization_outcome": (
+                    str(after.last_formalization_outcome)
+                    if after.last_formalization_outcome is not None
+                    else None
+                ),
+                "before_last_formalization_failure_kind": (
+                    str(before.last_formalization_failure_kind)
+                    if before.last_formalization_failure_kind is not None
+                    else None
+                ),
+                "after_last_formalization_failure_kind": (
+                    str(after.last_formalization_failure_kind)
+                    if after.last_formalization_failure_kind is not None
+                    else None
+                ),
+                "remaining_proof_burden_changed": before.remaining_proof_burden != after.remaining_proof_burden,
+                "formal_artifact_attached_changed": (before.formal_artifact is None) != (after.formal_artifact is None),
             }
             for before, after in changed_nodes
         ],

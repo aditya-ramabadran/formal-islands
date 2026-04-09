@@ -192,6 +192,9 @@
       cursor: pointer;
       text-decoration: none;
     }
+    .graph-node-link.graph-node-dimmed {
+      opacity: 0.22;
+    }
     .graph-node-box {
       fill: var(--status-informal-fill);
       stroke: var(--status-informal-stroke);
@@ -205,9 +208,9 @@
       stroke-dasharray: 5 4;
     }
     .graph-node-box.status-candidate-formal {
-      fill: var(--status-informal-fill);
-      stroke: var(--status-informal-stroke);
-      stroke-dasharray: 5 4;
+      fill: var(--status-candidate-fill);
+      stroke: var(--status-candidate-stroke);
+      stroke-dasharray: 8 4;
     }
     .graph-node-box.status-formal-verified {
       fill: var(--status-verified-fill);
@@ -250,7 +253,7 @@
       fill: var(--status-informal-stroke);
     }
     .graph-node-badge.status-candidate-formal {
-      fill: var(--status-informal-stroke);
+      fill: var(--status-candidate-stroke);
     }
     .graph-node-badge.status-formal-verified {
       fill: var(--status-verified-stroke);
@@ -262,6 +265,65 @@
       margin-top: 0.7rem;
       color: var(--muted);
       font-size: 0.95rem;
+    }
+    .graph-history-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.65rem;
+    }
+    .graph-history-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+    .graph-history-button {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 10px;
+      min-width: 2.4rem;
+      padding: 0.36rem 0.7rem;
+      font: inherit;
+      cursor: pointer;
+      transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+    }
+    .graph-history-button:hover:not(:disabled) {
+      border-color: var(--highlight);
+      background: var(--highlight-soft);
+    }
+    .graph-history-button:disabled {
+      opacity: 0.42;
+      cursor: default;
+    }
+    .graph-history-status {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .graph-history-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .graph-history-caption {
+      margin-top: 0;
+      margin-bottom: 0.65rem;
+      color: var(--ink);
+      font-size: 0.96rem;
+      line-height: 1.45;
+    }
+    .graph-history-meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+    .graph-history-frame[hidden] {
+      display: none;
     }
     .checklist {
       list-style: none;
@@ -317,6 +379,46 @@
     .nodes-grid {
       display: grid;
       gap: 1rem;
+    }
+    .node-navigation {
+      display: grid;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .node-search {
+      display: grid;
+      gap: 0.35rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .node-search input {
+      width: min(100%, 28rem);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem 0.75rem;
+      font: inherit;
+      color: var(--ink);
+      background: var(--panel);
+    }
+    .node-filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      align-items: center;
+    }
+    .node-filter-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.32rem 0.65rem;
+      font-size: 0.9rem;
+      background: var(--panel);
+      color: var(--ink);
+    }
+    .node-filter-reset {
+      min-width: auto;
     }
     .node-card {
       scroll-margin-top: 1rem;
@@ -403,14 +505,12 @@
       }
     }
     
-            .report-root:has(a.node-special_case:hover) .node-special_case.node-card,
-            .report-root:has(#node-special_case:target) a.node-special_case .graph-node-box {
+            .report-root:has(a.node-special_case:hover) a.node-special_case .graph-node-box {
               border-color: var(--highlight);
               stroke: var(--highlight);
               background: var(--highlight-soft);
               fill: var(--highlight-soft);
             }
-            .report-root:has(a.node-special_case:hover) .node-special_case.node-card,
             .report-root:has(#node-special_case:target).report-root .node-special_case.node-card {
               border-color: var(--highlight);
               box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
@@ -418,14 +518,12 @@
             }
             
 
-            .report-root:has(a.node-root:hover) .node-root.node-card,
-            .report-root:has(#node-root:target) a.node-root .graph-node-box {
+            .report-root:has(a.node-root:hover) a.node-root .graph-node-box {
               border-color: var(--highlight);
               stroke: var(--highlight);
               background: var(--highlight-soft);
               fill: var(--highlight-soft);
             }
-            .report-root:has(a.node-root:hover) .node-root.node-card,
             .report-root:has(#node-root:target).report-root .node-root.node-card {
               border-color: var(--highlight);
               box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
@@ -514,7 +612,7 @@
   </style>
 </head>
 <body>
-  <div class="fi-attribution">Created by <a href="https://github.com/aditya-ramabadran/formal-islands" target="_blank">Formal Islands</a></div>
+  <div class="fi-attribution">Created by <a href="https://formal-islands.github.io/formal-islands/" target="_blank">Formal Islands</a> &bull; <a href="https://github.com/aditya-ramabadran/formal-islands" target="_blank">GitHub</a></div>
   <main class="report-root">
     <section>
       <h1>Matrix determinant lemma</h1>
@@ -550,13 +648,13 @@ This is the classical matrix determinant lemma for a rank-one update. It is a co
     <div class="graph-frame">
       <svg class="graph-widget" viewBox="0 0 420 224" width="420" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
         <defs>
-          <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+          <marker id="graph-arrow-current" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
             <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
           </marker>
         </defs>
-        <g><path class="graph-edge edge-special_case-root" d="M 210.0 201.0 C 210.0 129.8, 210.0 76.4, 210.0 23.0" marker-end="url(#graph-arrow)"></path></g>
+        <g><path class="graph-edge edge-special_case-root" d="M 210.0 201.0 C 210.0 129.8, 210.0 76.4, 210.0 23.0" marker-end="url(#graph-arrow-current)"></path></g>
         <g>
-    <a class="graph-node-link node-special_case status-formal-verified" href="#node-special_case">
+    <a class="graph-node-link node-special_case status-formal-verified" href="#node-special_case" data-graph-node-id="special_case" data-graph-node-status="formal_verified" data-graph-node-title="\(\det(I+uv^T)=1+v^Tu\)">
       <rect class="graph-node-box status-formal-verified" x="144.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
       <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="150" r="4.6"></circle>
       <foreignObject x="148.0" y="142" width="124" height="44" overflow="visible">
@@ -566,7 +664,7 @@ This is the classical matrix determinant lemma for a rank-one update. It is a co
     </a>
     
 
-    <a class="graph-node-link node-root status-formal-verified" href="#node-root">
+    <a class="graph-node-link node-root status-formal-verified" href="#node-root" data-graph-node-id="root" data-graph-node-status="formal_verified" data-graph-node-title="\(\det(A+uv^T)=\det(A)(1+v^TA^{-1}u)\)">
       <rect class="graph-node-box status-formal-verified" x="144.0" y="20" rx="28" ry="28" width="132" height="66"></rect>
       <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="32" r="4.6"></circle>
       <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
@@ -583,7 +681,7 @@ This is the classical matrix determinant lemma for a rank-one update. It is a co
         Click a node to jump to its detail section.
       </p>
       <p class="graph-caption">
-        Nodes without attached Lean artifacts use dashed amber outlines. Verified formal nodes use green, and failed formal nodes use red.
+        Informal nodes use dashed brown outlines. Candidate formal nodes use dashed gold outlines, verified formal nodes use green, and failed formal nodes use red.
       </p>
       <p class="graph-caption">
         All arrows point from a claim to one of its dependencies.
@@ -632,9 +730,22 @@ This is the classical matrix determinant lemma for a rank-one update. It is a co
     </section>
     <section>
       <h2>Nodes</h2>
-      <div class="nodes-grid">
+      <div class="node-navigation">
+        <label class="node-search">
+          <span>Filter nodes</span>
+          <input type="search" placeholder="Search by node id or title" data-node-search />
+        </label>
+        <div class="node-filter-pills">
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="informal" checked /> Informal</label>
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="candidate_formal" checked /> Candidate</label>
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="formal_verified" checked /> Verified</label>
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="formal_failed" checked /> Failed</label>
+          <button type="button" class="graph-history-button node-filter-reset" data-node-filter-reset>Reset</button>
+        </div>
+      </div>
+      <div class="nodes-grid" data-node-grid>
         
-    <article class="node-card node-special_case" id="node-special_case" data-node-id="special_case">
+    <article class="node-card node-special_case" id="node-special_case" data-node-id="special_case" data-node-title="Rank-one determinant identity for the identity matrix" data-node-status="formal_verified">
       <h3>Rank-one determinant identity for the identity matrix</h3>
       <p class="meta">Node id: special_case | Status: formal_verified</p>
       <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-root">root</a></p>
@@ -699,7 +810,7 @@ stderr:
     </article>
     
 
-    <article class="node-card node-root" id="node-root" data-node-id="root">
+    <article class="node-card node-root" id="node-root" data-node-id="root" data-node-title="Matrix determinant lemma" data-node-status="formal_verified">
       <h3>Matrix determinant lemma</h3>
       <p class="meta">Node id: root | Status: formal_verified</p>
       <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-special_case">special_case</a></p>
@@ -787,5 +898,48 @@ stderr:
       </div>
     </section>
   </main>
+  
+  
+  <script>
+    document.querySelectorAll('.report-root').forEach((root) => {
+      const searchInput = root.querySelector('[data-node-search]');
+      const resetButton = root.querySelector('[data-node-filter-reset]');
+      const statusInputs = Array.from(root.querySelectorAll('[data-node-filter-status]'));
+      const cards = Array.from(root.querySelectorAll('[data-node-id]'));
+      const graphNodes = Array.from(root.querySelectorAll('[data-graph-node-id]'));
+      if (!searchInput || cards.length === 0) return;
+
+      const update = () => {
+        const query = searchInput.value.trim().toLowerCase();
+        const allowedStatuses = new Set(
+          statusInputs.filter((input) => input.checked).map((input) => input.dataset.nodeFilterStatus)
+        );
+        cards.forEach((card) => {
+          const nodeId = (card.dataset.nodeId || '').toLowerCase();
+          const title = (card.dataset.nodeTitle || '').toLowerCase();
+          const status = card.dataset.nodeStatus || '';
+          const matchesQuery = query === '' || nodeId.includes(query) || title.includes(query);
+          const matchesStatus = allowedStatuses.has(status);
+          const visible = matchesQuery && matchesStatus;
+          card.hidden = !visible;
+        });
+        graphNodes.forEach((node) => {
+          const nodeId = node.dataset.graphNodeId || '';
+          const linkedCard = root.querySelector(`[data-node-id="${CSS.escape(nodeId)}"]`);
+          node.classList.toggle('graph-node-dimmed', !!linkedCard && linkedCard.hidden);
+        });
+      };
+
+      statusInputs.forEach((input) => input.addEventListener('change', update));
+      searchInput.addEventListener('input', update);
+      resetButton?.addEventListener('click', () => {
+        searchInput.value = '';
+        statusInputs.forEach((input) => { input.checked = true; });
+        update();
+      });
+      update();
+    });
+  </script>
+    
 </body>
 </html>

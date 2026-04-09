@@ -6,6 +6,7 @@ import argparse
 import datetime
 import json
 import re
+import shlex
 import sys
 from pathlib import Path
 from typing import Any
@@ -39,10 +40,11 @@ from formal_islands.models import (
     VerificationResult,
     canonical_dependency_direction_warnings,
 )
-from formal_islands.report import export_report_bundle, render_html_report
+from formal_islands.report import export_report_bundle, load_graph_history_entries, render_html_report
 from formal_islands.report.annotation import synthesize_remaining_proof_burdens
 from formal_islands.review import derive_review_obligations
 from formal_islands.progress import (
+    append_to_progress_log,
     append_graph_snapshot_to_history_log,
     append_graph_summary_to_progress_log,
     progress,
@@ -67,6 +69,43 @@ GRAPH_HISTORY_LOG_FILENAME = "graph_history.jsonl"
 def _log_dependency_direction_warnings(graph: ProofGraph, *, context: str) -> None:
     for warning in canonical_dependency_direction_warnings(graph):
         progress(f"{context}: canonical direction warning: {warning}")
+
+
+def _log_cli_invocation(
+    *,
+    command_name: str,
+    args: argparse.Namespace,
+    effective: dict[str, object] | None = None,
+) -> None:
+    """Append a stable CLI invocation summary to the active progress log."""
+
+    arg_items = {
+        key: value
+        for key, value in vars(args).items()
+        if key != "func"
+    }
+    cli_parts = ["formal-islands", command_name]
+    for key in sorted(arg_items):
+        value = arg_items[key]
+        if value is None:
+            continue
+        flag = f"--{key.replace('_', '-')}"
+        if isinstance(value, bool):
+            if value:
+                cli_parts.append(flag)
+            continue
+        cli_parts.append(f"{flag}={shlex.quote(str(value))}")
+
+    lines = ["CLI invocation summary:", f"  command: {' '.join(cli_parts)}"]
+    if arg_items:
+        lines.append("  raw args:")
+        for key in sorted(arg_items):
+            lines.append(f"    {key} = {arg_items[key]!r}")
+    if effective:
+        lines.append("  effective settings:")
+        for key in sorted(effective):
+            lines.append(f"    {key} = {effective[key]!r}")
+    append_to_progress_log("\n".join(lines))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -630,7 +669,12 @@ def cmd_report(args: argparse.Namespace) -> int:
         output_dir / GRAPH_HISTORY_LOG_FILENAME
     ):
         progress("report stage starting")
-        graph = load_graph(Path(args.graph))
+        graph_path = Path(args.graph)
+        graph = load_graph(graph_path)
+        graph = _hydrate_report_annotations_from_previous_bundle(
+            graph=graph,
+            output_dir=output_dir,
+        )
         original_graph = graph
         _log_dependency_direction_warnings(graph, context="report stage")
         planning_backend_name = getattr(args, "planning_backend", None)
@@ -651,6 +695,11 @@ def cmd_report(args: argparse.Namespace) -> int:
                 graph=graph,
                 planning_backend=planning_backend,
             )
+        _persist_report_annotations_to_graph_if_canonical(
+            graph=graph,
+            graph_path=graph_path,
+            output_dir=output_dir,
+        )
         _append_graph_logs(
             graph,
             label="04_report_graph",
@@ -658,8 +707,9 @@ def cmd_report(args: argparse.Namespace) -> int:
             event="report_stage_graph",
         )
         obligations = derive_review_obligations(graph)
-        bundle = export_report_bundle(graph, obligations)
-        html = render_html_report(graph, obligations)
+        graph_history = load_graph_history_entries(output_dir / GRAPH_HISTORY_LOG_FILENAME)
+        bundle = export_report_bundle(graph, obligations, graph_history=graph_history)
+        html = render_html_report(graph, obligations, graph_history=graph_history)
 
         bundle_path = output_dir / "04_report_bundle.json"
         html_path = output_dir / "04_report.html"
@@ -668,6 +718,79 @@ def cmd_report(args: argparse.Namespace) -> int:
         print(bundle_path)
         print(html_path)
     return 0
+
+
+def _hydrate_report_annotations_from_previous_bundle(
+    *,
+    graph: ProofGraph,
+    output_dir: Path,
+) -> ProofGraph:
+    bundle_path = output_dir / "04_report_bundle.json"
+    if not bundle_path.exists():
+        return graph
+    try:
+        payload = json.loads(bundle_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return graph
+    previous_graph_payload = payload.get("graph")
+    if not isinstance(previous_graph_payload, dict):
+        return graph
+    try:
+        previous_graph = ProofGraph.model_validate(previous_graph_payload)
+    except Exception:
+        return graph
+
+    previous_burdens = {
+        node.id: node.remaining_proof_burden
+        for node in previous_graph.nodes
+        if node.remaining_proof_burden
+    }
+    if not previous_burdens:
+        return graph
+
+    changed = False
+    updated_nodes = []
+    for node in graph.nodes:
+        if node.remaining_proof_burden or node.id not in previous_burdens:
+            updated_nodes.append(node)
+            continue
+        updated_nodes.append(
+            node.model_copy(update={"remaining_proof_burden": previous_burdens[node.id]})
+        )
+        changed = True
+
+    if not changed:
+        return graph
+
+    progress(
+        "report stage: reused previously synthesized remaining proof burden text from 04_report_bundle.json"
+    )
+    return graph.model_copy(update={"nodes": updated_nodes})
+
+
+def _persist_report_annotations_to_graph_if_canonical(
+    *,
+    graph: ProofGraph,
+    graph_path: Path,
+    output_dir: Path,
+) -> None:
+    canonical_graph_path = output_dir / "03_formalized_graph.json"
+    try:
+        is_canonical = graph_path.resolve() == canonical_graph_path.resolve()
+    except FileNotFoundError:
+        is_canonical = graph_path == canonical_graph_path
+    if not is_canonical:
+        return
+
+    try:
+        existing_graph = load_graph(graph_path)
+    except Exception:
+        existing_graph = None
+    if existing_graph is not None and existing_graph.model_dump(mode="json") == graph.model_dump(mode="json"):
+        return
+
+    write_graph(graph, graph_path)
+    progress("report stage: persisted report annotations into 03_formalized_graph.json")
 
 
 def cmd_run_example(args: argparse.Namespace) -> int:
@@ -743,6 +866,23 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
         output_dir / GRAPH_HISTORY_LOG_FILENAME
     ):
         try:
+            _log_cli_invocation(
+                command_name=str(getattr(args, "command", "run-benchmark")),
+                args=args,
+                effective={
+                    "input_path": str(input_path),
+                    "output_dir": str(output_dir),
+                    "workspace": str(workspace),
+                    "planning_backend": resolve_backend_name(args, formalization=False),
+                    "planning_model": resolve_backend_model(args, formalization=False),
+                    "formalization_backend": resolve_backend_name(args, formalization=True),
+                    "formalization_model": resolve_backend_model(args, formalization=True),
+                    "formalization_timeout_seconds": resolve_formalization_timeout(
+                        args,
+                        resolve_backend_name(args, formalization=True),
+                    ),
+                },
+            )
             progress("running benchmark end-to-end")
             progress("benchmark planning stage starting")
             cmd_plan(

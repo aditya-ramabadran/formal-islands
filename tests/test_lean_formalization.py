@@ -1792,6 +1792,7 @@ def test_formalize_candidate_node_marks_failure_after_bound(tmp_path: Path) -> N
     assert updated_node.status == "formal_failed"
     assert updated_node.formal_artifact is not None
     assert updated_node.formal_artifact.verification.status == "failed"
+    assert updated_node.last_formalization_failure_kind == "lean_failure"
     assert len(updated_node.formal_artifact.attempt_history) == 2
 
 
@@ -1984,6 +1985,7 @@ def test_formalize_candidate_node_records_backend_failure_and_emits_update(tmp_p
     assert updated_node.formal_artifact.verification.command == "backend_request"
     assert "Codex timed out" in updated_node.formal_artifact.verification.stderr
     assert updated_node.last_formalization_outcome == "failed"
+    assert updated_node.last_formalization_failure_kind == "backend_failure"
     assert updated_node.last_formalization_attempt_count == 1
     assert "failed before the backend returned a usable lean artifact" in (
         updated_node.last_formalization_note or ""

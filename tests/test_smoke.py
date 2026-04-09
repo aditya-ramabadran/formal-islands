@@ -28,6 +28,7 @@ from formal_islands.smoke import (
     _backend_failure_outcome,
     _cleanup_archive_artifacts,
     cmd_plan,
+    cmd_report,
     cmd_run_benchmark,
     cmd_formalize_all_candidates,
     default_output_dir_for_input,
@@ -423,6 +424,82 @@ def test_cmd_plan_writes_both_planning_artifacts(tmp_path: Path, monkeypatch: py
     assert any(node.status == "candidate_formal" for node in candidate_graph.nodes)
 
 
+def test_cmd_report_reuses_previous_remaining_proof_burdens_without_planning_backend(
+    tmp_path: Path,
+) -> None:
+    output_dir = ensure_output_dir(tmp_path / "artifacts")
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="A implies B.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Root",
+                informal_statement="A implies B.",
+                informal_proof_text="Use n1.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Leaf",
+                informal_statement="A.",
+                informal_proof_text="Given.",
+                status="formal_verified",
+                formal_artifact={
+                    "lean_theorem_name": "n1_core",
+                    "lean_statement": "theorem n1_core : True",
+                    "lean_code": "theorem n1_core : True := by trivial",
+                    "faithfulness_classification": "full_node",
+                },
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1")],
+    )
+    graph_path = output_dir / "03_formalized_graph.json"
+    write_graph(graph, graph_path)
+
+    prior_graph = graph.model_copy(
+        update={
+            "nodes": [
+                node.model_copy(
+                    update={
+                        "remaining_proof_burden": "Only the final parent-level assembly remains.",
+                    }
+                )
+                if node.id == "n0"
+                else node
+                for node in graph.nodes
+            ]
+        }
+    )
+    prior_obligations = derive_review_obligations(prior_graph)
+    prior_bundle = export_report_bundle(prior_graph, prior_obligations)
+    (output_dir / "04_report_bundle.json").write_text(
+        json.dumps(prior_bundle, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    exit_code = cmd_report(
+        Namespace(
+            backend=None,
+            model=None,
+            planning_backend=None,
+            planning_model=None,
+            graph=str(graph_path),
+            output_dir=str(output_dir),
+        )
+    )
+
+    assert exit_code == 0
+    persisted_graph = load_graph(graph_path)
+    parent = next(node for node in persisted_graph.nodes if node.id == "n0")
+    assert parent.remaining_proof_burden == "Only the final parent-level assembly remains."
+
+    bundle_payload = json.loads((output_dir / "04_report_bundle.json").read_text(encoding="utf-8"))
+    bundle_parent = next(node for node in bundle_payload["graph"]["nodes"] if node["id"] == "n0")
+    assert bundle_parent["remaining_proof_burden"] == "Only the final parent-level assembly remains."
+
+
 def test_backend_failure_outcome_marks_node_and_captures_logs() -> None:
     graph = ProofGraph(
         theorem_title="Toy theorem",
@@ -665,6 +742,10 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
     progress_log = Path(output_dir_used) / "_progress.log"
     assert progress_log.exists()
     log_text = progress_log.read_text(encoding="utf-8")
+    assert "CLI invocation summary:" in log_text
+    assert "formal-islands run-benchmark" in log_text
+    assert "effective settings:" in log_text
+    assert "formalization_timeout_seconds = 900.0" in log_text
     assert "running benchmark end-to-end" in log_text
     assert "benchmark planning stage starting" in log_text
     assert "benchmark formalization stage starting" in log_text

@@ -6,6 +6,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from threading import RLock
+from collections import deque
 
 from formal_islands.backends import BackendError, StructuredBackend, StructuredBackendRequest
 from formal_islands.formalization.pipeline import (
@@ -37,6 +38,75 @@ class RemainingProofBurdenCache:
     lock: RLock
 
 
+def _collect_downstream_verified_support(graph: ProofGraph, parent_node_id: str) -> list[dict[str, str]]:
+    """Collect verified descendants below the parent's still-informal direct children."""
+
+    node_by_id = {node.id: node for node in graph.nodes}
+    direct_child_ids = [edge.target_id for edge in graph.edges if edge.source_id == parent_node_id]
+    seed_ids = [
+        child_id
+        for child_id in direct_child_ids
+        if child_id in node_by_id and node_by_id[child_id].status != "formal_verified"
+    ]
+    if not seed_ids:
+        return []
+
+    children_by_parent: dict[str, list[str]] = {}
+    for edge in graph.edges:
+        children_by_parent.setdefault(edge.source_id, []).append(edge.target_id)
+
+    seen: set[str] = set(seed_ids)
+    queue = deque(seed_ids)
+    support: list[dict[str, str]] = []
+    while queue:
+        current_id = queue.popleft()
+        for child_id in children_by_parent.get(current_id, []):
+            if child_id in seen:
+                continue
+            seen.add(child_id)
+            child = node_by_id.get(child_id)
+            if child is None:
+                continue
+            if child.status == "formal_verified" and child.formal_artifact is not None:
+                support.append(
+                    {
+                        "id": child.id,
+                        "title": child.title,
+                        "statement": child.formal_artifact.lean_statement,
+                        "theorem": child.formal_artifact.lean_theorem_name,
+                    }
+                )
+            else:
+                queue.append(child_id)
+    return sorted(support, key=lambda item: item["id"])
+
+
+def _format_downstream_verified_support(support: list[dict[str, str]]) -> str:
+    """Render verified descendant support as a distinct prompt section."""
+
+    lines = [
+        "Deeper verified support already available downstream:",
+        (
+            "These are not direct child lemmas of the parent node, but they are already verified "
+            "somewhere underneath still-informal direct children. Use them only as evidence that some "
+            "sub-burdens are already discharged downstream; do not flatten them into direct dependencies."
+        ),
+    ]
+    if support:
+        for item in support:
+            lines.extend(
+                [
+                    f"- id: {item['id']}",
+                    f"  title: {item['title']}",
+                    f"  Lean theorem: {item['theorem']}",
+                    f"  Lean statement: {item['statement']}",
+                ]
+            )
+    else:
+        lines.append("  - none listed")
+    return "\n".join(lines)
+
+
 def build_remaining_proof_burden_assessment_request(
     *,
     graph: ProofGraph,
@@ -44,6 +114,7 @@ def build_remaining_proof_burden_assessment_request(
 ) -> StructuredBackendRequest:
     parent = next(node for node in graph.nodes if node.id == parent_node_id)
     verified_children = build_verified_direct_child_context(graph, parent_node_id)
+    downstream_verified_support = _collect_downstream_verified_support(graph, parent_node_id)
     local_context = build_local_proof_context(graph, parent_node_id)
     verified_child_ids = [node.id for node in verified_children.child_nodes]
     title_child_list = f"[{', '.join(verified_child_ids)}]" if verified_child_ids else "[]"
@@ -79,6 +150,7 @@ def build_remaining_proof_burden_assessment_request(
             json.dumps(child_inventory, indent=2),
             "Verified direct child lemmas already available:",
             format_verified_direct_child_context(verified_children),
+            _format_downstream_verified_support(downstream_verified_support),
             (
                 "Dependency direction note: assume the verified child lemmas are already established "
                 "dependencies of this parent node. Explain only what still remains informal at the parent level."
@@ -98,6 +170,11 @@ def build_remaining_proof_burden_assessment_request(
                 "verified children cover only part of the burden and that the rest remains informal. Name the "
                 "specific missing steps if possible: a final rewrite, a substitution, a side-condition discharge, "
                 "a monotonicity/inequality step, or the assembly step that combines the children into the parent."
+            ),
+            (
+                "If deeper verified support exists only downstream of an informal direct child, say that some "
+                "sub-burdens are already certified further down the graph while the direct parent-level assembly "
+                "or child-to-parent bridge still remains informal."
             ),
             (
                 "Do not restate the verified children themselves. Focus on the residual burden that a human reviewer "
@@ -152,6 +229,7 @@ def _remaining_proof_burden_cache_key(graph: ProofGraph, parent_node_id: str) ->
         for node in graph.nodes
         if node.id in child_ids and node.status == "formal_verified" and node.formal_artifact is not None
     ]
+    downstream_verified_support = _collect_downstream_verified_support(graph, parent_node_id)
     payload = {
         "parent": {
             "id": parent.id,
@@ -168,6 +246,7 @@ def _remaining_proof_burden_cache_key(graph: ProofGraph, parent_node_id: str) ->
             }
             for child in verified_children
         ],
+        "downstream_support": downstream_verified_support,
     }
     serialized = json.dumps(payload, sort_keys=True, ensure_ascii=False)
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()

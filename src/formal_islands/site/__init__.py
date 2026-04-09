@@ -1,0 +1,2 @@
+"""Static website asset helpers."""
+

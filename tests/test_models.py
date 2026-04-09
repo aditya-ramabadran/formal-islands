@@ -171,11 +171,13 @@ def test_proof_node_accepts_last_formalization_episode_metadata() -> None:
         informal_proof_text="Use a certified core.",
         last_formalization_attempt_count=1,
         last_formalization_outcome="produced_supporting_core",
+        last_formalization_failure_kind="backend_failure",
         last_formalization_note="Most recent formalization attempt produced a verified supporting core.",
     )
 
     assert node.last_formalization_attempt_count == 1
     assert node.last_formalization_outcome == "produced_supporting_core"
+    assert node.last_formalization_failure_kind == "backend_failure"
 
 
 def test_review_obligation_requires_kind_text_and_nodes() -> None:

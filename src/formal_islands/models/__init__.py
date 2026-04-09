@@ -3,6 +3,7 @@
 from formal_islands.models.proof import (
     FaithfulnessClassification,
     FormalArtifact,
+    NodeFailureKind,
     NodeFormalizationOutcome,
     canonical_dependency_direction_warnings,
     ProofEdge,
@@ -16,6 +17,7 @@ from formal_islands.models.proof import (
 __all__ = [
     "FormalArtifact",
     "FaithfulnessClassification",
+    "NodeFailureKind",
     "NodeFormalizationOutcome",
     "canonical_dependency_direction_warnings",
     "ProofEdge",

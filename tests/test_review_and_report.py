@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode
 from formal_islands.examples.fixtures import build_example_graph
@@ -9,9 +10,11 @@ from formal_islands.report.annotation import (
 )
 from formal_islands.report.generator import (
     NODE_HEIGHT,
+    _build_graph_history_frames,
     _compute_graph_layout,
     _render_math_text,
     export_report_bundle,
+    load_graph_history_entries,
     render_html_report,
 )
 from formal_islands.review.extractor import derive_review_obligations
@@ -37,6 +40,37 @@ def test_export_report_bundle_is_json_serializable() -> None:
 
     assert "review_obligations" in serialized
     assert "formal_verified" in serialized
+
+
+def test_export_report_bundle_includes_graph_history_summary_when_present(tmp_path) -> None:
+    graph = build_example_graph()
+    obligations = derive_review_obligations(graph)
+    history_path = tmp_path / "graph_history.jsonl"
+    history_path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "timestamp": "2026-04-08T15:01:14-07:00",
+                "event": "plan_stage_extracted_graph",
+                "label": "01_extracted_graph.json",
+                "node_id": None,
+                "graph": graph.model_dump(mode="json"),
+                "diff": None,
+                "metadata": {},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    bundle = export_report_bundle(
+        graph,
+        obligations,
+        graph_history=load_graph_history_entries(history_path),
+    )
+
+    assert "graph_history" in bundle
+    assert bundle["graph_history"][0]["caption"] == "Initial extracted proof graph."
 
 
 def test_render_html_report_sanitizes_verification_command_paths() -> None:
@@ -107,7 +141,7 @@ def test_render_html_report_includes_core_sections() -> None:
     assert 'data-obligation-id="informal-proof-n1"' in html
     assert 'id="MathJax-script"' in html
     assert "width: min(100%, 720px);" in html
-    assert "Nodes without attached Lean artifacts use dashed amber outlines." in html
+    assert "Candidate formal nodes use dashed gold outlines" in html
     assert "All arrows point from a claim to one of its dependencies." in html
     assert "Dashed gray arrows mark refinement edges" in html
     assert "Used by (parent nodes):" in html
@@ -123,6 +157,352 @@ def test_render_html_report_includes_core_sections() -> None:
     assert "--checklist-panel:" in html
     assert ".lean-code {" in html
     assert "#f2e8dc" in html
+    assert "data-graph-history" not in html
+
+
+def test_render_html_report_with_graph_history_renders_timeline_controls() -> None:
+    before = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="A implies B.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Root",
+                informal_statement="A implies B.",
+                informal_proof_text="Use n1.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Leaf",
+                informal_statement="A.",
+                informal_proof_text="Given.",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Leaf node.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1")],
+    )
+    after = before.model_copy(
+        update={
+            "nodes": [
+                node.model_copy(
+                    update={
+                        "status": "formal_verified",
+                        "formal_artifact": FormalArtifact(
+                            lean_theorem_name="n1_core",
+                            lean_statement="theorem n1_core : True",
+                            lean_code="theorem n1_core : True := by trivial",
+                            faithfulness_classification="full_node",
+                        ),
+                    }
+                )
+                if node.id == "n1"
+                else node
+                for node in before.nodes
+            ]
+        }
+    )
+    obligations = derive_review_obligations(after)
+    graph_history = [
+        {
+            "version": 1,
+            "timestamp": "2026-04-08T15:01:14-07:00",
+            "event": "plan_stage_candidate_graph",
+            "label": "02_candidate_graph.json",
+            "node_id": None,
+            "diff": {
+                "added_nodes": [],
+                "removed_nodes": [],
+                "changed_nodes": [
+                    {
+                        "id": "n1",
+                        "before_status": "informal",
+                        "after_status": "candidate_formal",
+                        "before_priority": None,
+                        "after_priority": 1,
+                    }
+                ],
+                "added_edges": [],
+                "removed_edges": [],
+            },
+            "metadata": {},
+            "graph": before.model_dump(mode="json"),
+        },
+        {
+            "version": 1,
+            "timestamp": "2026-04-08T15:02:14-07:00",
+            "event": "formalization_update",
+            "label": "03_formalized_graph.json (n1)",
+            "node_id": "n1",
+            "diff": {
+                "added_nodes": [],
+                "removed_nodes": [],
+                "changed_nodes": [
+                    {
+                        "id": "n1",
+                        "before_status": "candidate_formal",
+                        "after_status": "formal_verified",
+                        "before_priority": 1,
+                        "after_priority": 1,
+                    }
+                ],
+                "added_edges": [],
+                "removed_edges": [],
+            },
+            "metadata": {},
+            "graph": after.model_dump(mode="json"),
+        },
+    ]
+
+    html = render_html_report(after, obligations, graph_history=graph_history)
+
+    assert 'data-graph-history' in html
+    assert 'data-history-action="start"' in html
+    assert 'data-history-action="end"' in html
+    assert 'Snapshot <span data-history-index>2</span> of <span data-history-count>2</span>' in html
+    assert (
+        'data-caption-html="Candidate selection marked &lt;code class=&quot;inline-code&quot;&gt;n1&lt;/code&gt; for formalization."'
+        in html
+    )
+    assert (
+        'Node <code class="inline-code">n1</code> was successfully formalized, status upgraded from '
+        '<code class="inline-code">candidate_formal</code> to <code class="inline-code">formal_verified</code>.'
+        in html
+    )
+
+
+def test_graph_history_frames_skip_annotation_only_or_duplicate_visual_snapshots() -> None:
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="A implies B.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Root",
+                informal_statement="A implies B.",
+                informal_proof_text="Use n1.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Leaf",
+                informal_statement="A.",
+                informal_proof_text="Given.",
+                status="formal_verified",
+                formal_artifact=FormalArtifact(
+                    lean_theorem_name="n1_core",
+                    lean_statement="theorem n1_core : True",
+                    lean_code="theorem n1_core : True := by trivial",
+                    faithfulness_classification="full_node",
+                ),
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1")],
+    )
+    graph_with_burden = graph.model_copy(
+        update={
+            "nodes": [
+                node.model_copy(
+                    update={
+                        "remaining_proof_burden": "Only the final rewrite remains.",
+                    }
+                )
+                if node.id == "n0"
+                else node
+                for node in graph.nodes
+            ]
+        }
+    )
+    entries = [
+        {
+            "version": 1,
+            "timestamp": "2026-04-09T09:00:00-07:00",
+            "event": "formalization_update",
+            "label": "03_formalized_graph.json (n1)",
+            "node_id": "n1",
+            "diff": None,
+            "metadata": {},
+            "graph": graph.model_dump(mode="json"),
+        },
+        {
+            "version": 1,
+            "timestamp": "2026-04-09T09:01:00-07:00",
+            "event": "report_stage_graph",
+            "label": "04_report_graph",
+            "node_id": None,
+            "diff": {
+                "added_nodes": [],
+                "removed_nodes": [],
+                "changed_nodes": [
+                    {
+                        "id": "n0",
+                        "before_status": "informal",
+                        "after_status": "informal",
+                        "before_priority": None,
+                        "after_priority": None,
+                        "remaining_proof_burden_changed": True,
+                        "formal_artifact_attached_changed": False,
+                    }
+                ],
+                "added_edges": [],
+                "removed_edges": [],
+            },
+            "metadata": {},
+            "graph": graph_with_burden.model_dump(mode="json"),
+        },
+        {
+            "version": 1,
+            "timestamp": "2026-04-09T09:02:00-07:00",
+            "event": "report_stage_graph",
+            "label": "04_report_graph",
+            "node_id": None,
+            "diff": {
+                "added_nodes": [],
+                "removed_nodes": [],
+                "changed_nodes": [
+                    {
+                        "id": "n0",
+                        "before_status": "informal",
+                        "after_status": "informal",
+                        "before_priority": None,
+                        "after_priority": None,
+                        "remaining_proof_burden_changed": True,
+                        "formal_artifact_attached_changed": False,
+                    }
+                ],
+                "added_edges": [],
+                "removed_edges": [],
+            },
+            "metadata": {},
+            "graph": graph_with_burden.model_dump(mode="json"),
+        },
+    ]
+
+    frames = _build_graph_history_frames(entries)
+
+    assert len(frames) == 1
+    assert frames[0]["event"] == "formalization_update"
+
+
+def test_render_html_report_with_parent_promotion_history_renders_promotion_caption() -> None:
+    before = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="A implies B.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Root",
+                informal_statement="A implies B.",
+                informal_proof_text="Use n1.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Leaf",
+                informal_statement="A.",
+                informal_proof_text="Given.",
+                status="formal_verified",
+                formal_artifact=FormalArtifact(
+                    lean_theorem_name="n1_core",
+                    lean_statement="theorem n1_core : True",
+                    lean_code="theorem n1_core : True := by trivial",
+                    faithfulness_classification="full_node",
+                ),
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1")],
+    )
+    after = before.model_copy(
+        update={
+            "nodes": [
+                    node.model_copy(
+                        update={
+                            "status": "candidate_formal",
+                            "formalization_priority": 2,
+                            "formalization_rationale": "Promoted after verified child support.",
+                        }
+                    )
+                if node.id == "n0"
+                else node
+                for node in before.nodes
+            ]
+        }
+    )
+    obligations = derive_review_obligations(after)
+    graph_history = [
+        {
+            "version": 1,
+            "timestamp": "2026-04-09T09:59:00-07:00",
+            "event": "plan_stage_extracted_graph",
+            "label": "01_extracted_graph.json",
+            "node_id": None,
+            "diff": None,
+            "metadata": {},
+            "graph": before.model_dump(mode="json"),
+        },
+        {
+            "version": 1,
+            "timestamp": "2026-04-09T10:00:00-07:00",
+            "event": "parent_promotion",
+            "label": "parent promotion (n0)",
+            "node_id": "n0",
+            "diff": {
+                "added_nodes": [],
+                "removed_nodes": [],
+                "changed_nodes": [
+                    {
+                        "id": "n0",
+                        "before_status": "informal",
+                        "after_status": "candidate_formal",
+                        "before_priority": None,
+                        "after_priority": 2,
+                    }
+                ],
+                "added_edges": [],
+                "removed_edges": [],
+            },
+            "metadata": {
+                "recommended_priority": 2,
+            },
+            "graph": after.model_dump(mode="json"),
+        },
+        {
+            "version": 1,
+            "timestamp": "2026-04-09T10:01:00-07:00",
+            "event": "formalization_update",
+            "label": "03_formalized_graph.json (n0)",
+            "node_id": "n0",
+            "diff": {
+                "added_nodes": [],
+                "removed_nodes": [],
+                "changed_nodes": [
+                    {
+                        "id": "n0",
+                        "before_status": "candidate_formal",
+                        "after_status": "candidate_formal",
+                        "before_priority": 2,
+                        "after_priority": 2,
+                        "remaining_proof_burden_changed": True,
+                    }
+                ],
+                "added_edges": [],
+                "removed_edges": [],
+            },
+            "metadata": {},
+            "graph": after.model_dump(mode="json"),
+        },
+    ]
+
+    html = render_html_report(after, obligations, graph_history=graph_history)
+
+    assert (
+        'data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;n0&lt;/code&gt; was promoted from '
+        '&lt;code class=&quot;inline-code&quot;&gt;informal&lt;/code&gt; to '
+        '&lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; at priority '
+        '&lt;code class=&quot;inline-code&quot;&gt;2&lt;/code&gt; after its direct children were verified."'
+    ) in html
 
 
 def test_render_html_report_shows_remaining_proof_burden_for_verified_children() -> None:
@@ -327,6 +707,52 @@ def test_remaining_proof_burden_prompt_is_concrete_about_the_residual_delta() ->
     assert "two to four sentences" in lowered
 
 
+def test_remaining_proof_burden_prompt_mentions_downstream_verified_support() -> None:
+    artifact = FormalArtifact(
+        lean_theorem_name="child_core",
+        lean_statement="theorem child_core : True",
+        lean_code="theorem child_core : True := by trivial",
+        faithfulness_classification="full_node",
+    )
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Parent theorem",
+                informal_statement="Show the parent theorem.",
+                informal_proof_text="Use n1.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Intermediate informal child",
+                informal_statement="Bridge to n2.",
+                informal_proof_text="Use n2.",
+            ),
+            ProofNode(
+                id="n2",
+                title="Verified downstream support",
+                informal_statement="Child two.",
+                informal_proof_text="Core two.",
+                status="formal_verified",
+                formal_artifact=artifact,
+            ),
+        ],
+        edges=[
+            ProofEdge(source_id="n0", target_id="n1"),
+            ProofEdge(source_id="n1", target_id="n2"),
+        ],
+    )
+
+    request = build_remaining_proof_burden_assessment_request(graph=graph, parent_node_id="n0")
+
+    lowered = request.prompt.lower()
+    assert "deeper verified support already available downstream" in lowered
+    assert "not direct child lemmas" in lowered
+
+
 def test_render_html_report_preserves_latex_text_blocks() -> None:
     graph = build_example_graph().model_copy(
         update={
@@ -376,6 +802,149 @@ def test_render_html_report_styles_graph_nodes_by_status() -> None:
     assert 'class="graph-node-badge status-formal-verified"' in html
     assert ".graph-node-box.status-informal" in html
     assert ".graph-node-box.status-formal-verified" in html
+
+
+def test_render_html_report_styles_candidate_nodes_distinctly() -> None:
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="A implies B.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Root",
+                informal_statement="A implies B.",
+                informal_proof_text="Use n1.",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Worth formalizing.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Leaf",
+                informal_statement="A.",
+                informal_proof_text="Given.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1")],
+    )
+    obligations = derive_review_obligations(graph)
+
+    html = render_html_report(graph, obligations)
+
+    assert 'class="graph-node-link node-n0 status-candidate-formal"' in html
+    assert 'class="graph-node-box status-candidate-formal"' in html
+    assert 'class="graph-node-badge status-candidate-formal"' in html
+    assert ".graph-node-box.status-candidate-formal" in html
+    assert "Candidate formal nodes use dashed gold outlines" in html
+
+
+def test_render_html_report_includes_node_navigation_controls_snapshot() -> None:
+    graph = build_example_graph()
+    obligations = derive_review_obligations(graph)
+
+    html = render_html_report(graph, obligations)
+    fixture = Path("tests/fixtures/report_node_navigation.snapshot.html").read_text(encoding="utf-8").strip()
+
+    assert fixture in html
+
+
+def test_render_html_report_history_toggle_snapshot_for_duplicate_visual_states() -> None:
+    before = build_example_graph()
+    candidate = before.model_copy(
+        update={
+            "nodes": [
+                node.model_copy(
+                    update={
+                        "status": "candidate_formal",
+                        "formalization_priority": 2,
+                        "formalization_rationale": "Worth a later attempt.",
+                    }
+                )
+                if node.id == before.root_node_id
+                else node
+                for node in before.nodes
+            ]
+        }
+    )
+    after = candidate.model_copy(
+        update={
+            "nodes": [
+                node.model_copy(update={"remaining_proof_burden": "Only the final rewrite remains."})
+                if node.id == before.root_node_id
+                else node
+                for node in candidate.nodes
+            ]
+        }
+    )
+    obligations = derive_review_obligations(after)
+    graph_history = [
+        {
+            "version": 1,
+            "timestamp": "2026-04-09T09:00:00-07:00",
+            "event": "plan_stage_extracted_graph",
+            "label": "01_extracted_graph.json",
+            "node_id": None,
+            "diff": None,
+            "metadata": {},
+            "graph": before.model_dump(mode="json"),
+        },
+        {
+            "version": 1,
+            "timestamp": "2026-04-09T09:00:30-07:00",
+            "event": "candidate_selection_output",
+            "label": "02_candidate_graph.json",
+            "node_id": before.root_node_id,
+            "diff": {
+                "added_nodes": [],
+                "removed_nodes": [],
+                "changed_nodes": [
+                    {
+                        "id": before.root_node_id,
+                        "before_status": "informal",
+                        "after_status": "candidate_formal",
+                        "before_priority": None,
+                        "after_priority": 2,
+                    }
+                ],
+                "added_edges": [],
+                "removed_edges": [],
+            },
+            "metadata": {},
+            "graph": candidate.model_dump(mode="json"),
+        },
+        {
+            "version": 1,
+            "timestamp": "2026-04-09T09:01:00-07:00",
+            "event": "report_stage_graph",
+            "label": "04_report_graph",
+            "node_id": None,
+            "diff": {
+                "added_nodes": [],
+                "removed_nodes": [],
+                "changed_nodes": [
+                    {
+                        "id": before.root_node_id,
+                        "before_status": "informal",
+                        "after_status": "informal",
+                        "before_priority": None,
+                        "after_priority": None,
+                        "remaining_proof_burden_changed": True,
+                        "formal_artifact_attached_changed": False,
+                    }
+                ],
+                "added_edges": [],
+                "removed_edges": [],
+            },
+            "metadata": {},
+            "graph": after.model_dump(mode="json"),
+        },
+    ]
+
+    html = render_html_report(after, obligations, graph_history=graph_history)
+    fixture = Path("tests/fixtures/report_history_toggle.snapshot.html").read_text(encoding="utf-8").strip()
+
+    assert fixture in html
 
 
 def test_render_html_report_formats_lean_statements_as_code() -> None:

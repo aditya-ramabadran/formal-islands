@@ -41,6 +41,15 @@ class NodeFormalizationOutcome(StrEnum):
     FAILED = "failed"
 
 
+class NodeFailureKind(StrEnum):
+    """Specific reason category for the most recent failed formalization episode."""
+
+    BACKEND_FAILURE = "backend_failure"
+    LEAN_FAILURE = "lean_failure"
+    FAITHFULNESS_REJECTION = "faithfulness_rejection"
+    PACKAGING_FAILURE = "packaging_failure"
+
+
 class ReviewObligationKind(StrEnum):
     """Deterministic review-check categories."""
 
@@ -94,6 +103,7 @@ class ProofNode(StrictModel):
     remaining_proof_burden: str | None = None
     last_formalization_attempt_count: int | None = Field(default=None, ge=1)
     last_formalization_outcome: NodeFormalizationOutcome | None = None
+    last_formalization_failure_kind: NodeFailureKind | None = None
     last_formalization_note: str | None = None
     formal_artifact: FormalArtifact | None = None
 
