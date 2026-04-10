@@ -77,6 +77,8 @@ def test_build_theorem_planning_request_uses_merged_schema() -> None:
     assert "candidates" in request.prompt
     assert "plan the graph and candidate ranking jointly" in request.prompt.lower()
     assert "single canonical dependency direction" in request.prompt.lower()
+    assert "either select the child as well or do not select the parent yet" in request.prompt
+    assert "direct blocker for the root" in request.prompt
 
 
 def test_extract_proof_graph_validates_schema_and_maps_to_internal_graph() -> None:
@@ -217,6 +219,13 @@ def test_plan_proof_graph_calibrates_small_candidate_set() -> None:
 
     candidates = [node.id for node in artifacts.candidate_graph.nodes if node.status == "candidate_formal"]
     assert candidates == ["n2", "n3"]
+
+
+def test_build_candidate_selection_request_mentions_root_blockers_with_library_support() -> None:
+    request = build_candidate_selection_request(build_graph())
+
+    assert "direct blocker for the root" in request.prompt
+    assert "standard existing library support" in request.prompt
 
 
 def test_plan_proof_graph_normalizes_textual_candidate_priority_labels() -> None:
@@ -455,6 +464,7 @@ def test_build_candidate_selection_request_uses_graph_json() -> None:
     assert request.json_schema["type"] == "object"
     assert '"theorem_title": "Toy theorem"' in request.prompt
     assert "inferential burden" in request.prompt
+    assert "either select the child as well or do not select the parent yet" in request.prompt
 
 
 def test_select_formalization_candidates_updates_matching_nodes() -> None:
@@ -477,6 +487,37 @@ def test_select_formalization_candidates_updates_matching_nodes() -> None:
     assert updated.nodes[0].status == "informal"
     assert updated.nodes[1].status == "candidate_formal"
     assert updated.nodes[1].formalization_priority == 3
+
+
+def test_select_formalization_candidates_can_promote_single_informal_blocker_child() -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "candidates": [
+                    {
+                        "node_id": "n1",
+                        "priority": 1,
+                        "rationale": "Try the parent theorem directly.",
+                    }
+                ]
+            },
+            {
+                "promote_child": True,
+                "recommended_priority": 1,
+                "reason": "This direct child is the obvious blocker and should be formalized first.",
+            },
+        ]
+    )
+
+    updated = select_formalization_candidates(backend=backend, graph=build_graph())
+
+    root = next(node for node in updated.nodes if node.id == "n1")
+    child = next(node for node in updated.nodes if node.id == "n2")
+    assert root.status == "candidate_formal"
+    assert child.status == "candidate_formal"
+    assert child.formalization_priority == 1
+    assert child.formalization_rationale is not None
+    assert "obvious blocker" in child.formalization_rationale.lower()
 
 
 def test_simplify_proof_graph_preserves_protected_candidate_node_ids() -> None:

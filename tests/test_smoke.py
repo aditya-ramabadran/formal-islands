@@ -1313,3 +1313,151 @@ def test_cmd_continue_attempts_requested_nodes_then_auto_continues(
     assert any(entry["event"] == "continuation_request" for entry in history_lines)
     progress_text = (output_dir / "_progress.log").read_text(encoding="utf-8")
     assert "user continuation request: attempting node(s) case_1" in progress_text
+
+
+def test_cmd_continue_carries_attempted_nodes_into_auto_phase(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_dir = tmp_path / "artifacts"
+    output_dir.mkdir(parents=True)
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="If A then B.",
+        root_node_id="root",
+        nodes=[
+            ProofNode(
+                id="root",
+                title="Root",
+                informal_statement="B.",
+                informal_proof_text="Use child.",
+            ),
+            ProofNode(
+                id="child",
+                title="Child",
+                informal_statement="A.",
+                informal_proof_text="Done.",
+                status="formal_verified",
+                formal_artifact={
+                    "lean_theorem_name": "child_thm",
+                    "lean_statement": "theorem child_thm : True",
+                    "lean_code": "theorem child_thm : True := by trivial",
+                    "faithfulness_classification": "full_node",
+                },
+            ),
+        ],
+        edges=[ProofEdge(source_id="root", target_id="child")],
+    )
+    write_graph(graph, output_dir / "03_formalized_graph.json")
+
+    call_metadata: list[tuple[list[str] | None, set[str] | None, int]] = []
+
+    class FakeBatch:
+        def __init__(self, graph_obj, outcomes):
+            self.graph = graph_obj
+            self.outcomes = outcomes
+
+    from formal_islands.models import FormalArtifact, VerificationResult
+
+    def fake_formalize_candidate_nodes(**kwargs):
+        cache_id = id(kwargs.get("parent_promotion_cache"))
+        attempted = kwargs.get("initial_attempted_ids")
+        call_metadata.append((kwargs["node_ids"], set(attempted) if attempted is not None else None, cache_id))
+        incoming = kwargs["graph"]
+        if kwargs["node_ids"] == ["root"]:
+            support_artifact = FormalArtifact(
+                lean_theorem_name="root_core",
+                lean_statement="theorem root_core : True",
+                lean_code="theorem root_core : True := by trivial",
+                faithfulness_classification="concrete_sublemma",
+                verification=VerificationResult(
+                    status="verified",
+                    command="lake env lean test.lean",
+                    attempt_count=1,
+                    artifact_path="test.lean",
+                ),
+            )
+            seeded_graph = incoming.model_copy(
+                update={
+                    "nodes": [
+                        node.model_copy(
+                            update={
+                                "status": "informal",
+                                "formal_artifact": None,
+                                "last_formalization_outcome": "produced_supporting_core",
+                                "last_formalization_attempt_count": 1,
+                                "last_formalization_note": "Produced support core.",
+                            }
+                        )
+                        if node.id == "root"
+                        else node
+                        for node in incoming.nodes
+                    ]
+                    + [
+                        ProofNode(
+                            id="root__formal_core",
+                            title="Certified core",
+                            informal_statement="Core.",
+                            informal_proof_text="Core.",
+                            status="formal_verified",
+                            formal_artifact=support_artifact,
+                        )
+                    ],
+                    "edges": list(incoming.edges)
+                    + [ProofEdge(source_id="root", target_id="root__formal_core", label="formal_sublemma_for")],
+                }
+            )
+            return FakeBatch(
+                seeded_graph,
+                [
+                    FormalizationOutcome(
+                        graph=seeded_graph,
+                        node_id="root",
+                        artifact=support_artifact,
+                    )
+                ],
+            )
+        assert kwargs["node_ids"] is None
+        assert kwargs["initial_attempted_ids"] == {"root"}
+        return FakeBatch(incoming, [])
+
+    def fake_report(args):
+        obligations = derive_review_obligations(load_graph(Path(args.graph)))
+        bundle = export_report_bundle(load_graph(Path(args.graph)), obligations)
+        (output_dir / "04_report_bundle.json").write_text(
+            json.dumps(bundle, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        (output_dir / "04_report.html").write_text("ok", encoding="utf-8")
+        return 0
+
+    monkeypatch.setattr("formal_islands.smoke.build_backend", lambda *args, **kwargs: object())
+    monkeypatch.setattr("formal_islands.smoke.LeanVerifier", lambda *args, **kwargs: object())
+    monkeypatch.setattr("formal_islands.smoke.LeanWorkspace", lambda *args, **kwargs: object())
+    monkeypatch.setattr("formal_islands.smoke.formalize_candidate_nodes", fake_formalize_candidate_nodes)
+    monkeypatch.setattr("formal_islands.smoke.cmd_report", fake_report)
+
+    exit_code = cmd_continue(
+        Namespace(
+            command="continue",
+            backends="gemini/aristotle",
+            backend=None,
+            model=None,
+            planning_backend="gemini",
+            planning_model=None,
+            formalization_backend="aristotle",
+            formalization_model=None,
+            output_dir=str(output_dir),
+            workspace="lean_project",
+            node_ids=["root"],
+            max_attempts=4,
+            formalization_mode="agentic",
+            formalization_timeout_seconds=None,
+        )
+    )
+
+    assert exit_code == 0
+    assert [item[0] for item in call_metadata] == [["root"], None]
+    assert call_metadata[0][1] is None
+    assert call_metadata[1][1] == {"root"}
+    assert call_metadata[0][2] == call_metadata[1][2]

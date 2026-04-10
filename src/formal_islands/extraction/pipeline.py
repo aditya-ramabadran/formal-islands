@@ -34,6 +34,15 @@ class TheoremPlanningArtifacts:
     candidate_graph: ProofGraph
 
 
+@dataclass(frozen=True)
+class CandidateBlockerPromotionAssessment:
+    """Planner judgment about promoting an informal child blocker of a selected candidate."""
+
+    promote_child: bool
+    recommended_priority: int | None
+    reason: str
+
+
 EXTRACTION_SYSTEM_PROMPT = (
     "Convert the user's theorem statement and informal proof into a dependency graph. "
     "Return only JSON that matches the supplied schema. "
@@ -49,6 +58,9 @@ EXTRACTION_SYSTEM_PROMPT = (
 CANDIDATE_SELECTION_SYSTEM_PROMPT = (
     "Read the proof graph and select conservative local formalization candidates. "
     "Prefer a small, high-yield candidate set with technical, self-contained, inferentially important nodes. "
+    "Avoid selecting a parent-style node while leaving one of its obvious direct dependency children untouched and informal, "
+    "unless the parent is genuinely expected to absorb that child internally when formalized. "
+    "Be willing to select self-contained direct blockers for the root when they look likely to formalize cleanly with standard existing library support. "
     "Avoid selecting near-duplicate parent/child claims, generic library facts, or easy but low-value side consequences. "
     "Return only JSON that matches the supplied schema."
 )
@@ -228,6 +240,17 @@ def build_theorem_planning_request(
                 "that are much weaker than the surrounding local argument."
             ),
             (
+                "Avoid selecting a parent-style candidate while leaving one of its obvious direct dependency children "
+                "plainly informal. If the parent really needs that child, either select the child as well or do not "
+                "select the parent yet. Only leave the child informal if the parent is genuinely expected to absorb "
+                "that child internally when formalized."
+            ),
+            (
+                "When a self-contained node is a direct blocker for the root and looks likely to formalize cleanly "
+                "using standard existing library support, prefer marking it candidate_formal rather than leaving it "
+                "informal out of excessive conservatism."
+            ),
+            (
                 "For a tiny proof, prefer a single root node unless a second node for a reusable or conceptually "
                 "distinct lemma clearly improves the graph."
             ),
@@ -365,6 +388,17 @@ def build_candidate_selection_request(graph: ProofGraph) -> StructuredBackendReq
                 "Disfavor side consequences that certify only a small fragment of the surrounding local argument. "
                 "Prefer candidates whose formalization would discharge real inferential burden for the parent proof."
             ),
+            (
+                "Avoid selecting a parent-style candidate while leaving one of its obvious direct dependency children "
+                "plainly informal. If the parent really needs that child, either select the child as well or do not "
+                "select the parent yet. Only leave the child informal if the parent is genuinely expected to absorb "
+                "that child internally when formalized."
+            ),
+            (
+                "When a self-contained node is a direct blocker for the root and looks likely to formalize cleanly "
+                "using standard existing library support, prefer marking it candidate_formal rather than leaving it "
+                "informal out of excessive conservatism."
+            ),
         ]
     )
     return StructuredBackendRequest(
@@ -389,6 +423,102 @@ def select_formalization_candidates(
         f"selected {len([node for node in updated.nodes if node.status == 'candidate_formal'])} candidate nodes"
     )
     return updated
+
+
+def build_candidate_blocker_promotion_request(
+    *,
+    graph: ProofGraph,
+    parent_node_id: str,
+    child_node_id: str,
+) -> StructuredBackendRequest:
+    """Ask whether an informal direct child blocker should also be promoted."""
+
+    node_by_id = {node.id: node for node in graph.nodes}
+    parent = node_by_id[parent_node_id]
+    child = node_by_id[child_node_id]
+    outgoing = _outgoing_edges(graph)
+    sibling_ids = [edge.target_id for edge in outgoing.get(parent_node_id, []) if edge.target_id != child_node_id]
+    siblings = [node_by_id[sibling_id] for sibling_id in sibling_ids]
+
+    prompt = "\n\n".join(
+        [
+            f"Theorem title: {graph.theorem_title}",
+            "Current graph JSON:",
+            json.dumps(graph.model_dump(mode="json"), indent=2),
+            "Selected candidate parent node:",
+            json.dumps(
+                {
+                    "id": parent.id,
+                    "title": parent.title,
+                    "informal_statement": parent.informal_statement,
+                    "informal_proof_text": parent.informal_proof_text,
+                    "status": parent.status,
+                    "formalization_priority": parent.formalization_priority,
+                    "formalization_rationale": parent.formalization_rationale,
+                },
+                indent=2,
+            ),
+            "Single direct informal child under review:",
+            json.dumps(
+                {
+                    "id": child.id,
+                    "title": child.title,
+                    "informal_statement": child.informal_statement,
+                    "informal_proof_text": child.informal_proof_text,
+                    "status": child.status,
+                },
+                indent=2,
+            ),
+            "Other direct children of the selected parent:",
+            json.dumps(
+                [
+                    {
+                        "id": sibling.id,
+                        "title": sibling.title,
+                        "status": sibling.status,
+                        "formalization_priority": sibling.formalization_priority,
+                    }
+                    for sibling in siblings
+                ],
+                indent=2,
+            ),
+            (
+                "A selected candidate currently sits above one obvious direct dependency child that is still informal. "
+                "Should that child also be promoted before formalization starts?"
+            ),
+            (
+                "Promote the child when it looks like the likely blocker or a more appropriate first local target. "
+                "Do not promote it if the selected parent is genuinely expected to absorb this child internally when formalized."
+            ),
+            (
+                "Return JSON with keys promote_child, recommended_priority, and reason. "
+                "recommended_priority must be null or an integer from 1 to 3."
+            ),
+        ]
+    )
+    return StructuredBackendRequest(
+        prompt=prompt,
+        system_prompt=(
+            "You are conservatively reviewing whether an informal blocker child should be promoted alongside a "
+            "selected candidate parent. Return only JSON matching the schema."
+        ),
+        json_schema={
+            "type": "object",
+            "properties": {
+                "promote_child": {"type": "boolean"},
+                "recommended_priority": {
+                    "anyOf": [
+                        {"type": "integer", "minimum": 1, "maximum": 3},
+                        {"type": "null"},
+                    ]
+                },
+                "reason": {"type": "string", "minLength": 1},
+            },
+            "required": ["promote_child", "recommended_priority", "reason"],
+            "additionalProperties": False,
+        },
+        task_name="promote_candidate_blocker_child",
+    )
 
 
 def _build_internal_graph(
@@ -464,6 +594,7 @@ def _apply_candidate_selection_result(
     updated_graph = graph.model_copy(update={"nodes": updated_nodes})
     updated_graph = _promote_high_yield_technical_candidate(updated_graph)
     updated_graph = _calibrate_candidate_set(updated_graph)
+    updated_graph = _promote_blocker_children_for_selected_parents(updated_graph, backend=backend)
     return updated_graph
 
 
@@ -869,6 +1000,76 @@ def _promote_high_yield_technical_candidate(graph: ProofGraph) -> ProofGraph:
         else:
             updated_nodes.append(node)
     return graph.model_copy(update={"nodes": updated_nodes})
+
+
+def _promote_blocker_children_for_selected_parents(
+    graph: ProofGraph,
+    *,
+    backend: StructuredBackend | None,
+) -> ProofGraph:
+    if backend is None:
+        return graph
+
+    node_by_id = {node.id: node for node in graph.nodes}
+    outgoing = _outgoing_edges(graph)
+    updated_graph = graph
+
+    candidate_parents = sorted(
+        [node for node in updated_graph.nodes if node.status == "candidate_formal"],
+        key=lambda node: (node.formalization_priority or 999, node.id),
+    )
+    for parent in candidate_parents:
+        current_node_by_id = {node.id: node for node in updated_graph.nodes}
+        current_parent = current_node_by_id[parent.id]
+        child_ids = [edge.target_id for edge in outgoing.get(parent.id, [])]
+        informal_children = [
+            current_node_by_id[child_id]
+            for child_id in child_ids
+            if current_node_by_id[child_id].status == "informal"
+            and child_id != updated_graph.root_node_id
+        ]
+        if len(informal_children) != 1:
+            continue
+
+        child = informal_children[0]
+        progress(
+            f"candidate blocker sweep: reviewing child {child.id} beneath selected parent {current_parent.id}"
+        )
+        response = run_structured_with_progress(
+            backend,
+            build_candidate_blocker_promotion_request(
+                graph=updated_graph,
+                parent_node_id=current_parent.id,
+                child_node_id=child.id,
+            ),
+        )
+        assessment = CandidateBlockerPromotionAssessment(**response.payload)
+        progress(
+            f"candidate blocker sweep: parent {current_parent.id}, child {child.id} -> "
+            f"promote={assessment.promote_child} priority={assessment.recommended_priority} "
+            f"reason={assessment.reason}"
+        )
+        if not assessment.promote_child:
+            continue
+
+        promoted_priority = assessment.recommended_priority or current_parent.formalization_priority or 1
+        updated_nodes: list[ProofNode] = []
+        for node in updated_graph.nodes:
+            if node.id == child.id:
+                updated_nodes.append(
+                    node.model_copy(
+                        update={
+                            "status": "candidate_formal",
+                            "formalization_priority": promoted_priority,
+                            "formalization_rationale": assessment.reason,
+                        }
+                    )
+                )
+            else:
+                updated_nodes.append(node)
+        updated_graph = updated_graph.model_copy(update={"nodes": updated_nodes})
+
+    return updated_graph
 
 
 def _calibrate_candidate_set(graph: ProofGraph) -> ProofGraph:

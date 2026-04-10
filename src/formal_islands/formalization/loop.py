@@ -19,6 +19,8 @@ from formal_islands.formalization.agentic import (
 from formal_islands.formalization.aristotle import request_aristotle_formalization
 from formal_islands.formalization.lean import LeanVerifier
 from formal_islands.formalization.pipeline import (
+    AbstractionReviewAssessment,
+    AbstractionReviewCategory,
     BlockerPromotionAssessment,
     CombinedFormalizationAssessment,
     FaithfulnessClassification,
@@ -32,6 +34,7 @@ from formal_islands.formalization.pipeline import (
     format_faithfulness_notes,
     request_combined_verification_assessment,
     request_blocker_promotion_assessment,
+    request_abstraction_review_assessment,
     request_concrete_sublemma_summary,
     request_parent_promotion_assessment,
     request_repair_assessment,
@@ -93,11 +96,85 @@ class ParentPromotionEpisode:
 FormalizationUpdateCallback = Callable[[FormalizationOutcome], None]
 DEFAULT_FORMALIZATION_ATTEMPTS = 2
 MAX_TOTAL_FORMALIZATION_ATTEMPTS = 4
+CANONICAL_ABSTRACTION_REVIEW_THRESHOLD = 2
 FormalizationBackend = StructuredBackend | AristotleBackend
 
 
 def _progress(message: str) -> None:
     progress(message)
+
+
+def _count_faithfulness_guard_attempts(attempt_history: list[VerificationResult]) -> int:
+    return sum(1 for result in attempt_history if result.command == "faithfulness_guard")
+
+
+def _should_request_canonical_abstraction_review(
+    *,
+    artifact: FormalArtifact,
+    attempt_history: list[VerificationResult],
+    failure_text: str,
+) -> bool:
+    if artifact.faithfulness_classification != FaithfulnessClassification.OVER_ABSTRACT:
+        return False
+    if _count_faithfulness_guard_attempts(attempt_history) < CANONICAL_ABSTRACTION_REVIEW_THRESHOLD:
+        return False
+    text = "\n".join(
+        part
+        for part in [
+            artifact.faithfulness_notes,
+            artifact.lean_statement,
+            artifact.lean_code,
+            failure_text,
+        ]
+        if part
+    )
+    return "Type*" in text or re.search(r"\bType u\b|\bType v\b", text) is not None
+
+
+def _review_repeated_over_abstract_attempt(
+    *,
+    planning_backend: StructuredBackend | None,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+    attempt_history: list[VerificationResult],
+    failure_text: str,
+) -> AbstractionReviewAssessment | None:
+    if planning_backend is None:
+        return None
+    if not _should_request_canonical_abstraction_review(
+        artifact=artifact,
+        attempt_history=attempt_history,
+        failure_text=failure_text,
+    ):
+        return None
+    assessment = request_abstraction_review_assessment(
+        backend=planning_backend,
+        graph=graph,
+        node_id=node_id,
+        artifact=artifact,
+        failure_text=failure_text,
+    )
+    _progress(
+        f"node {node_id}: repeated abstraction review [{assessment.category.value}] {assessment.note}"
+    )
+    return assessment
+
+
+def _artifact_with_canonical_abstraction_override(
+    artifact: FormalArtifact,
+    *,
+    assessment: AbstractionReviewAssessment,
+) -> FormalArtifact:
+    return artifact.model_copy(
+        update={
+            "faithfulness_classification": FaithfulnessClassification.FULL_NODE,
+            "faithfulness_notes": format_faithfulness_notes(
+                "canonical_abstraction_override",
+                assessment.note,
+            ),
+        }
+    )
 
 
 def formalize_candidate_node(
@@ -173,6 +250,8 @@ def formalize_candidate_nodes(
     max_attempts: int = DEFAULT_FORMALIZATION_ATTEMPTS,
     on_update: FormalizationUpdateCallback | None = None,
     mode: str = "agentic",
+    parent_promotion_cache: ParentPromotionCache | None = None,
+    initial_attempted_ids: set[str] | None = None,
 ) -> MultiFormalizationOutcome:
     """Formalize multiple candidate nodes sequentially, reusing the updated graph each time.
 
@@ -193,14 +272,15 @@ def formalize_candidate_nodes(
             max_attempts=max_attempts,
             on_update=on_update,
             mode=mode,
-            parent_promotion_cache=ParentPromotionCache(decisions={}, lock=RLock()),
+            parent_promotion_cache=parent_promotion_cache or ParentPromotionCache(decisions={}, lock=RLock()),
             enable_parent_promotion=node_ids is None,
+            initial_attempted_ids=initial_attempted_ids,
         )
 
     current_graph = graph
     outcomes: list[FormalizationOutcome] = []
-    attempted_ids: set[str] = set()
-    parent_promotion_cache = ParentPromotionCache(decisions={}, lock=RLock())
+    attempted_ids: set[str] = set(initial_attempted_ids or set())
+    parent_promotion_cache = parent_promotion_cache or ParentPromotionCache(decisions={}, lock=RLock())
     enable_parent_promotion = node_ids is None
 
     if node_ids is not None:
@@ -378,29 +458,51 @@ def _formalize_candidate_node_structured(
                     "attempt_history": attempt_history.copy(),
                 }
             )
-            current_graph = _update_node(current_graph, node_id, "formal_failed", latest_artifact)
-            _emit_update(current_graph, node_id, latest_artifact, on_update)
-            if attempt_number >= attempt_limit:
-                break
-            repair_assessment = _classify_retry_failure(
+            abstraction_review = _review_repeated_over_abstract_attempt(
                 planning_backend=planning_backend,
                 graph=current_graph,
                 node_id=node_id,
                 artifact=latest_artifact,
+                attempt_history=attempt_history,
                 failure_text=str(verification.stderr or verification.stdout),
-                previous_result=verification,
             )
-            _log_retry_diagnosis(node_id=node_id, repair_assessment=repair_assessment)
-            _progress(f"node {node_id}: retrying after faithfulness guard feedback")
-            latest_feedback = _build_repair_feedback(
-                previous_result=verification,
-                repair_assessment=repair_assessment,
-                extra_guidance=(
-                    "The previous theorem was rejected by the faithfulness guard. Stay much closer to the node text "
-                    "and keep the theorem shape locked to the target claim."
-                ),
-            )
-            continue
+            if (
+                abstraction_review is not None
+                and abstraction_review.category == AbstractionReviewCategory.CANONICAL_ENCODING
+            ):
+                latest_artifact = _artifact_with_canonical_abstraction_override(
+                    latest_artifact,
+                    assessment=abstraction_review,
+                )
+                artifact = latest_artifact
+                _progress(
+                    f"node {node_id}: planner accepted the current abstraction as a canonical Lean encoding; "
+                    "proceeding to local Lean verification"
+                )
+            else:
+                current_graph = _update_node(current_graph, node_id, "formal_failed", latest_artifact)
+                _emit_update(current_graph, node_id, latest_artifact, on_update)
+                if attempt_number >= attempt_limit:
+                    break
+                repair_assessment = _classify_retry_failure(
+                    planning_backend=planning_backend,
+                    graph=current_graph,
+                    node_id=node_id,
+                    artifact=latest_artifact,
+                    failure_text=str(verification.stderr or verification.stdout),
+                    previous_result=verification,
+                )
+                _log_retry_diagnosis(node_id=node_id, repair_assessment=repair_assessment)
+                _progress(f"node {node_id}: retrying after faithfulness guard feedback")
+                latest_feedback = _build_repair_feedback(
+                    previous_result=verification,
+                    repair_assessment=repair_assessment,
+                    extra_guidance=(
+                        "The previous theorem was rejected by the faithfulness guard. Stay much closer to the node text "
+                        "and keep the theorem shape locked to the target claim."
+                    ),
+                )
+                continue
 
         verification = verifier.verify_code(
             lean_code=artifact.lean_code,
@@ -568,38 +670,60 @@ def _formalize_candidate_node_aristotle(
                     "attempt_history": attempt_history.copy(),
                 }
             )
-            current_graph = _update_node(current_graph, node_id, "formal_failed", latest_artifact)
-            _emit_update(current_graph, node_id, latest_artifact, on_update)
-            if attempt_number >= attempt_limit:
-                break
-            previous_lean_code = scratch_path.read_text(encoding="utf-8") if scratch_path.exists() else None
-            repair_assessment = _classify_retry_failure(
+            abstraction_review = _review_repeated_over_abstract_attempt(
                 planning_backend=planning_backend,
                 graph=current_graph,
                 node_id=node_id,
                 artifact=latest_artifact,
+                attempt_history=attempt_history,
                 failure_text=str(verification.stderr or verification.stdout),
-                previous_result=verification,
             )
-            _log_retry_diagnosis(node_id=node_id, repair_assessment=repair_assessment)
-            _progress(f"node {node_id}: retrying after faithfulness guard feedback")
-            faithfulness_feedback = "\n\n".join(
-                [
-                    _build_aristotle_faithfulness_feedback(
-                        previous_result=verification,
-                        repair_assessment=repair_assessment,
-                    ),
-                    _build_repair_feedback(
-                        previous_result=verification,
-                        repair_assessment=repair_assessment,
-                        extra_guidance=(
-                            "The previous Aristotle submission was rejected by the faithfulness guard. "
-                            "Keep the theorem much closer to the node text and preserve the theorem shape."
+            if (
+                abstraction_review is not None
+                and abstraction_review.category == AbstractionReviewCategory.CANONICAL_ENCODING
+            ):
+                latest_artifact = _artifact_with_canonical_abstraction_override(
+                    latest_artifact,
+                    assessment=abstraction_review,
+                )
+                artifact = latest_artifact
+                _progress(
+                    f"node {node_id}: planner accepted the current abstraction as a canonical Lean encoding; "
+                    "proceeding to local Lean verification"
+                )
+            else:
+                current_graph = _update_node(current_graph, node_id, "formal_failed", latest_artifact)
+                _emit_update(current_graph, node_id, latest_artifact, on_update)
+                if attempt_number >= attempt_limit:
+                    break
+                previous_lean_code = scratch_path.read_text(encoding="utf-8") if scratch_path.exists() else None
+                repair_assessment = _classify_retry_failure(
+                    planning_backend=planning_backend,
+                    graph=current_graph,
+                    node_id=node_id,
+                    artifact=latest_artifact,
+                    failure_text=str(verification.stderr or verification.stdout),
+                    previous_result=verification,
+                )
+                _log_retry_diagnosis(node_id=node_id, repair_assessment=repair_assessment)
+                _progress(f"node {node_id}: retrying after faithfulness guard feedback")
+                faithfulness_feedback = "\n\n".join(
+                    [
+                        _build_aristotle_faithfulness_feedback(
+                            previous_result=verification,
+                            repair_assessment=repair_assessment,
                         ),
-                    ),
-                ]
-            )
-            continue
+                        _build_repair_feedback(
+                            previous_result=verification,
+                            repair_assessment=repair_assessment,
+                            extra_guidance=(
+                                "The previous Aristotle submission was rejected by the faithfulness guard. "
+                                "Keep the theorem much closer to the node text and preserve the theorem shape."
+                            ),
+                        ),
+                    ]
+                )
+                continue
 
         _progress(f"node {node_id}: running local Lean verification for Aristotle output")
         verification = verifier.verify_existing_file(file_path=scratch_path, attempt_number=attempt_number)
@@ -838,35 +962,56 @@ def _formalize_candidate_node_agentic(
                     "attempt_history": attempt_history.copy(),
                 }
             )
-            current_graph = _update_node(current_graph, node_id, "formal_failed", artifact)
-            _emit_update(current_graph, node_id, artifact, on_update)
-            if attempt_number >= attempt_limit:
-                _progress(f"node {node_id}: formalization failed after faithfulness guard")
-                current_graph = _maybe_refine_failed_node(
-                    planning_backend=planning_backend,
-                    graph=current_graph,
-                    node_id=node_id,
-                    artifact=artifact,
-                    verification=verification,
-                    on_update=on_update,
-                )
-                return FormalizationOutcome(graph=current_graph, node_id=node_id, artifact=artifact)
-            _progress(f"node {node_id}: retrying after faithfulness guard feedback")
-            repair_assessment = _classify_retry_failure(
+            abstraction_review = _review_repeated_over_abstract_attempt(
                 planning_backend=planning_backend,
                 graph=current_graph,
                 node_id=node_id,
                 artifact=artifact,
+                attempt_history=attempt_history,
                 failure_text=str(verification.stderr or verification.stdout),
-                previous_result=verification,
             )
-            _log_retry_diagnosis(node_id=node_id, repair_assessment=repair_assessment)
-            previous_lean_code = scratch_path.read_text(encoding="utf-8") if scratch_path.exists() else None
-            faithfulness_feedback = _build_agentic_faithfulness_feedback(
-                previous_result=verification,
-                repair_assessment=repair_assessment,
-            )
-            continue
+            if (
+                abstraction_review is not None
+                and abstraction_review.category == AbstractionReviewCategory.CANONICAL_ENCODING
+            ):
+                artifact = _artifact_with_canonical_abstraction_override(
+                    artifact,
+                    assessment=abstraction_review,
+                )
+                _progress(
+                    f"node {node_id}: planner accepted the current abstraction as a canonical Lean encoding; "
+                    "proceeding to local Lean verification"
+                )
+            else:
+                current_graph = _update_node(current_graph, node_id, "formal_failed", artifact)
+                _emit_update(current_graph, node_id, artifact, on_update)
+                if attempt_number >= attempt_limit:
+                    _progress(f"node {node_id}: formalization failed after faithfulness guard")
+                    current_graph = _maybe_refine_failed_node(
+                        planning_backend=planning_backend,
+                        graph=current_graph,
+                        node_id=node_id,
+                        artifact=artifact,
+                        verification=verification,
+                        on_update=on_update,
+                    )
+                    return FormalizationOutcome(graph=current_graph, node_id=node_id, artifact=artifact)
+                _progress(f"node {node_id}: retrying after faithfulness guard feedback")
+                repair_assessment = _classify_retry_failure(
+                    planning_backend=planning_backend,
+                    graph=current_graph,
+                    node_id=node_id,
+                    artifact=artifact,
+                    failure_text=str(verification.stderr or verification.stdout),
+                    previous_result=verification,
+                )
+                _log_retry_diagnosis(node_id=node_id, repair_assessment=repair_assessment)
+                previous_lean_code = scratch_path.read_text(encoding="utf-8") if scratch_path.exists() else None
+                faithfulness_feedback = _build_agentic_faithfulness_feedback(
+                    previous_result=verification,
+                    repair_assessment=repair_assessment,
+                )
+                continue
 
         verification = verifier.verify_existing_file(file_path=scratch_path, attempt_number=attempt_number)
         attempt_history.append(verification)
@@ -2650,10 +2795,11 @@ def _formalize_candidate_nodes_aristotle_parallel(
     mode: str,
     parent_promotion_cache: ParentPromotionCache | None,
     enable_parent_promotion: bool,
+    initial_attempted_ids: set[str] | None = None,
 ) -> MultiFormalizationOutcome:
     current_graph = graph
     outcomes: list[FormalizationOutcome] = []
-    attempted_ids: set[str] = set()
+    attempted_ids: set[str] = set(initial_attempted_ids or set())
     wave_index = 0
 
     while True:

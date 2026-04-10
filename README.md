@@ -52,7 +52,7 @@ Live reports on [the website](https://aditya-ramabadran.github.io/formal-islands
 | [Young's Convolution Inequality](https://aditya-ramabadran.github.io/formal-islands/reports/young_convolution.html) | 3 of 4 nodes formally verified |
 | [Two-Point Log-Sobolev Inequality](https://aditya-ramabadran.github.io/formal-islands/reports/two_point_log_sobolev.html) | Scalar inequality + G(u) ≥ 0 core lemma |
 | [Heat Equation Uniqueness](https://aditya-ramabadran.github.io/formal-islands/reports/heat_uniqueness.html) | Energy dissipation lemma + uniqueness core |
-| [Discrete Loomis-Whitney Inequality](https://aditya-ramabadran.github.io/formal-islands/reports/discrete_loomis_whitney.html) | Multilinear Hölder step + root theorem |
+| [Colorful Carathéodory Theorem](https://aditya-ramabadran.github.io/formal-islands/reports/colorful_caratheodory.html) | Active-vertices lemma + distance-improvement lemma + root theorem |
 | [Gershgorin Circle Theorem](https://aditya-ramabadran.github.io/formal-islands/reports/gershgorin_circle.html) | Eigenvalue bound + root theorem |
 
 ## Quick Start
@@ -81,13 +81,15 @@ The workspace path and output directory are inferred automatically.
 ## How It Works
 
 1. **Plan**: a planning backend reads the informal proof and builds a small proof graph (4-8 nodes)
-2. **Select**: candidate nodes for formalization are ranked by how concrete and self-contained they are
+2. **Select**: candidate nodes for formalization are ranked by how concrete and self-contained they are; the planner is discouraged from selecting a parent while leaving an obvious direct blocker child informal, and a small blocker sweep can promote that child when appropriate
 3. **Formalize**: an agentic backend worker attempts to write and verify a Lean theorem for each candidate node
 4. **Report**: the pipeline produces an HTML report with full verification logs, a review checklist, and a "remaining proof burden" summary for each informal node with already-verified children
 
 The planner and formalizer can be the same backend or different ones. In practice, using a strong reasoning model for planning and Aristotle for formalization gives the best results.
 
 After any verification, the result is semantically reviewed: the system checks whether the formal statement actually matches the intended informal claim, and classifies it as a full-node match, a faithful supporting core, or a narrower result. This matters because a proof that compiles in Lean is not automatically a proof of the right thing.
+
+The faithfulness heuristics are intentionally conservative, but repeated `Type*`-style abstraction rejections can now trigger a second-stage planner review to distinguish true semantic drift from a canonical Lean encoding of the same local claim.
 
 When all direct children of an informal parent node are verified, the parent can be promoted into the candidate set for a follow-up assembly attempt, so successful local cores can bootstrap further verification automatically.
 

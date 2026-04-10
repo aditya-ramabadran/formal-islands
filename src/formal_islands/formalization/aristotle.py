@@ -33,7 +33,6 @@ class VerifiedChildSupportFile:
     theorem_name: str
     lean_statement: str
     relative_path: Path
-    import_path: str
     source_artifact_path: str | None
     lean_code: str
 
@@ -237,18 +236,19 @@ def build_aristotle_formalization_prompt(
         json.dumps(child_summaries, indent=2) if child_summaries else "[]",
         format_verified_direct_child_context(direct_child_context),
         (
-            "These verified children are already available. The theorem should prove only the remaining "
-            "parent-level delta, not a restatement of any verified child or a close corollary that duplicates it."
+            "Proof-goal instruction: the verified direct children already cover part of this node's burden. "
+            "Your main theorem should certify only the remaining parent-level delta / remaining parent-level step, not restate a verified child "
+            "theorem or a trivial corollary that merely duplicates child coverage."
         ),
         (
-            "If you use the verified child results, treat them as helper lemmas for the current node. "
-            "Your main theorem must be a new theorem for the current parent target, not just a resubmission "
-            "of one child theorem under a new filename."
+            "If you use the verified child results, use them only as helper lemmas while proving a new theorem "
+            "for the current node. The designated main theorem must be a genuinely new parent-level theorem for "
+            "this target, not just a resubmission of one child theorem under a new filename."
         ),
         (
-            "Prefer a self-contained final scratch file. Treat the materialized support files as reference material "
-            "to inspect, then copy or adapt the minimal helper lemmas you need into the scratch file itself. "
-            "Do not make the final artifact depend on cross-file generated-support imports."
+            "Packaging instruction: prefer a self-contained final scratch file. Treat the materialized support files "
+            "as reference material to inspect, then copy or adapt only the minimal helper lemmas you need into the "
+            "scratch file itself. Do not make the final artifact depend on cross-file generated-support imports."
         ),
         (
             "Dependency direction note: the verified child lemmas are outgoing dependencies of the target node. "
@@ -307,7 +307,6 @@ def build_aristotle_formalization_prompt(
                             "theorem_name": support.theorem_name,
                             "lean_statement": support.lean_statement,
                             "snapshot_file": str(support.relative_path),
-                            "import_path": support.import_path,
                             "source_artifact_path": support.source_artifact_path,
                         }
                         for support in verified_child_support_files
@@ -321,7 +320,8 @@ def build_aristotle_formalization_prompt(
                 ),
                 (
                     "Prefer copying or adapting the minimal helper material you need into the scratch file so that the "
-                    "final certified artifact stays self-contained. Do not import a generated support file in the final "
+                    "final certified artifact stays self-contained. The staged support files are not importable modules; "
+                    "do not try to import them. Do not import a generated support file in the final "
                     "artifact; copy or adapt what you need into the scratch file."
                 ),
             ]
@@ -449,8 +449,7 @@ def _render_aristotle_scratch_header(
                     f"- child id: {support.child_id}",
                     f"  theorem: {support.theorem_name}",
                     f"  statement: {support.lean_statement}",
-                    f"  snapshot file: {support.relative_path}",
-                    f"  import path: {support.import_path}",
+                    f"  reference file: {support.relative_path}",
                 ]
             )
     if _is_promoted_parent_attempt(node) and verified_child_support_files:
@@ -479,8 +478,9 @@ def _build_verified_child_support_files(
         if child.status != "formal_verified" or artifact is None:
             continue
         module_stem = _sanitize_file_stem(child.id)
-        relative_path = Path("FormalIslands") / "Generated" / "Support" / f"{module_stem}.lean"
-        import_path = ".".join(relative_path.with_suffix("").parts)
+        relative_path = (
+            Path("FormalIslands") / "Generated" / "SupportReference" / f"{module_stem}.lean.txt"
+        )
         support_files.append(
             VerifiedChildSupportFile(
                 child_id=child.id,
@@ -488,7 +488,6 @@ def _build_verified_child_support_files(
                 theorem_name=artifact.lean_theorem_name,
                 lean_statement=artifact.lean_statement,
                 relative_path=relative_path,
-                import_path=import_path,
                 source_artifact_path=artifact.verification.artifact_path,
                 lean_code=artifact.lean_code,
             )
@@ -505,10 +504,25 @@ def _materialize_verified_child_support_files(
         destination = snapshot_root / support.relative_path
         destination.parent.mkdir(parents=True, exist_ok=True)
         source_path = Path(support.source_artifact_path).expanduser().resolve() if support.source_artifact_path else None
-        if source_path is not None and source_path.is_file():
-            shutil.copy2(source_path, destination)
-        else:
-            destination.write_text(support.lean_code, encoding="utf-8")
+        source_text = (
+            source_path.read_text(encoding="utf-8")
+            if source_path is not None and source_path.is_file()
+            else support.lean_code
+        )
+        reference_text = "\n".join(
+            [
+                f"-- Verified child id: {support.child_id}",
+                f"-- Theorem: {support.theorem_name}",
+                "-- Statement:",
+                support.lean_statement,
+                "",
+                "-- Full source artifact below. This file is reference material only; copy or adapt",
+                "-- what you need into the active scratch file instead of importing it.",
+                "",
+                source_text,
+            ]
+        )
+        destination.write_text(reference_text, encoding="utf-8")
 
 
 def _is_promoted_parent_attempt(node) -> bool:

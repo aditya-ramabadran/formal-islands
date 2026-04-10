@@ -10,6 +10,7 @@ import shlex
 import sys
 from pathlib import Path
 from typing import Any
+from threading import RLock
 
 from formal_islands.backends import (
     BackendError,
@@ -794,6 +795,8 @@ def cmd_continue(args: argparse.Namespace) -> int:
             verifier = LeanVerifier(workspace=LeanWorkspace(root=Path(workspace)))
             summary_path = output_dir / "03_formalization_summaries.json"
             latest_graph = continued_graph
+            from formal_islands.formalization.loop import ParentPromotionCache
+            shared_parent_promotion_cache = ParentPromotionCache(decisions={}, lock=RLock())
 
             def write_progress(outcome) -> None:
                 nonlocal latest_graph
@@ -817,9 +820,13 @@ def cmd_continue(args: argparse.Namespace) -> int:
                 max_attempts=args.max_attempts,
                 on_update=write_progress,
                 mode=args.formalization_mode,
+                parent_promotion_cache=shared_parent_promotion_cache,
             )
             current_graph = seeded_outcomes.graph
             outcomes.extend(seeded_outcomes.outcomes)
+            attempted_in_continuation = {
+                outcome.node_id for outcome in seeded_outcomes.outcomes
+            }
 
             auto_outcomes = formalize_candidate_nodes(
                 backend=backend,
@@ -830,6 +837,8 @@ def cmd_continue(args: argparse.Namespace) -> int:
                 max_attempts=args.max_attempts,
                 on_update=write_progress,
                 mode=args.formalization_mode,
+                parent_promotion_cache=shared_parent_promotion_cache,
+                initial_attempted_ids=attempted_in_continuation,
             )
             current_graph = auto_outcomes.graph
             outcomes.extend(auto_outcomes.outcomes)

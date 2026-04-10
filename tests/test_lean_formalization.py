@@ -9,6 +9,8 @@ import pytest
 
 from formal_islands.backends import AristotleBackend, BackendInvocationError, MockBackend
 from formal_islands.formalization.agentic import (
+    _extract_named_lean_theorem,
+    _extract_primary_lean_theorem,
     agentic_worker_plan_path,
     build_agentic_formalization_request,
     recover_agentic_artifact_from_scratch_file,
@@ -162,6 +164,54 @@ def test_lean_workspace_prepares_agentic_worker_file(tmp_path: Path) -> None:
     assert "agentic formalization worker" in scratch_path.read_text(encoding="utf-8")
 
 
+def test_extract_named_lean_theorem_handles_multiline_let_binder_in_statement() -> None:
+    lean_code = """
+theorem upper_inequality_aristotle
+    (A : Matrix (Fin (n + 1)) (Fin (n + 1)) ℝ) (hA : A.IsHermitian)
+    (j : Fin n) :
+    let hB := principalSub_isHermitian hA
+    eigDecr hB j ≤ eigDecr hA (Fin.castSucc j) := by
+  intro hB
+  trivial
+"""
+
+    theorem_name, theorem_statement = _extract_named_lean_theorem(
+        lean_code,
+        "upper_inequality_aristotle",
+    )
+
+    assert theorem_name == "upper_inequality_aristotle"
+    assert theorem_statement is not None
+    assert "let hB := principalSub_isHermitian hA" in theorem_statement
+    assert "eigDecr hB j ≤ eigDecr hA (Fin.castSucc j)" in theorem_statement
+    assert theorem_statement.strip().endswith("eigDecr hB j ≤ eigDecr hA (Fin.castSucc j)")
+
+
+def test_extract_primary_lean_theorem_handles_internal_let_assignment_before_final_by() -> None:
+    lean_code = """
+lemma helper_identity (x : ℝ) : x = x := by
+  rfl
+
+theorem lower_inequality_aristotle
+    (A : Matrix (Fin (n + 1)) (Fin (n + 1)) ℝ) (hA : A.IsHermitian)
+    (j : Fin n) :
+    let hB := principalSub_isHermitian hA
+    eigDecr hA (Fin.succ j) ≤ eigDecr hB j := by
+  intro hB
+  trivial
+"""
+
+    theorem_name, theorem_statement = _extract_primary_lean_theorem(
+        lean_code,
+        preferred_name="lower_inequality_aristotle",
+    )
+
+    assert theorem_name == "lower_inequality_aristotle"
+    assert theorem_statement is not None
+    assert "let hB := principalSub_isHermitian hA" in theorem_statement
+    assert "eigDecr hA (Fin.succ j) ≤ eigDecr hB j" in theorem_statement
+
+
 def test_lean_verifier_defaults_to_240_second_timeout(tmp_path: Path) -> None:
     workspace = create_workspace(tmp_path)
     verifier = LeanVerifier(workspace=workspace)
@@ -313,11 +363,12 @@ def test_build_aristotle_formalization_prompt_for_promoted_parent_mentions_new_p
     assert "this is a promoted parent-assembly attempt" in lowered
     assert "must still be `n0_aristotle`" in prompt
     assert "not just a resubmission of one child theorem" in lowered
-    assert "FormalIslands/Generated/Support" in prompt
+    assert "FormalIslands/Generated/SupportReference" in prompt
     assert "prefer copying or adapting the minimal helper material" in lowered
     assert "reference material" in lowered
     assert "do not rely on `formalislands.generated.support.*` imports in the final artifact" in lowered
     assert "do not import a generated support file in the final artifact" in lowered
+    assert "not importable modules" in lowered
 
 
 def test_materialize_verified_child_support_files_copies_existing_artifacts(tmp_path: Path) -> None:
@@ -352,7 +403,11 @@ def test_materialize_verified_child_support_files_copies_existing_artifacts(tmp_
 
     first_support = next(support for support in support_files if support.child_id == "n1")
     copied = snapshot_root / first_support.relative_path
-    assert copied.read_text(encoding="utf-8") == artifact_path.read_text(encoding="utf-8")
+    copied_text = copied.read_text(encoding="utf-8")
+    assert first_support.relative_path.suffixes[-2:] == [".lean", ".txt"]
+    assert "-- Full source artifact below." in copied_text
+    assert "reference material only" in copied_text
+    assert artifact_path.read_text(encoding="utf-8") in copied_text
 
 
 def test_parent_promotion_assessment_is_cached_and_promotes_parent(tmp_path: Path) -> None:
@@ -2052,6 +2107,72 @@ def test_formalize_candidate_node_repairs_faithfulness_drift_once(tmp_path: Path
     assert "faithfulness guard" in backend.requests[1].prompt.lower()
     assert "theorem too_abstract" in backend.requests[1].prompt
     assert "lock the theorem shape" in backend.requests[1].prompt.lower()
+
+
+def test_formalize_candidate_node_uses_planner_abstraction_review_after_repeated_type_rejections(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "lean_theorem_name": "too_abstract_1",
+                "lean_statement": "theorem too_abstract_1 {A : Type*} [NormedRing A] : True",
+                "lean_code": "import Mathlib\n\ntheorem too_abstract_1 {A : Type*} [NormedRing A] : True := by\n  trivial\n",
+            },
+            {
+                "lean_theorem_name": "too_abstract_2",
+                "lean_statement": "theorem too_abstract_2 {A : Type*} [NormedRing A] : True",
+                "lean_code": "import Mathlib\n\ntheorem too_abstract_2 {A : Type*} [NormedRing A] : True := by\n  trivial\n",
+            },
+        ]
+    )
+    planning_backend = MockBackend(
+        queued_payloads=[
+            {
+                "repair_category": "setting_fix",
+                "repair_note": "Stay closer to the target node and avoid unnecessary abstraction.",
+            },
+            {
+                "abstraction_category": "canonical_encoding",
+                "abstraction_note": (
+                    "A type-parametric Banach-algebra theorem is the canonical Lean encoding of the same local claim."
+                ),
+            }
+        ]
+    )
+
+    outcome = formalize_candidate_node(
+        backend=backend,
+        planning_backend=planning_backend,
+        verifier=verifier,
+        graph=build_graph(),
+        node_id="n2",
+        max_attempts=2,
+        enable_parent_promotion=False,
+    )
+
+    updated_node = next(node for node in outcome.graph.nodes if node.id == "n2")
+    assert updated_node.status == "formal_verified"
+    assert updated_node.formal_artifact is not None
+    assert len(updated_node.formal_artifact.attempt_history) == 3
+    assert planning_backend.requests
+    assert any(
+        request.task_name == "assess_abstraction_review" for request in planning_backend.requests
+    )
 
 
 def test_formalize_candidate_node_uses_at_most_three_repair_retries(tmp_path: Path) -> None:

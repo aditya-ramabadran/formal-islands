@@ -209,6 +209,22 @@ class RepairAssessment:
     note: str
 
 
+class AbstractionReviewCategory(StrEnum):
+    """Whether a repeated abstraction looks canonical or like real drift."""
+
+    CANONICAL_ENCODING = "canonical_encoding"
+    REAL_DRIFT = "real_drift"
+    UNCERTAIN = "uncertain"
+
+
+@dataclass(frozen=True)
+class AbstractionReviewAssessment:
+    """Planning-backend judgment about a repeated over-abstract theorem encoding."""
+
+    category: AbstractionReviewCategory
+    note: str
+
+
 @dataclass(frozen=True)
 class CoverageExpansionAssessment:
     """Planning-backend judgment about whether a concrete sublemma still needs expansion."""
@@ -1260,6 +1276,106 @@ def request_repair_assessment(
     return RepairAssessment(
         category=RepairCategory(str(payload["repair_category"]).strip()),
         note=str(payload["repair_note"]).strip(),
+    )
+
+
+def build_abstraction_review_request(
+    *,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+    failure_text: str,
+) -> StructuredBackendRequest:
+    node = next(node for node in graph.nodes if node.id == node_id)
+    local_context = build_local_proof_context(graph=graph, node_id=node_id)
+    prompt = "\n\n".join(
+        [
+            (
+                "Target node:\n"
+                f"- id: {node.id}\n"
+                f"- title: {node.title}\n"
+                f"- informal statement: {node.informal_statement}\n"
+                f"- informal proof text: {node.informal_proof_text}"
+            ),
+            (
+                "Current Lean theorem under review:\n"
+                f"- theorem name: {artifact.lean_theorem_name}\n"
+                f"- Lean statement: {artifact.lean_statement}"
+            ),
+            "Local proof neighborhood:",
+            format_local_proof_context(local_context),
+            (
+                "Prior heuristic faithfulness assessment:\n"
+                f"- classification: {artifact.faithfulness_classification}\n"
+                f"- notes: {artifact.faithfulness_notes or '(none)'}"
+            ),
+            (
+                "Failure text:\n"
+                f"{failure_text}\n\n"
+                "The heuristic faithfulness guard has repeatedly rejected this theorem for over-abstraction, "
+                "especially because it introduces `Type*`-style parameters or a more generic ambient setting."
+            ),
+            (
+                "Answer the narrow question: is this abstraction actually the canonical Lean/Mathlib encoding of "
+                "the same local claim, or is it a real drift away from the intended benchmark node?"
+            ),
+            (
+                "Choose exactly one category:\n"
+                "- canonical_encoding: the type-parametric or abstract-looking statement is still the right theorem "
+                "family and is how this local claim should naturally be represented in Lean.\n"
+                "- real_drift: the theorem has genuinely shifted away from the intended node into a broader or "
+                "different mathematical claim.\n"
+                "- uncertain: the theorem is borderline and should not automatically bypass the heuristic guard."
+            ),
+            (
+                "Be conservative. Do not choose canonical_encoding merely because Lean often uses structures over "
+                "`Type*`; only choose it when the theorem still matches the node's mathematical burden and local role."
+            ),
+            "Return JSON with keys abstraction_category and abstraction_note.",
+        ]
+    )
+    return StructuredBackendRequest(
+        prompt=prompt,
+        system_prompt=(
+            "You are a conservative reviewer of Lean theorem encodings. Return only JSON matching the schema."
+        ),
+        json_schema={
+            "type": "object",
+            "properties": {
+                "abstraction_category": {
+                    "type": "string",
+                    "enum": [category.value for category in AbstractionReviewCategory],
+                },
+                "abstraction_note": {"type": "string", "minLength": 1},
+            },
+            "required": ["abstraction_category", "abstraction_note"],
+            "additionalProperties": False,
+        },
+        task_name="assess_abstraction_review",
+    )
+
+
+def request_abstraction_review_assessment(
+    *,
+    backend: StructuredBackend,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+    failure_text: str,
+) -> AbstractionReviewAssessment:
+    response = run_structured_with_progress(
+        backend,
+        build_abstraction_review_request(
+            graph=graph,
+            node_id=node_id,
+            artifact=artifact,
+            failure_text=failure_text,
+        ),
+    )
+    payload = response.payload
+    return AbstractionReviewAssessment(
+        category=AbstractionReviewCategory(str(payload["abstraction_category"]).strip()),
+        note=str(payload["abstraction_note"]).strip(),
     )
 
 

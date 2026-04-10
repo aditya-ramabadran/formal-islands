@@ -449,15 +449,144 @@ def _select_primary_lean_theorem(
 
 
 def _extract_lean_declarations(lean_code: str) -> list[tuple[str, str, str, int]]:
-    pattern = re.compile(
-        r"(?ms)^\s*(theorem|lemma|example)\s+([A-Za-z0-9_'.]+)(.*?)(:=\s*by|:=|where\b)"
-    )
+    pattern = re.compile(r"(?m)^\s*(theorem|lemma|example)\s+([A-Za-z0-9_'.]+)\b")
     declarations: list[tuple[str, str, str, int]] = []
-    for ordinal, match in enumerate(pattern.finditer(lean_code)):
+    matches = list(pattern.finditer(lean_code))
+    for ordinal, match in enumerate(matches):
         keyword = match.group(1)
         theorem_name = match.group(2)
-        signature_tail = match.group(3).rstrip()
+        declaration_end = matches[ordinal + 1].start() if ordinal + 1 < len(matches) else len(lean_code)
+        declaration_chunk = lean_code[match.end() : declaration_end]
+        statement_end = _find_lean_declaration_statement_end(declaration_chunk)
+        if statement_end is None:
+            continue
+        signature_tail = declaration_chunk[:statement_end].rstrip()
         statement = f"{keyword} {theorem_name}{signature_tail}".strip()
         statement = re.sub(r"\s+\n", "\n", statement)
         declarations.append((keyword, theorem_name, statement, ordinal))
     return declarations
+
+
+def _find_lean_declaration_statement_end(declaration_chunk: str) -> int | None:
+    """Return the end offset of a theorem/lemma statement before its body delimiter.
+
+    This intentionally handles multiline theorem types that contain internal
+    `let ... := ...` binders. We prefer the first top-level `:= by` delimiter,
+    falling back to a later top-level `:=` or `where` only when needed.
+    """
+
+    paren_depth = 0
+    brace_depth = 0
+    bracket_depth = 0
+    block_comment_depth = 0
+    in_line_comment = False
+    in_string = False
+    escape_next = False
+
+    first_top_level_colon_eq: int | None = None
+    last_top_level_colon_eq: int | None = None
+    last_top_level_where: int | None = None
+
+    i = 0
+    length = len(declaration_chunk)
+    while i < length:
+        ch = declaration_chunk[i]
+        nxt = declaration_chunk[i + 1] if i + 1 < length else ""
+
+        if in_line_comment:
+            if ch == "\n":
+                in_line_comment = False
+            i += 1
+            continue
+
+        if block_comment_depth > 0:
+            if ch == "/" and nxt == "-":
+                block_comment_depth += 1
+                i += 2
+                continue
+            if ch == "-" and nxt == "/":
+                block_comment_depth -= 1
+                i += 2
+                continue
+            i += 1
+            continue
+
+        if in_string:
+            if escape_next:
+                escape_next = False
+            elif ch == "\\":
+                escape_next = True
+            elif ch == '"':
+                in_string = False
+            i += 1
+            continue
+
+        if ch == "-" and nxt == "-":
+            in_line_comment = True
+            i += 2
+            continue
+        if ch == "/" and nxt == "-":
+            block_comment_depth += 1
+            i += 2
+            continue
+        if ch == '"':
+            in_string = True
+            i += 1
+            continue
+
+        if ch == "(":
+            paren_depth += 1
+            i += 1
+            continue
+        if ch == ")" and paren_depth > 0:
+            paren_depth -= 1
+            i += 1
+            continue
+        if ch == "{":
+            brace_depth += 1
+            i += 1
+            continue
+        if ch == "}" and brace_depth > 0:
+            brace_depth -= 1
+            i += 1
+            continue
+        if ch == "[":
+            bracket_depth += 1
+            i += 1
+            continue
+        if ch == "]" and bracket_depth > 0:
+            bracket_depth -= 1
+            i += 1
+            continue
+
+        if paren_depth == 0 and brace_depth == 0 and bracket_depth == 0:
+            if ch == ":" and nxt == "=":
+                if first_top_level_colon_eq is None:
+                    first_top_level_colon_eq = i
+                last_top_level_colon_eq = i
+                j = i + 2
+                while j < length and declaration_chunk[j].isspace():
+                    j += 1
+                if declaration_chunk.startswith("by", j) and (
+                    j + 2 == length or not declaration_chunk[j + 2].isalnum() and declaration_chunk[j + 2] != "_"
+                ):
+                    return i
+                i += 2
+                continue
+            if declaration_chunk.startswith("where", i) and (
+                i == 0 or not (declaration_chunk[i - 1].isalnum() or declaration_chunk[i - 1] == "_")
+            ) and (
+                i + 5 == length
+                or not (declaration_chunk[i + 5].isalnum() or declaration_chunk[i + 5] == "_")
+            ):
+                last_top_level_where = i
+                i += 5
+                continue
+
+        i += 1
+
+    if last_top_level_colon_eq is not None:
+        return last_top_level_colon_eq
+    if last_top_level_where is not None:
+        return last_top_level_where
+    return first_top_level_colon_eq

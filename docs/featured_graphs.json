@@ -16,9 +16,9 @@
       "graph_json": "artifacts/manual-testing/run11-two-point-log-sobolev-gemini-aristotle-6/03_formalized_graph.json"
     },
     {
-      "id": "discrete_loomis_whitney",
-      "report_url": "reports/discrete_loomis_whitney.html",
-      "graph_json": "artifacts/manual-testing/run20-discrete-loomis-whitney-gemini-aristotle/03_formalized_graph.json"
+      "id": "colorful_caratheodory",
+      "report_url": "reports/colorful_caratheodory.html",
+      "graph_json": "artifacts/manual-testing/run21-colorful-caratheodory-gemini-aristotle/03_formalized_graph.json"
     },
     {
       "id": "gershgorin_circle",

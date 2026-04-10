@@ -26,6 +26,7 @@ from formal_islands.formalization.pipeline import (
     request_coverage_expansion_assessment,
     request_node_formalization,
     request_parent_promotion_assessment,
+    request_abstraction_review_assessment,
     request_repair_assessment,
 )
 from formal_islands.models import FormalArtifact, ProofEdge, ProofGraph, ProofNode, VerificationResult
@@ -632,6 +633,37 @@ def test_request_repair_assessment_logs_backend_prompt_to_progress_file(tmp_path
     log_text = progress_log.read_text(encoding="utf-8")
     assert "prompting Mock backend for assess_repair" in log_text
     assert "Mock backend completed for assess_repair" in log_text
+
+
+def test_request_abstraction_review_assessment_returns_category() -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "abstraction_category": "canonical_encoding",
+                "abstraction_note": (
+                    "Using a concrete graph G : SimpleGraph V over a vertex type V is the natural Lean encoding "
+                    "of the same local claim rather than a drift away from it."
+                ),
+            }
+        ]
+    )
+    graph = build_graph()
+    artifact = FormalArtifact(
+        lean_theorem_name="graph_local_claim",
+        lean_statement="theorem graph_local_claim {V : Type*} (G : SimpleGraph V) : True",
+        lean_code="theorem graph_local_claim {V : Type*} (G : SimpleGraph V) : True := by\n  trivial",
+    )
+
+    assessment = request_abstraction_review_assessment(
+        backend=backend,
+        graph=graph,
+        node_id="n2",
+        artifact=artifact,
+        failure_text="Formalization drifted too far from the target node. Avoid introducing arbitrary `Type*` parameters.",
+    )
+
+    assert assessment.category.value == "canonical_encoding"
+    assert "natural Lean encoding" in assessment.note
 
 
 def test_request_concrete_sublemma_summary_returns_generated_text() -> None:
