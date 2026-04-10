@@ -202,6 +202,43 @@ def build_parser() -> argparse.ArgumentParser:
     add_formalization_timeout_arg(formalize_all_parser)
     formalize_all_parser.set_defaults(func=cmd_formalize_all_candidates)
 
+    continue_parser = subparsers.add_parser("continue")
+    add_backend_args(continue_parser)
+    add_output_dir_arg(continue_parser)
+    continue_parser.add_argument(
+        "--workspace",
+        default=None,
+        help="Path to the local Lean workspace. Default: auto-discovered.",
+    )
+    continue_parser.add_argument(
+        "--node",
+        "--node-id",
+        dest="node_ids",
+        action="append",
+        required=True,
+        help=(
+            "Node id to reintroduce as a candidate for continuation. "
+            "Repeat the flag to seed multiple nodes."
+        ),
+    )
+    continue_parser.add_argument(
+        "--max-attempts",
+        type=int,
+        default=DEFAULT_FORMALIZATION_ATTEMPTS,
+        help=(
+            "Maximum number of bounded formalization attempts per node during continuation. "
+            f"Default: {DEFAULT_FORMALIZATION_ATTEMPTS}."
+        ),
+    )
+    continue_parser.add_argument(
+        "--formalization-mode",
+        choices=["agentic"],
+        default="agentic",
+        help="Formalization execution mode. Agentic is the only supported option.",
+    )
+    add_formalization_timeout_arg(continue_parser)
+    continue_parser.set_defaults(func=cmd_continue)
+
     report_parser = subparsers.add_parser("report")
     add_backend_args(report_parser)
     add_graph_input_arg(report_parser)
@@ -408,6 +445,53 @@ def _cleanup_archive_artifacts(output_dir: Path) -> list[Path]:
     return removed
 
 
+def _normalize_requested_node_ids(raw_node_ids: list[str] | None) -> list[str]:
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for raw in raw_node_ids or []:
+        node_id = str(raw).strip()
+        if not node_id or node_id in seen:
+            continue
+        seen.add(node_id)
+        normalized.append(node_id)
+    if not normalized:
+        raise ValueError("at least one node id is required for continuation")
+    return normalized
+
+
+def _prepare_graph_for_continuation(*, graph: ProofGraph, node_ids: list[str]) -> ProofGraph:
+    requested = set(node_ids)
+    nodes_by_id = {node.id: node for node in graph.nodes}
+    missing = [node_id for node_id in node_ids if node_id not in nodes_by_id]
+    if missing:
+        raise ValueError(f"continuation requested unknown node ids: {', '.join(missing)}")
+
+    updated_nodes = []
+    for node in graph.nodes:
+        if node.id not in requested:
+            updated_nodes.append(node)
+            continue
+        if node.status == "formal_verified":
+            raise ValueError(
+                f"node '{node.id}' is already formal_verified; continuation retries for verified nodes are not supported"
+            )
+        updated_nodes.append(
+            node.model_copy(
+                update={
+                    "status": "candidate_formal",
+                    "formalization_priority": node.formalization_priority or 1,
+                    "formalization_rationale": "User continuation request.",
+                    "last_formalization_attempt_count": None,
+                    "last_formalization_outcome": None,
+                    "last_formalization_failure_kind": None,
+                    "last_formalization_note": None,
+                    "formal_artifact": None,
+                }
+            )
+        )
+    return graph.model_copy(update={"nodes": updated_nodes})
+
+
 def cmd_extract(args: argparse.Namespace) -> int:
     input_payload = load_input_payload(Path(args.input))
     output_dir = ensure_output_dir(Path(args.output_dir))
@@ -600,8 +684,6 @@ def cmd_formalize_all_candidates(args: argparse.Namespace) -> int:
             summary_path = output_dir / "03_formalization_summaries.json"
             latest_graph = graph
 
-            summaries: list[dict[str, Any]] = []
-
             def write_progress(outcome) -> None:
                 nonlocal latest_graph
                 write_graph(outcome.graph, graph_path)
@@ -631,32 +713,153 @@ def cmd_formalize_all_candidates(args: argparse.Namespace) -> int:
                 previous_graph=latest_graph,
                 event="formalization_stage_output",
             )
-            for outcome in outcomes.outcomes:
-                outcome_node = next((node for node in outcomes.graph.nodes if node.id == outcome.node_id), None)
-                summaries.append(
-                    {
-                        "node_id": outcome.node_id,
-                        "status": outcome.artifact.verification.status,
-                        "artifact_path": outcome.artifact.verification.artifact_path,
-                        "attempt_count": outcome.artifact.verification.attempt_count,
-                        "stderr": outcome.artifact.verification.stderr,
-                        "faithfulness_classification": outcome.artifact.faithfulness_classification,
-                        "lean_theorem_name": outcome.artifact.lean_theorem_name,
-                        "node_status_after_attempt": outcome_node.status if outcome_node is not None else None,
-                        "last_formalization_outcome": (
-                            outcome_node.last_formalization_outcome if outcome_node is not None else None
-                        ),
-                        "last_formalization_attempt_count": (
-                            outcome_node.last_formalization_attempt_count if outcome_node is not None else None
-                        ),
-                        "last_formalization_note": (
-                            outcome_node.last_formalization_note if outcome_node is not None else None
-                        ),
-                    }
-                )
-            summary_path.write_text(json.dumps(summaries, indent=2) + "\n", encoding="utf-8")
+            _write_formalization_summaries(summary_path, outcomes.graph, outcomes.outcomes)
             print(graph_path)
             print(summary_path)
+        finally:
+            if cleanup_archives:
+                _cleanup_archive_artifacts(output_dir)
+    return 0
+
+
+def cmd_continue(args: argparse.Namespace) -> int:
+    output_dir = ensure_output_dir(Path(args.output_dir))
+    cleanup_archives = getattr(args, "cleanup_archives", True)
+    workspace = _resolve_workspace(getattr(args, "workspace", None))
+    graph_path = output_dir / "03_formalized_graph.json"
+    if not graph_path.exists():
+        raise FileNotFoundError(
+            f"cannot continue run because {graph_path} does not exist"
+        )
+
+    requested_node_ids = _normalize_requested_node_ids(getattr(args, "node_ids", []))
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME), use_graph_history_log(
+        output_dir / GRAPH_HISTORY_LOG_FILENAME
+    ):
+        try:
+            _log_cli_invocation(
+                command_name=str(getattr(args, "command", "continue")),
+                args=args,
+                effective={
+                    "output_dir": str(output_dir),
+                    "graph_path": str(graph_path),
+                    "workspace": str(workspace),
+                    "requested_node_ids": requested_node_ids,
+                    "planning_backend": resolve_backend_name(args, formalization=False),
+                    "planning_model": resolve_backend_model(args, formalization=False),
+                    "formalization_backend": resolve_backend_name(args, formalization=True),
+                    "formalization_model": resolve_backend_model(args, formalization=True),
+                    "formalization_timeout_seconds": resolve_formalization_timeout(
+                        args,
+                        resolve_backend_name(args, formalization=True),
+                    ),
+                },
+            )
+            progress("continuation stage starting")
+            progress(
+                "user continuation request: attempting node(s) "
+                + ", ".join(requested_node_ids)
+            )
+            graph = load_graph(graph_path)
+            _log_dependency_direction_warnings(graph, context="continuation stage")
+            continued_graph = _prepare_graph_for_continuation(
+                graph=graph,
+                node_ids=requested_node_ids,
+            )
+            write_graph(continued_graph, graph_path)
+            _append_graph_logs(
+                continued_graph,
+                label="03_formalized_graph.json (continuation request)",
+                previous_graph=graph,
+                event="continuation_request",
+                node_id=requested_node_ids[0] if len(requested_node_ids) == 1 else None,
+                metadata={"requested_nodes": requested_node_ids},
+            )
+
+            planning_backend_name = resolve_backend_name(args, formalization=False)
+            planning_backend = build_backend(
+                planning_backend_name,
+                resolve_backend_model(args, formalization=False),
+                output_dir / "_backend_logs",
+                timeout_seconds=DEFAULT_BACKEND_TIMEOUT_SECONDS,
+            )
+            formalization_backend_name = resolve_backend_name(args, formalization=True)
+            backend = build_backend(
+                formalization_backend_name,
+                resolve_backend_model(args, formalization=True),
+                output_dir / "_backend_logs",
+                timeout_seconds=resolve_formalization_timeout(args, formalization_backend_name),
+                formalization=True,
+            )
+            verifier = LeanVerifier(workspace=LeanWorkspace(root=Path(workspace)))
+            summary_path = output_dir / "03_formalization_summaries.json"
+            latest_graph = continued_graph
+
+            def write_progress(outcome) -> None:
+                nonlocal latest_graph
+                write_graph(outcome.graph, graph_path)
+                _append_graph_logs(
+                    outcome.graph,
+                    label=f"03_formalized_graph.json ({outcome.node_id})",
+                    previous_graph=latest_graph,
+                    event="formalization_update",
+                    node_id=outcome.node_id,
+                )
+                latest_graph = outcome.graph
+
+            outcomes: list[Any] = []
+            seeded_outcomes = formalize_candidate_nodes(
+                backend=backend,
+                planning_backend=planning_backend,
+                verifier=verifier,
+                graph=continued_graph,
+                node_ids=requested_node_ids,
+                max_attempts=args.max_attempts,
+                on_update=write_progress,
+                mode=args.formalization_mode,
+            )
+            current_graph = seeded_outcomes.graph
+            outcomes.extend(seeded_outcomes.outcomes)
+
+            auto_outcomes = formalize_candidate_nodes(
+                backend=backend,
+                planning_backend=planning_backend,
+                verifier=verifier,
+                graph=current_graph,
+                node_ids=None,
+                max_attempts=args.max_attempts,
+                on_update=write_progress,
+                mode=args.formalization_mode,
+            )
+            current_graph = auto_outcomes.graph
+            outcomes.extend(auto_outcomes.outcomes)
+
+            write_graph(current_graph, graph_path)
+            _append_graph_logs(
+                current_graph,
+                label="03_formalized_graph.json",
+                previous_graph=latest_graph,
+                event="formalization_stage_output",
+            )
+            _write_formalization_summaries(summary_path, current_graph, outcomes)
+            progress("continuation report stage starting")
+            cmd_report(
+                argparse.Namespace(
+                    graph=str(graph_path),
+                    output_dir=str(output_dir),
+                    backends=getattr(args, "backends", None),
+                    backend=getattr(args, "backend", None),
+                    model=getattr(args, "model", None),
+                    planning_backend=getattr(args, "planning_backend", None),
+                    planning_model=getattr(args, "planning_model", None),
+                    formalization_backend=getattr(args, "formalization_backend", None),
+                    formalization_model=getattr(args, "formalization_model", None),
+                )
+            )
+            print(graph_path)
+            print(summary_path)
+            print(output_dir / "04_report_bundle.json")
+            print(output_dir / "04_report.html")
         finally:
             if cleanup_archives:
                 _cleanup_archive_artifacts(output_dir)
@@ -1124,6 +1327,34 @@ def _write_formalization_summary(path: Path, outcome) -> None:
         + "\n",
         encoding="utf-8",
     )
+
+
+def _write_formalization_summaries(path: Path, graph: ProofGraph, outcomes: list[Any]) -> None:
+    summaries: list[dict[str, Any]] = []
+    for outcome in outcomes:
+        outcome_node = next((node for node in graph.nodes if node.id == outcome.node_id), None)
+        summaries.append(
+            {
+                "node_id": outcome.node_id,
+                "status": outcome.artifact.verification.status,
+                "artifact_path": outcome.artifact.verification.artifact_path,
+                "attempt_count": outcome.artifact.verification.attempt_count,
+                "stderr": outcome.artifact.verification.stderr,
+                "faithfulness_classification": outcome.artifact.faithfulness_classification,
+                "lean_theorem_name": outcome.artifact.lean_theorem_name,
+                "node_status_after_attempt": outcome_node.status if outcome_node is not None else None,
+                "last_formalization_outcome": (
+                    outcome_node.last_formalization_outcome if outcome_node is not None else None
+                ),
+                "last_formalization_attempt_count": (
+                    outcome_node.last_formalization_attempt_count if outcome_node is not None else None
+                ),
+                "last_formalization_note": (
+                    outcome_node.last_formalization_note if outcome_node is not None else None
+                ),
+            }
+        )
+    path.write_text(json.dumps(summaries, indent=2) + "\n", encoding="utf-8")
 
 
 def _backend_failure_outcome(*, graph: ProofGraph, node_id: str, error: BackendError):

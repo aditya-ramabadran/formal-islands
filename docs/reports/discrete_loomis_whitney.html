@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Discrete Loomis-Whitney inequality - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: #fffaf1;
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
+      --graph-shell-top: rgba(255, 251, 242, 0.96);
+      --graph-shell-bottom: rgba(245, 238, 227, 0.96);
+      --checklist-panel: rgba(255, 250, 241, 0.95);
+      --target-panel: #fff8ee;
+      --code-surface: #f4efe6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161311;
+        --panel: #211b17;
+        --ink: #f3ede5;
+        --muted: #c0b2a3;
+        --border: #4a3d32;
+        --accent: #f0b47b;
+        --accent-soft: #3a2b20;
+        --highlight: #ffb25c;
+        --highlight-soft: #3f2d19;
+        --preview-soft: #312419;
+        --checked: #65c08a;
+        --checked-soft: #213126;
+        --edge: #8f8172;
+        --status-informal-stroke: #d69760;
+        --status-informal-fill: #2e221a;
+        --status-candidate-stroke: #f0a64e;
+        --status-candidate-fill: #3f2d18;
+        --status-verified-stroke: #65c08a;
+        --status-verified-fill: #213126;
+        --status-failed-stroke: #dd8a79;
+        --status-failed-fill: #3b2320;
+        --graph-shell-top: rgba(44, 34, 27, 0.98);
+        --graph-shell-bottom: rgba(32, 25, 21, 0.98);
+        --checklist-panel: rgba(36, 29, 24, 0.98);
+        --target-panel: #31261f;
+        --code-surface: #2a231e;
+      }
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(circle at top, #2a211b, var(--bg));
+      }
+    }
+    .fi-attribution {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+    .fi-attribution a {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .fi-attribution a:hover {
+      text-decoration: underline;
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .math-text mjx-container {
+      max-width: 100%;
+    }
+    .math-text mjx-container[display="true"] {
+      margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .math-text mjx-container[jax="CHTML"][display="true"] {
+      padding: 0 !important;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--graph-shell-top), var(--graph-shell-bottom));
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+    .graph-frame {
+      width: min(100%, 720px);
+      margin: 0 auto;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 240px;
+      overflow: visible;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 2.8;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-edge.edge-refinement {
+      stroke-dasharray: 7 5;
+      opacity: 0.66;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-link.graph-node-dimmed {
+      opacity: 0.22;
+    }
+    .graph-node-box {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-candidate-fill);
+      stroke: var(--status-candidate-stroke);
+      stroke-dasharray: 8 4;
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-fo-title {
+      font-size: 9px;
+      font-weight: 700;
+      text-align: center;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.3;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 9.5px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-candidate-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .graph-history-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.65rem;
+    }
+    .graph-history-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+    .graph-history-button {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 10px;
+      min-width: 2.4rem;
+      padding: 0.36rem 0.7rem;
+      font: inherit;
+      cursor: pointer;
+      transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+    }
+    .graph-history-button:hover:not(:disabled) {
+      border-color: var(--highlight);
+      background: var(--highlight-soft);
+    }
+    .graph-history-button:disabled {
+      opacity: 0.42;
+      cursor: default;
+    }
+    .graph-history-status {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .graph-history-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .graph-history-caption {
+      margin-top: 0;
+      margin-bottom: 0.65rem;
+      color: var(--ink);
+      font-size: 0.96rem;
+      line-height: 1.45;
+    }
+    .graph-history-meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+    .graph-history-frame[hidden] {
+      display: none;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--checklist-panel);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {
+      min-width: 0;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-navigation {
+      display: grid;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .node-search {
+      display: grid;
+      gap: 0.35rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .node-search input {
+      width: min(100%, 28rem);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem 0.75rem;
+      font: inherit;
+      color: var(--ink);
+      background: var(--panel);
+    }
+    .node-filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      align-items: center;
+    }
+    .node-filter-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.32rem 0.65rem;
+      font-size: 0.9rem;
+      background: var(--panel);
+      color: var(--ink);
+    }
+    .node-filter-reset {
+      min-width: auto;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: var(--target-panel);
+    }
+    pre {
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 0.75rem;
+      background: var(--code-surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin: 0.6rem 0;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    code.inline-code {
+      background: var(--code-surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.95em;
+      white-space: break-spaces;
+    }
+    .statement-code {
+      margin-top: 0.35rem;
+    }
+    .statement-code pre,
+    .checklist-code pre {
+      margin-top: 0.35rem;
+      background: var(--code-surface);
+    }
+    .lean-code {
+      color: #2a241f;
+    }
+    .lean-code .tok-keyword {
+      color: #8b2f18;
+      font-weight: 700;
+    }
+    .lean-code .tok-tactic {
+      color: #9d5d17;
+      font-weight: 600;
+    }
+    .lean-code .tok-type {
+      color: #245f7a;
+    }
+    .lean-code .tok-number {
+      color: #7442a8;
+    }
+    .lean-code .tok-comment {
+      color: #6e7a60;
+      font-style: italic;
+    }
+    .lean-code .tok-string {
+      color: #2d7f4d;
+    }
+    @media (prefers-color-scheme: dark) {
+      .lean-code {
+        color: #f2e8dc;
+      }
+      .lean-code .tok-keyword {
+        color: #f08f63;
+      }
+      .lean-code .tok-tactic {
+        color: #f4b35d;
+      }
+      .lean-code .tok-type {
+        color: #73c7ff;
+      }
+      .lean-code .tok-number {
+        color: #be8cff;
+      }
+      .lean-code .tok-comment {
+        color: #97b18b;
+      }
+      .lean-code .tok-string {
+        color: #67d59a;
+      }
+    }
+    
+            .report-root:has(a.node-loomis_whitney_root:hover) a.node-loomis_whitney_root .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(#node-loomis_whitney_root:target).report-root .node-loomis_whitney_root.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-multilinear_holder_step:hover) a.node-multilinear_holder_step .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(#node-multilinear_holder_step:target).report-root .node-multilinear_holder_step.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-loomis_whitney_root:hover) a.node-loomis_whitney_root .graph-node-box,
+.report-root:has(.obligation-semantic-match-loomis_whitney_root:hover) .node-loomis_whitney_root.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-loomis_whitney_root:checked) a.node-loomis_whitney_root .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-loomis_whitney_root:checked) .node-loomis_whitney_root.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-loomis_whitney_root:checked) .edge-loomis_whitney_root-multilinear_holder_step {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-loomis_whitney_root:hover) .obligation-semantic-match-loomis_whitney_root {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-loomis_whitney_root:checked) .obligation-semantic-match-loomis_whitney_root {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-multilinear_holder_step:hover) a.node-multilinear_holder_step .graph-node-box,
+.report-root:has(.obligation-semantic-match-multilinear_holder_step:hover) .node-multilinear_holder_step.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-multilinear_holder_step:checked) a.node-multilinear_holder_step .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-multilinear_holder_step:checked) .node-multilinear_holder_step.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-multilinear_holder_step:checked) .edge-loomis_whitney_root-multilinear_holder_step {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-multilinear_holder_step:hover) .obligation-semantic-match-multilinear_holder_step {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-multilinear_holder_step:checked) .obligation-semantic-match-multilinear_holder_step {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="fi-attribution">Created by <a href="https://aditya-ramabadran.github.io/formal-islands/" target="_blank">Formal Islands</a> &bull; <a href="https://github.com/aditya-ramabadran/formal-islands" target="_blank">GitHub</a></div>
+  <main class="report-root">
+    <section>
+      <h1>Discrete Loomis-Whitney inequality</h1>
+      <div class="math-text">Discrete Loomis-Whitney inequality.
+
+Let \(d \ge 2\) be an integer, and let \(A\) be a finite subset of \(\mathbb{Z}^d\). For each coordinate index \(i \in \{1,\dots,d\}\), let \(\pi_i : \mathbb{Z}^d \to \mathbb{Z}^{d-1}\) be the projection obtained by deleting the \(i\)-th coordinate. Then
+\[
+|A|^{d-1} \le \prod_{i=1}^d |\pi_i(A)|.
+\]
+Equivalently,
+\[
+|A| \le \prod_{i=1}^d |\pi_i(A)|^{1/(d-1)}.
+\]
+This is the discrete Loomis-Whitney inequality.</div>
+      <p class="meta">Root node: loomis_whitney_root</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 2</span>
+        <span class="pill">Edges: 1</span>
+        <span class="pill">Informal: 0</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 2</span>
+        <span class="pill">Failed: 0</span>
+      </p>
+      <div class="graph-shell">
+        
+    <div class="graph-history" data-graph-history data-history-default-collection="visual">
+      <div class="graph-history-controls">
+        <div class="graph-history-buttons">
+          <button type="button" class="graph-history-button" data-history-action="start" aria-label="Go to first graph snapshot" title="Go to first graph snapshot">⏮</button>
+          <button type="button" class="graph-history-button" data-history-action="prev" aria-label="Go to previous graph snapshot" title="Go to previous graph snapshot">◀</button>
+          <button type="button" class="graph-history-button" data-history-action="next" aria-label="Go to next graph snapshot" title="Go to next graph snapshot">▶</button>
+          <button type="button" class="graph-history-button" data-history-action="end" aria-label="Go to latest graph snapshot" title="Go to latest graph snapshot">⏭</button>
+        </div>
+        
+        <div class="graph-history-status">
+          Snapshot <span data-history-index>5</span> of <span data-history-count>5</span>
+        </div>
+      </div>
+      <p class="graph-history-caption" data-history-caption>Final display cleanup hid subsumed informal node <code class="inline-code">base_case_d2</code> because a verified parent theorem already discharged that dependency.</p>
+      <p class="graph-history-meta" data-history-meta>final display cleanup · 2026-04-09T14:00:34-07:00</p>
+      
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Initial extracted proof graph." data-label="01_extracted_graph.json" data-timestamp="2026-04-09T11:16:33-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 224" width="420" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-0" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-loomis_whitney_root-base_case_d2" d="M 210.0 83.0 C 210.0 106.2, 151.2 123.6, 126.0 141.0" marker-end="url(#graph-arrow-history-visual-0)"></path>
+<path class="graph-edge edge-loomis_whitney_root-multilinear_holder_step" d="M 210.0 83.0 C 210.0 106.2, 268.8 123.6, 294.0 141.0" marker-end="url(#graph-arrow-history-visual-0)"></path></g>
+        <g>
+    <a class="graph-node-link node-loomis_whitney_root status-informal" href="#node-loomis_whitney_root" data-graph-node-id="loomis_whitney_root" data-graph-node-status="informal" data-graph-node-title="Discrete Loomis-Whitney inequality">
+      <rect class="graph-node-box status-informal" x="144.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="262.0" cy="32" r="4.6"></circle>
+      <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Discrete Loomis-Whitney inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="68">loomis_whitney_root</text>
+    </a>
+    
+
+    <a class="graph-node-link node-base_case_d2 status-informal" href="#node-base_case_d2" data-graph-node-id="base_case_d2" data-graph-node-status="informal" data-graph-node-title="Base case (d=2)">
+      <rect class="graph-node-box status-informal" x="60.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="178.0" cy="150" r="4.6"></circle>
+      <foreignObject x="64.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Base case (d=2)</div>
+      </foreignObject>
+      <text class="graph-node-id" x="126.0" y="186">base_case_d2</text>
+    </a>
+    
+
+    <a class="graph-node-link node-multilinear_holder_step status-informal" href="#node-multilinear_holder_step" data-graph-node-id="multilinear_holder_step" data-graph-node-status="informal" data-graph-node-title="Multilinear Hölder estimate on slices">
+      <rect class="graph-node-box status-informal" x="228.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="346.0" cy="150" r="4.6"></circle>
+      <foreignObject x="232.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Multilinear Hölder estimate on slices</div>
+      </foreignObject>
+      <text class="graph-node-id" x="294.0" y="186">multilinear_holder_step</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Candidate selection marked &lt;code class=&quot;inline-code&quot;&gt;loomis_whitney_root&lt;/code&gt;, &lt;code class=&quot;inline-code&quot;&gt;multilinear_holder_step&lt;/code&gt; for formalization." data-label="02_candidate_graph.json" data-timestamp="2026-04-09T11:16:33-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 224" width="420" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-1" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-loomis_whitney_root-base_case_d2" d="M 210.0 83.0 C 210.0 106.2, 151.2 123.6, 126.0 141.0" marker-end="url(#graph-arrow-history-visual-1)"></path>
+<path class="graph-edge edge-loomis_whitney_root-multilinear_holder_step" d="M 210.0 83.0 C 210.0 106.2, 268.8 123.6, 294.0 141.0" marker-end="url(#graph-arrow-history-visual-1)"></path></g>
+        <g>
+    <a class="graph-node-link node-loomis_whitney_root status-candidate-formal" href="#node-loomis_whitney_root" data-graph-node-id="loomis_whitney_root" data-graph-node-status="candidate_formal" data-graph-node-title="Discrete Loomis-Whitney inequality">
+      <rect class="graph-node-box status-candidate-formal" x="144.0" y="20" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="32" r="4.6"></circle>
+      <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Discrete Loomis-Whitney inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="68">loomis_whitney_root</text>
+    </a>
+    
+
+    <a class="graph-node-link node-base_case_d2 status-informal" href="#node-base_case_d2" data-graph-node-id="base_case_d2" data-graph-node-status="informal" data-graph-node-title="Base case (d=2)">
+      <rect class="graph-node-box status-informal" x="60.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="178.0" cy="150" r="4.6"></circle>
+      <foreignObject x="64.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Base case (d=2)</div>
+      </foreignObject>
+      <text class="graph-node-id" x="126.0" y="186">base_case_d2</text>
+    </a>
+    
+
+    <a class="graph-node-link node-multilinear_holder_step status-candidate-formal" href="#node-multilinear_holder_step" data-graph-node-id="multilinear_holder_step" data-graph-node-status="candidate_formal" data-graph-node-title="Multilinear Hölder estimate on slices">
+      <rect class="graph-node-box status-candidate-formal" x="228.0" y="138" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="346.0" cy="150" r="4.6"></circle>
+      <foreignObject x="232.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Multilinear Hölder estimate on slices</div>
+      </foreignObject>
+      <text class="graph-node-id" x="294.0" y="186">multilinear_holder_step</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;multilinear_holder_step&lt;/code&gt; was successfully formalized, status upgraded from &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;formal_verified&lt;/code&gt;." data-label="03_formalized_graph.json (multilinear_holder_step)" data-timestamp="2026-04-09T13:44:05-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 224" width="420" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-2" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-loomis_whitney_root-base_case_d2" d="M 210.0 83.0 C 210.0 106.2, 151.2 123.6, 126.0 141.0" marker-end="url(#graph-arrow-history-visual-2)"></path>
+<path class="graph-edge edge-loomis_whitney_root-multilinear_holder_step" d="M 210.0 83.0 C 210.0 106.2, 268.8 123.6, 294.0 141.0" marker-end="url(#graph-arrow-history-visual-2)"></path></g>
+        <g>
+    <a class="graph-node-link node-loomis_whitney_root status-candidate-formal" href="#node-loomis_whitney_root" data-graph-node-id="loomis_whitney_root" data-graph-node-status="candidate_formal" data-graph-node-title="Discrete Loomis-Whitney inequality">
+      <rect class="graph-node-box status-candidate-formal" x="144.0" y="20" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="32" r="4.6"></circle>
+      <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Discrete Loomis-Whitney inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="68">loomis_whitney_root</text>
+    </a>
+    
+
+    <a class="graph-node-link node-base_case_d2 status-informal" href="#node-base_case_d2" data-graph-node-id="base_case_d2" data-graph-node-status="informal" data-graph-node-title="Base case (d=2)">
+      <rect class="graph-node-box status-informal" x="60.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="178.0" cy="150" r="4.6"></circle>
+      <foreignObject x="64.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Base case (d=2)</div>
+      </foreignObject>
+      <text class="graph-node-id" x="126.0" y="186">base_case_d2</text>
+    </a>
+    
+
+    <a class="graph-node-link node-multilinear_holder_step status-formal-verified" href="#node-multilinear_holder_step" data-graph-node-id="multilinear_holder_step" data-graph-node-status="formal_verified" data-graph-node-title="Multilinear Hölder estimate on slices">
+      <rect class="graph-node-box status-formal-verified" x="228.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="346.0" cy="150" r="4.6"></circle>
+      <foreignObject x="232.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Multilinear Hölder estimate on slices</div>
+      </foreignObject>
+      <text class="graph-node-id" x="294.0" y="186">multilinear_holder_step</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;loomis_whitney_root&lt;/code&gt; was successfully formalized, status upgraded from &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;formal_verified&lt;/code&gt;." data-label="03_formalized_graph.json (loomis_whitney_root)" data-timestamp="2026-04-09T14:00:34-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 224" width="420" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-3" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-loomis_whitney_root-base_case_d2" d="M 210.0 83.0 C 210.0 106.2, 151.2 123.6, 126.0 141.0" marker-end="url(#graph-arrow-history-visual-3)"></path>
+<path class="graph-edge edge-loomis_whitney_root-multilinear_holder_step" d="M 210.0 83.0 C 210.0 106.2, 268.8 123.6, 294.0 141.0" marker-end="url(#graph-arrow-history-visual-3)"></path></g>
+        <g>
+    <a class="graph-node-link node-loomis_whitney_root status-formal-verified" href="#node-loomis_whitney_root" data-graph-node-id="loomis_whitney_root" data-graph-node-status="formal_verified" data-graph-node-title="Discrete Loomis-Whitney inequality">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="20" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="32" r="4.6"></circle>
+      <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Discrete Loomis-Whitney inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="68">loomis_whitney_root</text>
+    </a>
+    
+
+    <a class="graph-node-link node-base_case_d2 status-informal" href="#node-base_case_d2" data-graph-node-id="base_case_d2" data-graph-node-status="informal" data-graph-node-title="Base case (d=2)">
+      <rect class="graph-node-box status-informal" x="60.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="178.0" cy="150" r="4.6"></circle>
+      <foreignObject x="64.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Base case (d=2)</div>
+      </foreignObject>
+      <text class="graph-node-id" x="126.0" y="186">base_case_d2</text>
+    </a>
+    
+
+    <a class="graph-node-link node-multilinear_holder_step status-formal-verified" href="#node-multilinear_holder_step" data-graph-node-id="multilinear_holder_step" data-graph-node-status="formal_verified" data-graph-node-title="Multilinear Hölder estimate on slices">
+      <rect class="graph-node-box status-formal-verified" x="228.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="346.0" cy="150" r="4.6"></circle>
+      <foreignObject x="232.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Multilinear Hölder estimate on slices</div>
+      </foreignObject>
+      <text class="graph-node-id" x="294.0" y="186">multilinear_holder_step</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Final display cleanup hid subsumed informal node &lt;code class=&quot;inline-code&quot;&gt;base_case_d2&lt;/code&gt; because a verified parent theorem already discharged that dependency." data-label="final display cleanup" data-timestamp="2026-04-09T14:00:34-07:00" >
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 224" width="420" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-4" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-loomis_whitney_root-multilinear_holder_step" d="M 210.0 83.0 C 210.0 106.2, 210.0 123.6, 210.0 141.0" marker-end="url(#graph-arrow-history-visual-4)"></path></g>
+        <g>
+    <a class="graph-node-link node-loomis_whitney_root status-formal-verified" href="#node-loomis_whitney_root" data-graph-node-id="loomis_whitney_root" data-graph-node-status="formal_verified" data-graph-node-title="Discrete Loomis-Whitney inequality">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="20" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="32" r="4.6"></circle>
+      <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Discrete Loomis-Whitney inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="68">loomis_whitney_root</text>
+    </a>
+    
+
+    <a class="graph-node-link node-multilinear_holder_step status-formal-verified" href="#node-multilinear_holder_step" data-graph-node-id="multilinear_holder_step" data-graph-node-status="formal_verified" data-graph-node-title="Multilinear Hölder estimate on slices">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="150" r="4.6"></circle>
+      <foreignObject x="148.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Multilinear Hölder estimate on slices</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="186">multilinear_holder_step</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+    </div>
+    
+      </div>
+      <p class="graph-caption">
+        Use the timeline controls to step through how the proof graph changed over the run. The latest graph is shown by default.
+      </p>
+      <p class="graph-caption">
+        Informal nodes use dashed brown outlines. Candidate formal nodes use dashed gold outlines, verified formal nodes use green, and failed formal nodes use red.
+      </p>
+      <p class="graph-caption">
+        All arrows point from a claim to one of its dependencies.
+      </p>
+      <p class="graph-caption">
+        Dashed gray arrows mark refinement edges: they are still dependency edges, but they indicate that a narrower claim was carved out from a broader proof step.
+      </p>
+      <p class="graph-caption">Final display cleanup hid subsumed informal node <code class="inline-code">base_case_d2</code> because a verified parent theorem already discharged that dependency.</p>
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <p class="graph-caption">The following are sufficient items for a human to check to verify correctness of the proof. Hovering or checking review items highlights related nodes and edges.</p>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-semantic-match-loomis_whitney_root" data-obligation-id="semantic-match-loomis_whitney_root">
+      <label class="checklist-label" for="obligation-check-semantic-match-loomis_whitney_root">
+        <input id="obligation-check-semantic-match-loomis_whitney_root" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;loomis_whitney_root&#x27; (Discrete Loomis-Whitney inequality) matches the verified Lean theorem for this node.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> loomis_whitney_root_aristotle (n : <span class="tok-type">ℕ</span>) (hn : <span class="tok-number">1</span> ≤ n)
+    (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) :
+    (A.card : <span class="tok-type">ℝ</span>) ^ n ≤
+      ∏ i : Fin (n + <span class="tok-number">1</span>), ((LoomisWhitney.shadow i A).card : <span class="tok-type">ℝ</span>)</code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-loomis_whitney_root">loomis_whitney_root</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-multilinear_holder_step" data-obligation-id="semantic-match-multilinear_holder_step">
+      <label class="checklist-label" for="obligation-check-semantic-match-multilinear_holder_step">
+        <input id="obligation-check-semantic-match-multilinear_holder_step" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;multilinear_holder_step&#x27; (Multilinear Hölder estimate on slices) matches the verified Lean theorem for this node.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> multilinear_holder_step_aristotle (d : <span class="tok-type">ℕ</span>) (hd : <span class="tok-number">1</span> ≤ d)
+    (ih : LoomisWhitney.Ineq d) : LoomisWhitney.Ineq (d + <span class="tok-number">1</span>)</code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-multilinear_holder_step">multilinear_holder_step</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="node-navigation">
+        <label class="node-search">
+          <span>Filter nodes</span>
+          <input type="search" placeholder="Search by node id or title" data-node-search />
+        </label>
+        <div class="node-filter-pills">
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="informal" checked /> Informal</label>
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="candidate_formal" checked /> Candidate</label>
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="formal_verified" checked /> Verified</label>
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="formal_failed" checked /> Failed</label>
+          <button type="button" class="graph-history-button node-filter-reset" data-node-filter-reset>Reset</button>
+        </div>
+      </div>
+      <div class="nodes-grid" data-node-grid>
+        
+    <article class="node-card node-loomis_whitney_root" id="node-loomis_whitney_root" data-node-id="loomis_whitney_root" data-node-title="Discrete Loomis-Whitney inequality" data-node-status="formal_verified">
+      <h3>Discrete Loomis-Whitney inequality</h3>
+      <p class="meta">Node id: loomis_whitney_root | Status: formal_verified</p>
+      <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-base_case_d2">base_case_d2</a>, <a class="node-jump" href="#node-multilinear_holder_step">multilinear_holder_step</a></p>
+      
+      <p class="meta">Formalization priority: 2. Rationale: The main inductive assembly is important, but follows straightforwardly once the base case and the Hölder step on slices are established.</p>
+      <p class="meta">Most recent formalization episode: verified the full parent node after 1 Lean verification attempt. Most recent formalization attempt verified the full parent node.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For any integer \(d \ge 2\) and finite \(A \subset \mathbb{Z}^d\), \(|A| \le \prod_{i=1}^d |\pi_i(A)|^{1/(d-1)}\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">We proceed by induction on \(d\). The base case \(d=2\) is handled separately. For the inductive step, assume the claim for \(d-1\). We slice \(A\) by the first coordinate to obtain \(A_t := \{x&#x27; \in \mathbb{Z}^{d-1} : (t,x&#x27;) \in A\}\). The slices are finite and pairwise disjoint, so \(|A| = \sum_t |A_t|\). Applying the inductive hypothesis to each slice and combining the bounds via a multilinear Hölder estimate gives the desired inequality. Raising both sides to the \(d-1\)-st power yields \(|A|^{d-1} \le \prod_{i=1}^d |\pi_i(A)|\).</div>
+      
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> loomis_whitney_root_aristotle</p>
+        <p><strong>Coverage:</strong> full match</p><p class="meta">The formal Lean statement exactly matches the full informal statement of the target node. By setting n = d - 1, the condition n &gt;= 1 corresponds to d &gt;= 2, and the inequality |A|^n &lt;= ∏ |π_i(A)| is exactly the Loomis-Whitney inequality raised to the d-1 power as described in the informal proof text. I am overriding the heuristic&#x27;s downgrade to concrete_sublemma, as this theorem statement constitutes a full match for the target node&#x27;s main claim.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> loomis_whitney_root_aristotle (n : <span class="tok-type">ℕ</span>) (hn : <span class="tok-number">1</span> ≤ n)
+    (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) :
+    (A.card : <span class="tok-type">ℝ</span>) ^ n ≤
+      ∏ i : Fin (n + <span class="tok-number">1</span>), ((LoomisWhitney.shadow i A).card : <span class="tok-type">ℝ</span>)</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean lean_project/FormalIslands/Generated/loomis_whitney_root_worker_20260409-134405_a03825b8.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+/-!
+# Discrete Loomis–Whitney inequality
+
+For any integer `d ≥ <span class="tok-number">2</span>` and finite `A ⊂ <span class="tok-type">ℤ</span>^d`,
+`|A|^{d-<span class="tok-number">1</span>} ≤ ∏_{i=<span class="tok-number">1</span>}^d |π_i(A)|`.
+
+We prove this <span class="tok-tactic">by</span> induction on `d`. The base case `d = <span class="tok-number">2</span>` is elementary, and
+the induction step uses a multilinear Hölder estimate on slices.
+-/
+
+<span class="tok-keyword">open</span> Finset BigOperators
+
+noncomputable <span class="tok-keyword">section</span>
+
+<span class="tok-keyword">namespace</span> LoomisWhitney
+
+/<span class="tok-comment">-- The shadow (coordinate projection) of a finite set `A ⊆ ℤ^{n+1}` obtained by</span>
+    deleting coordinate `i`. -/
+<span class="tok-keyword">def</span> shadow {n : <span class="tok-type">ℕ</span>} (i : Fin (n + <span class="tok-number">1</span>)) (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) : Finset (Fin n → <span class="tok-type">ℤ</span>) :=
+  A.image (· ∘ i.succAbove)
+
+/<span class="tok-comment">-- The discrete Loomis–Whitney inequality in dimension `n + 1`:</span>
+    `|A|^n ≤ ∏ i, |π_i(A)|` for all finite `A ⊆ <span class="tok-type">ℤ</span>^{n+<span class="tok-number">1</span>}`. -/
+<span class="tok-keyword">def</span> Ineq (n : <span class="tok-type">ℕ</span>) : <span class="tok-type">Prop</span> :=
+  ∀ A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>),
+    (A.card : <span class="tok-type">ℝ</span>) ^ n ≤ ∏ i : Fin (n + <span class="tok-number">1</span>), ((shadow i A).card : <span class="tok-type">ℝ</span>)
+
+/<span class="tok-comment">-- Slice of `A ⊆ ℤ^{n+1}` at coordinate `0 = t`. -/</span>
+<span class="tok-keyword">def</span> sliceAt {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) (t : <span class="tok-type">ℤ</span>) :
+    Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>) :=
+  A.filter (<span class="tok-keyword">fun</span> v =&gt; v <span class="tok-number">0</span> = t)
+
+/<span class="tok-comment">-- Embed a slice into the lower-dimensional space by deleting coordinate `0`. -/</span>
+<span class="tok-keyword">def</span> sliceEmbed {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) (t : <span class="tok-type">ℤ</span>) :
+    Finset (Fin n → <span class="tok-type">ℤ</span>) :=
+  (sliceAt A t).image (· ∘ (<span class="tok-number">0</span> : Fin (n + <span class="tok-number">1</span>)).succAbove)
+
+/<span class="tok-comment">-- The set of active slice indices. -/</span>
+<span class="tok-keyword">def</span> sliceIndices {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) : Finset <span class="tok-type">ℤ</span> :=
+  A.image (· <span class="tok-number">0</span>)
+
+/<span class="tok-comment">-- Deleting coordinate `0` is injective on elements sharing the same `0`-th coordinate. -/</span>
+<span class="tok-keyword">lemma</span> eraseCoord_zero_injOn_slice {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) (t : <span class="tok-type">ℤ</span>) :
+    Set.InjOn (· ∘ (<span class="tok-number">0</span> : Fin (n + <span class="tok-number">1</span>)).succAbove)
+      ((sliceAt A t : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) : Set (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">intro</span> a ha b hb heq
+  <span class="tok-tactic">simp</span> only [sliceAt, Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_coe] at ha hb
+  funext i
+  by_cases hi : i = <span class="tok-number">0</span>
+  · subst hi; <span class="tok-tactic">exact</span> ha.<span class="tok-number">2</span>.trans hb.<span class="tok-number">2</span>.symm
+  · <span class="tok-tactic">have</span> : i = (<span class="tok-number">0</span> : Fin (n + <span class="tok-number">1</span>)).succAbove (Fin.pred i hi) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">simp</span> [Fin.succAbove_zero, Fin.succ_pred]
+    <span class="tok-tactic">rw</span> [this]
+    <span class="tok-tactic">exact</span> congr_fun heq (Fin.pred i hi)
+
+/<span class="tok-comment">-- The cardinality of an embedded slice equals the cardinality of the original slice. -/</span>
+<span class="tok-keyword">lemma</span> sliceEmbed_card {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) (t : <span class="tok-type">ℤ</span>) :
+    (sliceEmbed A t).card = (sliceAt A t).card :=
+  Finset.card_image_of_injOn (eraseCoord_zero_injOn_slice A t)
+
+/<span class="tok-comment">-- Slicing partitions `A`: `|A| = ∑_{t ∈ T} |A_t|`. -/</span>
+<span class="tok-keyword">lemma</span> sum_slice_card {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) :
+    ∑ t ∈ sliceIndices A, (sliceAt A t).card = A.card := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">simp</span> only [sliceAt, sliceIndices]
+  <span class="tok-tactic">rw</span> [← Finset.card_eq_sum_card_fiberwise (<span class="tok-keyword">fun</span> x hx =&gt; Finset.mem_image_of_mem _ hx)]
+
+/<span class="tok-comment">-- Each embedded slice is a subset of the shadow along coordinate `0`. -/</span>
+<span class="tok-keyword">lemma</span> sliceEmbed_subset_shadow {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) (t : <span class="tok-type">ℤ</span>) :
+    sliceEmbed A t ⊆ shadow <span class="tok-number">0</span> A := <span class="tok-tactic">by</span>
+  unfold sliceEmbed shadow sliceAt
+  <span class="tok-tactic">exact</span> Finset.image_subset_image (Finset.filter_subset _ _)
+
+/<span class="tok-comment">-- The cardinality of each slice is bounded by the shadow along coordinate `0`. -/</span>
+<span class="tok-keyword">lemma</span> slice_card_le_shadow_zero {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) (t : <span class="tok-type">ℤ</span>) :
+    (sliceAt A t).card ≤ (shadow <span class="tok-number">0</span> A).card := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">rw</span> [← sliceEmbed_card]
+  <span class="tok-tactic">exact</span> Finset.card_le_card (sliceEmbed_subset_shadow A t)
+
+<span class="tok-keyword">lemma</span> sum_shadow_slice_le {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">2</span>) → <span class="tok-type">ℤ</span>)) (j : Fin (n + <span class="tok-number">1</span>)) :
+    ∑ t ∈ sliceIndices A, (shadow j (sliceEmbed A t)).card ≤
+    (shadow (Fin.succAbove <span class="tok-number">0</span> j) A).card := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_map : ∀ t ∈ sliceIndices A, (shadow j (sliceEmbed A t)).image (Fin.cons t) ⊆ shadow (Fin.succAbove <span class="tok-number">0</span> j) A := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">intro</span> t ht; <span class="tok-tactic">intro</span>; <span class="tok-tactic">simp</span> +decide [ shadow, sliceEmbed ] ;
+    <span class="tok-tactic">rintro</span> x hx rfl; use x; simp_all +decide [ sliceAt ] ;
+    ext i; induction i using Fin.inductionOn &lt;;&gt; <span class="tok-tactic">aesop</span>;
+  <span class="tok-tactic">refine</span>&#x27; le_trans _ ( Finset.card_le_card &lt;| <span class="tok-tactic">show</span> ( Finset.biUnion ( sliceIndices A ) <span class="tok-keyword">fun</span> t =&gt; image ( Fin.cons t ) ( shadow j ( sliceEmbed A t ) ) ) ⊆ shadow ( Fin.succAbove <span class="tok-number">0</span> j ) A from _ );
+  · <span class="tok-tactic">rw</span> [ Finset.card_biUnion ];
+    · <span class="tok-tactic">exact</span> Finset.sum_le_sum <span class="tok-keyword">fun</span> t ht =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ Finset.card_image_of_injective _ <span class="tok-keyword">fun</span> x y hxy =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">simpa</span> using hxy ] ;
+    · <span class="tok-tactic">intro</span> t ht u hu htu; simp_all +decide [ Finset.disjoint_left ] ;
+      <span class="tok-tactic">aesop</span>;
+  · <span class="tok-tactic">exact</span> Finset.biUnion_subset.mpr h_map
+
+/<span class="tok-comment">-- The induction step: `Ineq d` implies `Ineq (d + 1)` for `d ≥ 1`. -/</span>
+<span class="tok-keyword">theorem</span> step (d : <span class="tok-type">ℕ</span>) (hd : <span class="tok-number">1</span> ≤ d) (ih : Ineq d) : Ineq (d + <span class="tok-number">1</span>) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">intro</span> A
+  set T := sliceIndices A
+  <span class="tok-tactic">have</span> hA : (A.card : <span class="tok-type">ℝ</span>) = ∑ t ∈ T, (sliceAt A t).card := <span class="tok-tactic">by</span>
+    rw_mod_cast [ sum_slice_card ];
+  <span class="tok-tactic">have</span> h_ind : ∀ t ∈ T, (sliceAt A t).card ^ (d + <span class="tok-number">1</span>) ≤ (shadow <span class="tok-number">0</span> A).card * ∏ j : Fin (d + <span class="tok-number">1</span>), (shadow j (sliceEmbed A t)).card := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">intro</span> t ht
+    <span class="tok-tactic">have</span> h_ind_step : (sliceEmbed A t).card ^ d ≤ ∏ j : Fin (d + <span class="tok-number">1</span>), (shadow j (sliceEmbed A t)).card := <span class="tok-tactic">by</span>
+      convert ih ( sliceEmbed A t ) using <span class="tok-number">1</span>;
+      norm_cast;
+    convert Nat.mul_le_mul ( slice_card_le_shadow_zero A t ) h_ind_step using <span class="tok-number">1</span> ; <span class="tok-tactic">ring</span>!;
+    <span class="tok-tactic">rw</span> [ sliceEmbed_card ];
+  <span class="tok-tactic">have</span> h_holder : (∑ t ∈ T, (∏ j : Fin (d + <span class="tok-number">1</span>), (shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>))) ^ (d + <span class="tok-number">1</span>) ≤ (∏ j : Fin (d + <span class="tok-number">1</span>), (∑ t ∈ T, ((shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>)) : <span class="tok-type">ℝ</span>) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h_holder : ∀ (f : Fin (d + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span> → <span class="tok-type">ℝ</span>), (∀ j t, <span class="tok-number">0</span> ≤ f j t) → (∑ t ∈ T, (∏ j : Fin (d + <span class="tok-number">1</span>), f j t) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>))) ^ (d + <span class="tok-number">1</span>) ≤ (∏ j : Fin (d + <span class="tok-number">1</span>), (∑ t ∈ T, f j t)) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intro</span> f hf_nonneg
+      <span class="tok-tactic">have</span> h_holder_step : ∀ (t : <span class="tok-type">ℤ</span>), t ∈ T → (∏ j : Fin (d + <span class="tok-number">1</span>), f j t) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) ≤ (∏ j : Fin (d + <span class="tok-number">1</span>), (∑ t ∈ T, f j t)) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) * (∏ j : Fin (d + <span class="tok-number">1</span>), (f j t / (∑ t ∈ T, f j t))) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">intro</span> t ht; <span class="tok-tactic">rw</span> [ ← Real.mul_rpow ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; div_nonneg ( hf_nonneg _ _ ) ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) ) ] ;
+        by_cases h : ∏ j : Fin ( d + <span class="tok-number">1</span> ), ∑ t ∈ T, f j t = <span class="tok-number">0</span> &lt;;&gt; simp_all +decide [ Finset.prod_eq_zero_iff, Finset.sum_eq_zero_iff_of_nonneg ];
+        · <span class="tok-tactic">obtain</span> ⟨ j, hj ⟩ := h; simp_all +decide [ Finset.prod_eq_zero ( Finset.mem_univ j ) ] ;
+        · <span class="tok-tactic">rw</span> [ mul_div_cancel₀ _ ( Finset.prod_ne_zero_iff.mpr <span class="tok-keyword">fun</span> i _ =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">obtain</span> ⟨ j, hj₁, hj₂ ⟩ := h i; <span class="tok-tactic">exact</span> ne_of_gt ( lt_of_lt_of_le ( lt_of_le_of_ne ( hf_nonneg i j ) ( Ne.symm hj₂ ) ) ( Finset.single_le_sum ( <span class="tok-keyword">fun</span> x _ =&gt; hf_nonneg i x ) hj₁ ) ) ) ];
+      <span class="tok-tactic">have</span> h_am_gm : (∑ t ∈ T, (∏ j : Fin (d + <span class="tok-number">1</span>), (f j t / (∑ t ∈ T, f j t))) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>))) ≤ <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">have</span> h_am_gm : ∀ (t : <span class="tok-type">ℤ</span>), t ∈ T → (∏ j : Fin (d + <span class="tok-number">1</span>), (f j t / (∑ t ∈ T, f j t))) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) ≤ (∑ j : Fin (d + <span class="tok-number">1</span>), (f j t / (∑ t ∈ T, f j t))) / (d + <span class="tok-number">1</span>) := <span class="tok-tactic">by</span>
+          <span class="tok-tactic">intro</span> t ht; <span class="tok-tactic">have</span> := @Real.geom_mean_le_arith_mean;
+          <span class="tok-tactic">simpa</span> [ Finset.sum_div _ _ _ ] using this Finset.univ ( <span class="tok-keyword">fun</span> _ =&gt; <span class="tok-number">1</span> ) ( <span class="tok-keyword">fun</span> j =&gt; f j t / ∑ t ∈ T, f j t ) ( <span class="tok-keyword">fun</span> _ _ =&gt; zero_le_one ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">simpa</span> using <span class="tok-tactic">by</span> positivity ) ( <span class="tok-keyword">fun</span> _ _ =&gt; div_nonneg ( hf_nonneg _ _ ) ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) );
+        <span class="tok-tactic">refine</span> le_trans ( Finset.sum_le_sum h_am_gm ) ?_;
+        <span class="tok-tactic">rw</span> [ ← Finset.sum_div _ _ _, div_le_iff₀ ] &lt;;&gt; norm_cast &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+        <span class="tok-tactic">rw</span> [ Finset.sum_comm ];
+        <span class="tok-tactic">exact</span> le_trans ( Finset.sum_le_sum <span class="tok-keyword">fun</span> _ _ =&gt; <span class="tok-tactic">show</span> ∑ x ∈ T, f _ x / ∑ t ∈ T, f _ t ≤ <span class="tok-number">1</span> from <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ ← Finset.sum_div _ _ _ ] ; <span class="tok-tactic">exact</span> div_self_le_one _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> );
+      <span class="tok-tactic">refine</span> le_trans ( pow_le_pow_left₀ ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Real.rpow_nonneg ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) _ ) ( Finset.sum_le_sum h_holder_step ) _ ) ?_;
+      <span class="tok-tactic">rw</span> [ ← Finset.mul_sum _ _ _ ];
+      <span class="tok-tactic">exact</span> le_trans ( pow_le_pow_left₀ ( mul_nonneg ( Real.rpow_nonneg ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) _ ) ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Real.rpow_nonneg ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; div_nonneg ( hf_nonneg _ _ ) ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) ) _ ) ) ( mul_le_of_le_one_right ( Real.rpow_nonneg ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) _ ) h_am_gm ) _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ ← Real.rpow_natCast, ← Real.rpow_mul ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ), Nat.cast_add_one, div_mul_cancel₀ _ ( <span class="tok-tactic">by</span> positivity ), Real.rpow_one ] );
+    <span class="tok-tactic">exact</span> h_holder _ <span class="tok-keyword">fun</span> _ _ =&gt; Nat.cast_nonneg _;
+  <span class="tok-tactic">have</span> h_sum_ind : (∑ t ∈ T, (sliceAt A t).card : <span class="tok-type">ℝ</span>) ≤ (shadow <span class="tok-number">0</span> A).card ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) * (∑ t ∈ T, (∏ j : Fin (d + <span class="tok-number">1</span>), (shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>))) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h_sum_ind : ∀ t ∈ T, (sliceAt A t).card ≤ (shadow <span class="tok-number">0</span> A).card ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) * (∏ j : Fin (d + <span class="tok-number">1</span>), (shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intro</span> t ht
+      specialize h_ind t ht
+      <span class="tok-tactic">have</span> h_root : ((sliceAt A t).card : <span class="tok-type">ℝ</span>) ^ (d + <span class="tok-number">1</span>) ≤ (shadow <span class="tok-number">0</span> A).card * (∏ j : Fin (d + <span class="tok-number">1</span>), (shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>) := <span class="tok-tactic">by</span>
+        exact_mod_cast h_ind;
+      <span class="tok-tactic">rw</span> [ ← Real.mul_rpow ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Nat.cast_nonneg _ ) ] ; <span class="tok-tactic">exact</span> le_trans ( <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ ← Real.rpow_natCast, ← Real.rpow_mul ( <span class="tok-tactic">by</span> positivity ), Nat.cast_add_one, mul_one_div_cancel ( <span class="tok-tactic">by</span> positivity ), Real.rpow_one ] ) ( Real.rpow_le_rpow ( <span class="tok-tactic">by</span> positivity ) h_root ( <span class="tok-tactic">by</span> positivity ) ) ;
+    <span class="tok-tactic">simpa</span> only [ Finset.mul_sum _ _ _ ] using Finset.sum_le_sum h_sum_ind;
+  <span class="tok-tactic">have</span> h_combined : (∑ t ∈ T, (sliceAt A t).card : <span class="tok-type">ℝ</span>) ^ (d + <span class="tok-number">1</span>) ≤ (shadow <span class="tok-number">0</span> A).card * (∏ j : Fin (d + <span class="tok-number">1</span>), (∑ t ∈ T, ((shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>)) : <span class="tok-type">ℝ</span>) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">refine</span> le_trans ( pow_le_pow_left₀ ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Nat.cast_nonneg _ ) h_sum_ind _ ) ?_;
+    <span class="tok-tactic">rw</span> [ mul_pow ];
+    <span class="tok-tactic">exact</span> mul_le_mul ( <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ ← Real.rpow_natCast, ← Real.rpow_mul ( Nat.cast_nonneg _ ), Nat.cast_add_one, div_mul_cancel₀ _ ( <span class="tok-tactic">by</span> positivity ), Real.rpow_one ] ) h_holder ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> pow_nonneg ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Real.rpow_nonneg ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Nat.cast_nonneg _ ) _ ) _ ) ( <span class="tok-tactic">by</span> positivity );
+  <span class="tok-tactic">have</span> h_prod_le : (∏ j : Fin (d + <span class="tok-number">1</span>), (∑ t ∈ T, ((shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>)) : <span class="tok-type">ℝ</span>) ≤ (∏ j : Fin (d + <span class="tok-number">1</span>), ((shadow (Fin.succAbove <span class="tok-number">0</span> j) A).card : <span class="tok-type">ℝ</span>)) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> Finset.prod_le_prod ( <span class="tok-keyword">fun</span> _ _ =&gt; Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Nat.cast_nonneg _ ) <span class="tok-keyword">fun</span> _ _ =&gt; mod_cast sum_shadow_slice_le A _;
+  convert h_combined.trans ( mul_le_mul_of_nonneg_left h_prod_le &lt;| Nat.cast_nonneg _ ) using <span class="tok-number">1</span>;
+  · <span class="tok-tactic">exact</span> hA.symm ▸ <span class="tok-tactic">by</span> norm_cast;
+  · <span class="tok-tactic">rw</span> [ Fin.prod_univ_succAbove ]
+
+/-
+**Base case**: The Loomis–Whitney inequality <span class="tok-keyword">in</span> dimension <span class="tok-number">2</span>.
+    For `A ⊆ <span class="tok-type">ℤ</span>²`, `|A| ≤ |π₁(A)| · |π₂(A)|`.
+-/
+<span class="tok-keyword">theorem</span> base_case : Ineq <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">intro</span> A;
+  norm_cast;
+  <span class="tok-comment">-- The projection map from A to the product of the shadows is injective.</span>
+  <span class="tok-tactic">have</span> h_inj : Function.Injective (<span class="tok-keyword">fun</span> v : Fin <span class="tok-number">2</span> → <span class="tok-type">ℤ</span> =&gt; ((v <span class="tok-number">1</span> : <span class="tok-type">ℤ</span>), (v <span class="tok-number">0</span> : <span class="tok-type">ℤ</span>))) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> v w h =&gt; <span class="tok-tactic">by</span> ext i; fin_cases i &lt;;&gt; <span class="tok-tactic">aesop</span>;
+  <span class="tok-comment">-- Since the projection map is injective, the cardinality of A is less than or equal to the cardinality of the image of A under the projection map.</span>
+  <span class="tok-tactic">have</span> h_card_le : A.card ≤ (Finset.image (<span class="tok-keyword">fun</span> v : Fin <span class="tok-number">2</span> → <span class="tok-type">ℤ</span> =&gt; (v <span class="tok-number">1</span>, v <span class="tok-number">0</span>)) A).card := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">rw</span> [ Finset.card_image_of_injective _ h_inj ];
+  <span class="tok-comment">-- The image of A under the projection map is a subset of the product of the shadows.</span>
+  <span class="tok-tactic">have</span> h_image_subset : Finset.image (<span class="tok-keyword">fun</span> v : Fin <span class="tok-number">2</span> → <span class="tok-type">ℤ</span> =&gt; (v <span class="tok-number">1</span>, v <span class="tok-number">0</span>)) A ⊆ (shadow <span class="tok-number">0</span> A).image (<span class="tok-keyword">fun</span> v : Fin <span class="tok-number">1</span> → <span class="tok-type">ℤ</span> =&gt; (v <span class="tok-number">0</span>)) ×ˢ (shadow <span class="tok-number">1</span> A).image (<span class="tok-keyword">fun</span> v : Fin <span class="tok-number">1</span> → <span class="tok-type">ℤ</span> =&gt; (v <span class="tok-number">0</span>)) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">simp</span> +decide [ Finset.subset_iff ];
+    unfold shadow; <span class="tok-tactic">aesop</span>;
+  <span class="tok-tactic">have</span> := Finset.card_mono h_image_subset; simp_all +decide [ Fin.prod_univ_succ ] ;
+  <span class="tok-tactic">exact</span> h_card_le.trans ( this.trans ( Nat.mul_le_mul ( Finset.card_image_le ) ( Finset.card_image_le ) ) )
+
+/<span class="tok-comment">-- **Discrete Loomis–Whitney inequality** (induction assembly).</span>
+    For all `n ≥ <span class="tok-number">1</span>`, `Ineq n` holds, i.e., for all finite `A ⊆ <span class="tok-type">ℤ</span>^{n+<span class="tok-number">1</span>}`,
+    `|A|^n ≤ ∏ i, |π_i(A)|`. -/
+<span class="tok-keyword">theorem</span> ineq_all (n : <span class="tok-type">ℕ</span>) (hn : <span class="tok-number">1</span> ≤ n) : Ineq n := <span class="tok-tactic">by</span>
+  induction n <span class="tok-keyword">with</span>
+  | zero =&gt; <span class="tok-tactic">omega</span>
+  | succ m ih =&gt;
+    <span class="tok-tactic">cases</span> m <span class="tok-keyword">with</span>
+    | zero =&gt; <span class="tok-tactic">exact</span> base_case
+    | succ k =&gt; <span class="tok-tactic">exact</span> step (k + <span class="tok-number">1</span>) (<span class="tok-tactic">by</span> <span class="tok-tactic">omega</span>) (ih (<span class="tok-tactic">by</span> <span class="tok-tactic">omega</span>))
+
+<span class="tok-keyword">end</span> LoomisWhitney
+
+/<span class="tok-comment">-- **Discrete Loomis–Whitney inequality**.</span>
+    For any integer `d ≥ <span class="tok-number">2</span>` (encoded as `n + <span class="tok-number">2</span>` <span class="tok-keyword">with</span> `n : <span class="tok-type">ℕ</span>`) and any finite set
+    `A ⊆ <span class="tok-type">ℤ</span>^d`, we <span class="tok-tactic">have</span> `|A|^{d-<span class="tok-number">1</span>} ≤ ∏_{i=<span class="tok-number">1</span>}^{d} |π_i(A)|`.
+
+    Equivalently, `|A| ≤ ∏_{i=<span class="tok-number">1</span>}^{d} |π_i(A)|^{<span class="tok-number">1</span>/(d-<span class="tok-number">1</span>)}`. -/
+<span class="tok-keyword">theorem</span> loomis_whitney_root_aristotle (n : <span class="tok-type">ℕ</span>) (hn : <span class="tok-number">1</span> ≤ n)
+    (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) :
+    (A.card : <span class="tok-type">ℝ</span>) ^ n ≤
+      ∏ i : Fin (n + <span class="tok-number">1</span>), ((LoomisWhitney.shadow i A).card : <span class="tok-type">ℝ</span>) :=
+  LoomisWhitney.ineq_all n hn A</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/loomis_whitney_root_worker_20260409-134405_a03825b8.lean:49:59: warning: This simp argument is unused:
+  Finset.mem_coe
+
+Hint: Omit it from the simp argument list.
+  simp only [sliceAt, Finset.coe_filter, Set.mem_setOf_eq,̵ ̵F̵i̵n̵s̵e̵t̵.̵m̵e̵m̵_̵c̵o̵e̵] at ha hb
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/loomis_whitney_root_worker_20260409-134405_a03825b8.lean:54:12: warning: This simp argument is unused:
+  Fin.succAbove_zero
+
+Hint: Omit it from the simp argument list.
+  simp [̵F̵i̵n̵.̵s̵u̵c̵c̵A̵b̵o̵v̵e̵_̵z̵e̵r̵o̵,̵ ̵F̵i̵n̵.̵s̵u̵c̵c̵_̵p̵r̵e̵d̵]̵[̲F̲i̲n̲.̲s̲u̲c̲c̲_̲p̲r̲e̲d̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/loomis_whitney_root_worker_20260409-134405_a03825b8.lean:85:4: warning: Try this: intro t ht _
+Try this:
+  [apply] ring_nf!
+  
+  The `ring!` tactic failed to close the goal. Use `ring_nf!` to obtain a normal form.
+    
+  Note that `ring!` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+
+
+stderr:
+</code></pre>
+          </details>
+        
+    </article>
+    
+
+    <article class="node-card node-multilinear_holder_step" id="node-multilinear_holder_step" data-node-id="multilinear_holder_step" data-node-title="Multilinear Hölder estimate on slices" data-node-status="formal_verified">
+      <h3>Multilinear Hölder estimate on slices</h3>
+      <p class="meta">Node id: multilinear_holder_step | Status: formal_verified</p>
+      <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-loomis_whitney_root">loomis_whitney_root</a></p>
+      
+      <p class="meta">Formalization priority: 1. Rationale: The application of the multilinear Hölder inequality to the slice-wise bounds is the analytical core of the induction step and carries the main inferential load of the theorem.</p>
+      <p class="meta">Most recent formalization episode: verified the full parent node after 3 Lean verification attempts. Most recent formalization attempt verified the full parent node.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Assuming the \(d-1\) dimensional Loomis-Whitney inequality holds for the slices \(A_t\), the sum \(\sum_t |A_t|\) is bounded by \(\prod_{i=1}^d |\pi_i(A)|^{1/(d-1)}\) using the multilinear Hölder inequality.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">By the induction hypothesis applied to each slice \(A_t\), the size of each slice is bounded by the product of its \((d-2)\)-dimensional shadows. Applying a multilinear Hölder estimate to the sequence of slice sizes \(|A_t|\) over \(t\) reassembles the slice bounds into the global projection counts, yielding \(\sum_t |A_t| \le \prod_{i=1}^d |\pi_i(A)|^{1/(d-1)}\).</div>
+      
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> multilinear_holder_step_aristotle</p>
+        <p><strong>Coverage:</strong> full match</p><p class="meta">The Lean theorem precisely formalizes the complete inductive step of the Loomis-Whitney inequality, proving that the inequality for dimension <code class="inline-code">d+1</code> follows from the inequality for dimension <code class="inline-code">d</code>. This perfectly captures the target node&#x27;s entire burden, which describes bounding the overall volume by applying the multilinear Hölder inequality to the lower-dimensional slice bounds given by the induction hypothesis.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> multilinear_holder_step_aristotle (d : <span class="tok-type">ℕ</span>) (hd : <span class="tok-number">1</span> ≤ d)
+    (ih : LoomisWhitney.Ineq d) : LoomisWhitney.Ineq (d + <span class="tok-number">1</span>)</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean lean_project/FormalIslands/Generated/multilinear_holder_step_worker_20260409-111633_bd39e399.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib.Analysis.MeanInequalities
+<span class="tok-keyword">import</span> Mathlib.Order.Fin.Basic
+<span class="tok-keyword">import</span> Mathlib.Data.Finset.Card
+<span class="tok-keyword">import</span> Mathlib.Analysis.SpecialFunctions.Pow.NNReal
+
+/-!
+# Multilinear Hölder estimate on slices
+
+The analytical core of the induction step <span class="tok-keyword">in</span> the discrete Loomis–Whitney inequality.
+
+We work <span class="tok-keyword">with</span> subsets of `<span class="tok-type">ℤ</span>^d`, modeled as `Fin d → <span class="tok-type">ℤ</span>`. The coordinate projection
+`shadow i A` deletes coordinate `i` from each element of `A`.
+
+The main result is `multilinear_holder_step_aristotle`: assuming the Loomis–Whitney
+inequality <span class="tok-keyword">in</span> dimension `d + <span class="tok-number">1</span>` (for subsets of `Fin (d+<span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>`), we derive it <span class="tok-keyword">in</span>
+dimension `d + <span class="tok-number">2</span>` (for subsets of `Fin (d+<span class="tok-number">2</span>) → <span class="tok-type">ℤ</span>`).
+-/
+
+<span class="tok-keyword">open</span> Finset BigOperators
+
+noncomputable <span class="tok-keyword">section</span>
+
+<span class="tok-keyword">namespace</span> LoomisWhitney
+
+/<span class="tok-comment">-- The shadow (coordinate projection) of a finite set `A ⊆ ℤ^{n+1}` obtained by</span>
+    deleting coordinate `i`. -/
+<span class="tok-keyword">def</span> shadow {n : <span class="tok-type">ℕ</span>} (i : Fin (n + <span class="tok-number">1</span>)) (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) : Finset (Fin n → <span class="tok-type">ℤ</span>) :=
+  A.image (· ∘ i.succAbove)
+
+/<span class="tok-comment">-- The discrete Loomis–Whitney inequality in dimension `n + 1`:</span>
+    `|A|^n ≤ ∏ i, |π_i(A)|` for all finite `A ⊆ <span class="tok-type">ℤ</span>^{n+<span class="tok-number">1</span>}`. -/
+<span class="tok-keyword">def</span> Ineq (n : <span class="tok-type">ℕ</span>) : <span class="tok-type">Prop</span> :=
+  ∀ A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>),
+    (A.card : <span class="tok-type">ℝ</span>) ^ n ≤ ∏ i : Fin (n + <span class="tok-number">1</span>), ((shadow i A).card : <span class="tok-type">ℝ</span>)
+
+/<span class="tok-comment">-- Slice of `A ⊆ ℤ^{n+1}` at coordinate `0 = t`. -/</span>
+<span class="tok-keyword">def</span> sliceAt {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) (t : <span class="tok-type">ℤ</span>) :
+    Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>) :=
+  A.filter (<span class="tok-keyword">fun</span> v =&gt; v <span class="tok-number">0</span> = t)
+
+/<span class="tok-comment">-- Embed a slice into the lower-dimensional space by deleting coordinate `0`. -/</span>
+<span class="tok-keyword">def</span> sliceEmbed {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) (t : <span class="tok-type">ℤ</span>) :
+    Finset (Fin n → <span class="tok-type">ℤ</span>) :=
+  (sliceAt A t).image (· ∘ (<span class="tok-number">0</span> : Fin (n + <span class="tok-number">1</span>)).succAbove)
+
+/<span class="tok-comment">-- The set of active slice indices. -/</span>
+<span class="tok-keyword">def</span> sliceIndices {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) : Finset <span class="tok-type">ℤ</span> :=
+  A.image (· <span class="tok-number">0</span>)
+
+/<span class="tok-comment">-- Deleting coordinate `0` is injective on elements sharing the same `0`-th coordinate. -/</span>
+<span class="tok-keyword">lemma</span> eraseCoord_zero_injOn_slice {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) (t : <span class="tok-type">ℤ</span>) :
+    Set.InjOn (· ∘ (<span class="tok-number">0</span> : Fin (n + <span class="tok-number">1</span>)).succAbove)
+      ((sliceAt A t : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) : Set (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">intro</span> a ha b hb heq
+  <span class="tok-tactic">simp</span> only [sliceAt, Finset.coe_filter, Set.mem_setOf_eq, Finset.mem_coe] at ha hb
+  funext i
+  by_cases hi : i = <span class="tok-number">0</span>
+  · subst hi; <span class="tok-tactic">exact</span> ha.<span class="tok-number">2</span>.trans hb.<span class="tok-number">2</span>.symm
+  · <span class="tok-tactic">have</span> : i = (<span class="tok-number">0</span> : Fin (n + <span class="tok-number">1</span>)).succAbove (Fin.pred i hi) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">simp</span> [Fin.succAbove_zero, Fin.succ_pred]
+    <span class="tok-tactic">rw</span> [this]
+    <span class="tok-tactic">exact</span> congr_fun heq (Fin.pred i hi)
+
+/<span class="tok-comment">-- The cardinality of an embedded slice equals the cardinality of the original slice. -/</span>
+<span class="tok-keyword">lemma</span> sliceEmbed_card {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) (t : <span class="tok-type">ℤ</span>) :
+    (sliceEmbed A t).card = (sliceAt A t).card :=
+  Finset.card_image_of_injOn (eraseCoord_zero_injOn_slice A t)
+
+/<span class="tok-comment">-- Slicing partitions `A`: `|A| = ∑_{t ∈ T} |A_t|`. -/</span>
+<span class="tok-keyword">lemma</span> sum_slice_card {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) :
+    ∑ t ∈ sliceIndices A, (sliceAt A t).card = A.card := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">simp</span> only [sliceAt, sliceIndices]
+  <span class="tok-tactic">rw</span> [← Finset.card_eq_sum_card_fiberwise (<span class="tok-keyword">fun</span> x hx =&gt; Finset.mem_image_of_mem _ hx)]
+
+/<span class="tok-comment">-- Each embedded slice is a subset of the shadow along coordinate `0`. -/</span>
+<span class="tok-keyword">lemma</span> sliceEmbed_subset_shadow {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) (t : <span class="tok-type">ℤ</span>) :
+    sliceEmbed A t ⊆ shadow <span class="tok-number">0</span> A := <span class="tok-tactic">by</span>
+  unfold sliceEmbed shadow sliceAt
+  <span class="tok-tactic">exact</span> Finset.image_subset_image (Finset.filter_subset _ _)
+
+/<span class="tok-comment">-- The cardinality of each slice is bounded by the shadow along coordinate `0`. -/</span>
+<span class="tok-keyword">lemma</span> slice_card_le_shadow_zero {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span>)) (t : <span class="tok-type">ℤ</span>) :
+    (sliceAt A t).card ≤ (shadow <span class="tok-number">0</span> A).card := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">rw</span> [← sliceEmbed_card]
+  <span class="tok-tactic">exact</span> Finset.card_le_card (sliceEmbed_subset_shadow A t)
+
+/-
+The shadows of slices sum to at most the global shadow size.
+-/
+<span class="tok-keyword">lemma</span> sum_shadow_slice_le {n : <span class="tok-type">ℕ</span>} (A : Finset (Fin (n + <span class="tok-number">2</span>) → <span class="tok-type">ℤ</span>)) (j : Fin (n + <span class="tok-number">1</span>)) :
+    ∑ t ∈ sliceIndices A, (shadow j (sliceEmbed A t)).card ≤
+    (shadow (Fin.succAbove <span class="tok-number">0</span> j) A).card := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- We can map each element in the shadow of a slice to an element in the global shadow by restoring the coordinate `0`.</span>
+  <span class="tok-tactic">have</span> h_map : ∀ t ∈ sliceIndices A, (shadow j (sliceEmbed A t)).image (Fin.cons t) ⊆ shadow (Fin.succAbove <span class="tok-number">0</span> j) A := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">intro</span> t ht; <span class="tok-tactic">intro</span>; <span class="tok-tactic">simp</span> +decide [ shadow, sliceEmbed ] ;
+    <span class="tok-tactic">rintro</span> x hx rfl; use x; simp_all +decide [ sliceAt ] ;
+    ext i; induction i using Fin.inductionOn &lt;;&gt; <span class="tok-tactic">aesop</span>;
+  <span class="tok-tactic">refine</span>&#x27; le_trans _ ( Finset.card_le_card &lt;| <span class="tok-tactic">show</span> ( Finset.biUnion ( sliceIndices A ) <span class="tok-keyword">fun</span> t =&gt; image ( Fin.cons t ) ( shadow j ( sliceEmbed A t ) ) ) ⊆ shadow ( Fin.succAbove <span class="tok-number">0</span> j ) A from _ );
+  · <span class="tok-tactic">rw</span> [ Finset.card_biUnion ];
+    · <span class="tok-tactic">exact</span> Finset.sum_le_sum <span class="tok-keyword">fun</span> t ht =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ Finset.card_image_of_injective _ <span class="tok-keyword">fun</span> x y hxy =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">simpa</span> using hxy ] ;
+    · <span class="tok-tactic">intro</span> t ht u hu htu; simp_all +decide [ Finset.disjoint_left ] ;
+      <span class="tok-tactic">aesop</span>;
+  · <span class="tok-tactic">exact</span> Finset.biUnion_subset.mpr h_map
+
+/-
+The induction step: Ineq d implies Ineq (d + <span class="tok-number">1</span>).
+-/
+<span class="tok-keyword">theorem</span> step (d : <span class="tok-type">ℕ</span>) (hd : <span class="tok-number">1</span> ≤ d) (ih : Ineq d) : Ineq (d + <span class="tok-number">1</span>) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">intro</span> A
+  set T := sliceIndices A
+  <span class="tok-tactic">have</span> hA : (A.card : <span class="tok-type">ℝ</span>) = ∑ t ∈ T, (sliceAt A t).card := <span class="tok-tactic">by</span>
+    rw_mod_cast [ sum_slice_card ];
+  <span class="tok-comment">-- By the induction hypothesis, we have $|B_t|^{d+1} \leq |\pi_0(A)| \cdot \prod_j |\pi_j(B_t)|$.</span>
+  <span class="tok-tactic">have</span> h_ind : ∀ t ∈ T, (sliceAt A t).card ^ (d + <span class="tok-number">1</span>) ≤ (shadow <span class="tok-number">0</span> A).card * ∏ j : Fin (d + <span class="tok-number">1</span>), (shadow j (sliceEmbed A t)).card := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">intro</span> t ht
+    <span class="tok-tactic">have</span> h_ind_step : (sliceEmbed A t).card ^ d ≤ ∏ j : Fin (d + <span class="tok-number">1</span>), (shadow j (sliceEmbed A t)).card := <span class="tok-tactic">by</span>
+      convert ih ( sliceEmbed A t ) using <span class="tok-number">1</span>;
+      norm_cast;
+    convert Nat.mul_le_mul ( slice_card_le_shadow_zero A t ) h_ind_step using <span class="tok-number">1</span> ; <span class="tok-tactic">ring</span>!;
+    <span class="tok-tactic">rw</span> [ sliceEmbed_card ];
+  <span class="tok-comment">-- Applying the multilinear Hölder inequality to the sum of the products.</span>
+  <span class="tok-tactic">have</span> h_holder : (∑ t ∈ T, (∏ j : Fin (d + <span class="tok-number">1</span>), (shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>))) ^ (d + <span class="tok-number">1</span>) ≤ (∏ j : Fin (d + <span class="tok-number">1</span>), (∑ t ∈ T, ((shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>)) : <span class="tok-type">ℝ</span>) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h_holder : ∀ (f : Fin (d + <span class="tok-number">1</span>) → <span class="tok-type">ℤ</span> → <span class="tok-type">ℝ</span>), (∀ j t, <span class="tok-number">0</span> ≤ f j t) → (∑ t ∈ T, (∏ j : Fin (d + <span class="tok-number">1</span>), f j t) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>))) ^ (d + <span class="tok-number">1</span>) ≤ (∏ j : Fin (d + <span class="tok-number">1</span>), (∑ t ∈ T, f j t)) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intro</span> f hf_nonneg
+      <span class="tok-tactic">have</span> h_holder_step : ∀ (t : <span class="tok-type">ℤ</span>), t ∈ T → (∏ j : Fin (d + <span class="tok-number">1</span>), f j t) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) ≤ (∏ j : Fin (d + <span class="tok-number">1</span>), (∑ t ∈ T, f j t)) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) * (∏ j : Fin (d + <span class="tok-number">1</span>), (f j t / (∑ t ∈ T, f j t))) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">intro</span> t ht; <span class="tok-tactic">rw</span> [ ← Real.mul_rpow ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; div_nonneg ( hf_nonneg _ _ ) ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) ) ] ;
+        by_cases h : ∏ j : Fin ( d + <span class="tok-number">1</span> ), ∑ t ∈ T, f j t = <span class="tok-number">0</span> &lt;;&gt; simp_all +decide [ Finset.prod_eq_zero_iff, Finset.sum_eq_zero_iff_of_nonneg ];
+        · <span class="tok-tactic">obtain</span> ⟨ j, hj ⟩ := h; simp_all +decide [ Finset.prod_eq_zero ( Finset.mem_univ j ) ] ;
+        · <span class="tok-tactic">rw</span> [ mul_div_cancel₀ _ ( Finset.prod_ne_zero_iff.mpr <span class="tok-keyword">fun</span> i _ =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">obtain</span> ⟨ j, hj₁, hj₂ ⟩ := h i; <span class="tok-tactic">exact</span> ne_of_gt ( lt_of_lt_of_le ( lt_of_le_of_ne ( hf_nonneg i j ) ( Ne.symm hj₂ ) ) ( Finset.single_le_sum ( <span class="tok-keyword">fun</span> x _ =&gt; hf_nonneg i x ) hj₁ ) ) ) ];
+      <span class="tok-comment">-- Applying the AM-GM inequality to the sum of the products.</span>
+      <span class="tok-tactic">have</span> h_am_gm : (∑ t ∈ T, (∏ j : Fin (d + <span class="tok-number">1</span>), (f j t / (∑ t ∈ T, f j t))) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>))) ≤ <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">have</span> h_am_gm : ∀ (t : <span class="tok-type">ℤ</span>), t ∈ T → (∏ j : Fin (d + <span class="tok-number">1</span>), (f j t / (∑ t ∈ T, f j t))) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) ≤ (∑ j : Fin (d + <span class="tok-number">1</span>), (f j t / (∑ t ∈ T, f j t))) / (d + <span class="tok-number">1</span>) := <span class="tok-tactic">by</span>
+          <span class="tok-tactic">intro</span> t ht; <span class="tok-tactic">have</span> := @Real.geom_mean_le_arith_mean;
+          <span class="tok-tactic">simpa</span> [ Finset.sum_div _ _ _ ] using this Finset.univ ( <span class="tok-keyword">fun</span> _ =&gt; <span class="tok-number">1</span> ) ( <span class="tok-keyword">fun</span> j =&gt; f j t / ∑ t ∈ T, f j t ) ( <span class="tok-keyword">fun</span> _ _ =&gt; zero_le_one ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">simpa</span> using <span class="tok-tactic">by</span> positivity ) ( <span class="tok-keyword">fun</span> _ _ =&gt; div_nonneg ( hf_nonneg _ _ ) ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) );
+        <span class="tok-tactic">refine</span> le_trans ( Finset.sum_le_sum h_am_gm ) ?_;
+        <span class="tok-tactic">rw</span> [ ← Finset.sum_div _ _ _, div_le_iff₀ ] &lt;;&gt; norm_cast &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+        <span class="tok-tactic">rw</span> [ Finset.sum_comm ];
+        <span class="tok-tactic">exact</span> le_trans ( Finset.sum_le_sum <span class="tok-keyword">fun</span> _ _ =&gt; <span class="tok-tactic">show</span> ∑ x ∈ T, f _ x / ∑ t ∈ T, f _ t ≤ <span class="tok-number">1</span> from <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ ← Finset.sum_div _ _ _ ] ; <span class="tok-tactic">exact</span> div_self_le_one _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">norm_num</span> );
+      <span class="tok-tactic">refine</span> le_trans ( pow_le_pow_left₀ ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Real.rpow_nonneg ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) _ ) ( Finset.sum_le_sum h_holder_step ) _ ) ?_;
+      <span class="tok-tactic">rw</span> [ ← Finset.mul_sum _ _ _ ];
+      <span class="tok-tactic">exact</span> le_trans ( pow_le_pow_left₀ ( mul_nonneg ( Real.rpow_nonneg ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) _ ) ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Real.rpow_nonneg ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; div_nonneg ( hf_nonneg _ _ ) ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) ) _ ) ) ( mul_le_of_le_one_right ( Real.rpow_nonneg ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ) _ ) h_am_gm ) _ ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ ← Real.rpow_natCast, ← Real.rpow_mul ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; hf_nonneg _ _ ), Nat.cast_add_one, div_mul_cancel₀ _ ( <span class="tok-tactic">by</span> positivity ), Real.rpow_one ] );
+    <span class="tok-tactic">exact</span> h_holder _ <span class="tok-keyword">fun</span> _ _ =&gt; Nat.cast_nonneg _;
+  <span class="tok-comment">-- Applying the induction hypothesis to each term in the sum, we get:</span>
+  <span class="tok-tactic">have</span> h_sum_ind : (∑ t ∈ T, (sliceAt A t).card : <span class="tok-type">ℝ</span>) ≤ (shadow <span class="tok-number">0</span> A).card ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) * (∑ t ∈ T, (∏ j : Fin (d + <span class="tok-number">1</span>), (shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>))) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h_sum_ind : ∀ t ∈ T, (sliceAt A t).card ≤ (shadow <span class="tok-number">0</span> A).card ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) * (∏ j : Fin (d + <span class="tok-number">1</span>), (shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>) ^ (<span class="tok-number">1</span> / (d + <span class="tok-number">1</span> : <span class="tok-type">ℝ</span>)) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intro</span> t ht
+      specialize h_ind t ht
+      <span class="tok-tactic">have</span> h_root : ((sliceAt A t).card : <span class="tok-type">ℝ</span>) ^ (d + <span class="tok-number">1</span>) ≤ (shadow <span class="tok-number">0</span> A).card * (∏ j : Fin (d + <span class="tok-number">1</span>), (shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>) := <span class="tok-tactic">by</span>
+        exact_mod_cast h_ind;
+      <span class="tok-tactic">rw</span> [ ← Real.mul_rpow ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Nat.cast_nonneg _ ) ] ; <span class="tok-tactic">exact</span> le_trans ( <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ ← Real.rpow_natCast, ← Real.rpow_mul ( <span class="tok-tactic">by</span> positivity ), Nat.cast_add_one, mul_one_div_cancel ( <span class="tok-tactic">by</span> positivity ), Real.rpow_one ] ) ( Real.rpow_le_rpow ( <span class="tok-tactic">by</span> positivity ) h_root ( <span class="tok-tactic">by</span> positivity ) ) ;
+    <span class="tok-tactic">simpa</span> only [ Finset.mul_sum _ _ _ ] using Finset.sum_le_sum h_sum_ind;
+  <span class="tok-comment">-- Combining the inequalities from h_sum_ind and h_holder, we get:</span>
+  <span class="tok-tactic">have</span> h_combined : (∑ t ∈ T, (sliceAt A t).card : <span class="tok-type">ℝ</span>) ^ (d + <span class="tok-number">1</span>) ≤ (shadow <span class="tok-number">0</span> A).card * (∏ j : Fin (d + <span class="tok-number">1</span>), (∑ t ∈ T, ((shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>)) : <span class="tok-type">ℝ</span>) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">refine</span> le_trans ( pow_le_pow_left₀ ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Nat.cast_nonneg _ ) h_sum_ind _ ) ?_;
+    <span class="tok-tactic">rw</span> [ mul_pow ];
+    <span class="tok-tactic">exact</span> mul_le_mul ( <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ ← Real.rpow_natCast, ← Real.rpow_mul ( Nat.cast_nonneg _ ), Nat.cast_add_one, div_mul_cancel₀ _ ( <span class="tok-tactic">by</span> positivity ), Real.rpow_one ] ) h_holder ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> pow_nonneg ( Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Real.rpow_nonneg ( Finset.prod_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Nat.cast_nonneg _ ) _ ) _ ) ( <span class="tok-tactic">by</span> positivity );
+  <span class="tok-comment">-- Applying the inequality from sum_shadow_slice_le to each term in the product.</span>
+  <span class="tok-tactic">have</span> h_prod_le : (∏ j : Fin (d + <span class="tok-number">1</span>), (∑ t ∈ T, ((shadow j (sliceEmbed A t)).card : <span class="tok-type">ℝ</span>)) : <span class="tok-type">ℝ</span>) ≤ (∏ j : Fin (d + <span class="tok-number">1</span>), ((shadow (Fin.succAbove <span class="tok-number">0</span> j) A).card : <span class="tok-type">ℝ</span>)) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> Finset.prod_le_prod ( <span class="tok-keyword">fun</span> _ _ =&gt; Finset.sum_nonneg <span class="tok-keyword">fun</span> _ _ =&gt; Nat.cast_nonneg _ ) <span class="tok-keyword">fun</span> _ _ =&gt; mod_cast sum_shadow_slice_le A _;
+  convert h_combined.trans ( mul_le_mul_of_nonneg_left h_prod_le &lt;| Nat.cast_nonneg _ ) using <span class="tok-number">1</span>;
+  · <span class="tok-tactic">exact</span> hA.symm ▸ <span class="tok-tactic">by</span> norm_cast;
+  · <span class="tok-tactic">rw</span> [ Fin.prod_univ_succAbove ]
+
+<span class="tok-keyword">end</span> LoomisWhitney
+
+/<span class="tok-comment">-- **Multilinear Hölder estimate on slices**: the discrete Loomis–Whitney</span>
+    inequality <span class="tok-keyword">in</span> dimension `d + <span class="tok-number">2</span>` follows from the inequality <span class="tok-keyword">in</span> dimension `d + <span class="tok-number">1</span>`. -/
+<span class="tok-keyword">theorem</span> multilinear_holder_step_aristotle (d : <span class="tok-type">ℕ</span>) (hd : <span class="tok-number">1</span> ≤ d)
+    (ih : LoomisWhitney.Ineq d) : LoomisWhitney.Ineq (d + <span class="tok-number">1</span>) :=
+  LoomisWhitney.step d hd ih</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/multilinear_holder_step_worker_20260409-111633_bd39e399.lean:55:59: warning: This simp argument is unused:
+  Finset.mem_coe
+
+Hint: Omit it from the simp argument list.
+  simp only [sliceAt, Finset.coe_filter, Set.mem_setOf_eq,̵ ̵F̵i̵n̵s̵e̵t̵.̵m̵e̵m̵_̵c̵o̵e̵] at ha hb
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/multilinear_holder_step_worker_20260409-111633_bd39e399.lean:60:12: warning: This simp argument is unused:
+  Fin.succAbove_zero
+
+Hint: Omit it from the simp argument list.
+  simp [̵F̵i̵n̵.̵s̵u̵c̵c̵A̵b̵o̵v̵e̵_̵z̵e̵r̵o̵,̵ ̵F̵i̵n̵.̵s̵u̵c̵c̵_̵p̵r̵e̵d̵]̵[̲F̲i̲n̲.̲s̲u̲c̲c̲_̲p̲r̲e̲d̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/multilinear_holder_step_worker_20260409-111633_bd39e399.lean:95:4: warning: Try this: intro t ht _
+Try this:
+  [apply] ring_nf!
+  
+  The `ring!` tactic failed to close the goal. Use `ring_nf!` to obtain a normal form.
+    
+  Note that `ring!` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+
+
+stderr:
+</code></pre>
+          </details>
+        
+    </article>
+    
+      </div>
+      
+      <details class="subsumed-nodes">
+        <summary>Hidden subsumed nodes (1)</summary>
+        <p class="graph-caption">
+          These informal nodes are hidden from the final graph display because a formal-verified parent theorem
+          appears to have discharged them internally. They remain in the saved artifacts and graph history.
+        </p>
+        <div class="nodes-grid nodes-grid-subsumed">
+          
+    <article class="node-card node-base_case_d2" id="node-base_case_d2" data-node-id="base_case_d2" data-node-title="Base case (d=2)" data-node-status="informal">
+      <h3>Base case (d=2)</h3>
+      <p class="meta">Node id: base_case_d2 | Status: informal</p>
+      <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-loomis_whitney_root">loomis_whitney_root</a></p>
+      
+      
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">For a finite set \(A \subseteq \mathbb{Z}^2\), \(|A| \le |\pi_1(A)|\,|\pi_2(A)|\).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">A finite set \(A \subseteq \mathbb{Z}^2\) injects into the product of its two coordinate projections, so its size is bounded by the product of the sizes of the projections.</div>
+      
+      
+    </article>
+    
+        </div>
+      </details>
+    
+    </section>
+  </main>
+  
+  <script>
+    document.querySelectorAll('[data-graph-history]').forEach((root) => {
+      const collections = {
+        visual: Array.from(root.querySelectorAll('[data-history-frame][data-history-collection="visual"]')),
+        all: Array.from(root.querySelectorAll('[data-history-frame][data-history-collection="all"]')),
+      };
+      const showAllToggle = root.querySelector('[data-history-show-all]');
+      const captionEl = root.querySelector('[data-history-caption]');
+      const metaEl = root.querySelector('[data-history-meta]');
+      const indexEl = root.querySelector('[data-history-index]');
+      const countEl = root.querySelector('[data-history-count]');
+      const startBtn = root.querySelector('[data-history-action="start"]');
+      const prevBtn = root.querySelector('[data-history-action="prev"]');
+      const nextBtn = root.querySelector('[data-history-action="next"]');
+      const endBtn = root.querySelector('[data-history-action="end"]');
+      let collection = (root.dataset.historyDefaultCollection || 'visual');
+      const indexes = {
+        visual: Math.max(collections.visual.length - 1, 0),
+        all: Math.max(collections.all.length - 1, 0),
+      };
+
+      const activeFrames = () => {
+        const frames = collections[collection] || [];
+        return frames.length > 0 ? frames : collections.visual;
+      };
+
+      const update = () => {
+        Object.entries(collections).forEach(([key, frames]) => {
+          frames.forEach((frame, frameIndex) => {
+            const active = key === collection && frameIndex === indexes[collection];
+            frame.hidden = !active;
+          });
+        });
+        const frames = activeFrames();
+        const safeIndex = Math.min(indexes[collection], frames.length - 1);
+        indexes[collection] = Math.max(safeIndex, 0);
+        const active = frames[indexes[collection]];
+        if (!active) return;
+        if (captionEl) captionEl.innerHTML = active.dataset.captionHtml || '';
+        if (metaEl) {
+          const label = active.dataset.label || '';
+          const timestamp = active.dataset.timestamp || '';
+          metaEl.textContent = label && timestamp ? `${label} · ${timestamp}` : (label || timestamp);
+        }
+        if (indexEl) indexEl.textContent = String(indexes[collection] + 1);
+        if (countEl) countEl.textContent = String(frames.length);
+        if (startBtn) startBtn.disabled = indexes[collection] === 0;
+        if (prevBtn) prevBtn.disabled = indexes[collection] === 0;
+        if (nextBtn) nextBtn.disabled = indexes[collection] === frames.length - 1;
+        if (endBtn) endBtn.disabled = indexes[collection] === frames.length - 1;
+      };
+
+      startBtn?.addEventListener('click', () => {
+        indexes[collection] = 0;
+        update();
+      });
+      prevBtn?.addEventListener('click', () => {
+        if (indexes[collection] > 0) {
+          indexes[collection] -= 1;
+          update();
+        }
+      });
+      nextBtn?.addEventListener('click', () => {
+        const frames = activeFrames();
+        if (indexes[collection] < frames.length - 1) {
+          indexes[collection] += 1;
+          update();
+        }
+      });
+      endBtn?.addEventListener('click', () => {
+        const frames = activeFrames();
+        indexes[collection] = Math.max(frames.length - 1, 0);
+        update();
+      });
+      showAllToggle?.addEventListener('change', () => {
+        collection = showAllToggle.checked && collections.all.length > 0 ? 'all' : 'visual';
+        update();
+      });
+
+      update();
+    });
+  </script>
+    
+  
+  <script>
+    document.querySelectorAll('.report-root').forEach((root) => {
+      const searchInput = root.querySelector('[data-node-search]');
+      const resetButton = root.querySelector('[data-node-filter-reset]');
+      const statusInputs = Array.from(root.querySelectorAll('[data-node-filter-status]'));
+      const cards = Array.from(root.querySelectorAll('[data-node-id]'));
+      const graphNodes = Array.from(root.querySelectorAll('[data-graph-node-id]'));
+      if (!searchInput || cards.length === 0) return;
+
+      const update = () => {
+        const query = searchInput.value.trim().toLowerCase();
+        const allowedStatuses = new Set(
+          statusInputs.filter((input) => input.checked).map((input) => input.dataset.nodeFilterStatus)
+        );
+        cards.forEach((card) => {
+          const nodeId = (card.dataset.nodeId || '').toLowerCase();
+          const title = (card.dataset.nodeTitle || '').toLowerCase();
+          const status = card.dataset.nodeStatus || '';
+          const matchesQuery = query === '' || nodeId.includes(query) || title.includes(query);
+          const matchesStatus = allowedStatuses.has(status);
+          const visible = matchesQuery && matchesStatus;
+          card.hidden = !visible;
+        });
+        graphNodes.forEach((node) => {
+          const nodeId = node.dataset.graphNodeId || '';
+          const linkedCard = root.querySelector(`[data-node-id="${CSS.escape(nodeId)}"]`);
+          node.classList.toggle('graph-node-dimmed', !!linkedCard && linkedCard.hidden);
+        });
+      };
+
+      statusInputs.forEach((input) => input.addEventListener('change', update));
+      searchInput.addEventListener('input', update);
+      resetButton?.addEventListener('click', () => {
+        searchInput.value = '';
+        statusInputs.forEach((input) => { input.checked = true; });
+        update();
+      });
+      update();
+    });
+  </script>
+    
+</body>
+</html>

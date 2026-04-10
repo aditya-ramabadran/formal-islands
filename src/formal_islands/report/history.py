@@ -121,6 +121,15 @@ def graph_history_caption(entry: GraphHistoryEntry) -> str:
 
     if event in {GraphHistoryEventKind.EXTRACT_STAGE_OUTPUT, GraphHistoryEventKind.PLAN_STAGE_EXTRACTED_GRAPH}:
         return "Initial extracted proof graph."
+    if event == GraphHistoryEventKind.CONTINUATION_REQUEST:
+        requested = entry.metadata.get("requested_nodes")
+        if isinstance(requested, list):
+            formatted = ", ".join(f"`{str(node_id)}`" for node_id in requested)
+            if formatted:
+                return f"Continuation request promoted {formatted} for another formalization pass."
+        if node_id:
+            return f"Continuation request promoted `{node_id}` for another formalization pass."
+        return "Continuation request updated the graph for another formalization pass."
     if event in {GraphHistoryEventKind.CANDIDATE_SELECTION_OUTPUT, GraphHistoryEventKind.PLAN_STAGE_CANDIDATE_GRAPH}:
         promoted = [
             f"`{change.get('id')}`"
@@ -130,6 +139,24 @@ def graph_history_caption(entry: GraphHistoryEntry) -> str:
         if promoted:
             return "Candidate selection marked " + ", ".join(promoted) + " for formalization."
         return "Candidate selection updated the proof graph."
+    if event == GraphHistoryEventKind.BLOCKER_PROMOTION:
+        promoted_changes = [
+            change
+            for change in changed_nodes
+            if isinstance(change, dict) and change.get("after_status") == "candidate_formal"
+        ]
+        if promoted_changes:
+            change = promoted_changes[0]
+            changed_id = str(change.get("id") or node_id or "node")
+            priority = change.get("after_priority")
+            priority_suffix = f" at priority `{priority}`" if priority is not None else ""
+            return (
+                f"Node `{changed_id}` was promoted from `informal` to `candidate_formal`"
+                f"{priority_suffix} as the last remaining blocker to a broader parent/root theorem."
+            )
+        if node_id:
+            return f"Node `{node_id}` was promoted as a last-blocker formalization target."
+        return "A blocker node was promoted for formalization."
     if event == GraphHistoryEventKind.PARENT_PROMOTION:
         promoted_changes = [
             change
@@ -209,6 +236,67 @@ def graph_history_caption(entry: GraphHistoryEntry) -> str:
 def render_graph_history_widget(entries: list[GraphHistoryEntry | dict[str, object]]) -> str:
     visual_frames = build_graph_history_frames(entries, visually_distinct_only=True)
     all_frames = build_graph_history_frames(entries, visually_distinct_only=False)
+    return _render_graph_history_collections(visual_frames=visual_frames, all_frames=all_frames)
+
+
+def render_graph_history_widget_with_cleanup(
+    entries: list[GraphHistoryEntry | dict[str, object]],
+    *,
+    cleaned_graph: ProofGraph,
+    cleaned_caption: str,
+    cleaned_label: str = "final display cleanup",
+) -> str:
+    visual_frames = build_graph_history_frames(entries, visually_distinct_only=True)
+    all_frames = build_graph_history_frames(entries, visually_distinct_only=False)
+    visual_frames = _append_synthetic_cleanup_frame(
+        visual_frames,
+        cleaned_graph=cleaned_graph,
+        cleaned_caption=cleaned_caption,
+        cleaned_label=cleaned_label,
+    )
+    all_frames = _append_synthetic_cleanup_frame(
+        all_frames,
+        cleaned_graph=cleaned_graph,
+        cleaned_caption=cleaned_caption,
+        cleaned_label=cleaned_label,
+    )
+    return _render_graph_history_collections(visual_frames=visual_frames, all_frames=all_frames)
+
+
+def _append_synthetic_cleanup_frame(
+    frames: list[dict[str, object]],
+    *,
+    cleaned_graph: ProofGraph,
+    cleaned_caption: str,
+    cleaned_label: str,
+) -> list[dict[str, object]]:
+    if not frames:
+        return frames
+    last_graph = frames[-1]["graph"]
+    if not isinstance(last_graph, ProofGraph):
+        return frames
+    if graph_visual_signature(last_graph) == graph_visual_signature(cleaned_graph):
+        return frames
+    synthetic = {
+        "index": len(frames),
+        "timestamp": str(frames[-1]["timestamp"]),
+        "event": "report_display_cleanup",
+        "label": cleaned_label,
+        "node_id": None,
+        "caption": cleaned_caption,
+        "caption_html": render_inline_code_html(cleaned_caption),
+        "node_count": len(cleaned_graph.nodes),
+        "edge_count": len(cleaned_graph.edges),
+        "graph": cleaned_graph,
+    }
+    return [*frames, synthetic]
+
+
+def _render_graph_history_collections(
+    *,
+    visual_frames: list[dict[str, object]],
+    all_frames: list[dict[str, object]],
+) -> str:
     if len(visual_frames) < 2:
         return render_graph_widget(visual_frames[-1]["graph"], widget_key="current") if visual_frames else ""
 
@@ -237,10 +325,10 @@ def render_graph_history_widget(entries: list[GraphHistoryEntry | dict[str, obje
     <div class="graph-history" data-graph-history data-history-default-collection="visual">
       <div class="graph-history-controls">
         <div class="graph-history-buttons">
-          <button type="button" class="graph-history-button" data-history-action="start" aria-label="Go to first graph snapshot">|&lt;</button>
-          <button type="button" class="graph-history-button" data-history-action="prev" aria-label="Go to previous graph snapshot">&lt;</button>
-          <button type="button" class="graph-history-button" data-history-action="next" aria-label="Go to next graph snapshot">&gt;</button>
-          <button type="button" class="graph-history-button" data-history-action="end" aria-label="Go to latest graph snapshot">&gt;|</button>
+          <button type="button" class="graph-history-button" data-history-action="start" aria-label="Go to first graph snapshot" title="Go to first graph snapshot">⏮</button>
+          <button type="button" class="graph-history-button" data-history-action="prev" aria-label="Go to previous graph snapshot" title="Go to previous graph snapshot">◀</button>
+          <button type="button" class="graph-history-button" data-history-action="next" aria-label="Go to next graph snapshot" title="Go to next graph snapshot">▶</button>
+          <button type="button" class="graph-history-button" data-history-action="end" aria-label="Go to latest graph snapshot" title="Go to latest graph snapshot">⏭</button>
         </div>
         {show_all_toggle}
         <div class="graph-history-status">

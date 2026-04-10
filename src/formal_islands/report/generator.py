@@ -8,6 +8,10 @@ from html import escape
 from formal_islands.formalization.pipeline import parse_faithfulness_notes
 from formal_islands.models import ProofGraph, ProofNode, ReviewObligation
 from formal_islands.progress import GraphHistoryEntry
+from formal_islands.report.graph_visibility import (
+    display_graph_without_hidden_subsumed_nodes,
+    subsumed_informal_node_ids,
+)
 from formal_islands.report.graph_widget import (
     NODE_HEIGHT,
     node_class,
@@ -22,6 +26,7 @@ from formal_islands.report.history import (
     load_graph_history_entries,
     render_graph_history_script,
     render_graph_history_widget,
+    render_graph_history_widget_with_cleanup,
 )
 from formal_islands.report.rendering import (
     display_verification_command,
@@ -39,6 +44,56 @@ _compute_graph_layout = compute_graph_layout
 _render_math_text = render_math_text
 
 
+def _subsumed_cleanup_caption(hidden_nodes: list[ProofNode]) -> str:
+    if not hidden_nodes:
+        return ""
+    if len(hidden_nodes) == 1:
+        return (
+            f"Final display cleanup hid subsumed informal node `{hidden_nodes[0].id}` because a verified parent "
+            "theorem already discharged that dependency."
+        )
+    formatted = ", ".join(f"`{node.id}`" for node in hidden_nodes)
+    return (
+        f"Final display cleanup hid subsumed informal nodes {formatted} because verified parent theorems already "
+        "discharged those dependencies."
+    )
+
+
+def _render_hidden_subsumed_nodes_section(hidden_nodes: list[ProofNode], graph: ProofGraph) -> str:
+    if not hidden_nodes:
+        return ""
+    hidden_sections = "\n".join(_render_node_section(node, graph) for node in hidden_nodes)
+    summary = (
+        f"Hidden subsumed nodes ({len(hidden_nodes)})"
+    )
+    return f"""
+      <details class="subsumed-nodes">
+        <summary>{escape(summary)}</summary>
+        <p class="graph-caption">
+          These informal nodes are hidden from the final graph display because a formal-verified parent theorem
+          appears to have discharged them internally. They remain in the saved artifacts and graph history.
+        </p>
+        <div class="nodes-grid nodes-grid-subsumed">
+          {hidden_sections}
+        </div>
+      </details>
+    """
+
+
+def _display_review_obligations(
+    obligations: list[ReviewObligation],
+    *,
+    hidden_node_ids: set[str],
+) -> list[ReviewObligation]:
+    if not hidden_node_ids:
+        return obligations
+    return [
+        obligation
+        for obligation in obligations
+        if not any(node_id in hidden_node_ids for node_id in obligation.node_ids)
+    ]
+
+
 def export_report_bundle(
     graph: ProofGraph,
     obligations: list[ReviewObligation],
@@ -47,9 +102,12 @@ def export_report_bundle(
 ) -> dict:
     """Export a JSON-serializable report bundle."""
 
+    hidden_subsumed_ids = subsumed_informal_node_ids(graph)
+    display_graph = display_graph_without_hidden_subsumed_nodes(graph, hidden_subsumed_ids)
+    display_obligations = _display_review_obligations(obligations, hidden_node_ids=hidden_subsumed_ids)
     bundle = {
-        "graph": sanitize_report_payload(graph.model_dump(mode="json")),
-        "review_obligations": [obligation.model_dump(mode="json") for obligation in obligations],
+        "graph": sanitize_report_payload(display_graph.model_dump(mode="json")),
+        "review_obligations": [obligation.model_dump(mode="json") for obligation in display_obligations],
     }
     if graph_history:
         bundle["graph_history"] = sanitize_report_payload(graph_history_bundle(graph_history))
@@ -64,23 +122,36 @@ def render_html_report(
 ) -> str:
     """Render a static HTML report with a pure SVG/CSS graph widget."""
 
-    status_counts = Counter(node.status for node in graph.nodes)
-    checklist_items = "\n".join(_render_checklist_item(obligation, graph) for obligation in obligations)
-    node_sections = "\n".join(_render_node_section(node, graph) for node in graph.nodes)
+    hidden_subsumed_ids = subsumed_informal_node_ids(graph)
+    display_graph = display_graph_without_hidden_subsumed_nodes(graph, hidden_subsumed_ids)
+    display_obligations = _display_review_obligations(obligations, hidden_node_ids=hidden_subsumed_ids)
+    status_counts = Counter(node.status for node in display_graph.nodes)
+    checklist_items = "\n".join(_render_checklist_item(obligation, graph) for obligation in display_obligations)
+    visible_nodes = [node for node in graph.nodes if node.id not in hidden_subsumed_ids]
+    hidden_nodes = [node for node in graph.nodes if node.id in hidden_subsumed_ids]
+    node_sections = "\n".join(_render_node_section(node, graph) for node in visible_nodes)
+    hidden_node_section = _render_hidden_subsumed_nodes_section(hidden_nodes, graph)
     history_frames = build_graph_history_frames(graph_history or [])
     has_history_timeline = len(history_frames) >= 2
     graph_widget = (
-        render_graph_history_widget(graph_history or [])
+        render_graph_history_widget_with_cleanup(
+            graph_history or [],
+            cleaned_graph=display_graph,
+            cleaned_caption=_subsumed_cleanup_caption(hidden_nodes),
+        )
+        if has_history_timeline and hidden_nodes
+        else render_graph_history_widget(graph_history or [])
         if has_history_timeline
-        else render_graph_widget(graph, widget_key="current")
+        else render_graph_widget(display_graph, widget_key="current")
     )
-    interaction_styles = render_interaction_styles(graph, obligations)
+    interaction_styles = render_interaction_styles(display_graph, display_obligations)
     graph_history_script = render_graph_history_script() if has_history_timeline else ""
     graph_caption_primary = (
         "Use the timeline controls to step through how the proof graph changed over the run. The latest graph is shown by default."
         if has_history_timeline
         else "Click a node to jump to its detail section."
     )
+    graph_caption_cleanup = _subsumed_cleanup_caption(hidden_nodes) if hidden_nodes else ""
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -597,7 +668,7 @@ def render_html_report(
   </style>
 </head>
 <body>
-  <div class="fi-attribution">Created by <a href="https://formal-islands.github.io/formal-islands/" target="_blank">Formal Islands</a> &bull; <a href="https://github.com/aditya-ramabadran/formal-islands" target="_blank">GitHub</a></div>
+  <div class="fi-attribution">Created by <a href="https://aditya-ramabadran.github.io/formal-islands/" target="_blank">Formal Islands</a> &bull; <a href="https://github.com/aditya-ramabadran/formal-islands" target="_blank">GitHub</a></div>
   <main class="report-root">
     <section>
       <h1>{escape(graph.theorem_title)}</h1>
@@ -607,8 +678,8 @@ def render_html_report(
     <section>
       <h2>Graph Summary</h2>
       <p>
-        <span class="pill">Nodes: {len(graph.nodes)}</span>
-        <span class="pill">Edges: {len(graph.edges)}</span>
+        <span class="pill">Nodes: {len(display_graph.nodes)}</span>
+        <span class="pill">Edges: {len(display_graph.edges)}</span>
         <span class="pill">Informal: {status_counts.get("informal", 0)}</span>
         <span class="pill">Candidates: {status_counts.get("candidate_formal", 0)}</span>
         <span class="pill">Verified: {status_counts.get("formal_verified", 0)}</span>
@@ -629,6 +700,7 @@ def render_html_report(
       <p class="graph-caption">
         Dashed gray arrows mark refinement edges: they are still dependency edges, but they indicate that a narrower claim was carved out from a broader proof step.
       </p>
+      {f'<p class="graph-caption">{render_inline_code_html(graph_caption_cleanup)}</p>' if graph_caption_cleanup else ''}
     </section>
     <section>
       <h2>Review Checklist</h2>
@@ -655,6 +727,7 @@ def render_html_report(
       <div class="nodes-grid" data-node-grid>
         {node_sections}
       </div>
+      {hidden_node_section}
     </section>
   </main>
   {graph_history_script}

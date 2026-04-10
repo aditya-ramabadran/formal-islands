@@ -7,7 +7,7 @@ from threading import RLock
 
 import pytest
 
-from formal_islands.backends import BackendInvocationError, MockBackend
+from formal_islands.backends import AristotleBackend, BackendInvocationError, MockBackend
 from formal_islands.formalization.agentic import (
     agentic_worker_plan_path,
     build_agentic_formalization_request,
@@ -27,6 +27,7 @@ from formal_islands.formalization.loop import (
     _build_agentic_faithfulness_feedback,
     _build_aristotle_faithfulness_feedback,
     _integrate_successful_formalization,
+    _promote_last_blocker_nodes,
     _promote_informal_parents_with_verified_children,
     _should_run_bonus_retry,
     _summarize_compiler_feedback,
@@ -201,7 +202,8 @@ def test_build_agentic_formalization_request_includes_concrete_setting_guidance(
     assert "must correspond to that single main theorem" in request.prompt.lower()
     assert "coverage sketch" in request.prompt.lower()
     assert "local proof neighborhood" in request.prompt.lower()
-    assert "verified supporting lemmas already certified in this run" in request.prompt.lower()
+    assert "nearby verified context for orientation only" in request.prompt.lower()
+    assert "do not rely on them unless they are also explicit dependencies" in request.prompt.lower()
     assert "context-only sibling ingredients" in request.prompt.lower()
     assert "dependency note" in request.prompt.lower()
     assert "reserved keyword" in request.prompt.lower()
@@ -248,7 +250,8 @@ def test_build_aristotle_formalization_prompt_marks_ambient_theorem_as_context_o
     assert "informal statement:" in prompt.lower()
     assert "informal proof text:" in prompt.lower()
     assert "local proof neighborhood" in prompt.lower()
-    assert "verified supporting lemmas already certified in this run" in prompt.lower()
+    assert "nearby verified context for orientation only" in prompt.lower()
+    assert "do not rely on them unless they are also explicit dependencies" in prompt.lower()
     assert "context-only sibling ingredients" in prompt.lower()
     assert "dependency note" in prompt.lower()
     assert "do not convert a difficult intermediate identity" in prompt.lower()
@@ -477,6 +480,68 @@ def test_parent_promotion_episode_prevents_immediate_repromotion(tmp_path: Path)
     assert "skipping parent promotion because this verified child set already came from a prior parent-assembly episode" in log_text
 
 
+def test_last_blocker_promotion_promotes_endpoint_case(tmp_path: Path) -> None:
+    graph = ProofGraph(
+        theorem_title="Young's inequality",
+        theorem_statement="Main theorem.",
+        root_node_id="root",
+        nodes=[
+            ProofNode(
+                id="root",
+                title="Root",
+                informal_statement="Main theorem.",
+                informal_proof_text="Use case_1 and tonelli.",
+            ),
+            ProofNode(
+                id="case_1",
+                title="Endpoint case",
+                informal_statement="If p=1 or q=1 then the inequality holds.",
+                informal_proof_text="Handle endpoint.",
+            ),
+            ProofNode(
+                id="tonelli",
+                title="Tonelli step",
+                informal_statement="Tonelli step.",
+                informal_proof_text="Done.",
+                status="formal_verified",
+                formal_artifact=FormalArtifact(
+                    lean_theorem_name="tonelli_core",
+                    lean_statement="theorem tonelli_core : True",
+                    lean_code="theorem tonelli_core : True := by trivial",
+                ),
+            ),
+        ],
+        edges=[ProofEdge(source_id="root", target_id="case_1"), ProofEdge(source_id="root", target_id="tonelli")],
+    )
+    planning_backend = MockBackend(
+        queued_payloads=[
+            {
+                "promote_node": True,
+                "recommended_priority": 1,
+                "reason": "This endpoint case is now the last remaining obstacle to parent closure.",
+            }
+        ]
+    )
+    cache = ParentPromotionCache(decisions={}, lock=RLock())
+    progress_log = tmp_path / "_progress.log"
+
+    with use_progress_log(progress_log):
+        updated_graph = _promote_last_blocker_nodes(
+            graph=graph,
+            planning_backend=planning_backend,
+            parent_promotion_cache=cache,
+            blocked_node_ids=set(),
+        )
+
+    case_1 = next(node for node in updated_graph.nodes if node.id == "case_1")
+    assert case_1.status == "candidate_formal"
+    assert case_1.formalization_priority == 1
+    assert case_1.formalization_rationale is not None
+    assert "last remaining blocker" in case_1.formalization_rationale.lower()
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "blocker promotion assessment -> promote=True" in log_text
+
+
 def test_bonus_retry_runs_for_faithful_core_when_expansion_is_warranted() -> None:
     graph = build_graph().model_copy(
         update={
@@ -613,6 +678,113 @@ def test_aristotle_batch_does_not_immediately_repromote_attempted_parent_after_s
     assert planning_backend.requests[0].task_name == "summarize_concrete_sublemma"
     log_text = progress_log.read_text(encoding="utf-8")
     assert "skipping parent promotion because this node was already formalized in the current pass" in log_text
+
+
+def test_aristotle_auto_mode_promotes_parent_after_last_child_verifies_when_queue_is_empty(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import formal_islands.formalization.loop as loop_module
+
+    graph = ProofGraph(
+        theorem_title="Young's inequality",
+        theorem_statement="Main theorem.",
+        root_node_id="root",
+        nodes=[
+            ProofNode(
+                id="root",
+                title="Root",
+                informal_statement="Main theorem.",
+                informal_proof_text="Assemble case_1 and tonelli.",
+            ),
+            ProofNode(
+                id="case_1",
+                title="Endpoint case",
+                informal_statement="If p=1 or q=1 then the inequality holds.",
+                informal_proof_text="Handle endpoint.",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Continuation request.",
+            ),
+            ProofNode(
+                id="tonelli",
+                title="Tonelli step",
+                informal_statement="Tonelli step.",
+                informal_proof_text="Already verified.",
+                status="formal_verified",
+                formal_artifact=FormalArtifact(
+                    lean_theorem_name="tonelli_core",
+                    lean_statement="theorem tonelli_core : True",
+                    lean_code="theorem tonelli_core : True := by trivial",
+                ),
+            ),
+        ],
+        edges=[ProofEdge(source_id="root", target_id="case_1"), ProofEdge(source_id="root", target_id="tonelli")],
+    )
+    planning_backend = MockBackend(
+        queued_payloads=[
+            {
+                "promote_parent": True,
+                "recommended_priority": 1,
+                "reason": "All child branches are verified; only the parent assembly theorem remains.",
+            }
+        ]
+    )
+    progress_log = tmp_path / "_progress.log"
+
+    def fake_formalize_candidate_node(**kwargs: object) -> FormalizationOutcome:
+        node_id = kwargs["node_id"]
+        current_graph = kwargs["graph"]
+        artifact = FormalArtifact(
+            lean_theorem_name=f"{node_id}_thm",
+            lean_statement=f"theorem {node_id}_thm : True",
+            lean_code=f"theorem {node_id}_thm : True := by trivial",
+            faithfulness_classification="full_node",
+            verification=VerificationResult(
+                status="verified",
+                command="lake env lean fake.lean",
+                attempt_count=1,
+                artifact_path="fake.lean",
+            ),
+        )
+        updated_nodes = [
+            node.model_copy(
+                update={
+                    "status": "formal_verified",
+                    "formal_artifact": artifact,
+                    "last_formalization_outcome": "verified_full_node",
+                    "last_formalization_attempt_count": 1,
+                }
+            )
+            if node.id == node_id
+            else node
+            for node in current_graph.nodes
+        ]
+        return FormalizationOutcome(
+            graph=current_graph.model_copy(update={"nodes": updated_nodes}),
+            node_id=node_id,
+            artifact=artifact,
+        )
+
+    monkeypatch.setattr(loop_module, "formalize_candidate_node", fake_formalize_candidate_node)
+
+    with use_progress_log(progress_log):
+        outcome = loop_module.formalize_candidate_nodes(
+            backend=AristotleBackend(log_dir=None, timeout_seconds=None),
+            planning_backend=planning_backend,
+            verifier=LeanVerifier(workspace=create_workspace(tmp_path / "lean_project")),
+            graph=graph,
+            node_ids=None,
+            max_attempts=1,
+            mode="agentic",
+        )
+
+    root = next(node for node in outcome.graph.nodes if node.id == "root")
+    assert root.status == "formal_verified"
+    assert len(planning_backend.requests) == 1
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "parent promotion sweep: evaluating 1 eligible informal parent(s)" in log_text
+    assert "node root: requesting parent assembly promotion assessment" in log_text
 
 
 def test_full_node_verification_swallows_direct_supporting_formal_core() -> None:

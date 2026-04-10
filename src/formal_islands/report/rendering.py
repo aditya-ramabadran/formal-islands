@@ -6,6 +6,10 @@ import re
 from html import escape
 from pathlib import Path
 
+MATH_SPAN_PATTERN = re.compile(
+    r"(?s)(\$\$.*?\$\$|\\\[.*?\\\]|\\\(.*?\\\)|\$(?:\\.|[^$\\])+\$)"
+)
+
 
 def display_verification_command(verification: object) -> str:
     """Render verification commands using repo-relative paths when possible."""
@@ -54,7 +58,7 @@ def sanitize_report_payload(value: object) -> object:
 
 def render_math_text(text: str) -> str:
     compacted = compact_report_text(text)
-    return f'<div class="math-text">{render_inline_code_html(compacted)}</div>'
+    return f'<div class="math-text">{render_text_with_math_spans(compacted)}</div>'
 
 
 def render_faithfulness_label(*, result_kind: str | None, classification: str) -> str:
@@ -87,6 +91,22 @@ def render_inline_code_html(text: str) -> str:
                     rendered.append(f"<em>{escape(seg[1:-1])}</em>")
                 else:
                     rendered.append(escape(seg))
+    return "".join(rendered)
+
+
+def render_text_with_math_spans(text: str) -> str:
+    """Render prose while leaving LaTeX math spans opaque to Markdown-style parsing."""
+
+    rendered: list[str] = []
+    last_index = 0
+    for match in MATH_SPAN_PATTERN.finditer(text):
+        start, end = match.span()
+        if start > last_index:
+            rendered.append(render_inline_code_html(text[last_index:start]))
+        rendered.append(escape(match.group(0)))
+        last_index = end
+    if last_index < len(text):
+        rendered.append(render_inline_code_html(text[last_index:]))
     return "".join(rendered)
 
 

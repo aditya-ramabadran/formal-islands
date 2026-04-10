@@ -2,7 +2,7 @@
 
 **Partial formal certification for natural-language mathematical proofs.**
 
-Formal Islands turns a theorem statement plus informal proof into a proof graph with Lean-verified nodes and a human-readable report. The output is a mixed artifact that makes the formally checked pieces, the remaining informal gaps, and the review burden explicit.
+Formal Islands turns a theorem statement plus informal proof into a proof graph with Lean-verified nodes and a human-readable report. The output is a mixed artifact that makes the formally checked pieces, the remaining informal gaps, and the review burden explicit. In practice, the graph-guided workflow also acts as a useful formalization orchestration layer: certifying child nodes first can improve later parent-level attempts and sometimes yields cleaner root formalizations than a one-shot direct attempt.
 
 **Research prototype / experimental.** The system is useful, but it is still actively evolving and should be treated as a research artifact rather than a polished production tool.
 
@@ -37,6 +37,8 @@ Each run writes a small set of stage artifacts:
 
 Depending on the command, you may also see `02_candidate_graph.json` and `04_report_bundle.json` in the output directory.
 
+Runs can also be resumed later from `03_formalized_graph.json` with the `continue` command: you can seed one or more nodes back into the candidate set, append to the same `_progress.log` / `graph_history.jsonl`, and let the normal auto formalization + promotion logic continue from there.
+
 <p align="center">
   <img src="docs/assets/heat_uniqueness.png" width="480" alt="Proof graph for heat equation uniqueness: one informal root node with two formally verified child nodes">
 </p>
@@ -47,10 +49,11 @@ Live reports on [the website](https://aditya-ramabadran.github.io/formal-islands
 
 | Theorem | Verified |
 |---|---|
+| [Young's Convolution Inequality](https://aditya-ramabadran.github.io/formal-islands/reports/young_convolution.html) | 3 of 4 nodes formally verified |
 | [Two-Point Log-Sobolev Inequality](https://aditya-ramabadran.github.io/formal-islands/reports/two_point_log_sobolev.html) | Scalar inequality + G(u) ≥ 0 core lemma |
 | [Heat Equation Uniqueness](https://aditya-ramabadran.github.io/formal-islands/reports/heat_uniqueness.html) | Energy dissipation lemma + uniqueness core |
-| [Matrix Determinant Lemma](https://aditya-ramabadran.github.io/formal-islands/reports/matrix_determinant_lemma.html) | Both nodes, full formal closure |
-| [Hoeffding's Lemma](https://aditya-ramabadran.github.io/formal-islands/reports/hoeffding_lemma.html) | Convexity bound + log-MGF bound |
+| [Discrete Loomis-Whitney Inequality](https://aditya-ramabadran.github.io/formal-islands/reports/discrete_loomis_whitney.html) | Multilinear Hölder step + root theorem |
+| [Gershgorin Circle Theorem](https://aditya-ramabadran.github.io/formal-islands/reports/gershgorin_circle.html) | Eigenvalue bound + root theorem |
 
 ## Quick Start
 
@@ -87,6 +90,12 @@ The planner and formalizer can be the same backend or different ones. In practic
 After any verification, the result is semantically reviewed: the system checks whether the formal statement actually matches the intended informal claim, and classifies it as a full-node match, a faithful supporting core, or a narrower result. This matters because a proof that compiles in Lean is not automatically a proof of the right thing.
 
 When all direct children of an informal parent node are verified, the parent can be promoted into the candidate set for a follow-up assembly attempt, so successful local cores can bootstrap further verification automatically.
+
+In several benchmarks, this child-first traversal is not just explanatory. It materially improves later parent-level theorem attempts by providing better staging, tighter theorem-family control, and already-certified local ingredients.
+
+After the initial candidates are exhausted, the pipeline also does a narrow “last blocker” sweep: if one remaining informal endpoint/base-case node is the only obstacle to a promising broader parent/root closure, it can be promoted and tried late in the run.
+
+If you rerun `report` later without a planning backend, previously generated `remaining_proof_burden` text is preserved and reused from the saved run artifacts.
 
 ## Setup
 
@@ -201,6 +210,20 @@ formal-islands report --graph <file> --output-dir <dir> --planning-backend claud
 ```
 
 The `report` command accepts `--planning-backend` optionally; if supplied, it synthesizes a "remaining proof burden" paragraph for any informal node that has verified children.
+
+### `formal-islands continue`
+
+Resume a finished run from its existing `03_formalized_graph.json`, reintroducing specific node ids as fresh candidates and then continuing the normal auto formalization loop from there.
+
+```bash
+formal-islands continue \
+  --output-dir artifacts/manual-testing/run19-young-convolution-inequality-gemini-aristotle \
+  --node case_1 \
+  --planning-backend gemini \
+  --formalization-backend aristotle
+```
+
+This appends to the same `_progress.log` and `graph_history.jsonl`, rewrites `03_formalized_graph.json` and `03_formalization_summaries.json`, and regenerates the report.
 
 ## Input Format
 

@@ -43,12 +43,14 @@ class GraphHistoryEventKind(StrEnum):
     """Canonical event kinds for graph-history snapshots."""
 
     GRAPH_SNAPSHOT = "graph_snapshot"
+    CONTINUATION_REQUEST = "continuation_request"
     EXTRACT_STAGE_OUTPUT = "extract_stage_output"
     PLAN_STAGE_EXTRACTED_GRAPH = "plan_stage_extracted_graph"
     CANDIDATE_SELECTION_OUTPUT = "candidate_selection_output"
     PLAN_STAGE_CANDIDATE_GRAPH = "plan_stage_candidate_graph"
     FORMALIZATION_UPDATE = "formalization_update"
     PARENT_PROMOTION = "parent_promotion"
+    BLOCKER_PROMOTION = "blocker_promotion"
     REPORT_STAGE_GRAPH = "report_stage_graph"
 
 
@@ -310,6 +312,25 @@ def append_parent_promotion_assessment_to_progress_log(
         lines.append(f"recommended_priority={recommended_priority}")
     if verified_child_count is not None:
         lines.append(f"verified_child_count={verified_child_count}")
+    lines.append(f"reason: {reason}")
+    append_to_progress_log("\n".join(lines))
+
+
+def append_blocker_promotion_assessment_to_progress_log(
+    *,
+    node_id: str,
+    promote_node: bool,
+    reason: str,
+    recommended_priority: int | None = None,
+    parent_ids: list[str] | None = None,
+) -> None:
+    """Append a concise blocker-promotion review summary to the active progress log."""
+
+    lines = [f"node {node_id}: blocker promotion assessment promote_node={promote_node}"]
+    if recommended_priority is not None:
+        lines.append(f"recommended_priority={recommended_priority}")
+    if parent_ids:
+        lines.append("blocked_parent_ids=" + ", ".join(parent_ids))
     lines.append(f"reason: {reason}")
     append_to_progress_log("\n".join(lines))
 

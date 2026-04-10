@@ -181,6 +181,15 @@ class ParentPromotionAssessment:
     reason: str
 
 
+@dataclass(frozen=True)
+class BlockerPromotionAssessment:
+    """Planning-backend judgment about whether an informal blocker node should now be promoted."""
+
+    promote_node: bool
+    recommended_priority: int | None
+    reason: str
+
+
 class RepairCategory(StrEnum):
     """Structured repair buckets for retry guidance."""
 
@@ -324,10 +333,11 @@ def format_local_proof_context(context: LocalProofContext) -> str:
 
     sections: list[str] = []
     lines = [
-        "Verified supporting lemmas already certified in this run:",
+        "Nearby verified context for orientation only:",
         (
-            "You may rely on these statements as already established for proof planning. "
-            "Do not treat unrelated context-only nodes as hypotheses."
+            "These nearby verified results are included to help preserve the right theorem family, notation, "
+            "and ambient setting. Do not rely on them unless they are also explicit dependencies of the target "
+            "node."
         ),
     ]
     if context.verified_supporting_nodes:
@@ -583,9 +593,9 @@ def build_formalization_request(
                 "component of the sketch, keep the result honest and avoid pretending to certify the whole node."
             ),
             (
-                "If local context lists verified supporting lemmas, you may rely on their statements as established "
-                "facts for this job. Context-only sibling ingredients are for orientation only and should not be "
-                "turned into assumptions."
+                "If local context lists nearby verified results, treat them as orientation only unless the graph "
+                "also lists them as explicit dependencies of the target node. Only verified direct child context "
+                "should be used as established dependency lemmas for this job."
             ),
             (
                 "If the node mixes a reusable source estimate with a more concrete downstream application, "
@@ -999,6 +1009,129 @@ def request_parent_promotion_assessment(
         recommended_priority = int(recommended_priority)
     return ParentPromotionAssessment(
         promote_parent=bool(payload["promote_parent"]),
+        recommended_priority=recommended_priority,
+        reason=str(payload["reason"]).strip(),
+    )
+
+
+def build_blocker_promotion_assessment_request(
+    *,
+    graph: ProofGraph,
+    blocker_node_id: str,
+) -> StructuredBackendRequest:
+    blocker = next(node for node in graph.nodes if node.id == blocker_node_id)
+    local_context = build_local_proof_context(graph, blocker_node_id)
+    sketch = build_node_coverage_sketch(blocker)
+    parents = [node for node in graph.nodes if any(edge.source_id == node.id and edge.target_id == blocker_node_id for edge in graph.edges)]
+    parent_records: list[dict[str, object]] = []
+    node_by_id = {node.id: node for node in graph.nodes}
+    for parent in parents:
+        child_ids = [edge.target_id for edge in graph.edges if edge.source_id == parent.id]
+        child_inventory = [
+            {
+                "id": child_id,
+                "title": node_by_id[child_id].title,
+                "status": node_by_id[child_id].status,
+                "is_target_blocker": child_id == blocker_node_id,
+                "is_verified": node_by_id[child_id].status == "formal_verified",
+            }
+            for child_id in child_ids
+            if child_id in node_by_id
+        ]
+        remaining_informal = [
+            child_id
+            for child_id in child_ids
+            if child_id in node_by_id and node_by_id[child_id].status != "formal_verified"
+        ]
+        parent_records.append(
+            {
+                "id": parent.id,
+                "title": parent.title,
+                "status": parent.status,
+                "informal_statement": parent.informal_statement,
+                "remaining_unverified_child_ids": remaining_informal,
+                "is_last_remaining_unverified_child": remaining_informal == [blocker_node_id],
+                "child_inventory": child_inventory,
+            }
+        )
+
+    prompt = "\n\n".join(
+        [
+            f"Theorem title: {graph.theorem_title}",
+            (
+                "Target informal blocker node:\n"
+                f"- id: {blocker.id}\n"
+                f"- title: {blocker.title}\n"
+                f"- informal statement: {blocker.informal_statement}\n"
+                f"- informal proof text: {blocker.informal_proof_text}\n"
+                f"- current status: {blocker.status}\n"
+                f"- prior formalization outcome: {blocker.last_formalization_outcome or '(none)'}"
+            ),
+            "Blocker coverage sketch:",
+            _format_coverage_sketch_for_prompt(sketch),
+            "Parent nodes for which this blocker may be the last remaining obstacle:",
+            json.dumps(parent_records, indent=2),
+            "Local proof neighborhood:",
+            format_local_proof_context(local_context),
+            (
+                "Decide whether this blocker node should now be promoted to candidate_formal. "
+                "Bias toward promotion when the node looks like a concrete endpoint case, base case, side branch, "
+                "or short local lemma that has become the last remaining obstacle to a meaningful parent/root closure theorem."
+            ),
+            (
+                "Do not promote it if the node still looks too broad, too abstract, or likely to duplicate work already "
+                "captured by a verified sibling. Prefer promotion when the node now appears to be within reach because "
+                "its verified siblings already discharged the hard interior proof burden."
+            ),
+            (
+                "If you do promote it, return a recommended_priority from 1 to 3, where 1 means it should be tried "
+                "very soon and 3 means it can wait. If you do not promote it, return null for recommended_priority."
+            ),
+            "Return JSON with keys promote_node, recommended_priority, and reason.",
+        ]
+    )
+    return StructuredBackendRequest(
+        prompt=prompt,
+        system_prompt=(
+            "You are a proof-graph planner deciding whether one remaining informal blocker node should now be promoted. "
+            "Bias toward promotion when it is the last concrete obstacle to a worthwhile parent/root closure theorem. "
+            "Return only JSON matching the schema."
+        ),
+        json_schema={
+            "type": "object",
+            "properties": {
+                "promote_node": {"type": "boolean"},
+                "recommended_priority": {
+                    "anyOf": [
+                        {"type": "integer", "minimum": 1, "maximum": 3},
+                        {"type": "null"},
+                    ]
+                },
+                "reason": {"type": "string", "minLength": 1},
+            },
+            "required": ["promote_node", "recommended_priority", "reason"],
+            "additionalProperties": False,
+        },
+        task_name="assess_blocker_promotion",
+    )
+
+
+def request_blocker_promotion_assessment(
+    *,
+    backend: StructuredBackend,
+    graph: ProofGraph,
+    blocker_node_id: str,
+) -> BlockerPromotionAssessment:
+    response = run_structured_with_progress(
+        backend,
+        build_blocker_promotion_assessment_request(graph=graph, blocker_node_id=blocker_node_id),
+    )
+    payload = response.payload
+    recommended_priority = payload.get("recommended_priority")
+    if recommended_priority is not None:
+        recommended_priority = int(recommended_priority)
+    return BlockerPromotionAssessment(
+        promote_node=bool(payload["promote_node"]),
         recommended_priority=recommended_priority,
         reason=str(payload["reason"]).strip(),
     )

@@ -9,6 +9,7 @@ from formal_islands.formalization.loop import (
 from formal_islands.formalization.pipeline import (
     FaithfulnessClassification,
     FormalizationFaithfulnessError,
+    build_blocker_promotion_assessment_request,
     build_coverage_expansion_assessment_request,
     build_combined_verification_assessment_request,
     build_parent_promotion_assessment_request,
@@ -21,6 +22,7 @@ from formal_islands.formalization.pipeline import (
     format_faithfulness_notes,
     parse_faithfulness_notes,
     request_concrete_sublemma_summary,
+    request_blocker_promotion_assessment,
     request_coverage_expansion_assessment,
     request_node_formalization,
     request_parent_promotion_assessment,
@@ -155,7 +157,8 @@ def test_build_formalization_request_includes_local_context() -> None:
     assert "Coverage sketch" in request.prompt
     assert "Arithmetic lemma" in request.prompt
     assert "local proof neighborhood" in request.prompt.lower()
-    assert "verified supporting lemmas already certified in this run" in request.prompt.lower()
+    assert "nearby verified context for orientation only" in request.prompt.lower()
+    assert "do not rely on them unless they are also explicit dependencies" in request.prompt.lower()
     assert "context-only sibling ingredients" in request.prompt.lower()
     assert "dependency note" in request.prompt.lower()
     assert "arbitrary index types" in request.prompt.lower()
@@ -304,6 +307,102 @@ def test_request_parent_promotion_assessment_returns_priority_and_reason() -> No
     assert assessment.promote_parent is True
     assert assessment.recommended_priority == 2
     assert "assembly argument" in assessment.reason
+
+
+def test_build_blocker_promotion_assessment_request_mentions_last_obstacle_role() -> None:
+    graph = ProofGraph(
+        theorem_title="Young's inequality",
+        theorem_statement="Main theorem.",
+        root_node_id="root",
+        nodes=[
+            ProofNode(
+                id="root",
+                title="Root",
+                informal_statement="Main theorem.",
+                informal_proof_text="Use case_1 and tonelli.",
+            ),
+            ProofNode(
+                id="case_1",
+                title="Endpoint case",
+                informal_statement="If p=1 or q=1 then the inequality holds.",
+                informal_proof_text="Handle the endpoint branch.",
+            ),
+            ProofNode(
+                id="tonelli",
+                title="Tonelli step",
+                informal_statement="Integrate the pointwise bound.",
+                informal_proof_text="Tonelli.",
+                status="formal_verified",
+                formal_artifact=FormalArtifact(
+                    lean_theorem_name="tonelli_core",
+                    lean_statement="theorem tonelli_core : True",
+                    lean_code="theorem tonelli_core : True := by trivial",
+                ),
+            ),
+        ],
+        edges=[ProofEdge(source_id="root", target_id="case_1"), ProofEdge(source_id="root", target_id="tonelli")],
+    )
+
+    request = build_blocker_promotion_assessment_request(graph=graph, blocker_node_id="case_1")
+    lowered = request.prompt.lower()
+    assert "last remaining obstacle" in lowered
+    assert "endpoint case" in lowered
+    assert "parent nodes for which this blocker may be the last remaining obstacle" in lowered
+    assert "promote_node" in request.prompt
+
+
+def test_request_blocker_promotion_assessment_returns_priority_and_reason() -> None:
+    backend = MockBackend(
+        queued_payloads=[
+            {
+                "promote_node": True,
+                "recommended_priority": 1,
+                "reason": "This endpoint case is now the last remaining obstacle to parent closure.",
+            }
+        ]
+    )
+    graph = ProofGraph(
+        theorem_title="Young's inequality",
+        theorem_statement="Main theorem.",
+        root_node_id="root",
+        nodes=[
+            ProofNode(
+                id="root",
+                title="Root",
+                informal_statement="Main theorem.",
+                informal_proof_text="Use case_1 and tonelli.",
+            ),
+            ProofNode(
+                id="case_1",
+                title="Endpoint case",
+                informal_statement="Endpoint.",
+                informal_proof_text="Handle endpoint.",
+            ),
+            ProofNode(
+                id="tonelli",
+                title="Tonelli step",
+                informal_statement="Tonelli.",
+                informal_proof_text="Done.",
+                status="formal_verified",
+                formal_artifact=FormalArtifact(
+                    lean_theorem_name="tonelli_core",
+                    lean_statement="theorem tonelli_core : True",
+                    lean_code="theorem tonelli_core : True := by trivial",
+                ),
+            ),
+        ],
+        edges=[ProofEdge(source_id="root", target_id="case_1"), ProofEdge(source_id="root", target_id="tonelli")],
+    )
+
+    assessment = request_blocker_promotion_assessment(
+        backend=backend,
+        graph=graph,
+        blocker_node_id="case_1",
+    )
+
+    assert assessment.promote_node is True
+    assert assessment.recommended_priority == 1
+    assert "last remaining obstacle" in assessment.reason
 
 
 def test_build_combined_verification_assessment_request_mentions_recoverability_fields() -> None:

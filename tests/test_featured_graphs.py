@@ -113,3 +113,19 @@ def test_build_featured_graph_bundle_from_graph_json(tmp_path: Path) -> None:
 
     assert "toy" in bundle
     assert "featured-graph" in bundle["toy"]
+
+
+def test_render_featured_graph_html_hides_subsumed_informal_child() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    spec = FeaturedGraphSpec(
+        id="discrete_loomis_whitney",
+        report_url="reports/discrete_loomis_whitney.html",
+        graph_json="artifacts/manual-testing/run20-discrete-loomis-whitney-gemini-aristotle/03_formalized_graph.json",
+    )
+
+    graph = build_featured_graph_bundle([spec], repo_root=repo_root)["discrete_loomis_whitney"]
+
+    assert "Discrete Loomis-Whitney inequality" in graph
+    assert "Multilinear Hölder" in graph
+    assert "estimate on slices" in graph
+    assert "Base case (d=2)" not in graph

@@ -5,10 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from html import escape
 import json
+import math
 from pathlib import Path
 import re
 
 from formal_islands.models import ProofGraph
+from formal_islands.report.graph_visibility import display_graph_without_hidden_subsumed_nodes
 from formal_islands.report.graph_widget import graph_visual_status
 from formal_islands.report.history import build_graph_history_frames, load_graph_history_entries
 from formal_islands.report.rendering import slugify
@@ -81,14 +83,26 @@ def resolve_featured_graph(spec: FeaturedGraphSpec, *, repo_root: Path) -> Proof
 def render_featured_graph_html(graph: ProofGraph, *, graph_id: str) -> str:
     """Render a static, minimal homepage graph preview."""
 
+    graph = display_graph_without_hidden_subsumed_nodes(graph)
     layout = _compute_featured_graph_layout(graph)
     width = float(layout["width"])
     height = float(layout["height"])
-    font_scale = max(0.72, min(1.0, 400.0 / width))
+    font_scale = max(1.0, min(1.15, 440.0 / width))
     marker_id = f"featured-arrow-{slugify(graph_id)}"
     edges_svg = "\n".join(_render_featured_edge(edge, layout, marker_id=marker_id) for edge in graph.edges)
     nodes_svg = "\n".join(_render_featured_node_box(node, layout) for node in graph.nodes)
-    label_html = "\n".join(_render_featured_label(node, layout, width=width, height=height) for node in graph.nodes)
+    text_svg = "\n".join(
+        text
+        for node in graph.nodes
+        for text in [_render_featured_svg_label(node, layout, font_scale=font_scale)]
+        if text
+    )
+    label_html = "\n".join(
+        label
+        for node in graph.nodes
+        for label in [_render_featured_html_label(node, layout, width=width, height=height)]
+        if label
+    )
     aspect_ratio = f"{int(width)} / {int(height)}"
     return f"""
 <div class="featured-graph" data-featured-graph-root style="aspect-ratio: {aspect_ratio}; --featured-graph-font-scale: {font_scale:.3f};">
@@ -100,6 +114,7 @@ def render_featured_graph_html(graph: ProofGraph, *, graph_id: str) -> str:
     </defs>
     <g>{edges_svg}</g>
     <g>{nodes_svg}</g>
+    <g>{text_svg}</g>
   </svg>
   <div class="featured-graph-overlay">
     {label_html}
@@ -169,19 +184,86 @@ def _render_featured_node_box(node, layout: dict) -> str:
     )
 
 
-def _render_featured_label(node, layout: dict, *, width: float, height: float) -> str:
+def _label_uses_mathjax(label: str) -> bool:
+    return "\\(" in label or "\\[" in label or "$" in label
+
+
+def _wrap_featured_label(text: str, *, node_width: float, font_scale: float) -> list[str]:
+    words = text.split()
+    if not words:
+        return [text]
+    if len(words) == 1:
+        return [text]
+
+    estimated_char_width = max(4.6, 7.1 * font_scale)
+    hard_max_chars = max(10, int((node_width - 26) / estimated_char_width))
+    comfortable_chars = max(9, int(hard_max_chars * 0.72))
+    preferred_line_count = min(3, max(1, math.ceil(len(text) / comfortable_chars)))
+
+    partitions: list[list[str]] = []
+
+    def backtrack(start: int, remaining_lines: int, acc: list[str]) -> None:
+        if remaining_lines == 1:
+            partitions.append(acc + [" ".join(words[start:])])
+            return
+        max_split = len(words) - remaining_lines + 1
+        for split in range(start + 1, max_split + 1):
+            backtrack(split, remaining_lines - 1, acc + [" ".join(words[start:split])])
+
+    for line_count in range(1, min(3, len(words)) + 1):
+        backtrack(0, line_count, [])
+
+    def score(lines: list[str]) -> tuple[float, float, float]:
+        lengths = [len(line) for line in lines]
+        max_len = max(lengths)
+        overflow_penalty = max(0, max_len - hard_max_chars) * 100.0
+        ragged_penalty = sum((length - (sum(lengths) / len(lengths))) ** 2 for length in lengths)
+        line_count_penalty = abs(len(lines) - preferred_line_count) * 12.0
+        return (overflow_penalty + ragged_penalty + line_count_penalty, max_len, ragged_penalty)
+
+    best = min(partitions, key=score)
+    return best
+
+
+def _render_featured_svg_label(node, layout: dict, *, font_scale: float) -> str:
     x, y = layout["positions"][node.id]
     node_width, node_height = layout["node_sizes"][node.id]
+    raw_label = node.display_label or node.title
+    if _label_uses_mathjax(raw_label):
+        return ""
+    status = graph_visual_status(node)
+    status_class = f"status-{slugify(status).replace('_', '-')}"
+    center_x = x + node_width / 2
+    center_y = y + node_height / 2
+    lines = _wrap_featured_label(raw_label, node_width=node_width, font_scale=font_scale)
+    line_height = 18.0 * font_scale
+    start_y = center_y - (line_height * (len(lines) - 1) / 2)
+    tspans = "".join(
+        f'<tspan x="{center_x:.2f}" y="{start_y + idx * line_height:.2f}">{escape(line)}</tspan>'
+        for idx, line in enumerate(lines)
+    )
+    return (
+        f'<text class="featured-graph-node-text {status_class}" '
+        f'x="{center_x:.2f}" y="{center_y:.2f}" text-anchor="middle" dominant-baseline="middle">'
+        f"{tspans}</text>"
+    )
+
+
+def _render_featured_html_label(node, layout: dict, *, width: float, height: float) -> str:
+    x, y = layout["positions"][node.id]
+    node_width, node_height = layout["node_sizes"][node.id]
+    raw_label = node.display_label or node.title
+    if not _label_uses_mathjax(raw_label):
+        return ""
     left = x / width * 100
     top = y / height * 100
     box_width = node_width / width * 100
     box_height = node_height / height * 100
-    raw_label = escape(node.display_label or node.title)
     status = graph_visual_status(node)
     status_class = f"status-{slugify(status).replace('_', '-')}"
     return f"""
     <div class="featured-graph-label {status_class}" style="left:{left:.5f}%;top:{top:.5f}%;width:{box_width:.5f}%;height:{box_height:.5f}%;">
-      <div class="featured-graph-title">{raw_label}</div>
+      <div class="featured-graph-title">{escape(raw_label)}</div>
     </div>
     """.strip()
 

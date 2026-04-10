@@ -273,6 +273,54 @@ def test_render_html_report_with_graph_history_renders_timeline_controls() -> No
     )
 
 
+def test_render_html_report_hides_subsumed_informal_child_from_final_display() -> None:
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="root",
+        nodes=[
+            ProofNode(
+                id="root",
+                title="Root theorem",
+                informal_statement="Main theorem.",
+                informal_proof_text="Use base case.",
+                status="formal_verified",
+                formal_artifact=FormalArtifact(
+                    lean_theorem_name="root_core",
+                    lean_statement="theorem root_core : True",
+                    lean_code="theorem root_core : True := by trivial",
+                    faithfulness_classification="full_node",
+                ),
+            ),
+            ProofNode(
+                id="base_case",
+                title="Base case",
+                informal_statement="Base case.",
+                informal_proof_text="Trivial.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="root", target_id="base_case")],
+    )
+    obligations = derive_review_obligations(graph)
+
+    html = render_html_report(graph, obligations)
+    bundle = export_report_bundle(graph, obligations)
+
+    assert "Hidden subsumed nodes (1)" in html
+    assert "Final display cleanup hid subsumed informal node <code class=\"inline-code\">base_case</code>" in html
+    assert "<span class=\"pill\">Nodes: 1</span>" in html
+    assert "Check that node 'base_case'" not in html
+    assert bundle["graph"]["nodes"][0]["id"] == "root"
+    assert bundle["review_obligations"] == [
+        {
+            "id": "semantic-match-root",
+            "kind": "formal_semantic_match_check",
+            "text": "Check that node 'root' (Root theorem) matches the verified Lean theorem for this node.",
+            "node_ids": ["root"],
+        }
+    ]
+
+
 def test_graph_history_frames_skip_annotation_only_or_duplicate_visual_snapshots() -> None:
     graph = ProofGraph(
         theorem_title="Toy theorem",
@@ -999,6 +1047,14 @@ def test_render_math_text_formats_backticks_as_inline_code() -> None:
 
     assert '<code class="inline-code">grad_u</code>' in html
     assert '<code class="inline-code">horth</code>' in html
+
+
+def test_render_math_text_preserves_asterisks_inside_math() -> None:
+    html = _render_math_text("Suppose $f*g$ and use `code` outside math.")
+
+    assert "$f*g$" in html
+    assert "<em>" not in html
+    assert '<code class="inline-code">code</code>' in html
 
 
 def test_derive_review_obligations_words_supporting_sublemma_honestly() -> None:

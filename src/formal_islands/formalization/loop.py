@@ -19,6 +19,7 @@ from formal_islands.formalization.agentic import (
 from formal_islands.formalization.aristotle import request_aristotle_formalization
 from formal_islands.formalization.lean import LeanVerifier
 from formal_islands.formalization.pipeline import (
+    BlockerPromotionAssessment,
     CombinedFormalizationAssessment,
     FaithfulnessClassification,
     FormalizationFaithfulnessError,
@@ -30,6 +31,7 @@ from formal_islands.formalization.pipeline import (
     classify_heuristic_repair_assessment,
     format_faithfulness_notes,
     request_combined_verification_assessment,
+    request_blocker_promotion_assessment,
     request_concrete_sublemma_summary,
     request_parent_promotion_assessment,
     request_repair_assessment,
@@ -46,6 +48,7 @@ from formal_islands.models import (
 )
 from formal_islands.progress import (
     append_formalization_assessment_to_progress_log,
+    append_blocker_promotion_assessment_to_progress_log,
     append_graph_snapshot_to_history_log,
     append_parent_promotion_assessment_to_progress_log,
     progress,
@@ -73,7 +76,7 @@ class MultiFormalizationOutcome:
 class ParentPromotionCache:
     """Thread-safe cache for planner parent-promotion decisions."""
 
-    decisions: dict[str, ParentPromotionAssessment | None]
+    decisions: dict[str, ParentPromotionAssessment | BlockerPromotionAssessment | None]
     lock: RLock
     episodes: dict[str, list["ParentPromotionEpisode"]] = field(default_factory=dict)
 
@@ -237,6 +240,16 @@ def formalize_candidate_nodes(
                 None,
             )
             if next_node is None:
+                if enable_parent_promotion:
+                    promoted_graph = _run_auto_promotion_sweeps(
+                        graph=current_graph,
+                        planning_backend=planning_backend,
+                        parent_promotion_cache=parent_promotion_cache,
+                        blocked_node_ids=attempted_ids,
+                    )
+                    if promoted_graph.model_dump(mode="json") != current_graph.model_dump(mode="json"):
+                        current_graph = promoted_graph
+                        continue
                 break
             attempted_ids.add(next_node.id)
             _progress(f"node {next_node.id}: scheduled from auto candidate discovery")
@@ -256,6 +269,39 @@ def formalize_candidate_nodes(
             outcomes.append(outcome)
 
     return MultiFormalizationOutcome(graph=current_graph, outcomes=outcomes)
+
+
+def _run_auto_promotion_sweeps(
+    *,
+    graph: ProofGraph,
+    planning_backend: StructuredBackend | None,
+    parent_promotion_cache: ParentPromotionCache | None,
+    blocked_node_ids: set[str] | None,
+) -> ProofGraph:
+    """Run late auto-discovery promotion passes in priority order.
+
+    When no candidate nodes are currently queued, we first check whether any
+    now-eligible informal parents should be promoted, and only then fall back
+    to last-blocker promotion.
+    """
+
+    current_graph = graph
+    parent_promoted = _promote_informal_parents_with_verified_children(
+        graph=current_graph,
+        planning_backend=planning_backend,
+        parent_promotion_cache=parent_promotion_cache,
+        blocked_parent_ids=blocked_node_ids,
+    )
+    if parent_promoted.model_dump(mode="json") != current_graph.model_dump(mode="json"):
+        return parent_promoted
+
+    blocker_promoted = _promote_last_blocker_nodes(
+        graph=current_graph,
+        planning_backend=planning_backend,
+        parent_promotion_cache=parent_promotion_cache,
+        blocked_node_ids=blocked_node_ids,
+    )
+    return blocker_promoted
 
 
 def _formalize_candidate_node_structured(
@@ -1727,6 +1773,166 @@ def _promote_informal_parents_with_verified_children(
     return current_graph
 
 
+def _eligible_last_blocker_nodes(graph: ProofGraph) -> list[str]:
+    node_by_id = {node.id: node for node in graph.nodes}
+    parent_candidates: set[str] = set()
+    for edge in graph.edges:
+        parent = node_by_id.get(edge.source_id)
+        child = node_by_id.get(edge.target_id)
+        if parent is None or child is None:
+            continue
+        if parent.status != "informal":
+            continue
+        if child.status == "formal_verified":
+            continue
+        child_ids = [candidate_edge.target_id for candidate_edge in graph.edges if candidate_edge.source_id == parent.id]
+        if not child_ids:
+            continue
+        remaining_unverified = [
+            child_id
+            for child_id in child_ids
+            if child_id in node_by_id and node_by_id[child_id].status != "formal_verified"
+        ]
+        if remaining_unverified != [child.id]:
+            continue
+        if not any(
+            child_id in node_by_id and node_by_id[child_id].status == "formal_verified"
+            for child_id in child_ids
+            if child_id != child.id
+        ):
+            continue
+        if child.formal_artifact is not None or child.last_formalization_outcome is not None:
+            continue
+        grandchild_ids = [candidate_edge.target_id for candidate_edge in graph.edges if candidate_edge.source_id == child.id]
+        if any(
+            grandchild_id in node_by_id and node_by_id[grandchild_id].status != "formal_verified"
+            for grandchild_id in grandchild_ids
+        ):
+            continue
+        parent_candidates.add(child.id)
+    return sorted(parent_candidates)
+
+
+def _blocker_promotion_cache_key(graph: ProofGraph, node_id: str) -> str:
+    snapshot = tuple(_current_direct_child_ids(graph, node_id))
+    return f"blocker::{node_id}::{snapshot}"
+
+
+def _promote_last_blocker_nodes(
+    *,
+    graph: ProofGraph,
+    planning_backend: StructuredBackend | None,
+    parent_promotion_cache: ParentPromotionCache | None,
+    blocked_node_ids: set[str] | None = None,
+) -> ProofGraph:
+    if planning_backend is None:
+        return graph
+
+    eligible_node_ids = _eligible_last_blocker_nodes(graph)
+    if not eligible_node_ids:
+        _progress("blocker promotion sweep: no last-blocker informal nodes were eligible")
+        return graph
+
+    _progress(
+        "blocker promotion sweep: evaluating "
+        f"{len(eligible_node_ids)} eligible blocker node(s)"
+    )
+    current_graph = graph
+    updated_nodes = list(current_graph.nodes)
+    node_index = {node.id: index for index, node in enumerate(updated_nodes)}
+    node_by_id = {node.id: node for node in updated_nodes}
+
+    for node_id in eligible_node_ids:
+        if blocked_node_ids is not None and node_id in blocked_node_ids:
+            _progress(
+                f"node {node_id}: skipping blocker promotion because this node was already formalized in the current pass"
+            )
+            continue
+        blocker = node_by_id[node_id]
+        cache_key = _blocker_promotion_cache_key(current_graph, node_id)
+        decision: BlockerPromotionAssessment | None = None
+        cached_hit = False
+        if parent_promotion_cache is not None:
+            with parent_promotion_cache.lock:
+                if cache_key in parent_promotion_cache.decisions:
+                    decision = parent_promotion_cache.decisions[cache_key]  # type: ignore[assignment]
+                    cached_hit = True
+        if not cached_hit:
+            _progress(f"node {node_id}: requesting blocker promotion assessment")
+            try:
+                decision = request_blocker_promotion_assessment(
+                    backend=planning_backend,
+                    graph=current_graph,
+                    blocker_node_id=node_id,
+                )
+            except BackendError as exc:
+                _progress(
+                    f"node {node_id}: blocker promotion assessment failed: "
+                    f"{_truncate_progress_summary(str(exc), max_length=180)}"
+                )
+                decision = None
+            if parent_promotion_cache is not None:
+                with parent_promotion_cache.lock:
+                    parent_promotion_cache.decisions[cache_key] = decision
+        else:
+            _progress(
+                f"node {node_id}: blocker promotion decision cache hit -> "
+                f"promote={(decision.promote_node if decision is not None else False)}"
+            )
+
+        if decision is None:
+            _progress(f"node {node_id}: leaving informal because no blocker-promotion decision was available")
+            continue
+
+        parent_ids = sorted({edge.source_id for edge in current_graph.edges if edge.target_id == node_id})
+        append_blocker_promotion_assessment_to_progress_log(
+            node_id=node_id,
+            promote_node=decision.promote_node,
+            reason=_truncate_progress_summary(decision.reason, max_length=180),
+            recommended_priority=decision.recommended_priority,
+            parent_ids=parent_ids,
+        )
+        _progress(
+            f"node {node_id}: blocker promotion assessment -> promote={decision.promote_node} "
+            f"priority={decision.recommended_priority if decision.recommended_priority is not None else 'null'} "
+            f"reason={_truncate_progress_summary(decision.reason, max_length=180)}"
+        )
+        if not decision.promote_node:
+            continue
+
+        priority = decision.recommended_priority if decision.recommended_priority is not None else 2
+        updated_nodes[node_index[node_id]] = blocker.model_copy(
+            update={
+                "status": "candidate_formal",
+                "formalization_priority": priority,
+                "formalization_rationale": _truncate_progress_summary(
+                    (
+                        f"Promoted as the last remaining blocker to parent/root closure; {decision.reason}"
+                    ),
+                    max_length=240,
+                ),
+            }
+        )
+        promoted_graph = current_graph.model_copy(update={"nodes": list(updated_nodes)})
+        _progress(f"node {node_id}: promoted to candidate_formal as a last-blocker node at priority {priority}")
+        append_graph_snapshot_to_history_log(
+            promoted_graph,
+            label=f"blocker promotion ({node_id})",
+            previous_graph=current_graph,
+            event="blocker_promotion",
+            node_id=node_id,
+            metadata={
+                "reason": decision.reason,
+                "recommended_priority": priority,
+                "parent_ids": parent_ids,
+            },
+        )
+        current_graph = promoted_graph
+        node_by_id[node_id] = updated_nodes[node_index[node_id]]
+
+    return current_graph
+
+
 def _apply_combined_verification_assessment(
     *,
     planning_backend: StructuredBackend | None,
@@ -2475,6 +2681,16 @@ def _formalize_candidate_nodes_aristotle_parallel(
                 attempted_ids=attempted_ids,
             )
         if not batch_nodes:
+            if node_ids is None and enable_parent_promotion:
+                promoted_graph = _run_auto_promotion_sweeps(
+                    graph=current_graph,
+                    planning_backend=planning_backend,
+                    parent_promotion_cache=parent_promotion_cache,
+                    blocked_node_ids=attempted_ids,
+                )
+                if promoted_graph.model_dump(mode="json") != current_graph.model_dump(mode="json"):
+                    current_graph = promoted_graph
+                    continue
             break
 
         wave_index += 1

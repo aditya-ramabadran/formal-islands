@@ -27,9 +27,11 @@ from formal_islands.progress import append_graph_summary_to_progress_log
 from formal_islands.smoke import (
     _backend_failure_outcome,
     _cleanup_archive_artifacts,
+    _prepare_graph_for_continuation,
     cmd_plan,
     cmd_report,
     cmd_run_benchmark,
+    cmd_continue,
     cmd_formalize_all_candidates,
     default_output_dir_for_input,
     ensure_output_dir,
@@ -535,6 +537,59 @@ def test_backend_failure_outcome_marks_node_and_captures_logs() -> None:
     assert updated_node.status == "formal_failed"
     assert updated_node.formal_artifact is not None
     assert "Codex timed out" in updated_node.formal_artifact.verification.stderr
+
+
+def test_prepare_graph_for_continuation_resets_requested_failed_node() -> None:
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="If A then B.",
+        root_node_id="n1",
+        nodes=[
+            ProofNode(
+                id="n1",
+                title="Main claim",
+                informal_statement="B",
+                informal_proof_text="Use lemma",
+            ),
+            ProofNode(
+                id="n2",
+                title="Lemma",
+                informal_statement="A -> B",
+                informal_proof_text="Local technical fact.",
+                status="formal_failed",
+                formalization_priority=2,
+                formalization_rationale="Old attempt.",
+                last_formalization_attempt_count=3,
+                last_formalization_outcome="failed",
+                last_formalization_failure_kind="lean_failure",
+                last_formalization_note="Previous retry exhausted.",
+                formal_artifact={
+                    "lean_theorem_name": "n2_failed",
+                    "lean_statement": "theorem n2_failed : True",
+                    "lean_code": "theorem n2_failed : True := by trivial",
+                    "faithfulness_classification": "full_node",
+                    "verification": {
+                        "status": "failed",
+                        "command": "lake env lean",
+                        "attempt_count": 3,
+                    },
+                },
+            ),
+        ],
+        edges=[ProofEdge(source_id="n1", target_id="n2")],
+    )
+
+    updated = _prepare_graph_for_continuation(graph=graph, node_ids=["n2"])
+
+    node = next(node for node in updated.nodes if node.id == "n2")
+    assert node.status == "candidate_formal"
+    assert node.formalization_priority == 2
+    assert node.formalization_rationale == "User continuation request."
+    assert node.last_formalization_attempt_count is None
+    assert node.last_formalization_outcome is None
+    assert node.last_formalization_failure_kind is None
+    assert node.last_formalization_note is None
+    assert node.formal_artifact is None
 
 
 def test_build_backend_configures_backend_logs(tmp_path: Path) -> None:
@@ -1086,3 +1141,175 @@ def test_cmd_formalize_all_candidates_writes_batch_summary(
     assert [item["node_id"] for item in summaries] == ["n1", "n2"]
     assert all("node_status_after_attempt" in item for item in summaries)
     assert all("last_formalization_outcome" in item for item in summaries)
+
+
+def test_cmd_continue_attempts_requested_nodes_then_auto_continues(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_dir = tmp_path / "artifacts"
+    output_dir.mkdir(parents=True)
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="If A then B.",
+        root_node_id="root",
+        nodes=[
+            ProofNode(
+                id="root",
+                title="Root",
+                informal_statement="B.",
+                informal_proof_text="Use case_1.",
+            ),
+            ProofNode(
+                id="case_1",
+                title="Case 1",
+                informal_statement="A.",
+                informal_proof_text="Endpoint case.",
+                status="informal",
+            ),
+        ],
+        edges=[ProofEdge(source_id="root", target_id="case_1")],
+    )
+    write_graph(graph, output_dir / "03_formalized_graph.json")
+
+    from formal_islands.models import FormalArtifact, VerificationResult
+
+    def make_outcome(graph_obj: ProofGraph, node_id: str, status: str = "full_node"):
+        artifact = FormalArtifact(
+            lean_theorem_name=f"{node_id}_thm",
+            lean_statement="theorem t : True",
+            lean_code="theorem t : True := by trivial",
+            faithfulness_classification=status,
+            verification=VerificationResult(
+                status="verified",
+                command="lake env lean test.lean",
+                attempt_count=1,
+                artifact_path="test.lean",
+            ),
+        )
+        return FormalizationOutcome(graph=graph_obj, node_id=node_id, artifact=artifact)
+
+    class FakeBatch:
+        def __init__(self, graph_obj, outcomes):
+            self.graph = graph_obj
+            self.outcomes = outcomes
+
+    call_node_ids: list[list[str] | None] = []
+
+    def fake_formalize_candidate_nodes(**kwargs):
+        call_node_ids.append(kwargs["node_ids"])
+        incoming = kwargs["graph"]
+        case_node = next(node for node in incoming.nodes if node.id == "case_1")
+        if kwargs["node_ids"] == ["case_1"]:
+            assert case_node.status == "candidate_formal"
+            assert case_node.formal_artifact is None
+            case_artifact = FormalArtifact(
+                lean_theorem_name="case_1_thm",
+                lean_statement="theorem case_1_thm : True",
+                lean_code="theorem case_1_thm : True := by trivial",
+                faithfulness_classification="full_node",
+                verification=VerificationResult(
+                    status="verified",
+                    command="lake env lean test.lean",
+                    attempt_count=1,
+                    artifact_path="test.lean",
+                ),
+            )
+            explicit_graph = incoming.model_copy(
+                update={
+                    "nodes": [
+                        node.model_copy(
+                            update={
+                                "status": "formal_verified",
+                                "formal_artifact": case_artifact,
+                                "last_formalization_outcome": "verified_full_node",
+                                "last_formalization_attempt_count": 1,
+                            }
+                        )
+                        if node.id == "case_1"
+                        else node
+                        for node in incoming.nodes
+                    ]
+                }
+            )
+            return FakeBatch(explicit_graph, [make_outcome(explicit_graph, "case_1")])
+
+        assert kwargs["node_ids"] is None
+        assert next(node for node in incoming.nodes if node.id == "case_1").status == "formal_verified"
+        root_artifact = FormalArtifact(
+            lean_theorem_name="root_thm",
+            lean_statement="theorem root_thm : True",
+            lean_code="theorem root_thm : True := by trivial",
+            faithfulness_classification="full_node",
+            verification=VerificationResult(
+                status="verified",
+                command="lake env lean test.lean",
+                attempt_count=1,
+                artifact_path="test.lean",
+            ),
+        )
+        auto_graph = incoming.model_copy(
+            update={
+                "nodes": [
+                    node.model_copy(
+                        update={
+                            "status": "formal_verified",
+                            "formal_artifact": root_artifact,
+                            "last_formalization_outcome": "verified_full_node",
+                            "last_formalization_attempt_count": 1,
+                        }
+                    )
+                    if node.id == "root"
+                    else node
+                    for node in incoming.nodes
+                ]
+            }
+        )
+        return FakeBatch(auto_graph, [make_outcome(auto_graph, "root")])
+
+    def fake_report(args):
+        obligations = derive_review_obligations(load_graph(Path(args.graph)))
+        bundle = export_report_bundle(load_graph(Path(args.graph)), obligations)
+        (output_dir / "04_report_bundle.json").write_text(
+            json.dumps(bundle, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        (output_dir / "04_report.html").write_text("ok", encoding="utf-8")
+        return 0
+
+    monkeypatch.setattr("formal_islands.smoke.build_backend", lambda *args, **kwargs: object())
+    monkeypatch.setattr("formal_islands.smoke.LeanVerifier", lambda *args, **kwargs: object())
+    monkeypatch.setattr("formal_islands.smoke.LeanWorkspace", lambda *args, **kwargs: object())
+    monkeypatch.setattr("formal_islands.smoke.formalize_candidate_nodes", fake_formalize_candidate_nodes)
+    monkeypatch.setattr("formal_islands.smoke.cmd_report", fake_report)
+
+    exit_code = cmd_continue(
+        Namespace(
+            command="continue",
+            backends="gemini/aristotle",
+            backend=None,
+            model=None,
+            planning_backend="gemini",
+            planning_model=None,
+            formalization_backend="aristotle",
+            formalization_model=None,
+            output_dir=str(output_dir),
+            workspace="lean_project",
+            node_ids=["case_1"],
+            max_attempts=4,
+            formalization_mode="agentic",
+            formalization_timeout_seconds=None,
+        )
+    )
+
+    assert exit_code == 0
+    assert call_node_ids == [["case_1"], None]
+    final_graph = load_graph(output_dir / "03_formalized_graph.json")
+    assert next(node for node in final_graph.nodes if node.id == "root").status == "formal_verified"
+    summaries = json.loads((output_dir / "03_formalization_summaries.json").read_text(encoding="utf-8"))
+    assert [item["node_id"] for item in summaries] == ["case_1", "root"]
+
+    history_lines = [json.loads(line) for line in (output_dir / "graph_history.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert any(entry["event"] == "continuation_request" for entry in history_lines)
+    progress_text = (output_dir / "_progress.log").read_text(encoding="utf-8")
+    assert "user continuation request: attempting node(s) case_1" in progress_text

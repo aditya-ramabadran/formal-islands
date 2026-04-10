@@ -404,13 +404,27 @@ p:last-child { margin-bottom: 0; }
 .featured-graph-node-badge.status-formal-verified { fill: #2f8f5b; }
 .featured-graph-node-badge.status-formal-failed { fill: #b45746; }
 
+.featured-graph-node-text {
+  fill: var(--text);
+  font-family: Georgia, "Iowan Old Style", serif;
+  font-size: calc(17px * var(--featured-graph-font-scale, 1));
+  font-weight: 700;
+  line-height: 1.16;
+  pointer-events: none;
+}
+
+.spotlight-thumb .featured-graph-node-text {
+  font-size: calc(22px * var(--featured-graph-font-scale, 1));
+}
+
 .featured-graph-label {
   position: absolute;
   display: grid;
   place-items: center;
   place-content: center;
+  box-sizing: border-box;
   text-align: center;
-  padding: 0.45rem 0.65rem;
+  padding: 0.3rem 0.65rem;
   pointer-events: none;
   overflow: hidden;
   color: var(--text);
@@ -459,6 +473,7 @@ p:last-child { margin-bottom: 0; }
   .featured-graph-node-badge.status-candidate-formal { fill: #f0a64e; }
   .featured-graph-node-badge.status-formal-verified { fill: #65c08a; }
   .featured-graph-node-badge.status-formal-failed { fill: #dd8a79; }
+  .featured-graph-node-text { fill: #f3eee7; }
 }
 
 .card-body {
@@ -629,6 +644,9 @@ footer {
     Lean-verified nodes plus a report that shows which parts are certified and which parts still need
     human review. 
   </p>
+  <p>
+    The proof graph is not just explanatory: in several benchmarks, certifying local child nodes first also improves later parent-level formalization attempts.
+  </p>
   <div class="spotlight-card">
     <a class="spotlight-thumb" target="_blank" rel="noopener noreferrer" href="reports/heat_uniqueness.html">
       <div class="featured-graph-host" data-featured-graph-id="heat_uniqueness" aria-label="Proof graph for heat equation uniqueness"></div>
@@ -747,6 +765,27 @@ footer {
   <div class="gallery">
 
     <div class="card">
+      <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/young_convolution.html">
+        <div class="featured-graph-host" data-featured-graph-id="young_convolution" aria-label="Proof graph for Young's convolution inequality"></div>
+      </a>
+      <div class="card-body">
+        <div class="card-title">Young's Convolution Inequality</div>
+        <div class="card-statement">
+          For exponents p, q, r with 1/p + 1/q = 1 + 1/r, the convolution norm is
+          bounded by the product of the input norms.
+        </div>
+        <span class="verified-badge">✓ 3 of 4 nodes formally verified</span>
+        <div class="card-desc">
+          The endpoint case, the pointwise Hölder estimate, and the Tonelli
+          integration step are formally verified. The root theorem remains
+          informal, so the remaining assembly burden is visible right on the
+          graph.
+        </div>
+        <a class="card-link" target="_blank" href="reports/young_convolution.html">View report →</a>
+      </div>
+    </div>
+
+    <div class="card">
       <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/two_point_log_sobolev.html">
         <div class="featured-graph-host" data-featured-graph-id="two_point_log_sobolev" aria-label="Proof graph for the two-point log-Sobolev inequality"></div>
       </a>
@@ -767,42 +806,22 @@ footer {
     </div>
 
     <div class="card">
-      <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/matrix_determinant_lemma.html">
-        <div class="featured-graph-host" data-featured-graph-id="matrix_determinant_lemma" aria-label="Proof graph for the matrix determinant lemma"></div>
+      <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/discrete_loomis_whitney.html">
+        <div class="featured-graph-host" data-featured-graph-id="discrete_loomis_whitney" aria-label="Proof graph for the discrete Loomis-Whitney inequality"></div>
       </a>
       <div class="card-body">
-        <div class="card-title">Matrix Determinant Lemma</div>
+        <div class="card-title">Discrete Loomis-Whitney Inequality</div>
         <div class="card-statement">
-          det(A + uv<sup>T</sup>) = (1 + v<sup>T</sup>A<sup>−1</sup>u) · det(A)
-          for invertible A and column vectors u, v.
+          For a finite subset of Z<sup>d</sup>, the size of the set is controlled by the
+          product of its coordinate projections.
         </div>
         <span class="verified-badge">✓ 2 of 2 nodes formally verified</span>
         <div class="card-desc">
-          Both nodes in the proof graph are formally closed: the rank-one base case
-          and the full determinant lemma. End-to-end formal certification on a
-          Mathlib-supported benchmark.
+          The multilinear Hölder slice estimate and the inductive assembly theorem are
+          both formally verified. This is a clean end-to-end proof graph on a
+          combinatorial inequality benchmark.
         </div>
-        <a class="card-link" target="_blank" href="reports/matrix_determinant_lemma.html">View report →</a>
-      </div>
-    </div>
-
-    <div class="card">
-      <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/hoeffding_lemma.html">
-        <div class="featured-graph-host" data-featured-graph-id="hoeffding_lemma" aria-label="Proof graph for Hoeffding's lemma"></div>
-      </a>
-      <div class="card-body">
-        <div class="card-title">Hoeffding's Lemma</div>
-        <div class="card-statement">
-          For a bounded mean-zero random variable X with a ≤ X ≤ b a.s.,
-          log E[e<sup>tX</sup>] ≤ t²(b−a)²/8.
-        </div>
-        <span class="verified-badge">✓ 2 of 2 nodes formally verified</span>
-        <div class="card-desc">
-          The calculus lemma is verified first, and then the full Hoeffding root
-          theorem closes after bounded repair. This is now the strongest
-          Hoeffding artifact in the suite.
-        </div>
-        <a class="card-link" target="_blank" href="reports/hoeffding_lemma.html">View report →</a>
+        <a class="card-link" target="_blank" href="reports/discrete_loomis_whitney.html">View report →</a>
       </div>
     </div>
 
