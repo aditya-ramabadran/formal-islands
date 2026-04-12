@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 import time
@@ -117,56 +118,7 @@ class LeanVerifier:
             attempt_number=attempt_number,
             lean_code=lean_code,
         ).resolve()
-        command = [self._lake_executable(), "env", "lean", str(scratch_path)]
-        display_command = [
-            self._lake_executable(),
-            "env",
-            "lean",
-            self._repo_relative_path(scratch_path, workspace_root),
-        ]
-
-        start = time.monotonic()
-        try:
-            completed = self.command_runner(
-                command,
-                capture_output=True,
-                text=True,
-                cwd=workspace_root,
-                check=False,
-                timeout=self.timeout_seconds,
-            )
-            elapsed_seconds = time.monotonic() - start
-        except subprocess.TimeoutExpired as exc:
-            elapsed_seconds = time.monotonic() - start
-            result = VerificationResult(
-                status="failed",
-                command=" ".join(command),
-                exit_code=None,
-                stdout=exc.stdout or "",
-                stderr=(
-                    f"Lean verification timed out after {self.timeout_seconds} seconds."
-                    + (f"\n{exc.stderr}" if exc.stderr else "")
-                ),
-                elapsed_seconds=elapsed_seconds,
-                attempt_count=attempt_number,
-                artifact_path=str(scratch_path),
-            )
-            progress(
-                f"finished local Lean verification for node {node_id} (attempt {attempt_number}) "
-                f"with status {result.status} after timeout"
-            )
-            return result
-
-        result = VerificationResult(
-            status="verified" if completed.returncode == 0 else "failed",
-            command=" ".join(display_command),
-            exit_code=completed.returncode,
-            stdout=completed.stdout,
-            stderr=completed.stderr,
-            elapsed_seconds=elapsed_seconds,
-            attempt_count=attempt_number,
-            artifact_path=str(scratch_path),
-        )
+        result = self._verify_file_path(scratch_path, attempt_number=attempt_number)
         progress(
             f"finished local Lean verification for node {node_id} (attempt {attempt_number}) "
             f"with status {result.status}"
@@ -181,14 +133,115 @@ class LeanVerifier:
         progress(
             f"running local Lean verification for {resolved_path} (attempt {attempt_number})"
         )
-        command = [self._lake_executable(), "env", "lean", str(resolved_path)]
+        result = self._verify_file_path(resolved_path, attempt_number=attempt_number)
+        progress(
+            f"finished local Lean verification for {resolved_path} (attempt {attempt_number}) "
+            f"with status {result.status}"
+        )
+        return result
+
+    def _verify_file_path(self, file_path: Path, *, attempt_number: int) -> VerificationResult:
+        workspace_root = self.workspace.root.resolve()
+        resolved_path = file_path.resolve()
+        import_failure = self._prebuild_imported_local_modules(
+            resolved_path,
+            workspace_root=workspace_root,
+            attempt_number=attempt_number,
+        )
+        if import_failure is not None:
+            return import_failure
+        return self._run_lean_file(
+            resolved_path,
+            workspace_root=workspace_root,
+            attempt_number=attempt_number,
+        )
+
+    def _prebuild_imported_local_modules(
+        self,
+        file_path: Path,
+        *,
+        workspace_root: Path,
+        attempt_number: int,
+        visited: set[Path] | None = None,
+    ) -> VerificationResult | None:
+        if visited is None:
+            visited = set()
+        try:
+            resolved_path = file_path.resolve()
+        except FileNotFoundError:
+            return None
+        if resolved_path in visited or not resolved_path.is_file():
+            return None
+        visited.add(resolved_path)
+        for import_path in self._iter_local_import_paths(resolved_path, workspace_root):
+            nested_failure = self._prebuild_imported_local_modules(
+                import_path,
+                workspace_root=workspace_root,
+                attempt_number=attempt_number,
+                visited=visited,
+            )
+            if nested_failure is not None:
+                return nested_failure
+            progress(f"prebuilding imported local module {import_path}")
+            result = self._run_lean_file(
+                import_path,
+                workspace_root=workspace_root,
+                attempt_number=attempt_number,
+            )
+            if result.status != "verified":
+                return result.model_copy(
+                    update={
+                        "artifact_path": str(file_path.resolve()),
+                        "stderr": (
+                            f"Failed while prebuilding imported local module {import_path}.\n"
+                            f"{result.stderr}"
+                        ).strip(),
+                    }
+                )
+        return None
+
+    def _iter_local_import_paths(self, file_path: Path, workspace_root: Path) -> list[Path]:
+        try:
+            text = file_path.read_text(encoding="utf-8")
+        except Exception:
+            return []
+        paths: list[Path] = []
+        seen: set[Path] = set()
+        for line in text.splitlines():
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.startswith("--"):
+                continue
+            if not stripped.startswith("import "):
+                if not stripped.startswith("/-") and not stripped.startswith("set_option"):
+                    break
+                continue
+            module_names = stripped[len("import ") :].split()
+            for module_name in module_names:
+                candidate = workspace_root / Path(*module_name.split("."))
+                candidate = candidate.with_suffix(".lean")
+                if candidate.is_file():
+                    resolved_candidate = candidate.resolve()
+                    if resolved_candidate not in seen:
+                        seen.add(resolved_candidate)
+                        paths.append(resolved_candidate)
+        return paths
+
+    def _run_lean_file(
+        self,
+        file_path: Path,
+        *,
+        workspace_root: Path,
+        attempt_number: int,
+    ) -> VerificationResult:
+        command = [self._lake_executable(), "env", "lean", str(file_path)]
         display_command = [
             self._lake_executable(),
             "env",
             "lean",
-            self._repo_relative_path(resolved_path, workspace_root),
+            self._repo_relative_path(file_path, workspace_root),
         ]
-
         start = time.monotonic()
         try:
             completed = self.command_runner(
@@ -202,7 +255,7 @@ class LeanVerifier:
             elapsed_seconds = time.monotonic() - start
         except subprocess.TimeoutExpired as exc:
             elapsed_seconds = time.monotonic() - start
-            result = VerificationResult(
+            return VerificationResult(
                 status="failed",
                 command=" ".join(command),
                 exit_code=None,
@@ -213,29 +266,30 @@ class LeanVerifier:
                 ),
                 elapsed_seconds=elapsed_seconds,
                 attempt_count=attempt_number,
-                artifact_path=str(resolved_path),
+                artifact_path=str(file_path),
             )
-            progress(
-                f"finished local Lean verification for {resolved_path} (attempt {attempt_number}) "
-                f"with status {result.status} after timeout"
-            )
-            return result
-
-        result = VerificationResult(
-            status="verified" if completed.returncode == 0 else "failed",
+        status = "verified" if completed.returncode == 0 else "failed"
+        stderr_text = completed.stderr
+        if completed.returncode == 0 and self._contains_sorry_warning(
+            "\n".join(part for part in [completed.stdout, completed.stderr] if part)
+        ):
+            status = "failed"
+            suffix = "Lean verification rejected the file because the compiler reported `sorry` usage."
+            stderr_text = f"{completed.stderr}\n{suffix}".strip()
+        return VerificationResult(
+            status=status,
             command=" ".join(display_command),
             exit_code=completed.returncode,
             stdout=completed.stdout,
-            stderr=completed.stderr,
+            stderr=stderr_text,
             elapsed_seconds=elapsed_seconds,
             attempt_count=attempt_number,
-            artifact_path=str(resolved_path),
+            artifact_path=str(file_path),
         )
-        progress(
-            f"finished local Lean verification for {resolved_path} (attempt {attempt_number}) "
-            f"with status {result.status}"
-        )
-        return result
+
+    @staticmethod
+    def _contains_sorry_warning(text: str) -> bool:
+        return bool(re.search(r"warning: .*uses 'sorry'", text))
 
     @staticmethod
     def _repo_relative_path(path: Path, workspace_root: Path) -> str:

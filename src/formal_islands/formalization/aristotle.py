@@ -35,6 +35,8 @@ class VerifiedChildSupportFile:
     relative_path: Path
     source_artifact_path: str | None
     lean_code: str
+    usage_mode: str = "reference"
+    import_module: str | None = None
 
 
 def request_aristotle_formalization(
@@ -64,7 +66,13 @@ def request_aristotle_formalization(
     desired_theorem_name = _desired_aristotle_theorem_name(node_id)
     relative_scratch_path = scratch_path.relative_to(workspace_root)
 
-    support_files = _build_verified_child_support_files(graph=graph, node_id=node_id)
+    promoted_parent_attempt = _is_promoted_parent_attempt(node)
+    support_files = _build_verified_child_support_files(
+        graph=graph,
+        node_id=node_id,
+        workspace_root=workspace_root,
+        prefer_importable_modules=promoted_parent_attempt,
+    )
 
     with tempfile.TemporaryDirectory(prefix="formal-islands-aristotle-") as temp_dir_name:
         snapshot_root = Path(temp_dir_name)
@@ -206,6 +214,12 @@ def build_aristotle_formalization_prompt(
         if child.id in children and child.formal_artifact is not None
     ]
     promoted_parent_attempt = _is_promoted_parent_attempt(node)
+    importable_support_files = [
+        support for support in (verified_child_support_files or []) if support.usage_mode == "importable"
+    ]
+    reference_support_files = [
+        support for support in (verified_child_support_files or []) if support.usage_mode != "importable"
+    ]
     prompt_parts = [
         f"Theorem title: {graph.theorem_title}",
         (
@@ -246,9 +260,9 @@ def build_aristotle_formalization_prompt(
             "this target, not just a resubmission of one child theorem under a new filename."
         ),
         (
-            "Packaging instruction: prefer a self-contained final scratch file. Treat the materialized support files "
-            "as reference material to inspect, then copy or adapt only the minimal helper lemmas you need into the "
-            "scratch file itself. Do not make the final artifact depend on cross-file generated-support imports."
+            "Packaging instruction: for ordinary node attempts, prefer a self-contained final scratch file. Treat "
+            "reference-only support files as material to inspect, then copy or adapt only the minimal helper lemmas "
+            "you need into the scratch file itself."
         ),
         (
             "Dependency direction note: the verified child lemmas are outgoing dependencies of the target node. "
@@ -306,6 +320,8 @@ def build_aristotle_formalization_prompt(
                             "child_title": support.child_title,
                             "theorem_name": support.theorem_name,
                             "lean_statement": support.lean_statement,
+                            "usage_mode": support.usage_mode,
+                            "import_module": support.import_module,
                             "snapshot_file": str(support.relative_path),
                             "source_artifact_path": support.source_artifact_path,
                         }
@@ -314,15 +330,26 @@ def build_aristotle_formalization_prompt(
                     indent=2,
                 ),
                 (
-                    "Use these support files primarily as reference material to inspect and copy from. "
                     "The designated main theorem must still be "
                     f"`{desired_theorem_name}` and must certify the current node's parent-level delta."
                 ),
+            ]
+        )
+    if reference_support_files:
+        prompt_parts.append(
+            "Reference-only support files should be inspected and copied from when useful; they are not importable modules."
+        )
+    if importable_support_files:
+        prompt_parts.extend(
+            [
                 (
-                    "Prefer copying or adapting the minimal helper material you need into the scratch file so that the "
-                    "final certified artifact stays self-contained. The staged support files are not importable modules; "
-                    "do not try to import them. Do not import a generated support file in the final "
-                    "artifact; copy or adapt what you need into the scratch file."
+                    "Some verified direct-child support files in this snapshot are importable Lean modules. Because "
+                    "they are explicit verified dependencies of the current node, you may import those child modules "
+                    "directly in the final artifact."
+                ),
+                (
+                    "If you import a verified direct-child module, call the actual verified theorem from that module. "
+                    "Do not restate a verified child theorem locally with `:= by sorry`, `axiom`, or any other placeholder."
                 ),
             ]
         )
@@ -336,8 +363,13 @@ def build_aristotle_formalization_prompt(
                     "is one of the support theorems unchanged."
                 ),
                 (
-                    "Default to a self-contained parent file that copies or adapts helper lemmas from the support material. "
-                    "Do not rely on `FormalIslands.Generated.Support.*` imports in the final artifact."
+                    "For promoted parents, the cleanest default is to prefer importing that child module when a verified "
+                    "direct-child support file is materialized as an importable module, and then prove the new parent theorem "
+                    "from those verified children."
+                ),
+                (
+                    "Only fall back to copying helper code when a needed support file is reference-only or when import "
+                    "would be impossible. Never use local `sorry` stubs to fake already-verified child lemmas."
                 ),
             ]
         )
@@ -383,6 +415,12 @@ def _render_aristotle_scratch_header(
     sketch = build_node_coverage_sketch(node)
     local_context = build_local_proof_context(graph, node.id)
     direct_child_context = build_verified_direct_child_context(graph, node.id)
+    importable_support_files = [
+        support for support in (verified_child_support_files or []) if support.usage_mode == "importable"
+    ]
+    reference_support_files = [
+        support for support in (verified_child_support_files or []) if support.usage_mode != "importable"
+    ]
     lines = [
             "/--",
             "Aristotle formalization target.",
@@ -417,8 +455,6 @@ def _render_aristotle_scratch_header(
             "These verified children are already available. The theorem should prove only the remaining parent-level delta,",
             "not a restatement of any verified child or a close corollary that duplicates it.",
             "If you use them, treat them as helper lemmas for a new theorem for the current node.",
-            "Prefer a self-contained final file: inspect the support files and copy or adapt only the minimal helper material you need.",
-            "Treat the support files as reference material first, not as modules that should be imported in the final artifact.",
             "",
             "Dependency direction note: the verified child lemmas are outgoing dependencies of the target node.",
             "Treat them as already established support, not as parents or as claims that depend on the target.",
@@ -449,9 +485,28 @@ def _render_aristotle_scratch_header(
                     f"- child id: {support.child_id}",
                     f"  theorem: {support.theorem_name}",
                     f"  statement: {support.lean_statement}",
+                    f"  usage mode: {support.usage_mode}",
+                    (f"  import module: {support.import_module}" if support.import_module else "  import module: (none)"),
                     f"  reference file: {support.relative_path}",
                 ]
             )
+    if reference_support_files:
+        lines.extend(
+            [
+                "",
+                "Reference-only support files should be inspected and copied from when useful; they are not importable modules.",
+            ]
+        )
+    if importable_support_files:
+        lines.extend(
+            [
+                "",
+                "Some support files are importable verified direct-child modules.",
+                "You may import those child modules directly because they are explicit verified dependencies of this node.",
+                "If you import a child module, call the actual verified theorem from that module.",
+                "Do not restate a verified child theorem locally with `:= by sorry` or any other placeholder.",
+            ]
+        )
     if _is_promoted_parent_attempt(node) and verified_child_support_files:
         lines.extend(
             [
@@ -459,7 +514,9 @@ def _render_aristotle_scratch_header(
                 "This is a promoted parent-assembly attempt.",
                 "Reuse the support theorem(s) above as helpers and prove the parent-level enlargement or assembly step.",
                 "Do not leave the file with only a support theorem copied unchanged.",
-                "Copy or adapt the needed helper material into this scratch file instead of importing generated support modules.",
+                "When a verified direct-child support file is importable, prefer importing that child module and proving the new parent theorem from it.",
+                "Only copy helper material when a needed support file is reference-only.",
+                "Never use local `sorry` stubs to stand in for already-verified child lemmas.",
             ]
         )
     lines.append("-/")
@@ -470,6 +527,8 @@ def _build_verified_child_support_files(
     *,
     graph: ProofGraph,
     node_id: str,
+    workspace_root: Path | None = None,
+    prefer_importable_modules: bool = False,
 ) -> list[VerifiedChildSupportFile]:
     children = {edge.target_id for edge in graph.edges if edge.source_id == node_id}
     support_files: list[VerifiedChildSupportFile] = []
@@ -478,9 +537,29 @@ def _build_verified_child_support_files(
         if child.status != "formal_verified" or artifact is None:
             continue
         module_stem = _sanitize_file_stem(child.id)
-        relative_path = (
-            Path("FormalIslands") / "Generated" / "SupportReference" / f"{module_stem}.lean.txt"
+        source_path = (
+            Path(artifact.verification.artifact_path).expanduser().resolve()
+            if artifact.verification.artifact_path
+            else None
         )
+        usage_mode = "reference"
+        import_module: str | None = None
+        relative_path = Path("FormalIslands") / "Generated" / "SupportReference" / f"{module_stem}.lean.txt"
+        if (
+            prefer_importable_modules
+            and workspace_root is not None
+            and source_path is not None
+            and source_path.is_file()
+            and source_path.suffix == ".lean"
+        ):
+            try:
+                relative_candidate = source_path.relative_to(workspace_root.resolve())
+            except ValueError:
+                relative_candidate = None
+            if relative_candidate is not None:
+                usage_mode = "importable"
+                relative_path = relative_candidate
+                import_module = _relative_lean_path_to_module_name(relative_candidate)
         support_files.append(
             VerifiedChildSupportFile(
                 child_id=child.id,
@@ -490,6 +569,8 @@ def _build_verified_child_support_files(
                 relative_path=relative_path,
                 source_artifact_path=artifact.verification.artifact_path,
                 lean_code=artifact.lean_code,
+                usage_mode=usage_mode,
+                import_module=import_module,
             )
         )
     return support_files
@@ -509,6 +590,9 @@ def _materialize_verified_child_support_files(
             if source_path is not None and source_path.is_file()
             else support.lean_code
         )
+        if support.usage_mode == "importable":
+            destination.write_text(source_text, encoding="utf-8")
+            continue
         reference_text = "\n".join(
             [
                 f"-- Verified child id: {support.child_id}",
@@ -536,6 +620,11 @@ def _desired_aristotle_theorem_name(node_id: str) -> str:
 
 def _sanitize_file_stem(text: str) -> str:
     return re.sub(r"[^A-Za-z0-9_]+", "_", text).strip("_") or "aristotle_node"
+
+
+def _relative_lean_path_to_module_name(relative_path: Path) -> str:
+    module_path = relative_path.with_suffix("")
+    return ".".join(module_path.parts)
 
 
 def _format_node_context(

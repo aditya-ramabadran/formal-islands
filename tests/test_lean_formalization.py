@@ -26,6 +26,7 @@ from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.formalization.loop import (
     _formalize_candidate_nodes_aristotle_parallel,
     _attempt_agentic_coverage_expansion,
+    _build_coverage_expansion_feedback,
     _build_agentic_faithfulness_feedback,
     _build_aristotle_faithfulness_feedback,
     _integrate_successful_formalization,
@@ -341,7 +342,34 @@ def test_build_aristotle_formalization_prompt_for_promoted_parent_mentions_new_p
     workspace = create_workspace(tmp_path)
     scratch_path = workspace.prepare_worker_file("n0")
     graph = build_two_child_candidate_graph()
-    support_files = _build_verified_child_support_files(graph=graph, node_id="n0")
+    child_artifact = workspace.prepare_worker_file("child")
+    child_artifact.write_text("theorem child_theorem : True := by trivial\n", encoding="utf-8")
+    graph = graph.model_copy(
+        update={
+            "nodes": [
+                candidate.model_copy(
+                    update={
+                        "formal_artifact": candidate.formal_artifact.model_copy(
+                            update={
+                                "verification": candidate.formal_artifact.verification.model_copy(
+                                    update={"artifact_path": str(child_artifact)}
+                                )
+                            }
+                        )
+                    }
+                )
+                if candidate.id in {"n1", "n2"}
+                else candidate
+                for candidate in graph.nodes
+            ]
+        }
+    )
+    support_files = _build_verified_child_support_files(
+        graph=graph,
+        node_id="n0",
+        workspace_root=workspace.root,
+        prefer_importable_modules=True,
+    )
     node = next(node for node in graph.nodes if node.id == "n0").model_copy(
         update={
             "formalization_rationale": "Promoted after all direct children were verified; remaining work is parent assembly."
@@ -363,12 +391,12 @@ def test_build_aristotle_formalization_prompt_for_promoted_parent_mentions_new_p
     assert "this is a promoted parent-assembly attempt" in lowered
     assert "must still be `n0_aristotle`" in prompt
     assert "not just a resubmission of one child theorem" in lowered
-    assert "FormalIslands/Generated/SupportReference" in prompt
-    assert "prefer copying or adapting the minimal helper material" in lowered
-    assert "reference material" in lowered
-    assert "do not rely on `formalislands.generated.support.*` imports in the final artifact" in lowered
-    assert "do not import a generated support file in the final artifact" in lowered
-    assert "not importable modules" in lowered
+    assert "usage_mode" in prompt
+    assert "import_module" in prompt
+    assert "some verified direct-child support files in this snapshot are importable lean modules" in lowered
+    assert "you may import those child modules directly" in lowered
+    assert "do not restate a verified child theorem locally with `:= by sorry`" in lowered
+    assert "prefer importing that child module" in lowered
 
 
 def test_materialize_verified_child_support_files_copies_existing_artifacts(tmp_path: Path) -> None:
@@ -408,6 +436,45 @@ def test_materialize_verified_child_support_files_copies_existing_artifacts(tmp_
     assert "-- Full source artifact below." in copied_text
     assert "reference material only" in copied_text
     assert artifact_path.read_text(encoding="utf-8") in copied_text
+
+
+def test_materialize_verified_child_support_files_can_stage_importable_modules(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path / "lean_project")
+    child_artifact = workspace.prepare_worker_file("child")
+    child_artifact.write_text("theorem child_theorem : True := by trivial\n", encoding="utf-8")
+
+    graph = build_two_child_graph()
+    updated_nodes = [
+        node.model_copy(
+            update={
+                "formal_artifact": node.formal_artifact.model_copy(
+                    update={
+                        "verification": node.formal_artifact.verification.model_copy(
+                            update={"artifact_path": str(child_artifact)}
+                        )
+                    }
+                )
+            }
+        )
+        if node.id == "n1"
+        else node
+        for node in graph.nodes
+    ]
+    support_files = _build_verified_child_support_files(
+        graph=graph.model_copy(update={"nodes": updated_nodes}),
+        node_id="n0",
+        workspace_root=workspace.root,
+        prefer_importable_modules=True,
+    )
+    first_support = next(support for support in support_files if support.child_id == "n1")
+    assert first_support.usage_mode == "importable"
+    assert first_support.import_module is not None
+
+    snapshot_root = tmp_path / "snapshot"
+    _materialize_verified_child_support_files(snapshot_root=snapshot_root, support_files=support_files)
+    copied = snapshot_root / first_support.relative_path
+    assert copied.suffix == ".lean"
+    assert copied.read_text(encoding="utf-8") == child_artifact.read_text(encoding="utf-8")
 
 
 def test_parent_promotion_assessment_is_cached_and_promotes_parent(tmp_path: Path) -> None:
@@ -622,6 +689,47 @@ def test_bonus_retry_runs_for_faithful_core_when_expansion_is_warranted() -> Non
         node_id="n2",
         assessment=assessment,
     )
+
+
+def test_build_coverage_expansion_feedback_includes_semantic_gap_reason() -> None:
+    node = ProofNode(
+        id="root",
+        title="Young's inequality",
+        informal_statement="Lift the verified nonnegative core to the full parent theorem.",
+        informal_proof_text="Reduce to absolute values and then conclude the full parent statement.",
+    )
+    artifact = FormalArtifact(
+        lean_theorem_name="young_core",
+        lean_statement="theorem young_core : True",
+        lean_code="theorem young_core : True := by trivial",
+        faithfulness_classification="concrete_sublemma",
+        verification=VerificationResult(
+            status="verified",
+            command="lake env lean young_core.lean",
+            attempt_count=1,
+        ),
+    )
+    assessment = CombinedFormalizationAssessment(
+        result_kind="concrete_sublemma",
+        certifies_main_burden=True,
+        coverage_score=8,
+        expansion_warranted=True,
+        worth_retrying_later=False,
+        reason=(
+            "The verified theorem already proves the nonnegative core, but it stops short of lifting the result "
+            "to the full parent theorem."
+        ),
+    )
+
+    feedback = _build_coverage_expansion_feedback(
+        node=node,
+        artifact=artifact,
+        assessment=assessment,
+    )
+
+    assert "Why the current theorem was judged narrower than the parent node:" in feedback
+    assert "stops short of lifting the result to the full parent theorem" in feedback
+    assert "Focus the expansion on the remaining interface, lift, assembly, or parent-shaped packaging gap" in feedback
 
 
 def test_aristotle_batch_does_not_immediately_repromote_attempted_parent_after_support_core(
@@ -1170,6 +1278,70 @@ def test_lean_verifier_verifies_existing_file(tmp_path: Path) -> None:
     assert result.status == "verified"
     assert result.command.startswith("lake env lean lean_project/")
     assert result.artifact_path == str(worker_file.resolve())
+
+
+def test_lean_verifier_rejects_sorry_warnings_even_with_zero_exit_code(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=0,
+            stdout="",
+            stderr="warning: declaration uses 'sorry'\n",
+        )
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    result = verifier.verify_code(
+        lean_code="theorem t : True := by\n  sorry\n",
+        node_id="n2",
+        attempt_number=1,
+    )
+
+    assert result.status == "failed"
+    assert "reported `sorry` usage" in result.stderr
+
+
+def test_lean_verifier_prebuilds_imported_local_modules_before_parent(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+    child_file = workspace.generated_dir / "child_dep.lean"
+    child_file.write_text("theorem child_dep : True := by trivial\n", encoding="utf-8")
+    parent_file = workspace.prepare_worker_file("parent")
+    parent_file.write_text(
+        "import FormalIslands.Generated.child_dep\n\n"
+        "theorem parent : True := by\n"
+        "  exact child_dep\n",
+        encoding="utf-8",
+    )
+
+    seen: list[str] = []
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        seen.append(args[3])
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    result = verifier.verify_existing_file(file_path=parent_file, attempt_number=1)
+
+    assert result.status == "verified"
+    assert seen[0] == str(child_file.resolve())
+    assert seen[-1] == str(parent_file.resolve())
 
 
 def test_lean_verifier_captures_timeout_as_failed_result(tmp_path: Path) -> None:

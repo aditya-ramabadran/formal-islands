@@ -27,6 +27,25 @@ def subsumed_informal_node_ids(graph: ProofGraph) -> set[str]:
             for parent_id in parent_ids
         ):
             hidden_ids.add(node.id)
+
+    # If an informal node is hidden because a verified parent discharged it, then any downstream
+    # informal dependency chain that is only reachable through already-hidden parents should also
+    # disappear from the final display. Otherwise the report can show disconnected informal nodes
+    # whose only purpose was to support the now-hidden subsumed node.
+    changed = True
+    while changed:
+        changed = False
+        for node in graph.nodes:
+            if node.id in hidden_ids:
+                continue
+            if node.status != "informal":
+                continue
+            if node.formal_artifact is not None or node.last_formalization_outcome is not None:
+                continue
+            parent_ids = parent_ids_by_child.get(node.id, set())
+            if parent_ids and parent_ids.issubset(hidden_ids):
+                hidden_ids.add(node.id)
+                changed = True
     return hidden_ids
 
 

@@ -321,6 +321,62 @@ def test_render_html_report_hides_subsumed_informal_child_from_final_display() -
     ]
 
 
+def test_render_html_report_hides_dangling_descendants_of_hidden_subsumed_nodes() -> None:
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="root",
+        nodes=[
+            ProofNode(
+                id="root",
+                title="Root theorem",
+                informal_statement="Main theorem.",
+                informal_proof_text="Use helper chain.",
+                status="formal_verified",
+                formal_artifact=FormalArtifact(
+                    lean_theorem_name="root_core",
+                    lean_statement="theorem root_core : True",
+                    lean_code="theorem root_core : True := by trivial",
+                    faithfulness_classification="full_node",
+                ),
+            ),
+            ProofNode(
+                id="helper",
+                title="Helper",
+                informal_statement="Helper.",
+                informal_proof_text="Use spectral fact.",
+            ),
+            ProofNode(
+                id="spectral",
+                title="Spectral fact",
+                informal_statement="Spectral fact.",
+                informal_proof_text="Background.",
+            ),
+        ],
+        edges=[
+            ProofEdge(source_id="root", target_id="helper"),
+            ProofEdge(source_id="helper", target_id="spectral"),
+        ],
+    )
+    obligations = derive_review_obligations(graph)
+
+    html = render_html_report(graph, obligations)
+    bundle = export_report_bundle(graph, obligations)
+
+    assert "Hidden subsumed nodes (2)" in html
+    assert "helper" in html and "spectral" in html
+    assert "<span class=\"pill\">Nodes: 1</span>" in html
+    assert [node["id"] for node in bundle["graph"]["nodes"]] == ["root"]
+    assert bundle["review_obligations"] == [
+        {
+            "id": "semantic-match-root",
+            "kind": "formal_semantic_match_check",
+            "text": "Check that node 'root' (Root theorem) matches the verified Lean theorem for this node.",
+            "node_ids": ["root"],
+        }
+    ]
+
+
 def test_graph_history_frames_skip_annotation_only_or_duplicate_visual_snapshots() -> None:
     graph = ProofGraph(
         theorem_title="Toy theorem",

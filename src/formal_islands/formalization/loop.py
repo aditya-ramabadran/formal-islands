@@ -1140,6 +1140,7 @@ def _attempt_aristotle_coverage_expansion(
             faithfulness_feedback=_build_coverage_expansion_feedback(
                 node=next(node for node in graph.nodes if node.id == node_id),
                 artifact=artifact,
+                assessment=assessment,
             ),
             previous_lean_code=artifact.lean_code,
             compiler_feedback="Try to expand the verified local core upward toward the parent node.",
@@ -2626,6 +2627,7 @@ def _attempt_structured_coverage_expansion(
             compiler_feedback=_build_coverage_expansion_feedback(
                 node=next(node for node in graph.nodes if node.id == node_id),
                 artifact=artifact,
+                assessment=assessment,
             ),
             previous_lean_code=artifact.lean_code,
         )
@@ -2714,6 +2716,7 @@ def _attempt_agentic_coverage_expansion(
             faithfulness_feedback=_build_coverage_expansion_feedback(
                 node=next(node for node in graph.nodes if node.id == node_id),
                 artifact=artifact,
+                assessment=assessment,
             ),
             previous_lean_code=artifact.lean_code,
         )
@@ -2931,45 +2934,72 @@ def _select_dependency_aware_aristotle_wave(
     return remaining_nodes
 
 
-def _build_coverage_expansion_feedback(*, node: ProofNode, artifact: FormalArtifact) -> str:
+def _build_coverage_expansion_feedback(
+    *,
+    node: ProofNode,
+    artifact: FormalArtifact,
+    assessment: CombinedFormalizationAssessment | None = None,
+) -> str:
     sketch = build_node_coverage_sketch(node)
     component_lines = "\n".join(
         f"- [{component.kind}] {component.text}" for component in sketch.components
     ) or "- Broaden coverage toward the full node."
-    return "\n\n".join(
+    prompt_parts = [
+        "Coverage expansion follow-up:",
+        (
+            "A verified Lean theorem was accepted as a narrower concrete local core, not as full-node coverage. "
+            "Continue from the already verified code and try to enlarge coverage upward while staying in the same concrete setting."
+        ),
+        "Coverage sketch:",
+        json.dumps(
+            {
+                "summary": sketch.summary,
+                "components": [
+                    {"kind": component.kind, "text": component.text}
+                    for component in sketch.components
+                ],
+            },
+            indent=2,
+        ),
+        "Currently verified Lean theorem:",
+        artifact.lean_statement,
+        "Broader target node:",
+        f"{node.title}: {node.informal_statement}",
+        (
+            "Aim first at the closest broader theorem that still directly mirrors the parent node, preserving the "
+            "same ambient setting, symbols, quantities, and inferential role."
+        ),
+        (
+            "Do not switch to a more abstract ambient theorem. Build upward from the verified core toward adjacent "
+            "missing steps in the same local argument."
+        ),
+    ]
+    if assessment is not None and assessment.reason.strip():
+        prompt_parts.extend(
+            [
+                "Why the current theorem was judged narrower than the parent node:",
+                assessment.reason.strip(),
+            ]
+        )
+        if assessment.certifies_main_burden:
+            prompt_parts.append(
+                "The current theorem already appears to certify the main technical burden. Focus the expansion on the "
+                "remaining interface, lift, assembly, or parent-shaped packaging gap that turns this verified core into "
+                "a theorem that actually matches the parent node. Do not spend the attempt merely reproving or lightly "
+                "repackaging the same verified core."
+            )
+        else:
+            prompt_parts.append(
+                "The current theorem does not yet cover enough of the parent node. Use the reason above to identify "
+                "the missing local burden and expand specifically toward that gap rather than wandering to a different theorem family."
+            )
+    prompt_parts.extend(
         [
-            "Coverage expansion follow-up:",
-            (
-                "A verified Lean theorem was accepted as a narrower concrete local core, not as full-node coverage. "
-                "Continue from the already verified code and try to enlarge coverage upward while staying in the same concrete setting."
-            ),
-            "Coverage sketch:",
-            json.dumps(
-                {
-                    "summary": sketch.summary,
-                    "components": [
-                        {"kind": component.kind, "text": component.text}
-                        for component in sketch.components
-                    ],
-                },
-                indent=2,
-            ),
-            "Currently verified Lean theorem:",
-            artifact.lean_statement,
-            "Broader target node:",
-            f"{node.title}: {node.informal_statement}",
-            (
-                "Aim first at the closest broader theorem that still directly mirrors the parent node, preserving the "
-                "same ambient setting, symbols, quantities, and inferential role."
-            ),
-            (
-                "Do not switch to a more abstract ambient theorem. Build upward from the verified core toward adjacent "
-                "missing steps in the same local argument."
-            ),
             "Potential missing substeps from the parent node:",
             component_lines,
         ]
     )
+    return "\n\n".join(prompt_parts)
 
 
 def _node_coverage_targets(node: ProofNode) -> list[str]:
