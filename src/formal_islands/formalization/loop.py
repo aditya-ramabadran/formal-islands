@@ -16,7 +16,10 @@ from formal_islands.formalization.agentic import (
     recover_agentic_artifact_from_scratch_file,
     request_agentic_formalization,
 )
-from formal_islands.formalization.aristotle import request_aristotle_formalization
+from formal_islands.formalization.aristotle import (
+    _build_verified_child_support_files,
+    request_aristotle_formalization,
+)
 from formal_islands.formalization.lean import LeanVerifier
 from formal_islands.formalization.pipeline import (
     AbstractionReviewAssessment,
@@ -603,6 +606,26 @@ def _formalize_candidate_node_aristotle(
     previous_lean_code: str | None = None
     faithfulness_feedback: str | None = None
     scratch_path = verifier.workspace.prepare_worker_file(node_id).resolve()
+    workspace_root = verifier.workspace.root.resolve()
+
+    def _current_importable_support_context() -> tuple[list[str], list[str]]:
+        support_files = _build_verified_child_support_files(
+            graph=current_graph,
+            node_id=node_id,
+            workspace_root=workspace_root,
+            prefer_importable_modules=True,
+        )
+        import_modules = [
+            support.import_module
+            for support in support_files
+            if support.usage_mode == "importable" and support.import_module
+        ]
+        theorem_names = [
+            support.theorem_name
+            for support in support_files
+            if support.usage_mode == "importable"
+        ]
+        return import_modules, theorem_names
 
     for attempt_number in range(1, attempt_limit + 1):
         _progress(f"node {node_id}: formalization attempt {attempt_number}/{attempt_limit} (Aristotle backend)")
@@ -611,7 +634,7 @@ def _formalize_candidate_node_aristotle(
                 backend=backend,
                 graph=_graph_for_retry_request(current_graph, node_id),
                 node_id=node_id,
-                workspace_root=verifier.workspace.root.resolve(),
+                workspace_root=workspace_root,
                 scratch_file_path=scratch_path,
                 faithfulness_feedback=faithfulness_feedback,
                 previous_lean_code=previous_lean_code,
@@ -645,12 +668,15 @@ def _formalize_candidate_node_aristotle(
             _emit_update(current_graph, node_id, latest_artifact, on_update)
             if attempt_number >= attempt_limit:
                 break
+            import_modules, theorem_names = _current_importable_support_context()
             latest_feedback = _build_repair_feedback(
                 previous_result=verification,
                 extra_guidance=(
                     "The previous Aristotle submission failed before producing a usable Lean file. "
                     "Revise the theorem and keep it close to the node text."
                 ),
+                importable_support_modules=import_modules,
+                verified_child_theorem_names=theorem_names,
             )
             continue
         except FormalizationFaithfulnessError as exc:
@@ -707,11 +733,14 @@ def _formalize_candidate_node_aristotle(
                 )
                 _log_retry_diagnosis(node_id=node_id, repair_assessment=repair_assessment)
                 _progress(f"node {node_id}: retrying after faithfulness guard feedback")
+                import_modules, theorem_names = _current_importable_support_context()
                 faithfulness_feedback = "\n\n".join(
                     [
                         _build_aristotle_faithfulness_feedback(
                             previous_result=verification,
                             repair_assessment=repair_assessment,
+                            importable_support_modules=import_modules,
+                            verified_child_theorem_names=theorem_names,
                         ),
                         _build_repair_feedback(
                             previous_result=verification,
@@ -720,6 +749,8 @@ def _formalize_candidate_node_aristotle(
                                 "The previous Aristotle submission was rejected by the faithfulness guard. "
                                 "Keep the theorem much closer to the node text and preserve the theorem shape."
                             ),
+                            importable_support_modules=import_modules,
+                            verified_child_theorem_names=theorem_names,
                         ),
                     ]
                 )
@@ -815,9 +846,12 @@ def _formalize_candidate_node_aristotle(
         )
         _log_retry_diagnosis(node_id=node_id, repair_assessment=repair_assessment)
         _progress(f"node {node_id}: retrying after compiler feedback")
+        import_modules, theorem_names = _current_importable_support_context()
         latest_feedback = _build_repair_feedback(
             previous_result=verification,
             repair_assessment=repair_assessment,
+            importable_support_modules=import_modules,
+            verified_child_theorem_names=theorem_names,
         )
         previous_lean_code = scratch_path.read_text(encoding="utf-8") if scratch_path.exists() else None
 
@@ -1326,6 +1360,8 @@ def _build_repair_feedback(
     previous_result: VerificationResult,
     repair_assessment: RepairAssessment | None = None,
     extra_guidance: str | None = None,
+    importable_support_modules: list[str] | None = None,
+    verified_child_theorem_names: list[str] | None = None,
 ) -> str:
     heuristic = classify_heuristic_repair_assessment(
         previous_result=previous_result,
@@ -1364,16 +1400,50 @@ def _build_repair_feedback(
     )
     if extra_guidance:
         parts.append(extra_guidance)
-    parts.extend(_packaging_specific_repair_lines(previous_result))
+    parts.extend(
+        _packaging_specific_repair_lines(
+            previous_result,
+            importable_support_modules=importable_support_modules,
+            verified_child_theorem_names=verified_child_theorem_names,
+        )
+    )
     return "\n\n".join(parts)
 
 
-def _packaging_specific_repair_lines(previous_result: VerificationResult) -> list[str]:
+def _packaging_specific_repair_lines(
+    previous_result: VerificationResult,
+    *,
+    importable_support_modules: list[str] | None = None,
+    verified_child_theorem_names: list[str] | None = None,
+) -> list[str]:
     text = "\n".join(
         part for part in (previous_result.stderr, previous_result.stdout) if part.strip()
     ).lower()
     if "object file" not in text and ".olean" not in text:
         return []
+    if importable_support_modules:
+        theorem_text = ", ".join(sorted(verified_child_theorem_names or []))
+        import_text = "\n".join(f"import {module}" for module in importable_support_modules)
+        lines = [
+            (
+                "This failure is about a missing imported module object file (.olean), not about the theorem "
+                "mathematics. Keep the modular promoted-parent structure and repair the imports instead of switching "
+                "back to local copied child stubs."
+            ),
+            (
+                "Do not use stale worker imports, guessed helper-module names, or bare worker aliases. Replace them "
+                "with the exact stable import modules below."
+            ),
+            f"Preferred stable imports:\n{import_text}",
+            (
+                "Delete any local declarations that duplicate those verified child theorems or introduce `_local`/"
+                "primed stand-ins for them."
+            ),
+            "Do not respond to this packaging failure by reintroducing local `:= by sorry` child stubs.",
+        ]
+        if theorem_text:
+            lines.append(f"Verified child theorem names to call directly: {theorem_text}")
+        return lines
     return [
         (
             "This failure is about a missing imported module object file (.olean), not about the theorem "
@@ -1421,6 +1491,8 @@ def _build_aristotle_faithfulness_feedback(
     *,
     previous_result: VerificationResult,
     repair_assessment: RepairAssessment | None = None,
+    importable_support_modules: list[str] | None = None,
+    verified_child_theorem_names: list[str] | None = None,
 ) -> str:
     parts = [
         "Faithfulness feedback from the previous Aristotle attempt:",
@@ -1436,6 +1508,13 @@ def _build_aristotle_faithfulness_feedback(
     ]
     parts.extend(_repair_policy_lines(repair_assessment))
     parts.extend(_faithfulness_repair_lines(repair_assessment))
+    parts.extend(
+        _packaging_specific_repair_lines(
+            previous_result,
+            importable_support_modules=importable_support_modules,
+            verified_child_theorem_names=verified_child_theorem_names,
+        )
+    )
     return "\n\n".join(parts)
 
 
@@ -1850,7 +1929,7 @@ def _promote_informal_parents_with_verified_children(
                     f"{_truncate_progress_summary(str(exc), max_length=180)}"
                 )
                 decision = None
-            if parent_promotion_cache is not None:
+            if parent_promotion_cache is not None and decision is not None:
                 with parent_promotion_cache.lock:
                     parent_promotion_cache.decisions[cache_key] = decision
         else:

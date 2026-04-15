@@ -578,16 +578,74 @@ class GeminiCLIBackend:
         fence_match = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", stripped, flags=re.DOTALL | re.IGNORECASE)
         if fence_match is not None:
             stripped = fence_match.group(1).strip()
+        decoded = GeminiCLIBackend._try_load_json_string(stripped)
+        if decoded is not None:
+            return decoded
+
+        fenced_payloads = re.findall(
+            r"```(?:json)?\s*(.*?)\s*```",
+            stripped,
+            flags=re.DOTALL | re.IGNORECASE,
+        )
+        for candidate in fenced_payloads:
+            decoded = GeminiCLIBackend._try_load_json_string(candidate.strip())
+            if decoded is not None:
+                return decoded
+
+        for candidate in GeminiCLIBackend._iter_json_object_candidates(stripped):
+            decoded = GeminiCLIBackend._try_load_json_string(candidate)
+            if decoded is not None:
+                return decoded
+        return None
+
+    @staticmethod
+    def _try_load_json_string(value: str) -> Any | None:
         try:
-            return json.loads(stripped)
+            return json.loads(value)
         except json.JSONDecodeError:
-            repaired = GeminiCLIBackend._escape_invalid_json_backslashes(stripped)
-            if repaired != stripped:
+            repaired = GeminiCLIBackend._escape_invalid_json_backslashes(value)
+            if repaired != value:
                 try:
                     return json.loads(repaired)
                 except json.JSONDecodeError:
                     return None
             return None
+
+    @staticmethod
+    def _iter_json_object_candidates(text: str) -> list[str]:
+        candidates: list[str] = []
+        start_index: int | None = None
+        depth = 0
+        in_string = False
+        escape = False
+        for index, char in enumerate(text):
+            if start_index is None:
+                if char == "{":
+                    start_index = index
+                    depth = 1
+                    in_string = False
+                    escape = False
+                continue
+
+            if in_string:
+                if escape:
+                    escape = False
+                elif char == "\\":
+                    escape = True
+                elif char == '"':
+                    in_string = False
+                continue
+
+            if char == '"':
+                in_string = True
+            elif char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    candidates.append(text[start_index : index + 1])
+                    start_index = None
+        return candidates
 
     @staticmethod
     def _escape_invalid_json_backslashes(text: str) -> str:

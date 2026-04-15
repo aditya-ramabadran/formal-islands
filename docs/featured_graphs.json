@@ -11,9 +11,9 @@
       "graph_json": "artifacts/manual-testing/run19-young-convolution-inequality-gemini-aristotle/03_formalized_graph.json"
     },
     {
-      "id": "two_point_log_sobolev",
-      "report_url": "reports/two_point_log_sobolev.html",
-      "graph_json": "artifacts/manual-testing/run11-two-point-log-sobolev-gemini-aristotle-6/03_formalized_graph.json"
+      "id": "banach_stone",
+      "report_url": "reports/banach_stone.html",
+      "graph_json": "artifacts/manual-testing/run24-banach-stone-gemini-aristotle-6/03_formalized_graph.json"
     },
     {
       "id": "colorful_caratheodory",

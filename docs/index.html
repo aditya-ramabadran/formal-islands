@@ -786,22 +786,22 @@ footer {
     </div>
 
     <div class="card">
-      <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/two_point_log_sobolev.html">
-        <div class="featured-graph-host" data-featured-graph-id="two_point_log_sobolev" aria-label="Proof graph for the two-point log-Sobolev inequality"></div>
+      <a class="card-thumb" target="_blank" rel="noopener noreferrer" href="reports/banach_stone.html">
+        <div class="featured-graph-host" data-featured-graph-id="banach_stone" aria-label="Proof graph for the Banach-Stone theorem"></div>
       </a>
       <div class="card-body">
-        <div class="card-title">Two-Point Log-Sobolev Inequality</div>
+        <div class="card-title">Banach-Stone Theorem</div>
         <div class="card-statement">
-          Entropy of a function on the two-point space {−1,1} is bounded by its
-          discrete gradient energy.
+          A surjective linear isometry between real-valued continuous-function
+          spaces on compact Hausdorff spaces is induced by a homeomorphism and a sign function.
         </div>
-        <span class="verified-badge">✓ 3 of 3 nodes formally verified</span>
+        <span class="verified-badge">✓ 4 of 4 nodes formally verified</span>
         <div class="card-desc">
-          The normalized one-variable inequality, the scalar inequality, and the
-          final root theorem are all formally verified in Lean in a clean
-          bottom-up proof graph.
+          A 4-node functional-analysis proof spine closes end to end, and the
+          final root theorem is assembled cleanly from imported verified child
+          modules rather than copied support code.
         </div>
-        <a class="card-link" target="_blank" href="reports/two_point_log_sobolev.html">View report →</a>
+        <a class="card-link" target="_blank" href="reports/banach_stone.html">View report →</a>
       </div>
     </div>
 
@@ -864,7 +864,7 @@ python3 -m venv .venv
   <p>Run the pipeline interactively on your own theorem:</p>
 <pre><code>formal-islands new --backends claude/aristotle</code></pre>
   <p>Or run against a featured example:</p>
-<pre><code>formal-islands run two_point_log_sobolev --backends claude/aristotle --max-attempts 4</code></pre>
+<pre><code>formal-islands run banach_stone --backends claude/aristotle --max-attempts 4</code></pre>
   <p>
     The output directory, workspace path, and most options are inferred automatically.
     See the <a href="https://github.com/aditya-ramabadran/formal-islands">README</a>

@@ -290,6 +290,44 @@ def test_gemini_backend_repairs_fenced_json_with_tex_backslashes() -> None:
     assert "\\le 0" in response.payload["remaining_proof_burden"]
 
 
+def test_gemini_backend_parses_first_json_object_from_duplicate_fenced_response() -> None:
+    backend = GeminiCLIBackend(model="gemini-2.5-flash")
+    request = StructuredBackendRequest(
+        prompt="Should the parent be promoted?",
+        system_prompt="Return JSON only.",
+        json_schema={"type": "object"},
+    )
+
+    completed = subprocess.CompletedProcess(
+        args=[],
+        returncode=0,
+        stdout=json.dumps(
+            {
+                "response": (
+                    "```json\n"
+                    '{\n  "promote_parent": true,\n  "recommended_priority": 1,\n'
+                    '  "reason": "First answer."\n}\n'
+                    "``````json\n"
+                    '{\n  "promote_parent": false,\n  "recommended_priority": null,\n'
+                    '  "reason": "Second answer."\n}\n'
+                    "```"
+                ),
+                "stats": {"output_tokens": 20},
+                "error": None,
+            }
+        ),
+        stderr="",
+    )
+
+    with patch("shutil.which", return_value="/usr/bin/gemini"), patch(
+        "subprocess.run", return_value=completed
+    ):
+        response = backend.run_structured(request)
+
+    assert response.payload["promote_parent"] is True
+    assert response.payload["reason"] == "First answer."
+
+
 def test_gemini_backend_defaults_to_360_second_timeout() -> None:
     backend = GeminiCLIBackend()
 

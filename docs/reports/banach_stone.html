@@ -1,0 +1,2567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Banach-Stone Theorem - Formal Islands Report</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f4ec;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --muted: #6a625d;
+      --border: #d8cfc2;
+      --accent: #8c4f2b;
+      --accent-soft: #f5e8d6;
+      --highlight: #d97c2b;
+      --highlight-soft: #fff1df;
+      --preview-soft: #fff5e8;
+      --checked: #2f8f5b;
+      --checked-soft: #e6f5eb;
+      --edge: #b3aa9f;
+      --status-informal-stroke: #8c4f2b;
+      --status-informal-fill: #fffaf1;
+      --status-candidate-stroke: #d97c2b;
+      --status-candidate-fill: #fff0da;
+      --status-verified-stroke: #2f8f5b;
+      --status-verified-fill: #e6f5eb;
+      --status-failed-stroke: #b45746;
+      --status-failed-fill: #f9e6e1;
+      --graph-shell-top: rgba(255, 251, 242, 0.96);
+      --graph-shell-bottom: rgba(245, 238, 227, 0.96);
+      --checklist-panel: rgba(255, 250, 241, 0.95);
+      --target-panel: #fff8ee;
+      --code-surface: #f4efe6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161311;
+        --panel: #211b17;
+        --ink: #f3ede5;
+        --muted: #c0b2a3;
+        --border: #4a3d32;
+        --accent: #f0b47b;
+        --accent-soft: #3a2b20;
+        --highlight: #ffb25c;
+        --highlight-soft: #3f2d19;
+        --preview-soft: #312419;
+        --checked: #65c08a;
+        --checked-soft: #213126;
+        --edge: #8f8172;
+        --status-informal-stroke: #d69760;
+        --status-informal-fill: #2e221a;
+        --status-candidate-stroke: #f0a64e;
+        --status-candidate-fill: #3f2d18;
+        --status-verified-stroke: #65c08a;
+        --status-verified-fill: #213126;
+        --status-failed-stroke: #dd8a79;
+        --status-failed-fill: #3b2320;
+        --graph-shell-top: rgba(44, 34, 27, 0.98);
+        --graph-shell-bottom: rgba(32, 25, 21, 0.98);
+        --checklist-panel: rgba(36, 29, 24, 0.98);
+        --target-panel: #31261f;
+        --code-surface: #2a231e;
+      }
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background: radial-gradient(circle at top, #fff8e7, var(--bg));
+      color: var(--ink);
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(circle at top, #2a211b, var(--bg));
+      }
+    }
+    .fi-attribution {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+    .fi-attribution a {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .fi-attribution a:hover {
+      text-decoration: underline;
+    }
+    main.report-root {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    section, article {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem 1.15rem;
+      margin-top: 1rem;
+      box-shadow: 0 12px 30px rgba(60, 40, 20, 0.06);
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+    .meta {
+      color: var(--muted);
+    }
+    .math-text {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .math-text mjx-container {
+      max-width: 100%;
+    }
+    .math-text mjx-container[display="true"] {
+      margin: 0.45rem 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .math-text mjx-container[jax="CHTML"][display="true"] {
+      padding: 0 !important;
+    }
+    .pill {
+      display: inline-block;
+      margin-right: 0.45rem;
+      margin-bottom: 0.45rem;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.88rem;
+    }
+    .graph-shell {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--graph-shell-top), var(--graph-shell-bottom));
+      padding: 0.5rem 0.75rem;
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+    .graph-frame {
+      width: min(100%, 720px);
+      margin: 0 auto;
+    }
+    .graph-widget {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 240px;
+      overflow: visible;
+    }
+    .graph-edge {
+      stroke: var(--edge);
+      stroke-width: 2.8;
+      fill: none;
+      transition: stroke 140ms ease, stroke-width 140ms ease;
+    }
+    .graph-edge.edge-refinement {
+      stroke-dasharray: 7 5;
+      opacity: 0.66;
+    }
+    .graph-node-link {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .graph-node-link.graph-node-dimmed {
+      opacity: 0.22;
+    }
+    .graph-node-box {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-width: 2.25;
+      transition: fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease, filter 140ms ease;
+      filter: drop-shadow(0 6px 14px rgba(73, 48, 24, 0.08));
+    }
+    .graph-node-box.status-informal {
+      fill: var(--status-informal-fill);
+      stroke: var(--status-informal-stroke);
+      stroke-dasharray: 5 4;
+    }
+    .graph-node-box.status-candidate-formal {
+      fill: var(--status-candidate-fill);
+      stroke: var(--status-candidate-stroke);
+      stroke-dasharray: 8 4;
+    }
+    .graph-node-box.status-formal-verified {
+      fill: var(--status-verified-fill);
+      stroke: var(--status-verified-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-box.status-formal-failed {
+      fill: var(--status-failed-fill);
+      stroke: var(--status-failed-stroke);
+      stroke-dasharray: none;
+    }
+    .graph-node-fo-title {
+      font-size: 9px;
+      font-weight: 700;
+      text-align: center;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.3;
+    }
+    .graph-node-id {
+      fill: var(--muted);
+      font-size: 9.5px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+    .graph-node-badge {
+      stroke: rgba(31, 26, 23, 0.18);
+      stroke-width: 1.2;
+      pointer-events: none;
+    }
+    .graph-node-badge.status-informal {
+      fill: var(--status-informal-stroke);
+    }
+    .graph-node-badge.status-candidate-formal {
+      fill: var(--status-candidate-stroke);
+    }
+    .graph-node-badge.status-formal-verified {
+      fill: var(--status-verified-stroke);
+    }
+    .graph-node-badge.status-formal-failed {
+      fill: var(--status-failed-stroke);
+    }
+    .graph-caption {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .graph-history-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.65rem;
+    }
+    .graph-history-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+    .graph-history-button {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 10px;
+      min-width: 2.4rem;
+      padding: 0.36rem 0.7rem;
+      font: inherit;
+      cursor: pointer;
+      transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+    }
+    .graph-history-button:hover:not(:disabled) {
+      border-color: var(--highlight);
+      background: var(--highlight-soft);
+    }
+    .graph-history-button:disabled {
+      opacity: 0.42;
+      cursor: default;
+    }
+    .graph-history-status {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .graph-history-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .graph-history-caption {
+      margin-top: 0;
+      margin-bottom: 0.65rem;
+      color: var(--ink);
+      font-size: 0.96rem;
+      line-height: 1.45;
+    }
+    .graph-history-meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+    .graph-history-frame[hidden] {
+      display: none;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .checklist-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--checklist-panel);
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+    .checklist-label {
+      display: grid;
+      grid-template-columns: 1.35rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+    }
+    .checklist-label input {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.1rem;
+      accent-color: var(--checked);
+    }
+    .checklist-kind {
+      display: inline-block;
+      margin-bottom: 0.24rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .checklist-nodes {
+      margin-top: 0.45rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .checklist-item,
+    .checklist-label > span,
+    .nodes-grid,
+    .node-card {
+      min-width: 0;
+    }
+    .node-jump {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+    }
+    .nodes-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .node-navigation {
+      display: grid;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .node-search {
+      display: grid;
+      gap: 0.35rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .node-search input {
+      width: min(100%, 28rem);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem 0.75rem;
+      font: inherit;
+      color: var(--ink);
+      background: var(--panel);
+    }
+    .node-filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      align-items: center;
+    }
+    .node-filter-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.32rem 0.65rem;
+      font-size: 0.9rem;
+      background: var(--panel);
+      color: var(--ink);
+    }
+    .node-filter-reset {
+      min-width: auto;
+    }
+    .node-card {
+      scroll-margin-top: 1rem;
+      transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+    .node-card:target {
+      border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+      background: var(--target-panel);
+    }
+    pre {
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 0.75rem;
+      background: var(--code-surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin: 0.6rem 0;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+    }
+    code.inline-code {
+      background: var(--code-surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.95em;
+      white-space: break-spaces;
+    }
+    .statement-code {
+      margin-top: 0.35rem;
+    }
+    .statement-code pre,
+    .checklist-code pre {
+      margin-top: 0.35rem;
+      background: var(--code-surface);
+    }
+    .lean-code {
+      color: #2a241f;
+    }
+    .lean-code .tok-keyword {
+      color: #8b2f18;
+      font-weight: 700;
+    }
+    .lean-code .tok-tactic {
+      color: #9d5d17;
+      font-weight: 600;
+    }
+    .lean-code .tok-type {
+      color: #245f7a;
+    }
+    .lean-code .tok-number {
+      color: #7442a8;
+    }
+    .lean-code .tok-comment {
+      color: #6e7a60;
+      font-style: italic;
+    }
+    .lean-code .tok-string {
+      color: #2d7f4d;
+    }
+    @media (prefers-color-scheme: dark) {
+      .lean-code {
+        color: #f2e8dc;
+      }
+      .lean-code .tok-keyword {
+        color: #f08f63;
+      }
+      .lean-code .tok-tactic {
+        color: #f4b35d;
+      }
+      .lean-code .tok-type {
+        color: #73c7ff;
+      }
+      .lean-code .tok-number {
+        color: #be8cff;
+      }
+      .lean-code .tok-comment {
+        color: #97b18b;
+      }
+      .lean-code .tok-string {
+        color: #67d59a;
+      }
+    }
+    
+            .report-root:has(a.node-isometry_representation:hover) a.node-isometry_representation .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(#node-isometry_representation:target).report-root .node-isometry_representation.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-continuity_of_representation:hover) a.node-continuity_of_representation .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(#node-continuity_of_representation:target).report-root .node-continuity_of_representation.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-inverse_of_representation:hover) a.node-inverse_of_representation .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(#node-inverse_of_representation:target).report-root .node-inverse_of_representation.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+            .report-root:has(a.node-banach_stone_root:hover) a.node-banach_stone_root .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(#node-banach_stone_root:target).report-root .node-banach_stone_root.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-isometry_representation:hover) a.node-isometry_representation .graph-node-box,
+.report-root:has(.obligation-semantic-match-isometry_representation:hover) .node-isometry_representation.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-isometry_representation:checked) a.node-isometry_representation .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-isometry_representation:checked) .node-isometry_representation.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-isometry_representation:checked) .edge-banach_stone_root-isometry_representation {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-isometry_representation:hover) .obligation-semantic-match-isometry_representation {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-isometry_representation:checked) .obligation-semantic-match-isometry_representation {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-continuity_of_representation:hover) a.node-continuity_of_representation .graph-node-box,
+.report-root:has(.obligation-semantic-match-continuity_of_representation:hover) .node-continuity_of_representation.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-continuity_of_representation:checked) a.node-continuity_of_representation .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-continuity_of_representation:checked) .node-continuity_of_representation.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-continuity_of_representation:checked) .edge-banach_stone_root-continuity_of_representation {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-continuity_of_representation:hover) .obligation-semantic-match-continuity_of_representation {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-continuity_of_representation:checked) .obligation-semantic-match-continuity_of_representation {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-inverse_of_representation:hover) a.node-inverse_of_representation .graph-node-box,
+.report-root:has(.obligation-semantic-match-inverse_of_representation:hover) .node-inverse_of_representation.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-inverse_of_representation:checked) a.node-inverse_of_representation .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-inverse_of_representation:checked) .node-inverse_of_representation.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-inverse_of_representation:checked) .edge-banach_stone_root-inverse_of_representation {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-inverse_of_representation:hover) .obligation-semantic-match-inverse_of_representation {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-inverse_of_representation:checked) .obligation-semantic-match-inverse_of_representation {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-semantic-match-banach_stone_root:hover) a.node-banach_stone_root .graph-node-box,
+.report-root:has(.obligation-semantic-match-banach_stone_root:hover) .node-banach_stone_root.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-banach_stone_root:checked) a.node-banach_stone_root .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-banach_stone_root:checked) .node-banach_stone_root.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-banach_stone_root:checked) .edge-banach_stone_root-continuity_of_representation,
+.report-root:has(#obligation-check-semantic-match-banach_stone_root:checked) .edge-banach_stone_root-inverse_of_representation,
+.report-root:has(#obligation-check-semantic-match-banach_stone_root:checked) .edge-banach_stone_root-isometry_representation {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-banach_stone_root:hover) .obligation-semantic-match-banach_stone_root {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-banach_stone_root:checked) .obligation-semantic-match-banach_stone_root {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+    @media (max-width: 720px) {
+      main.report-root {
+        padding-inline: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="fi-attribution">Created by <a href="https://aditya-ramabadran.github.io/formal-islands/" target="_blank">Formal Islands</a> &bull; <a href="https://github.com/aditya-ramabadran/formal-islands" target="_blank">GitHub</a></div>
+  <main class="report-root">
+    <section>
+      <h1>Banach-Stone Theorem</h1>
+      <div class="math-text">Banach-Stone Theorem for real-valued continuous functions.
+
+Let \(X\) and \(Y\) be compact Hausdorff spaces. Suppose
+\[
+T : C(X,\mathbb{R}) \to C(Y,\mathbb{R})
+\]
+is a surjective linear isometry, where both spaces are equipped with the supremum norm. Then there exist:
+- a homeomorphism \(\tau : Y \to X\), and
+- a continuous function \(h : Y \to \{-1,1\}\),
+
+such that for every \(f \in C(X,\mathbb{R})\) and every \(y \in Y\),
+\[
+(Tf)(y) = h(y)\, f(\tau(y)).
+\]
+In particular, \(X\) and \(Y\) are homeomorphic.</div>
+      <p class="meta">Root node: banach_stone_root</p>
+    </section>
+    <section>
+      <h2>Graph Summary</h2>
+      <p>
+        <span class="pill">Nodes: 4</span>
+        <span class="pill">Edges: 3</span>
+        <span class="pill">Informal: 0</span>
+        <span class="pill">Candidates: 0</span>
+        <span class="pill">Verified: 4</span>
+        <span class="pill">Failed: 0</span>
+      </p>
+      <div class="graph-shell">
+        
+    <div class="graph-history" data-graph-history data-history-default-collection="visual">
+      <div class="graph-history-controls">
+        <div class="graph-history-buttons">
+          <button type="button" class="graph-history-button" data-history-action="start" aria-label="Go to first graph snapshot" title="Go to first graph snapshot">⏮</button>
+          <button type="button" class="graph-history-button" data-history-action="prev" aria-label="Go to previous graph snapshot" title="Go to previous graph snapshot">◀</button>
+          <button type="button" class="graph-history-button" data-history-action="next" aria-label="Go to next graph snapshot" title="Go to next graph snapshot">▶</button>
+          <button type="button" class="graph-history-button" data-history-action="end" aria-label="Go to latest graph snapshot" title="Go to latest graph snapshot">⏭</button>
+        </div>
+        
+        <label class="graph-history-toggle">
+          <input type="checkbox" data-history-show-all />
+          Show all history
+        </label>
+        
+        <div class="graph-history-status">
+          Snapshot <span data-history-index>7</span> of <span data-history-count>7</span>
+        </div>
+      </div>
+      <p class="graph-history-caption" data-history-caption>Node <code class="inline-code">banach_stone_root</code> was successfully formalized, status upgraded from <code class="inline-code">candidate_formal</code> to <code class="inline-code">formal_verified</code>.</p>
+      <p class="graph-history-meta" data-history-meta>03_formalized_graph.json (banach_stone_root) · 2026-04-14T16:52:21-07:00</p>
+      
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Initial extracted proof graph." data-label="01_extracted_graph.json" data-timestamp="2026-04-14T10:02:54-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-0" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-visual-0)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-visual-0)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-visual-0)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-informal" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="informal" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-informal" x="360.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-informal" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="informal" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-informal" x="24.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-informal" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="informal" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-informal" x="192.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-informal" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="informal" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-informal" x="192.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Candidate selection marked &lt;code class=&quot;inline-code&quot;&gt;continuity_of_representation&lt;/code&gt;, &lt;code class=&quot;inline-code&quot;&gt;inverse_of_representation&lt;/code&gt; for formalization." data-label="02_candidate_graph.json" data-timestamp="2026-04-14T10:02:54-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-1" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-visual-1)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-visual-1)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-visual-1)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-informal" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="informal" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-informal" x="360.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-candidate-formal" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="candidate_formal" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-candidate-formal" x="24.0" y="138" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-candidate-formal" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="candidate_formal" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-candidate-formal" x="192.0" y="138" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-informal" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="informal" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-informal" x="192.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;continuity_of_representation&lt;/code&gt; was successfully formalized, status upgraded from &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;formal_verified&lt;/code&gt;." data-label="03_formalized_graph.json (continuity_of_representation)" data-timestamp="2026-04-14T11:39:09-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-2" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-visual-2)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-visual-2)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-visual-2)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-informal" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="informal" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-informal" x="360.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-formal-verified" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-candidate-formal" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="candidate_formal" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-candidate-formal" x="192.0" y="138" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-informal" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="informal" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-informal" x="192.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;inverse_of_representation&lt;/code&gt; was successfully formalized, status upgraded from &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;formal_verified&lt;/code&gt;." data-label="03_formalized_graph.json (inverse_of_representation)" data-timestamp="2026-04-14T11:39:09-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-3" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-visual-3)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-visual-3)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-visual-3)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-informal" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="informal" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-informal" x="360.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-formal-verified" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-formal-verified" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-informal" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="informal" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-informal" x="192.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;isometry_representation&lt;/code&gt; was promoted from &lt;code class=&quot;inline-code&quot;&gt;informal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; at priority &lt;code class=&quot;inline-code&quot;&gt;1&lt;/code&gt; as the last remaining blocker to a broader parent/root theorem." data-label="blocker promotion (isometry_representation)" data-timestamp="2026-04-14T11:39:24-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-4" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-visual-4)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-visual-4)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-visual-4)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-candidate-formal" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="candidate_formal" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-candidate-formal" x="360.0" y="138" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-formal-verified" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-formal-verified" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-informal" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="informal" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-informal" x="192.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;banach_stone_root&lt;/code&gt; was promoted from &lt;code class=&quot;inline-code&quot;&gt;informal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; at priority &lt;code class=&quot;inline-code&quot;&gt;1&lt;/code&gt; after its direct children were verified." data-label="parent promotion (banach_stone_root)" data-timestamp="2026-04-14T16:20:27-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-5" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-visual-5)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-visual-5)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-visual-5)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-formal-verified" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="formal_verified" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-formal-verified" x="360.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-formal-verified" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-formal-verified" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-candidate-formal" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="candidate_formal" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-candidate-formal" x="192.0" y="20" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;banach_stone_root&lt;/code&gt; was successfully formalized, status upgraded from &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;formal_verified&lt;/code&gt;." data-label="03_formalized_graph.json (banach_stone_root)" data-timestamp="2026-04-14T16:52:21-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-7" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-visual-7)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-visual-7)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-visual-7)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-formal-verified" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="formal_verified" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-formal-verified" x="360.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-formal-verified" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-formal-verified" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-formal-verified" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="formal_verified" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="20" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="all" data-caption-html="Initial extracted proof graph." data-label="01_extracted_graph.json" data-timestamp="2026-04-14T10:02:54-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-all-0" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-all-0)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-all-0)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-all-0)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-informal" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="informal" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-informal" x="360.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-informal" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="informal" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-informal" x="24.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-informal" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="informal" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-informal" x="192.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-informal" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="informal" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-informal" x="192.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="all" data-caption-html="Candidate selection marked &lt;code class=&quot;inline-code&quot;&gt;continuity_of_representation&lt;/code&gt;, &lt;code class=&quot;inline-code&quot;&gt;inverse_of_representation&lt;/code&gt; for formalization." data-label="02_candidate_graph.json" data-timestamp="2026-04-14T10:02:54-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-all-1" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-all-1)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-all-1)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-all-1)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-informal" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="informal" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-informal" x="360.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-candidate-formal" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="candidate_formal" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-candidate-formal" x="24.0" y="138" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-candidate-formal" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="candidate_formal" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-candidate-formal" x="192.0" y="138" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-informal" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="informal" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-informal" x="192.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="all" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;continuity_of_representation&lt;/code&gt; was successfully formalized, status upgraded from &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;formal_verified&lt;/code&gt;." data-label="03_formalized_graph.json (continuity_of_representation)" data-timestamp="2026-04-14T11:39:09-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-all-2" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-all-2)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-all-2)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-all-2)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-informal" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="informal" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-informal" x="360.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-formal-verified" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-candidate-formal" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="candidate_formal" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-candidate-formal" x="192.0" y="138" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-informal" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="informal" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-informal" x="192.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="all" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;inverse_of_representation&lt;/code&gt; was successfully formalized, status upgraded from &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;formal_verified&lt;/code&gt;." data-label="03_formalized_graph.json (inverse_of_representation)" data-timestamp="2026-04-14T11:39:09-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-all-3" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-all-3)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-all-3)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-all-3)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-informal" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="informal" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-informal" x="360.0" y="138" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-formal-verified" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-formal-verified" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-informal" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="informal" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-informal" x="192.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="all" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;isometry_representation&lt;/code&gt; was promoted from &lt;code class=&quot;inline-code&quot;&gt;informal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; at priority &lt;code class=&quot;inline-code&quot;&gt;1&lt;/code&gt; as the last remaining blocker to a broader parent/root theorem." data-label="blocker promotion (isometry_representation)" data-timestamp="2026-04-14T11:39:24-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-all-4" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-all-4)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-all-4)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-all-4)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-candidate-formal" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="candidate_formal" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-candidate-formal" x="360.0" y="138" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-formal-verified" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-formal-verified" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-informal" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="informal" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-informal" x="192.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="all" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;banach_stone_root&lt;/code&gt; was promoted from &lt;code class=&quot;inline-code&quot;&gt;informal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; at priority &lt;code class=&quot;inline-code&quot;&gt;1&lt;/code&gt; after its direct children were verified." data-label="parent promotion (banach_stone_root)" data-timestamp="2026-04-14T16:20:27-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-all-5" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-all-5)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-all-5)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-all-5)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-formal-verified" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="formal_verified" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-formal-verified" x="360.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-formal-verified" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-formal-verified" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-candidate-formal" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="candidate_formal" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-candidate-formal" x="192.0" y="20" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="all" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;isometry_representation&lt;/code&gt; was successfully formalized, status upgraded from &lt;code class=&quot;inline-code&quot;&gt;informal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;formal_verified&lt;/code&gt;." data-label="03_formalized_graph.json (isometry_representation)" data-timestamp="2026-04-14T16:20:27-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-all-6" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-all-6)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-all-6)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-all-6)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-formal-verified" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="formal_verified" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-formal-verified" x="360.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-formal-verified" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-formal-verified" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-candidate-formal" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="candidate_formal" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-candidate-formal" x="192.0" y="20" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="all" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;banach_stone_root&lt;/code&gt; was successfully formalized, status upgraded from &lt;code class=&quot;inline-code&quot;&gt;candidate_formal&lt;/code&gt; to &lt;code class=&quot;inline-code&quot;&gt;formal_verified&lt;/code&gt;." data-label="03_formalized_graph.json (banach_stone_root)" data-timestamp="2026-04-14T16:52:21-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 224" width="516" height="224" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-all-7" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-banach_stone_root-isometry_representation" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-all-7)"></path>
+<path class="graph-edge edge-banach_stone_root-continuity_of_representation" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-all-7)"></path>
+<path class="graph-edge edge-banach_stone_root-inverse_of_representation" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-all-7)"></path></g>
+        <g>
+    <a class="graph-node-link node-isometry_representation status-formal-verified" href="#node-isometry_representation" data-graph-node-id="isometry_representation" data-graph-node-status="formal_verified" data-graph-node-title="Pointwise Representation of Isometries">
+      <rect class="graph-node-box status-formal-verified" x="360.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Representation of Isometries</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">isometry_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-continuity_of_representation status-formal-verified" href="#node-continuity_of_representation" data-graph-node-id="continuity_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Continuity of the Representation Maps">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Continuity of the Representation Maps</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">continuity_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-inverse_of_representation status-formal-verified" href="#node-inverse_of_representation" data-graph-node-id="inverse_of_representation" data-graph-node-status="formal_verified" data-graph-node-title="Bijectivity from Inverse Representation">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Bijectivity from Inverse Representation</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">inverse_of_representation</text>
+    </a>
+    
+
+    <a class="graph-node-link node-banach_stone_root status-formal-verified" href="#node-banach_stone_root" data-graph-node-id="banach_stone_root" data-graph-node-status="formal_verified" data-graph-node-title="Banach-Stone Theorem">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="20" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Banach-Stone Theorem</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">banach_stone_root</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+    </div>
+    
+      </div>
+      <p class="graph-caption">
+        Use the timeline controls to step through how the proof graph changed over the run. The latest graph is shown by default.
+      </p>
+      <p class="graph-caption">
+        Informal nodes use dashed brown outlines. Candidate formal nodes use dashed gold outlines, verified formal nodes use green, and failed formal nodes use red.
+      </p>
+      <p class="graph-caption">
+        All arrows point from a claim to one of its dependencies.
+      </p>
+      <p class="graph-caption">
+        Dashed gray arrows mark refinement edges: they are still dependency edges, but they indicate that a narrower claim was carved out from a broader proof step.
+      </p>
+      
+    </section>
+    <section>
+      <h2>Review Checklist</h2>
+      <p class="graph-caption">The following are sufficient items for a human to check to verify correctness of the proof. Hovering or checking review items highlights related nodes and edges.</p>
+      <ul class="checklist">
+        
+    <li class="checklist-item obligation-semantic-match-isometry_representation" data-obligation-id="semantic-match-isometry_representation">
+      <label class="checklist-label" for="obligation-check-semantic-match-isometry_representation">
+        <input id="obligation-check-semantic-match-isometry_representation" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;isometry_representation&#x27; (Pointwise Representation of Isometries) matches the verified Lean theorem for this node.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> isometry_representation_aristotle
+    (T : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>)) :
+    ∃ (tau : Y → X) (h : Y → <span class="tok-type">ℝ</span>),
+      (∀ y, h y = <span class="tok-number">1</span> ∨ h y = -<span class="tok-number">1</span>) ∧
+      (∀ (f : C(X, <span class="tok-type">ℝ</span>)) (y : Y), T f y = h y * f (tau y))</code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-isometry_representation">isometry_representation</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-continuity_of_representation" data-obligation-id="semantic-match-continuity_of_representation">
+      <label class="checklist-label" for="obligation-check-semantic-match-continuity_of_representation">
+        <input id="obligation-check-semantic-match-continuity_of_representation" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;continuity_of_representation&#x27; (Continuity of the Representation Maps) matches the verified Lean theorem for this node.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> continuity_of_representation_aristotle
+    {X Y : <span class="tok-type">Type</span>*} [TopologicalSpace X] [TopologicalSpace Y]
+    [CompactSpace X] [T2Space X]
+    [CompactSpace Y] [T2Space Y]
+    (T : C(X, <span class="tok-type">ℝ</span>) → C(Y, <span class="tok-type">ℝ</span>))
+    (tau : Y → X) (h : Y → <span class="tok-type">ℝ</span>)
+    (h_val : ∀ y, h y = <span class="tok-number">1</span> ∨ h y = -<span class="tok-number">1</span>)
+    (h_rep : ∀ (f : C(X, <span class="tok-type">ℝ</span>)) (y : Y), T f y = h y * f (tau y)) :
+    Continuous h ∧ Continuous tau</code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-continuity_of_representation">continuity_of_representation</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-inverse_of_representation" data-obligation-id="semantic-match-inverse_of_representation">
+      <label class="checklist-label" for="obligation-check-semantic-match-inverse_of_representation">
+        <input id="obligation-check-semantic-match-inverse_of_representation" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;inverse_of_representation&#x27; (Bijectivity from Inverse Representation) matches the verified Lean theorem for this node.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> inverse_of_representation_aristotle
+    {X Y : <span class="tok-type">Type</span>*} [TopologicalSpace X] [CompactSpace X] [T2Space X]
+    [TopologicalSpace Y] [CompactSpace Y] [T2Space Y]
+    (T : C(X, <span class="tok-type">ℝ</span>) → C(Y, <span class="tok-type">ℝ</span>)) (S : C(Y, <span class="tok-type">ℝ</span>) → C(X, <span class="tok-type">ℝ</span>))
+    (hTS : ∀ f, S (T f) = f) (hST : ∀ g, T (S g) = g)
+    (tau : Y → X) (sigma : X → Y)
+    (h : Y → <span class="tok-type">ℝ</span>) (k : X → <span class="tok-type">ℝ</span>)
+    (hh : ∀ y, h y = -<span class="tok-number">1</span> ∨ h y = <span class="tok-number">1</span>)
+    (hk : ∀ x, k x = -<span class="tok-number">1</span> ∨ k x = <span class="tok-number">1</span>)
+    (hT : ∀ (f : C(X, <span class="tok-type">ℝ</span>)) (y : Y), T f y = h y * f (tau y))
+    (hS : ∀ (g : C(Y, <span class="tok-type">ℝ</span>)) (x : X), S g x = k x * g (sigma x)) :
+    (∀ x, tau (sigma x) = x) ∧ (∀ y, sigma (tau y) = y)</code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-inverse_of_representation">inverse_of_representation</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-semantic-match-banach_stone_root" data-obligation-id="semantic-match-banach_stone_root">
+      <label class="checklist-label" for="obligation-check-semantic-match-banach_stone_root">
+        <input id="obligation-check-semantic-match-banach_stone_root" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;banach_stone_root&#x27; (Banach-Stone Theorem) matches the verified Lean theorem for this node.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> banach_stone_root_aristotle
+    {X : <span class="tok-type">Type</span>*} [TopologicalSpace X] [CompactSpace X] [T2Space X]
+    {Y : <span class="tok-type">Type</span>*} [TopologicalSpace Y] [CompactSpace Y] [T2Space Y]
+    (T : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>)) :
+    ∃ (tau : Y ≃ₜ X) (h : C(Y, <span class="tok-type">ℝ</span>)),
+      (∀ y, h y = <span class="tok-number">1</span> ∨ h y = -<span class="tok-number">1</span>) ∧
+      (∀ (f : C(X, <span class="tok-type">ℝ</span>)) (y : Y), T f y = h y * f (tau y))</code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-banach_stone_root">banach_stone_root</a></div>
+        </span>
+      </label>
+    </li>
+    
+      </ul>
+    </section>
+    <section>
+      <h2>Nodes</h2>
+      <div class="node-navigation">
+        <label class="node-search">
+          <span>Filter nodes</span>
+          <input type="search" placeholder="Search by node id or title" data-node-search />
+        </label>
+        <div class="node-filter-pills">
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="informal" checked /> Informal</label>
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="candidate_formal" checked /> Candidate</label>
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="formal_verified" checked /> Verified</label>
+          <label class="node-filter-pill"><input type="checkbox" data-node-filter-status="formal_failed" checked /> Failed</label>
+          <button type="button" class="graph-history-button node-filter-reset" data-node-filter-reset>Reset</button>
+        </div>
+      </div>
+      <div class="nodes-grid" data-node-grid>
+        
+    <article class="node-card node-isometry_representation" id="node-isometry_representation" data-node-id="isometry_representation" data-node-title="Pointwise Representation of Isometries" data-node-status="formal_verified">
+      <h3>Pointwise Representation of Isometries</h3>
+      <p class="meta">Node id: isometry_representation | Status: formal_verified</p>
+      <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-banach_stone_root">banach_stone_root</a></p>
+      
+      <p class="meta">Formalization priority: 1. Rationale: Promoted as the last remaining blocker to parent/root closure; This node is the last remaining unverified dependency for the Banach-Stone Theorem root node. With the continuity and bijectivity components already verified, formalizing this…</p>
+      <p class="meta">Most recent formalization episode: verified the full parent node after 2 Lean verification attempts. Most recent formalization attempt verified the full parent node.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let $X$ and $Y$ be compact Hausdorff spaces. If $T : C(X,\mathbb{R}) \to C(Y,\mathbb{R})$ is a surjective linear isometry, then there exist a map $\tau : Y \to X$ and a function $h : Y \to \{-1,1\}$ such that $(Tf)(y) = h(y) f(\tau(y))$ for all $f \in C(X,\mathbb{R})$ and $y \in Y$.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Let $T^* : C(Y,\mathbb{R})^* \to C(X,\mathbb{R})^*$ be the adjoint map, defined by $(T^*\mu)(f) = \mu(Tf)$. Since $T$ is a surjective linear isometry, $T^*$ is an isometric isomorphism between the dual spaces and maps the extreme points of the closed unit ball of $C(Y,\mathbb{R})^*$ bijectively onto the extreme points of the closed unit ball of $C(X,\mathbb{R})^*$. By the Riesz representation theorem, the dual space is identified with regular Borel measures, and the extreme points of the dual unit ball of $C(X,\mathbb{R})$ are exactly the evaluation functionals $\pm \delta_x$ for $x \in X$, and similarly for $Y$. Thus, for each $y \in Y$, the functional $\delta_y$ is an extreme point, so $T^* \delta_y = h(y) \delta_{\tau(y)}$ for some unique point $\tau(y) \in X$ and sign $h(y) \in \{-1,1\}$. Evaluating this identity at a function $f \in C(X,\mathbb{R})$ gives $(Tf)(y) = \delta_y(Tf) = (T^*\delta_y)(f) = h(y) f(\tau(y))$.</div>
+      
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> isometry_representation_aristotle</p>
+        <p><strong>Coverage:</strong> full match</p><p class="meta">The Lean theorem exactly formalizes the target node&#x27;s statement. It represents the surjective linear isometry as a linear isometric equivalence and asserts the existence of the maps tau and h with the specified pointwise evaluation property and image in {-1, 1}.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> isometry_representation_aristotle
+    (T : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>)) :
+    ∃ (tau : Y → X) (h : Y → <span class="tok-type">ℝ</span>),
+      (∀ y, h y = <span class="tok-number">1</span> ∨ h y = -<span class="tok-number">1</span>) ∧
+      (∀ (f : C(X, <span class="tok-type">ℝ</span>)) (y : Y), T f y = h y * f (tau y))</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean lean_project/FormalIslands/Generated/isometry_representation_worker_20260414-113924_804eaa56.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+<span class="tok-keyword">open</span> ContinuousMap Set
+
+noncomputable <span class="tok-keyword">section</span>
+
+<span class="tok-keyword">variable</span> {X Y : <span class="tok-type">Type</span>*} [TopologicalSpace X] [TopologicalSpace Y]
+  [CompactSpace X] [T2Space X]
+  [CompactSpace Y] [T2Space Y]
+
+/-! ## Extreme points of the unit ball of C(X,<span class="tok-type">ℝ</span>) <span class="tok-tactic">have</span> |f(x)| = <span class="tok-number">1</span> -/
+
+<span class="tok-keyword">lemma</span> extremePoint_abs_eq_one_aux [Nonempty X] {f : C(X, <span class="tok-type">ℝ</span>)}
+    (hf : f ∈ extremePoints <span class="tok-type">ℝ</span> (Metric.closedBall (<span class="tok-number">0</span> : C(X, <span class="tok-type">ℝ</span>)) <span class="tok-number">1</span>)) (x : X) :
+    |f x| = <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+  contrapose! hf <span class="tok-keyword">with</span> h;
+  <span class="tok-tactic">rw</span> [ extremePoints ];
+  <span class="tok-tactic">simp</span> +zetaDelta at *;
+  <span class="tok-tactic">refine</span>&#x27; <span class="tok-keyword">fun</span> h&#x27; =&gt; ⟨ f + ContinuousMap.mk ( <span class="tok-keyword">fun</span> y =&gt; Max.max ( <span class="tok-number">1</span> - |f y| ) <span class="tok-number">0</span> ), _, f - ContinuousMap.mk ( <span class="tok-keyword">fun</span> y =&gt; Max.max ( <span class="tok-number">1</span> - |f y| ) <span class="tok-number">0</span> ), _, _ ⟩;
+  · <span class="tok-tactic">rw</span> [ ContinuousMap.norm_le ] at * &lt;;&gt; <span class="tok-tactic">norm_num</span> at *;
+    grind +splitImp;
+  · <span class="tok-tactic">rw</span> [ ContinuousMap.norm_le ] at *;
+    · simp_all +decide [ abs_le ];
+      <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> x =&gt; ⟨ <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> abs_cases ( f x ) &lt;;&gt; <span class="tok-tactic">linarith</span> [ h&#x27; x ], <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> abs_cases ( f x ) &lt;;&gt; <span class="tok-tactic">linarith</span> [ h&#x27; x ] ⟩;
+    · <span class="tok-tactic">norm_num</span>;
+    · <span class="tok-tactic">norm_num</span>;
+  · <span class="tok-tactic">refine</span>&#x27; ⟨ _, _ ⟩;
+    · <span class="tok-tactic">refine</span>&#x27; ⟨ <span class="tok-number">1</span> / <span class="tok-number">2</span>, <span class="tok-number">1</span> / <span class="tok-number">2</span>, _, _, _ ⟩ &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+      ext y; <span class="tok-tactic">norm_num</span>; <span class="tok-tactic">ring</span>;
+    · <span class="tok-tactic">simp</span> +decide [ ContinuousMap.ext_iff ];
+      <span class="tok-tactic">exact</span> ⟨ x, lt_of_le_of_ne ( le_trans ( ContinuousMap.norm_coe_le_norm f x ) h&#x27; ) h ⟩
+
+/-! ## T(<span class="tok-number">1</span>) takes values ±<span class="tok-number">1</span> -/
+
+<span class="tok-keyword">lemma</span> isometry_image_one_values_aux [Nonempty X] [Nonempty Y]
+    (T : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>)) (y : Y) :
+    T <span class="tok-number">1</span> y = <span class="tok-number">1</span> ∨ T <span class="tok-number">1</span> y = -<span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_abs : ∀ y : Y, |(T <span class="tok-number">1</span>) y| = <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+    apply_rules [ extremePoint_abs_eq_one_aux ];
+    <span class="tok-tactic">have</span> h_extreme : <span class="tok-number">1</span> ∈ extremePoints <span class="tok-type">ℝ</span> (Metric.closedBall (<span class="tok-number">0</span> : C(X, <span class="tok-type">ℝ</span>)) <span class="tok-number">1</span>) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">refine</span>&#x27; ⟨ _, _ ⟩;
+      · <span class="tok-tactic">simp</span> +decide;
+      · <span class="tok-tactic">rintro</span> f hf g hg ⟨ a, b, ha, hb, hab, h ⟩;
+        ext x;
+        replace h := congr_arg ( <span class="tok-keyword">fun</span> f =&gt; f x ) h;
+        <span class="tok-tactic">norm_num</span> at *;
+        nlinarith [ abs_le.mp ( <span class="tok-tactic">show</span> |f x| ≤ <span class="tok-number">1</span> <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> le_trans ( ContinuousMap.norm_coe_le_norm f x ) hf ), abs_le.mp ( <span class="tok-tactic">show</span> |g x| ≤ <span class="tok-number">1</span> <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> le_trans ( ContinuousMap.norm_coe_le_norm g x ) hg ) ];
+    <span class="tok-tactic">rw</span> [ extremePoints ] at *;
+    simp_all +decide [ openSegment_eq_image ];
+    <span class="tok-tactic">intro</span> x₁ hx₁ x₂ hx₂ x hx₁&#x27; hx₂&#x27; h;
+    <span class="tok-tactic">have</span> := @h_extreme ( T.symm x₁ ) ?_ ( T.symm x₂ ) ?_ x hx₁&#x27; hx₂&#x27; ?_;
+    · <span class="tok-tactic">simpa</span> using congr_arg T this;
+    · <span class="tok-tactic">simpa</span> using hx₁;
+    · <span class="tok-tactic">simpa</span> using hx₂;
+    · <span class="tok-tactic">rw</span> [ ← T.injective.eq_iff ];
+      <span class="tok-tactic">simp</span> +decide [ ← h ];
+  <span class="tok-tactic">exact</span> eq_or_eq_neg_of_abs_eq ( h_abs y )
+
+/-! ## Construction of the sign-twisted isometry S -/
+
+/<span class="tok-comment">-- Given T : C(X,ℝ) ≃ₗᵢ[ℝ] C(Y,ℝ), construct S with S(f)(y) = T(1)(y) * T(f)(y). -/</span>
+<span class="tok-keyword">def</span> twistedIsometry [Nonempty X] [Nonempty Y]
+    (T : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>)) : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>) :=
+  <span class="tok-tactic">have</span> hT1 : ∀ y, T <span class="tok-number">1</span> y = <span class="tok-number">1</span> ∨ T <span class="tok-number">1</span> y = -<span class="tok-number">1</span> := isometry_image_one_values_aux T
+  <span class="tok-tactic">have</span> hT1_sq : T <span class="tok-number">1</span> * T <span class="tok-number">1</span> = <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+    ext y; <span class="tok-tactic">simp</span> [mul_apply]; rcases hT1 y <span class="tok-keyword">with</span> h | h &lt;;&gt; <span class="tok-tactic">simp</span> [h]
+  LinearIsometryEquiv.mk
+    ({ toFun := <span class="tok-keyword">fun</span> f =&gt; T <span class="tok-number">1</span> * T f
+       invFun := <span class="tok-keyword">fun</span> g =&gt; T.symm (T <span class="tok-number">1</span> * g)
+       left_inv := <span class="tok-keyword">fun</span> f =&gt; <span class="tok-tactic">by</span>
+         <span class="tok-tactic">have</span> : T <span class="tok-number">1</span> * (T <span class="tok-number">1</span> * T f) = T f := <span class="tok-tactic">by</span>
+           <span class="tok-tactic">rw</span> [← mul_assoc, hT1_sq, one_mul]
+         <span class="tok-tactic">simp</span> [this]
+       right_inv := <span class="tok-keyword">fun</span> g =&gt; <span class="tok-tactic">by</span>
+         <span class="tok-tactic">show</span> T <span class="tok-number">1</span> * T (T.symm (T <span class="tok-number">1</span> * g)) = g
+         <span class="tok-tactic">rw</span> [T.apply_symm_apply, ← mul_assoc, hT1_sq, one_mul]
+       map_add&#x27; := <span class="tok-keyword">fun</span> f g =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">simp</span> [mul_add]
+       map_smul&#x27; := <span class="tok-keyword">fun</span> r f =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">simp</span> [mul_comm] } : C(X, <span class="tok-type">ℝ</span>) ≃ₗ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>))
+    (<span class="tok-keyword">fun</span> f =&gt; <span class="tok-tactic">by</span>
+      <span class="tok-tactic">simp</span> only [LinearEquiv.coe_mk]
+      <span class="tok-tactic">have</span> h_abs : ∀ y, |T <span class="tok-number">1</span> y| = <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">intro</span> y; rcases hT1 y <span class="tok-keyword">with</span> h | h &lt;;&gt; <span class="tok-tactic">simp</span> [h]
+      conv_rhs =&gt; <span class="tok-tactic">rw</span> [← T.norm_map f]
+      <span class="tok-tactic">rw</span> [norm_eq_iSup_norm, norm_eq_iSup_norm]
+      congr <span class="tok-number">1</span>; ext y; <span class="tok-tactic">simp</span> [mul_apply, Real.norm_eq_abs, h_abs])
+
+@[<span class="tok-tactic">simp</span>]
+<span class="tok-keyword">lemma</span> twistedIsometry_apply [Nonempty X] [Nonempty Y]
+    (T : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>)) (f : C(X, <span class="tok-type">ℝ</span>)) (y : Y) :
+    twistedIsometry T f y = T <span class="tok-number">1</span> y * T f y := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">simp</span> [twistedIsometry, mul_apply]
+
+<span class="tok-keyword">lemma</span> twistedIsometry_one [Nonempty X] [Nonempty Y]
+    (T : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>)) :
+    twistedIsometry T <span class="tok-number">1</span> = <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+  ext y; <span class="tok-tactic">simp</span> [twistedIsometry_apply]
+  rcases isometry_image_one_values_aux T y <span class="tok-keyword">with</span> h | h &lt;;&gt; <span class="tok-tactic">simp</span> [h]
+
+/-! ## Unital isometry preserves nonneg functions -/
+
+<span class="tok-keyword">lemma</span> unital_isometry_nonneg [Nonempty X] [Nonempty Y]
+    (S : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>))
+    (hS1 : S <span class="tok-number">1</span> = <span class="tok-number">1</span>)
+    (f : C(X, <span class="tok-type">ℝ</span>)) (hf : ∀ x, <span class="tok-number">0</span> ≤ f x) (hfn : ‖f‖ ≤ <span class="tok-number">1</span>) (y : Y) :
+    <span class="tok-number">0</span> ≤ S f y := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_norm : ‖<span class="tok-number">1</span> - <span class="tok-number">2</span> • S f‖ ≤ <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h_norm : ‖<span class="tok-number">1</span> - <span class="tok-number">2</span> • f‖ ≤ <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">rw</span> [ ContinuousMap.norm_le ] at hfn ⊢;
+      · simp_all +decide [ two_smul ];
+        <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> x =&gt; abs_le.mpr ⟨ <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ abs_le.mp ( hfn x ), hf x ], <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> [ abs_le.mp ( hfn x ), hf x ] ⟩;
+      · <span class="tok-tactic">norm_num</span>;
+      · <span class="tok-tactic">norm_num</span>;
+    <span class="tok-tactic">have</span> h_norm_S : ‖S (<span class="tok-number">1</span> - <span class="tok-number">2</span> • f)‖ ≤ <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+      convert h_norm using <span class="tok-number">1</span>;
+      <span class="tok-tactic">exact</span> S.norm_map _;
+    convert h_norm_S using <span class="tok-number">2</span> ; <span class="tok-tactic">simp</span> +decide [ hS1, two_smul ];
+  simp_all +decide [ two_smul, ContinuousMap.norm_le ];
+  <span class="tok-tactic">linarith</span> [ abs_le.mp ( h_norm y ) ]
+
+/-! ## Unital isometry preserves order -/
+
+<span class="tok-keyword">lemma</span> unital_isometry_mono [Nonempty X] [Nonempty Y]
+    (S : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>))
+    (hS1 : S <span class="tok-number">1</span> = <span class="tok-number">1</span>)
+    (f g : C(X, <span class="tok-type">ℝ</span>)) (hfg : ∀ x, f x ≤ g x) (y : Y) :
+    S f y ≤ S g y := <span class="tok-tactic">by</span>
+  set c := ‖(g - f)‖
+  by_cases hc : c = <span class="tok-number">0</span>;
+  · <span class="tok-tactic">rw</span> [ norm_eq_zero, sub_eq_zero ] at hc ; <span class="tok-tactic">aesop</span>;
+  · set h := (<span class="tok-number">1</span> / c) • (g - f)
+    <span class="tok-tactic">have</span> hh_nonneg : ∀ x, <span class="tok-number">0</span> ≤ h x := <span class="tok-tactic">by</span> <span class="tok-tactic">aesop</span>
+    <span class="tok-tactic">have</span> hh_norm : ‖h‖ ≤ <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">rw</span> [ norm_smul, Real.norm_of_nonneg ( <span class="tok-tactic">by</span> positivity ), div_mul_cancel₀ _ hc ]
+    <span class="tok-tactic">have</span> hSh_nonneg : <span class="tok-number">0</span> ≤ (S h) y := unital_isometry_nonneg S hS1 h hh_nonneg hh_norm y
+    <span class="tok-tactic">simp</span> +zetaDelta at *;
+    nlinarith [ inv_pos.<span class="tok-number">2</span> ( norm_pos_iff.<span class="tok-number">2</span> hc ) ]
+
+/-! ## Unital isometry preserves sup -/
+
+<span class="tok-keyword">lemma</span> unital_isometry_sup [Nonempty X] [Nonempty Y]
+    (S : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>))
+    (hS1 : S <span class="tok-number">1</span> = <span class="tok-number">1</span>)
+    (f g : C(X, <span class="tok-type">ℝ</span>)) :
+    S (f ⊔ g) = S f ⊔ S g := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_ge : S (f ⊔ g) ≥ S f ⊔ S g := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h_ge : S f ≤ S (f⊔g) ∧ S g ≤ S (f⊔g) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">exact</span> ⟨ unital_isometry_mono S hS1 _ _ ( <span class="tok-keyword">fun</span> x =&gt; le_sup_left ) , unital_isometry_mono S hS1 _ _ ( <span class="tok-keyword">fun</span> x =&gt; le_sup_right ) ⟩;
+    <span class="tok-tactic">exact</span> sup_le h_ge.<span class="tok-number">1</span> h_ge.<span class="tok-number">2</span>;
+  <span class="tok-tactic">have</span> h_ge&#x27; : S.symm (S f ⊔ S g) ≥ f ⊔ g := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h_ge&#x27; : S.symm (S f ⊔ S g) ≥ S.symm (S f) ∧ S.symm (S f ⊔ S g) ≥ S.symm (S g) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">apply</span> And.<span class="tok-tactic">intro</span>;
+      · apply_rules [ unital_isometry_mono ];
+        · <span class="tok-tactic">rw</span> [ ← hS1, S.symm_apply_apply ];
+        · <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> y =&gt; le_sup_left;
+      · apply_rules [ unital_isometry_mono ];
+        · <span class="tok-tactic">rw</span> [ ← hS1, S.symm_apply_apply ];
+        · <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> y =&gt; le_sup_right;
+    <span class="tok-tactic">aesop</span>;
+  <span class="tok-tactic">refine</span>&#x27; le_antisymm _ h_ge;
+  <span class="tok-tactic">have</span> h_ge&#x27; : S (S.symm (S f ⊔ S g)) ≥ S (f ⊔ g) := <span class="tok-tactic">by</span>
+    apply_rules [ unital_isometry_mono ];
+  <span class="tok-tactic">aesop</span>
+
+/-! ## Lattice homomorphism functional on C(X,<span class="tok-type">ℝ</span>) is point evaluation -/
+
+set_option maxHeartbeats <span class="tok-number">400000</span> <span class="tok-keyword">in</span>
+<span class="tok-keyword">lemma</span> lattice_hom_eval [Nonempty X]
+    (phi : C(X, <span class="tok-type">ℝ</span>) →L[<span class="tok-type">ℝ</span>] <span class="tok-type">ℝ</span>)
+    (hphi1 : phi <span class="tok-number">1</span> = <span class="tok-number">1</span>)
+    (hphi_pos : ∀ f : C(X, <span class="tok-type">ℝ</span>), (∀ x, <span class="tok-number">0</span> ≤ f x) → <span class="tok-number">0</span> ≤ phi f)
+    (hphi_sup : ∀ f g : C(X, <span class="tok-type">ℝ</span>), phi (f ⊔ g) = max (phi f) (phi g)) :
+    ∃ x : X, ∀ f : C(X, <span class="tok-type">ℝ</span>), phi f = f x := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_inter_nonempty : ∀ (s : Finset (C(X, <span class="tok-type">ℝ</span>))), (⋂ f ∈ s, {x : X | f x = phi f}).Nonempty := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">intro</span> s
+    by_contra h_empty_inter
+    <span class="tok-tactic">have</span> h_sum_pos : ∃ g : C(X, <span class="tok-type">ℝ</span>), (∀ x, <span class="tok-number">0</span> ≤ g x) ∧ (∀ x, g x &gt; <span class="tok-number">0</span>) ∧ phi g = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">have</span> h_gf_zero : ∀ f ∈ s, phi (|f - phi f • <span class="tok-number">1</span>|) = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">intro</span> f hf
+        <span class="tok-tactic">have</span> h_gf_zero : phi (|f - phi f • <span class="tok-number">1</span>|) = max (phi (f - phi f • <span class="tok-number">1</span>)) (phi (-(f - phi f • <span class="tok-number">1</span>))) := <span class="tok-tactic">by</span>
+          grind +locals
+        generalize_proofs at *; (
+        simp_all +decide [ ContinuousMap.ext_iff ])
+      generalize_proofs at *; (
+      <span class="tok-tactic">refine</span>&#x27; ⟨ ∑ f ∈ s, |f - phi f • <span class="tok-number">1</span>|, _, _, _ ⟩ &lt;;&gt; simp_all +decide [ Finset.sum_nonneg, abs_nonneg ];
+      <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> x =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">obtain</span> ⟨ f, hf, hf&#x27; ⟩ := h_empty_inter x; <span class="tok-tactic">exact</span> lt_of_lt_of_le ( abs_pos.mpr ( sub_ne_zero.mpr hf&#x27; ) ) ( Finset.single_le_sum ( <span class="tok-keyword">fun</span> f _ =&gt; abs_nonneg ( f x - phi f ) ) hf ) ;)
+    <span class="tok-tactic">have</span> h_contra : <span class="tok-number">0</span> ≥ phi (<span class="tok-number">1</span> : C(X, <span class="tok-type">ℝ</span>)) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">obtain</span> ⟨ g, hg₁, hg₂, hg₃ ⟩ := h_sum_pos
+      <span class="tok-tactic">have</span> h_contra : ∃ c &gt; <span class="tok-number">0</span>, (c : <span class="tok-type">ℝ</span>) • <span class="tok-number">1</span> ≤ g := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">obtain</span> ⟨m, hm_pos, hm_min⟩ : ∃ m &gt; <span class="tok-number">0</span>, ∀ x, m ≤ g x := <span class="tok-tactic">by</span>
+          <span class="tok-tactic">have</span> h_min : ∃ m ∈ Set.range g, ∀ y ∈ Set.range g, m ≤ y := <span class="tok-tactic">by</span>
+            <span class="tok-tactic">exact</span> ( IsCompact.exists_isLeast &lt;| isCompact_range g.continuous ) &lt;| Set.range_nonempty _;
+          <span class="tok-tactic">aesop</span>;
+        <span class="tok-tactic">exact</span> ⟨ m, hm_pos, <span class="tok-keyword">fun</span> x =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">simpa</span> using hm_min x ⟩
+      <span class="tok-tactic">obtain</span> ⟨ c, hc_pos, hc_le ⟩ := h_contra
+      <span class="tok-tactic">have</span> h_contra : phi (c • <span class="tok-number">1</span>) ≤ phi g := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">have</span> := hphi_sup ( c • <span class="tok-number">1</span> ) g; simp_all +decide [ ContinuousMap.le_def ] ;
+      <span class="tok-tactic">simp</span> [hg₃] at h_contra
+      <span class="tok-tactic">exact</span> (<span class="tok-tactic">by</span> nlinarith)
+    <span class="tok-tactic">simp</span> [hphi1] at h_contra;
+    <span class="tok-tactic">norm_num</span> at h_contra;
+  <span class="tok-tactic">have</span> h_inter_nonempty : (⋂ f : C(X, <span class="tok-type">ℝ</span>), {x : X | f x = phi f}).Nonempty := <span class="tok-tactic">by</span>
+    contrapose! h_inter_nonempty;
+    <span class="tok-tactic">have</span> := ( isCompact_univ ( X := X ) ).elim_finite_subcover ( <span class="tok-keyword">fun</span> f : C(X, <span class="tok-type">ℝ</span>) =&gt; { x | f x = phi f }ᶜ ) ?_;
+    · simp_all +decide [ Set.ext_iff ];
+    · <span class="tok-tactic">exact</span> <span class="tok-keyword">fun</span> f =&gt; isOpen_compl_iff.mpr ( isClosed_eq ( f.continuous ) continuous_const );
+  <span class="tok-tactic">exact</span> ⟨ h_inter_nonempty.some, <span class="tok-keyword">fun</span> f =&gt; Eq.symm ( Set.mem_iInter.mp h_inter_nonempty.choose_spec f ) ⟩
+
+/-! ## Main <span class="tok-keyword">theorem</span>: Pointwise representation of isometries -/
+
+<span class="tok-keyword">theorem</span> isometry_representation_aristotle
+    (T : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>)) :
+    ∃ (tau : Y → X) (h : Y → <span class="tok-type">ℝ</span>),
+      (∀ y, h y = <span class="tok-number">1</span> ∨ h y = -<span class="tok-number">1</span>) ∧
+      (∀ (f : C(X, <span class="tok-type">ℝ</span>)) (y : Y), T f y = h y * f (tau y)) := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Handle degenerate cases</span>
+  rcases isEmpty_or_nonempty X <span class="tok-keyword">with</span> hX | hX
+  · rcases isEmpty_or_nonempty Y <span class="tok-keyword">with</span> hY | hY
+    · <span class="tok-tactic">exact</span> ⟨isEmptyElim, isEmptyElim, isEmptyElim, <span class="tok-keyword">fun</span> _ =&gt; isEmptyElim⟩
+    · exfalso
+      <span class="tok-tactic">obtain</span> ⟨f, hf⟩ := T.surjective (<span class="tok-number">1</span> : C(Y, <span class="tok-type">ℝ</span>))
+      <span class="tok-tactic">have</span> : f = <span class="tok-number">0</span> := <span class="tok-tactic">by</span> ext x; <span class="tok-tactic">exact</span> (hX.false x).elim
+      <span class="tok-tactic">rw</span> [this, map_zero] at hf
+      <span class="tok-tactic">have</span> : (<span class="tok-number">1</span> : C(Y, <span class="tok-type">ℝ</span>)) ≠ <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">intro</span> h; <span class="tok-tactic">have</span> := congr_fun (congr_arg DFunLike.coe h) hY.some; <span class="tok-tactic">simp</span> at this
+      <span class="tok-tactic">exact</span> this hf.symm
+  · rcases isEmpty_or_nonempty Y <span class="tok-keyword">with</span> hY | hY
+    · exfalso
+      <span class="tok-tactic">obtain</span> ⟨g, hg⟩ := T.symm.surjective (<span class="tok-number">1</span> : C(X, <span class="tok-type">ℝ</span>))
+      <span class="tok-tactic">have</span> : g = <span class="tok-number">0</span> := <span class="tok-tactic">by</span> ext y; <span class="tok-tactic">exact</span> (hY.false y).elim
+      <span class="tok-tactic">rw</span> [this, map_zero] at hg
+      <span class="tok-tactic">have</span> : (<span class="tok-number">1</span> : C(X, <span class="tok-type">ℝ</span>)) ≠ <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">intro</span> h; <span class="tok-tactic">have</span> := congr_fun (congr_arg DFunLike.coe h) hX.some; <span class="tok-tactic">simp</span> at this
+      <span class="tok-tactic">exact</span> this hg.symm
+    · <span class="tok-comment">-- Main case: both X and Y are nonempty</span>
+      set S := twistedIsometry T
+      <span class="tok-tactic">have</span> hS1 : S <span class="tok-number">1</span> = <span class="tok-number">1</span> := twistedIsometry_one T
+      <span class="tok-tactic">have</span> h_eval : ∀ y : Y, ∃ x : X, ∀ f : C(X, <span class="tok-type">ℝ</span>), S f y = f x := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">intro</span> y
+        set phi : C(X, <span class="tok-type">ℝ</span>) →L[<span class="tok-type">ℝ</span>] <span class="tok-type">ℝ</span> :=
+          ContinuousMap.evalCLM <span class="tok-type">ℝ</span> y ∘L S.toContinuousLinearEquiv.toContinuousLinearMap
+        <span class="tok-tactic">have</span> hphi_eq : ∀ f, phi f = S f y := <span class="tok-keyword">fun</span> _ =&gt; rfl
+        <span class="tok-tactic">have</span> hphi1 : phi <span class="tok-number">1</span> = <span class="tok-number">1</span> := <span class="tok-tactic">by</span> <span class="tok-tactic">simp</span> [hphi_eq, hS1]
+        <span class="tok-tactic">have</span> hphi_pos : ∀ f : C(X, <span class="tok-type">ℝ</span>), (∀ x, <span class="tok-number">0</span> ≤ f x) → <span class="tok-number">0</span> ≤ phi f := <span class="tok-tactic">by</span>
+          <span class="tok-tactic">intro</span> f hf; <span class="tok-tactic">simp</span> only [hphi_eq]
+          by_cases hf0 : f = <span class="tok-number">0</span>
+          · <span class="tok-tactic">simp</span> [hf0]
+          · <span class="tok-tactic">have</span> hfn_pos : <span class="tok-number">0</span> &lt; ‖f‖ := norm_pos_iff.mpr hf0
+            by_cases hfn : ‖f‖ ≤ <span class="tok-number">1</span>
+            · <span class="tok-tactic">exact</span> unital_isometry_nonneg S hS1 f hf hfn y
+            · push_neg at hfn
+              <span class="tok-tactic">have</span> h1 : <span class="tok-number">0</span> ≤ S (‖f‖⁻¹ • f) y := <span class="tok-tactic">by</span>
+                <span class="tok-tactic">apply</span> unital_isometry_nonneg S hS1
+                · <span class="tok-tactic">intro</span> x; <span class="tok-tactic">simp</span> [smul_apply]; <span class="tok-tactic">exact</span> mul_nonneg (inv_nonneg.<span class="tok-number">2</span> (norm_nonneg f)) (hf x)
+                · <span class="tok-tactic">rw</span> [norm_smul, norm_inv, norm_norm]; <span class="tok-tactic">exact</span> inv_mul_le_one
+              <span class="tok-tactic">simp</span> only [map_smul, smul_apply, smul_eq_mul] at h1
+              <span class="tok-tactic">have</span> h2 : (<span class="tok-number">0</span> : <span class="tok-type">ℝ</span>) &lt; ‖f‖⁻¹ := inv_pos.<span class="tok-number">2</span> hfn_pos
+              <span class="tok-tactic">rw</span> [mul_comm] at h1
+              <span class="tok-tactic">exact</span> nonneg_of_mul_nonneg_left h1 h2
+        <span class="tok-tactic">have</span> hphi_sup : ∀ f g : C(X, <span class="tok-type">ℝ</span>), phi (f ⊔ g) = max (phi f) (phi g) := <span class="tok-tactic">by</span>
+          <span class="tok-tactic">intro</span> f g; <span class="tok-tactic">simp</span> only [hphi_eq]
+          <span class="tok-tactic">have</span> hsup := unital_isometry_sup S hS1 f g
+          <span class="tok-tactic">have</span> := congr_fun (congr_arg DFunLike.coe hsup) y
+          <span class="tok-tactic">simp</span> [ContinuousMap.sup_apply] at this ⊢; <span class="tok-tactic">exact</span> this
+        <span class="tok-tactic">exact</span> lattice_hom_eval phi hphi1 hphi_pos hphi_sup
+      choose tau htau using h_eval
+      <span class="tok-tactic">refine</span> ⟨tau, <span class="tok-keyword">fun</span> y =&gt; T <span class="tok-number">1</span> y, isometry_image_one_values_aux T, <span class="tok-keyword">fun</span> f y =&gt; ?_⟩
+      <span class="tok-tactic">have</span> h1 := htau y f
+      <span class="tok-tactic">rw</span> [twistedIsometry_apply] at h1
+      <span class="tok-comment">-- h1 : T 1 y * T f y = f (tau y)</span>
+      <span class="tok-comment">-- Goal: T f y = T 1 y * f (tau y)</span>
+      <span class="tok-tactic">have</span> h_sq : T <span class="tok-number">1</span> y * T <span class="tok-number">1</span> y = <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+        rcases isometry_image_one_values_aux T y <span class="tok-keyword">with</span> h | h &lt;;&gt; <span class="tok-tactic">simp</span> [h]
+      <span class="tok-comment">-- From h1: T(1)(y) * T(f)(y) = f(τ(y))</span>
+      <span class="tok-comment">-- Want: T(f)(y) = T(1)(y) * f(τ(y))</span>
+      <span class="tok-comment">-- Multiply both sides of h1 by T(1)(y): T(1)(y)² * T(f)(y) = T(1)(y) * f(τ(y))</span>
+      <span class="tok-comment">-- Since T(1)(y)² = 1: T(f)(y) = T(1)(y) * f(τ(y))</span>
+      <span class="tok-tactic">show</span> T f y = T <span class="tok-number">1</span> y * f (tau y)
+      <span class="tok-tactic">have</span> : T <span class="tok-number">1</span> y * f (tau y) = T <span class="tok-number">1</span> y * (T <span class="tok-number">1</span> y * T f y) := <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [h1]
+      <span class="tok-tactic">rw</span> [this, ← mul_assoc, h_sq, one_mul]
+
+<span class="tok-keyword">end</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+FormalIslands/Generated/isometry_representation_worker_20260414-113924_804eaa56.lean:13:0: warning: automatically included section variable(s) unused in theorem `extremePoint_abs_eq_one_aux`:
+  [T2Space X]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [T2Space X] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+FormalIslands/Generated/isometry_representation_worker_20260414-113924_804eaa56.lean:35:0: warning: automatically included section variable(s) unused in theorem `isometry_image_one_values_aux`:
+  [T2Space X]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [T2Space X] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+FormalIslands/Generated/isometry_representation_worker_20260414-113924_804eaa56.lean:101:0: warning: automatically included section variable(s) unused in theorem `unital_isometry_nonneg`:
+  [T2Space X]
+  [T2Space Y]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [T2Space X] [T2Space Y] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+FormalIslands/Generated/isometry_representation_worker_20260414-113924_804eaa56.lean:167:0: warning: automatically included section variable(s) unused in theorem `lattice_hom_eval`:
+  [T2Space X]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [T2Space X] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+FormalIslands/Generated/isometry_representation_worker_20260414-113924_804eaa56.lean:182:27: warning: This simp argument is unused:
+  ContinuousMap.ext_iff
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide ̵[̵ ̵C̵o̵n̵t̵i̵n̵u̵o̵u̵s̵M̵a̵p̵.̵e̵x̵t̵_̵i̵f̵f̵ ̵]̵
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+FormalIslands/Generated/isometry_representation_worker_20260414-113924_804eaa56.lean:250:14: warning: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you&#x27;d rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro &quot;push_neg&quot; cfg:optConfig loc:(location)? : tactic =&gt;
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+
+
+stderr:
+</code></pre>
+          </details>
+        
+    </article>
+    
+
+    <article class="node-card node-continuity_of_representation" id="node-continuity_of_representation" data-node-id="continuity_of_representation" data-node-title="Continuity of the Representation Maps" data-node-status="formal_verified">
+      <h3>Continuity of the Representation Maps</h3>
+      <p class="meta">Node id: continuity_of_representation | Status: formal_verified</p>
+      <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-banach_stone_root">banach_stone_root</a></p>
+      
+      <p class="meta">Formalization priority: 1. Rationale: A purely topological and functional identity that avoids functional analysis machinery. It isolates the deduction of continuity cleanly using the initial topology property.</p>
+      <p class="meta">Most recent formalization episode: verified the full parent node after 5 Lean verification attempts. Most recent formalization attempt verified the full parent node.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let $X$ and $Y$ be compact Hausdorff spaces, and let $T : C(X,\mathbb{R}) \to C(Y,\mathbb{R})$ be a linear map into the space of continuous real-valued functions. Suppose there exist functions $\tau : Y \to X$ and $h : Y \to \{-1,1\}$ such that $(Tf)(y) = h(y) f(\tau(y))$ for all $f \in C(X,\mathbb{R})$ and $y \in Y$. Then $h$ is continuous, and $\tau$ is continuous.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Evaluate $T$ at the constant function $1 \in C(X,\mathbb{R})$ to get $(T1)(y) = h(y)$. Since $T1 \in C(Y,\mathbb{R})$, $h$ is continuous. Because $h$ takes values in $\{-1,1\}$, $h(y)^2 = 1$. For any $f \in C(X,\mathbb{R})$, we can multiply the representation by $h(y)$ to obtain $f(\tau(y)) = h(y) (Tf)(y)$. Since both $h$ and $Tf$ are continuous real-valued functions on $Y$, their product $y \mapsto f(\tau(y))$ is continuous. Thus $f \circ \tau$ is continuous for every $f \in C(X,\mathbb{R})$. Since $X$ is a compact Hausdorff space, its topology is initial with respect to the family of all continuous real-valued functions $C(X,\mathbb{R})$ (they separate points and closed sets). Therefore, the continuity of $f \circ \tau$ for all $f$ implies that $\tau$ itself is continuous.</div>
+      
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> continuity_of_representation_aristotle</p>
+        <p><strong>Coverage:</strong> full match</p><p class="meta">The formalized theorem perfectly matches the target informal statement. It includes all necessary topological assumptions (compact Hausdorff spaces X and Y), models the representation formula $(Tf)(y) = h(y)f(\tau(y))$ exactly, and successfully asserts the continuity of both h and tau. The omission of T&#x27;s linearity in the formal hypotheses is a mathematically sound generalization since the pointwise representation formula alone is sufficient to deduce continuity. This is a complete and faithful formalization of the node.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> continuity_of_representation_aristotle
+    {X Y : <span class="tok-type">Type</span>*} [TopologicalSpace X] [TopologicalSpace Y]
+    [CompactSpace X] [T2Space X]
+    [CompactSpace Y] [T2Space Y]
+    (T : C(X, <span class="tok-type">ℝ</span>) → C(Y, <span class="tok-type">ℝ</span>))
+    (tau : Y → X) (h : Y → <span class="tok-type">ℝ</span>)
+    (h_val : ∀ y, h y = <span class="tok-number">1</span> ∨ h y = -<span class="tok-number">1</span>)
+    (h_rep : ∀ (f : C(X, <span class="tok-type">ℝ</span>)) (y : Y), T f y = h y * f (tau y)) :
+    Continuous h ∧ Continuous tau</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean lean_project/FormalIslands/Generated/continuity_of_representation_worker_20260414-100254_39eb24d3.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+noncomputable <span class="tok-keyword">section</span>
+
+<span class="tok-keyword">open</span> ContinuousMap
+
+/-
+**Continuity of the Representation Maps** (Banach–Stone Theorem).
+
+Let `X` and `Y` be compact Hausdorff spaces, and <span class="tok-keyword">let</span> `T : C(X,<span class="tok-type">ℝ</span>) → C(Y,<span class="tok-type">ℝ</span>)` be a map.
+Suppose there exist functions `τ : Y → X` and `h : Y → <span class="tok-type">ℝ</span>` such that `h` takes values
+<span class="tok-keyword">in</span> `{-<span class="tok-number">1</span>, <span class="tok-number">1</span>}` and `(Tf)(y) = h(y) · f(τ(y))` for all `f ∈ C(X,<span class="tok-type">ℝ</span>)` and `y ∈ Y`.
+Then `h` is continuous, and `τ` is continuous.
+-/
+<span class="tok-keyword">theorem</span> continuity_of_representation_aristotle
+    {X Y : <span class="tok-type">Type</span>*} [TopologicalSpace X] [TopologicalSpace Y]
+    [CompactSpace X] [T2Space X]
+    [CompactSpace Y] [T2Space Y]
+    (T : C(X, <span class="tok-type">ℝ</span>) → C(Y, <span class="tok-type">ℝ</span>))
+    (tau : Y → X) (h : Y → <span class="tok-type">ℝ</span>)
+    (h_val : ∀ y, h y = <span class="tok-number">1</span> ∨ h y = -<span class="tok-number">1</span>)
+    (h_rep : ∀ (f : C(X, <span class="tok-type">ℝ</span>)) (y : Y), T f y = h y * f (tau y)) :
+    Continuous h ∧ Continuous tau := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">constructor</span>;
+  · convert T <span class="tok-number">1</span> |&gt; ContinuousMap.continuous;
+    <span class="tok-tactic">aesop</span>;
+  · <span class="tok-comment">-- By the complete regularity of $X$, the set of continuous functions separates points from closed sets.</span>
+    <span class="tok-tactic">have</span> h_separate : ∀ (S : Set X), IsClosed S → ∀ x : X, x ∉ S → ∃ f : C(X, <span class="tok-type">ℝ</span>), f x = <span class="tok-number">1</span> ∧ ∀ y ∈ S, f y = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intro</span> S hS x hx; <span class="tok-tactic">have</span> := exists_continuous_zero_one_of_isClosed hS ( <span class="tok-tactic">show</span> IsClosed { x } from isClosed_singleton ) ; <span class="tok-tactic">aesop</span>;
+    <span class="tok-tactic">rw</span> [ continuous_iff_continuousAt ];
+    <span class="tok-tactic">intro</span> y
+    <span class="tok-tactic">have</span> h_cont : ∀ S : Set X, IsClosed S → tau y ∉ S → ∃ U : Set Y, IsOpen U ∧ y ∈ U ∧ ∀ z ∈ U, tau z ∉ S := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intro</span> S hS hyS
+      <span class="tok-tactic">obtain</span> ⟨f, hf1, hf2⟩ := h_separate S hS (tau y) hyS
+      <span class="tok-tactic">have</span> h_cont_f : Continuous (<span class="tok-keyword">fun</span> z =&gt; h z * f (tau z)) := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">simpa</span> only [ ← h_rep ] using T f |&gt;.continuous;
+      <span class="tok-tactic">have</span> h_cont_f_ne_zero : ∃ U : Set Y, IsOpen U ∧ y ∈ U ∧ ∀ z ∈ U, h z * f (tau z) ≠ <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+        <span class="tok-tactic">exact</span> ⟨ { z | h z * f ( tau z ) ≠ <span class="tok-number">0</span> }, isOpen_ne.preimage h_cont_f, <span class="tok-tactic">by</span> <span class="tok-tactic">cases</span> h_val y &lt;;&gt; <span class="tok-tactic">simp</span> +decide [ * ], <span class="tok-keyword">fun</span> z hz =&gt; hz ⟩;
+      <span class="tok-tactic">exact</span> ⟨ h_cont_f_ne_zero.choose, h_cont_f_ne_zero.choose_spec.<span class="tok-number">1</span>, h_cont_f_ne_zero.choose_spec.<span class="tok-number">2.1</span>, <span class="tok-keyword">fun</span> z hz hz&#x27; =&gt; h_cont_f_ne_zero.choose_spec.<span class="tok-number">2.2</span> z hz &lt;| <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ hf2 _ hz&#x27; ] ; <span class="tok-tactic">ring</span> ⟩;
+    <span class="tok-tactic">refine</span>&#x27; tendsto_nhds.mpr _;
+    <span class="tok-tactic">intro</span> s hs hy; specialize h_cont sᶜ; simp_all +decide [ Set.preimage ] ;
+    <span class="tok-tactic">exact</span> Filter.mem_of_superset ( h_cont.choose_spec.<span class="tok-number">1</span>.mem_nhds h_cont.choose_spec.<span class="tok-number">2.1</span> ) h_cont.choose_spec.<span class="tok-number">2.2</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+</code></pre>
+          </details>
+        
+    </article>
+    
+
+    <article class="node-card node-inverse_of_representation" id="node-inverse_of_representation" data-node-id="inverse_of_representation" data-node-title="Bijectivity from Inverse Representation" data-node-status="formal_verified">
+      <h3>Bijectivity from Inverse Representation</h3>
+      <p class="meta">Node id: inverse_of_representation | Status: formal_verified</p>
+      <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-banach_stone_root">banach_stone_root</a></p>
+      
+      <p class="meta">Formalization priority: 1. Rationale: Isolates the point-separation argument (using Urysohn&#x27;s lemma and complete regularity) for bijectivity, formalizing smoothly without requiring dual spaces.</p>
+      <p class="meta">Most recent formalization episode: verified the full parent node after 2 Lean verification attempts. Most recent formalization attempt verified the full parent node.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let $X$ and $Y$ be compact Hausdorff spaces. Suppose $T : C(X,\mathbb{R}) \to C(Y,\mathbb{R})$ and $S : C(Y,\mathbb{R}) \to C(X,\mathbb{R})$ are mutual inverses. If there exist maps $\tau : Y \to X$, $\sigma : X \to Y$, $h : Y \to \{-1,1\}$, and $k : X \to \{-1,1\}$ such that $(Tf)(y) = h(y) f(\tau(y))$ and $(Sg)(x) = k(x) g(\sigma(x))$ for all $f \in C(X,\mathbb{R})$ and $g \in C(Y,\mathbb{R})$, then $\tau \circ \sigma = \operatorname{id}_X$ and $\sigma \circ \tau = \operatorname{id}_Y$.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">For any $f \in C(X,\mathbb{R})$ and $x \in X$, we have $f(x) = (S(Tf))(x) = k(x) (Tf)(\sigma(x)) = k(x) h(\sigma(x)) f(\tau(\sigma(x)))$. This identity holds for all continuous $f$. Suppose for contradiction that $\tau(\sigma(x)) \neq x$ for some $x$. Because $X$ is compact Hausdorff (and thus completely regular), Urysohn&#x27;s lemma provides a continuous function $f \in C(X,\mathbb{R})$ such that $f(x) = 1$ and $f(\tau(\sigma(x))) = 0$. Substituting this $f$ into the identity yields $1 = k(x) h(\sigma(x)) \cdot 0 = 0$, a contradiction. Thus $\tau(\sigma(x)) = x$ for all $x$, meaning $\tau \circ \sigma = \operatorname{id}_X$. By a symmetric argument applying $T(Sg) = g$, we obtain $\sigma(\tau(y)) = y$ for all $y$, so $\sigma \circ \tau = \operatorname{id}_Y$. Hence $\tau$ and $\sigma$ are mutual inverses.</div>
+      
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> inverse_of_representation_aristotle</p>
+        <p><strong>Coverage:</strong> full match</p><p class="meta">The formal theorem exactly matches the target informal node, faithfully encoding the topological assumptions (compact Hausdorff), the mutual inverses T and S, their pointwise representations via tau, sigma, h, and k, and concluding that tau and sigma are inverse bijections.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> inverse_of_representation_aristotle
+    {X Y : <span class="tok-type">Type</span>*} [TopologicalSpace X] [CompactSpace X] [T2Space X]
+    [TopologicalSpace Y] [CompactSpace Y] [T2Space Y]
+    (T : C(X, <span class="tok-type">ℝ</span>) → C(Y, <span class="tok-type">ℝ</span>)) (S : C(Y, <span class="tok-type">ℝ</span>) → C(X, <span class="tok-type">ℝ</span>))
+    (hTS : ∀ f, S (T f) = f) (hST : ∀ g, T (S g) = g)
+    (tau : Y → X) (sigma : X → Y)
+    (h : Y → <span class="tok-type">ℝ</span>) (k : X → <span class="tok-type">ℝ</span>)
+    (hh : ∀ y, h y = -<span class="tok-number">1</span> ∨ h y = <span class="tok-number">1</span>)
+    (hk : ∀ x, k x = -<span class="tok-number">1</span> ∨ k x = <span class="tok-number">1</span>)
+    (hT : ∀ (f : C(X, <span class="tok-type">ℝ</span>)) (y : Y), T f y = h y * f (tau y))
+    (hS : ∀ (g : C(Y, <span class="tok-type">ℝ</span>)) (x : X), S g x = k x * g (sigma x)) :
+    (∀ x, tau (sigma x) = x) ∧ (∀ y, sigma (tau y) = y)</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean lean_project/FormalIslands/Generated/inverse_of_representation_worker_20260414-100254_02b56943.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib.Topology.UrysohnsLemma
+<span class="tok-keyword">import</span> Mathlib.Topology.ContinuousMap.Algebra
+
+<span class="tok-keyword">open</span> ContinuousMap Set
+
+/-!
+# Bijectivity from Inverse Representation
+
+Let X and Y be compact Hausdorff spaces. If T : C(X,<span class="tok-type">ℝ</span>) → C(Y,<span class="tok-type">ℝ</span>) and S : C(Y,<span class="tok-type">ℝ</span>) → C(X,<span class="tok-type">ℝ</span>)
+are mutual inverses <span class="tok-keyword">with</span> pointwise representations involving maps τ, σ and sign functions h, k,
+<span class="tok-keyword">then</span> τ ∘ σ = id and σ ∘ τ = id.
+
+The proof uses Urysohn&#x27;s <span class="tok-keyword">lemma</span> to separate points <span class="tok-keyword">in</span> compact Hausdorff (hence normal) spaces.
+-/
+
+/-
+Core point-separation <span class="tok-keyword">lemma</span>: <span class="tok-keyword">if</span> for every continuous f : C(X,<span class="tok-type">ℝ</span>) we <span class="tok-tactic">have</span>
+    f(x) = c · f(φ(x)) <span class="tok-keyword">with</span> c ≠ <span class="tok-number">0</span>, <span class="tok-keyword">then</span> φ(x) = x. Uses Urysohn&#x27;s <span class="tok-keyword">lemma</span>.
+-/
+<span class="tok-keyword">lemma</span> eq_of_forall_continuousMap_eval_aristotle
+    {X : <span class="tok-type">Type</span>*} [TopologicalSpace X] [CompactSpace X] [T2Space X]
+    (phi : X → X) (c : X → <span class="tok-type">ℝ</span>) (_hc : ∀ x, c x ≠ <span class="tok-number">0</span>)
+    (hident : ∀ (f : C(X, <span class="tok-type">ℝ</span>)) (x : X), f x = c x * f (phi x)) :
+    ∀ x, phi x = x := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">intro</span> x
+  by_contra h_contra
+  <span class="tok-tactic">have</span> h_ne : phi x ≠ x := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> h_contra;
+  <span class="tok-comment">-- By Urysohn&#x27;s lemma, there exists a continuous function $f : C(X, ℝ)$ such that $f(\phi(x)) = 0$ and $f(x) = 1$.</span>
+  <span class="tok-tactic">obtain</span> ⟨f, hf⟩ : ∃ f : C(X, <span class="tok-type">ℝ</span>), f (phi x) = <span class="tok-number">0</span> ∧ f x = <span class="tok-number">1</span> := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> := exists_continuous_zero_one_of_isClosed ( <span class="tok-tactic">show</span> IsClosed { phi x } from isClosed_singleton ) ( <span class="tok-tactic">show</span> IsClosed { x } from isClosed_singleton ) ?_ &lt;;&gt; <span class="tok-tactic">norm_num</span> at * ; tauto;
+    <span class="tok-tactic">exact</span> h_ne;
+  <span class="tok-tactic">simpa</span> [ hf ] using hident f x
+
+/-
+**Bijectivity from Inverse Representation.**
+
+Let X and Y be compact Hausdorff spaces. Suppose T : C(X,<span class="tok-type">ℝ</span>) → C(Y,<span class="tok-type">ℝ</span>) and
+S : C(Y,<span class="tok-type">ℝ</span>) → C(X,<span class="tok-type">ℝ</span>) are mutual inverses. If there exist maps τ : Y → X,
+σ : X → Y, h : Y → {-<span class="tok-number">1</span>,<span class="tok-number">1</span>}, and k : X → {-<span class="tok-number">1</span>,<span class="tok-number">1</span>} such that
+(Tf)(y) = h(y) · f(τ(y)) and (Sg)(x) = k(x) · g(σ(x)),
+<span class="tok-keyword">then</span> τ ∘ σ = id_X and σ ∘ τ = id_Y.
+-/
+<span class="tok-keyword">theorem</span> inverse_of_representation_aristotle
+    {X Y : <span class="tok-type">Type</span>*} [TopologicalSpace X] [CompactSpace X] [T2Space X]
+    [TopologicalSpace Y] [CompactSpace Y] [T2Space Y]
+    (T : C(X, <span class="tok-type">ℝ</span>) → C(Y, <span class="tok-type">ℝ</span>)) (S : C(Y, <span class="tok-type">ℝ</span>) → C(X, <span class="tok-type">ℝ</span>))
+    (hTS : ∀ f, S (T f) = f) (hST : ∀ g, T (S g) = g)
+    (tau : Y → X) (sigma : X → Y)
+    (h : Y → <span class="tok-type">ℝ</span>) (k : X → <span class="tok-type">ℝ</span>)
+    (hh : ∀ y, h y = -<span class="tok-number">1</span> ∨ h y = <span class="tok-number">1</span>)
+    (hk : ∀ x, k x = -<span class="tok-number">1</span> ∨ k x = <span class="tok-number">1</span>)
+    (hT : ∀ (f : C(X, <span class="tok-type">ℝ</span>)) (y : Y), T f y = h y * f (tau y))
+    (hS : ∀ (g : C(Y, <span class="tok-type">ℝ</span>)) (x : X), S g x = k x * g (sigma x)) :
+    (∀ x, tau (sigma x) = x) ∧ (∀ y, sigma (tau y) = y) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">refine</span>&#x27; And.<span class="tok-tactic">intro</span> _ _;
+  · <span class="tok-tactic">intro</span> x;
+    <span class="tok-comment">-- Apply eq_of_forall_continuousMap_eval_aristotle with phi = tau ∘ sigma and c(x) = k(x) * h(σ(x)).</span>
+    <span class="tok-tactic">have</span> h_eq : ∀ f : C(X, <span class="tok-type">ℝ</span>), ∀ x : X, f x = k x * h (sigma x) * f (tau (sigma x)) := <span class="tok-tactic">by</span>
+      grind +splitIndPred;
+    <span class="tok-tactic">have</span> h_c_nonzero : ∀ x, k x * h (sigma x) ≠ <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+      grind +revert;
+    <span class="tok-tactic">exact</span> eq_of_forall_continuousMap_eval_aristotle ( <span class="tok-keyword">fun</span> x =&gt; tau ( sigma x ) ) ( <span class="tok-keyword">fun</span> x =&gt; k x * h ( sigma x ) ) h_c_nonzero h_eq x;
+  · <span class="tok-tactic">intro</span> y
+    by_contra h_contra;
+    <span class="tok-comment">-- By Urysohn&#x27;s lemma, there exists a continuous function $g : Y \to \mathbb{R}$ such that $g(y) = 1$ and $g(\sigma(\tau(y))) = 0$.</span>
+    <span class="tok-tactic">obtain</span> ⟨g, hg⟩ : ∃ g : C(Y, <span class="tok-type">ℝ</span>), g y = <span class="tok-number">1</span> ∧ g (sigma (tau y)) = <span class="tok-number">0</span> := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">have</span> := exists_continuous_zero_one_of_isClosed ( <span class="tok-tactic">show</span> IsClosed { sigma ( tau y ) } from isClosed_singleton ) ( <span class="tok-tactic">show</span> IsClosed { y } from isClosed_singleton );
+      <span class="tok-tactic">exact</span> Exists.elim ( this ( Set.disjoint_singleton_left.mpr h_contra ) ) <span class="tok-keyword">fun</span> f hf =&gt; ⟨ f, hf.<span class="tok-number">2.1</span> rfl, hf.<span class="tok-number">1</span> rfl ⟩;
+    replace hST := congr_arg ( <span class="tok-keyword">fun</span> f =&gt; f y ) ( hST g ) ; simp_all +decide ;</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+</code></pre>
+          </details>
+        
+    </article>
+    
+
+    <article class="node-card node-banach_stone_root" id="node-banach_stone_root" data-node-id="banach_stone_root" data-node-title="Banach-Stone Theorem" data-node-status="formal_verified">
+      <h3>Banach-Stone Theorem</h3>
+      <p class="meta">Node id: banach_stone_root | Status: formal_verified</p>
+      <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-isometry_representation">isometry_representation</a>, <a class="node-jump" href="#node-continuity_of_representation">continuity_of_representation</a>, <a class="node-jump" href="#node-inverse_of_representation">inverse_of_representation</a></p>
+      
+      <p class="meta">Formalization priority: 1. Rationale: Promoted after all direct children were verified; The Banach-Stone root theorem is now fully supported by its three verified children, which provide pointwise representation, continuity of the representation maps, and bijectivity. The rema…</p>
+      <p class="meta">Most recent formalization episode: verified the full parent node after 2 Lean verification attempts. Most recent formalization attempt verified the full parent node.</p>
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let $X$ and $Y$ be compact Hausdorff spaces. Suppose $T : C(X,\mathbb{R}) \to C(Y,\mathbb{R})$ is a surjective linear isometry. Then there exist a homeomorphism $\tau : Y \to X$ and a continuous function $h : Y \to \{-1,1\}$ such that $(Tf)(y) = h(y)\, f(\tau(y))$ for all $f \in C(X,\mathbb{R})$ and $y \in Y$. In particular, $X$ and $Y$ are homeomorphic.</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">Since $T$ is a surjective linear isometry, the pointwise representation lemma provides maps $\tau : Y \to X$ and $h : Y \to \{-1,1\}$ such that $(Tf)(y) = h(y) f(\tau(y))$ for all $f \in C(X,\mathbb{R})$ and $y \in Y$. By the continuity lemma, $h$ and $\tau$ are continuous.
+Because $T$ is an isometric isomorphism of Banach spaces, its inverse $T^{-1} : C(Y,\mathbb{R}) \to C(X,\mathbb{R})$ is also a surjective linear isometry. Applying the pointwise representation lemma to $T^{-1}$ yields maps $\sigma : X \to Y$ and $k : X \to \{-1,1\}$ such that $(T^{-1}g)(x) = k(x) g(\sigma(x))$. By the bijectivity lemma, since $T$ and $T^{-1}$ are mutual inverses, we have $\tau \circ \sigma = \operatorname{id}_X$ and $\sigma \circ \tau = \operatorname{id}_Y$, so $\tau$ and $\sigma$ are mutual inverses. Since $\tau$ is a continuous bijection with an inverse $\sigma$ (which is continuous by the continuity lemma applied to $T^{-1}$), $\tau$ is a homeomorphism.</div>
+      
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> banach_stone_root_aristotle</p>
+        <p><strong>Coverage:</strong> full match</p><p class="meta">The Lean theorem faithfully and fully captures the informal Banach-Stone theorem. It sets up X and Y as compact Hausdorff spaces, takes T as a bijective linear isometry (which is equivalent to surjective linear isometry), and concludes with the existence of a homeomorphism tau and a continuous function h taking values in {-1, 1} that satisfy the representation formula. No further expansion is needed.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> banach_stone_root_aristotle
+    {X : <span class="tok-type">Type</span>*} [TopologicalSpace X] [CompactSpace X] [T2Space X]
+    {Y : <span class="tok-type">Type</span>*} [TopologicalSpace Y] [CompactSpace Y] [T2Space Y]
+    (T : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>)) :
+    ∃ (tau : Y ≃ₜ X) (h : C(Y, <span class="tok-type">ℝ</span>)),
+      (∀ y, h y = <span class="tok-number">1</span> ∨ h y = -<span class="tok-number">1</span>) ∧
+      (∀ (f : C(X, <span class="tok-type">ℝ</span>)) (y : Y), T f y = h y * f (tau y))</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean lean_project/FormalIslands/Generated/banach_stone_root_worker_20260414-162027_0798d22d.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+<span class="tok-keyword">import</span> FormalIslands.Generated.VerifiedSupport.ContinuityOfRepresentation_ec50dae1b8
+<span class="tok-keyword">import</span> FormalIslands.Generated.VerifiedSupport.InverseOfRepresentation_f90b74f1c1
+<span class="tok-keyword">import</span> FormalIslands.Generated.VerifiedSupport.IsometryRepresentation_73d063723d
+
+/-!
+# Banach-Stone Theorem
+
+Let X and Y be compact Hausdorff spaces. Suppose T : C(X,<span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y,<span class="tok-type">ℝ</span>) is a surjective
+linear isometry. Then there exist a homeomorphism τ : Y → X and a continuous function
+h : Y → {-<span class="tok-number">1</span>,<span class="tok-number">1</span>} such that (Tf)(y) = h(y) · f(τ(y)) for all f ∈ C(X,<span class="tok-type">ℝ</span>) and y ∈ Y.
+In particular, X and Y are homeomorphic.
+
+The proof assembles three verified child lemmas:
+- `isometry_representation_aristotle`: pointwise representation of isometries
+- `continuity_of_representation_aristotle`: continuity of the representation maps
+- `inverse_of_representation_aristotle`: bijectivity from inverse representation
+-/
+
+noncomputable <span class="tok-keyword">section</span>
+
+<span class="tok-keyword">open</span> ContinuousMap
+
+/<span class="tok-comment">-- **Banach-Stone Theorem.** Let X and Y be compact Hausdorff spaces. A surjective linear</span>
+isometry T : C(X,<span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y,<span class="tok-type">ℝ</span>) is represented as (Tf)(y) = h(y) · f(τ(y)) <span class="tok-keyword">where</span>
+τ : Y ≃ₜ X is a homeomorphism and h : C(Y,<span class="tok-type">ℝ</span>) takes values <span class="tok-keyword">in</span> {-<span class="tok-number">1</span>, <span class="tok-number">1</span>}. -/
+<span class="tok-keyword">theorem</span> banach_stone_root_aristotle
+    {X : <span class="tok-type">Type</span>*} [TopologicalSpace X] [CompactSpace X] [T2Space X]
+    {Y : <span class="tok-type">Type</span>*} [TopologicalSpace Y] [CompactSpace Y] [T2Space Y]
+    (T : C(X, <span class="tok-type">ℝ</span>) ≃ₗᵢ[<span class="tok-type">ℝ</span>] C(Y, <span class="tok-type">ℝ</span>)) :
+    ∃ (tau : Y ≃ₜ X) (h : C(Y, <span class="tok-type">ℝ</span>)),
+      (∀ y, h y = <span class="tok-number">1</span> ∨ h y = -<span class="tok-number">1</span>) ∧
+      (∀ (f : C(X, <span class="tok-type">ℝ</span>)) (y : Y), T f y = h y * f (tau y)) := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Step 1: Apply pointwise representation to T</span>
+  <span class="tok-tactic">obtain</span> ⟨tau, h, h_val, h_rep⟩ := isometry_representation_aristotle T
+  <span class="tok-comment">-- Step 2: Apply pointwise representation to T.symm</span>
+  <span class="tok-tactic">obtain</span> ⟨sigma, k, k_val, k_rep⟩ := isometry_representation_aristotle T.symm
+  <span class="tok-comment">-- Step 3: Get continuity of h, tau from the continuity lemma</span>
+  <span class="tok-tactic">have</span> h_cont := continuity_of_representation_aristotle (<span class="tok-keyword">fun</span> f =&gt; T f) tau h h_val h_rep
+  <span class="tok-comment">-- Step 4: Get continuity of k, sigma from the continuity lemma applied to T.symm</span>
+  <span class="tok-tactic">have</span> k_cont := continuity_of_representation_aristotle (<span class="tok-keyword">fun</span> g =&gt; T.symm g) sigma k k_val k_rep
+  <span class="tok-comment">-- Step 5: Get bijectivity from the inverse representation lemma</span>
+  <span class="tok-tactic">have</span> hTS : ∀ f : C(X, <span class="tok-type">ℝ</span>), T.symm (T f) = f := <span class="tok-keyword">fun</span> f =&gt; T.symm_apply_apply f
+  <span class="tok-tactic">have</span> hST : ∀ g : C(Y, <span class="tok-type">ℝ</span>), T (T.symm g) = g := <span class="tok-keyword">fun</span> g =&gt; T.apply_symm_apply g
+  <span class="tok-tactic">have</span> hh : ∀ y, h y = -<span class="tok-number">1</span> ∨ h y = <span class="tok-number">1</span> := <span class="tok-keyword">fun</span> y =&gt; (h_val y).symm
+  <span class="tok-tactic">have</span> hk : ∀ x, k x = -<span class="tok-number">1</span> ∨ k x = <span class="tok-number">1</span> := <span class="tok-keyword">fun</span> x =&gt; (k_val x).symm
+  <span class="tok-tactic">have</span> bijection := inverse_of_representation_aristotle
+    (<span class="tok-keyword">fun</span> f =&gt; T f) (<span class="tok-keyword">fun</span> g =&gt; T.symm g) hTS hST tau sigma h k hh hk h_rep k_rep
+  <span class="tok-tactic">obtain</span> ⟨h_tau_sigma, h_sigma_tau⟩ := bijection
+  <span class="tok-comment">-- Step 6: Construct the homeomorphism</span>
+  <span class="tok-keyword">let</span> tau_equiv : Y ≃ X := {
+    toFun := tau
+    invFun := sigma
+    left_inv := h_sigma_tau
+    right_inv := h_tau_sigma
+  }
+  <span class="tok-keyword">let</span> tau_homeo : Y ≃ₜ X := {
+    toEquiv := tau_equiv
+    continuous_toFun := h_cont.<span class="tok-number">2</span>
+    continuous_invFun := k_cont.<span class="tok-number">2</span>
+  }
+  <span class="tok-comment">-- Step 7: Construct h as a ContinuousMap</span>
+  <span class="tok-keyword">let</span> h_map : C(Y, <span class="tok-type">ℝ</span>) := ⟨h, h_cont.<span class="tok-number">1</span>⟩
+  <span class="tok-tactic">exact</span> ⟨tau_homeo, h_map, h_val, h_rep⟩
+
+<span class="tok-keyword">end</span></code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+
+
+stderr:
+</code></pre>
+          </details>
+        
+    </article>
+    
+      </div>
+      
+    </section>
+  </main>
+  
+  <script>
+    document.querySelectorAll('[data-graph-history]').forEach((root) => {
+      const collections = {
+        visual: Array.from(root.querySelectorAll('[data-history-frame][data-history-collection="visual"]')),
+        all: Array.from(root.querySelectorAll('[data-history-frame][data-history-collection="all"]')),
+      };
+      const showAllToggle = root.querySelector('[data-history-show-all]');
+      const captionEl = root.querySelector('[data-history-caption]');
+      const metaEl = root.querySelector('[data-history-meta]');
+      const indexEl = root.querySelector('[data-history-index]');
+      const countEl = root.querySelector('[data-history-count]');
+      const startBtn = root.querySelector('[data-history-action="start"]');
+      const prevBtn = root.querySelector('[data-history-action="prev"]');
+      const nextBtn = root.querySelector('[data-history-action="next"]');
+      const endBtn = root.querySelector('[data-history-action="end"]');
+      let collection = (root.dataset.historyDefaultCollection || 'visual');
+      const indexes = {
+        visual: Math.max(collections.visual.length - 1, 0),
+        all: Math.max(collections.all.length - 1, 0),
+      };
+
+      const activeFrames = () => {
+        const frames = collections[collection] || [];
+        return frames.length > 0 ? frames : collections.visual;
+      };
+
+      const update = () => {
+        Object.entries(collections).forEach(([key, frames]) => {
+          frames.forEach((frame, frameIndex) => {
+            const active = key === collection && frameIndex === indexes[collection];
+            frame.hidden = !active;
+          });
+        });
+        const frames = activeFrames();
+        const safeIndex = Math.min(indexes[collection], frames.length - 1);
+        indexes[collection] = Math.max(safeIndex, 0);
+        const active = frames[indexes[collection]];
+        if (!active) return;
+        if (captionEl) captionEl.innerHTML = active.dataset.captionHtml || '';
+        if (metaEl) {
+          const label = active.dataset.label || '';
+          const timestamp = active.dataset.timestamp || '';
+          metaEl.textContent = label && timestamp ? `${label} · ${timestamp}` : (label || timestamp);
+        }
+        if (indexEl) indexEl.textContent = String(indexes[collection] + 1);
+        if (countEl) countEl.textContent = String(frames.length);
+        if (startBtn) startBtn.disabled = indexes[collection] === 0;
+        if (prevBtn) prevBtn.disabled = indexes[collection] === 0;
+        if (nextBtn) nextBtn.disabled = indexes[collection] === frames.length - 1;
+        if (endBtn) endBtn.disabled = indexes[collection] === frames.length - 1;
+      };
+
+      startBtn?.addEventListener('click', () => {
+        indexes[collection] = 0;
+        update();
+      });
+      prevBtn?.addEventListener('click', () => {
+        if (indexes[collection] > 0) {
+          indexes[collection] -= 1;
+          update();
+        }
+      });
+      nextBtn?.addEventListener('click', () => {
+        const frames = activeFrames();
+        if (indexes[collection] < frames.length - 1) {
+          indexes[collection] += 1;
+          update();
+        }
+      });
+      endBtn?.addEventListener('click', () => {
+        const frames = activeFrames();
+        indexes[collection] = Math.max(frames.length - 1, 0);
+        update();
+      });
+      showAllToggle?.addEventListener('change', () => {
+        collection = showAllToggle.checked && collections.all.length > 0 ? 'all' : 'visual';
+        update();
+      });
+
+      update();
+    });
+  </script>
+    
+  
+  <script>
+    document.querySelectorAll('.report-root').forEach((root) => {
+      const searchInput = root.querySelector('[data-node-search]');
+      const resetButton = root.querySelector('[data-node-filter-reset]');
+      const statusInputs = Array.from(root.querySelectorAll('[data-node-filter-status]'));
+      const cards = Array.from(root.querySelectorAll('[data-node-id]'));
+      const graphNodes = Array.from(root.querySelectorAll('[data-graph-node-id]'));
+      if (!searchInput || cards.length === 0) return;
+
+      const update = () => {
+        const query = searchInput.value.trim().toLowerCase();
+        const allowedStatuses = new Set(
+          statusInputs.filter((input) => input.checked).map((input) => input.dataset.nodeFilterStatus)
+        );
+        cards.forEach((card) => {
+          const nodeId = (card.dataset.nodeId || '').toLowerCase();
+          const title = (card.dataset.nodeTitle || '').toLowerCase();
+          const status = card.dataset.nodeStatus || '';
+          const matchesQuery = query === '' || nodeId.includes(query) || title.includes(query);
+          const matchesStatus = allowedStatuses.has(status);
+          const visible = matchesQuery && matchesStatus;
+          card.hidden = !visible;
+        });
+        graphNodes.forEach((node) => {
+          const nodeId = node.dataset.graphNodeId || '';
+          const linkedCard = root.querySelector(`[data-node-id="${CSS.escape(nodeId)}"]`);
+          node.classList.toggle('graph-node-dimmed', !!linkedCard && linkedCard.hidden);
+        });
+      };
+
+      statusInputs.forEach((input) => input.addEventListener('change', update));
+      searchInput.addEventListener('input', update);
+      resetButton?.addEventListener('click', () => {
+        searchInput.value = '';
+        statusInputs.forEach((input) => { input.checked = true; });
+        update();
+      });
+      update();
+    });
+  </script>
+    
+</body>
+</html>

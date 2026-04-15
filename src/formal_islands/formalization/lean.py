@@ -183,7 +183,7 @@ class LeanVerifier:
             if nested_failure is not None:
                 return nested_failure
             progress(f"prebuilding imported local module {import_path}")
-            result = self._run_lean_file(
+            result = self._build_lean_module(
                 import_path,
                 workspace_root=workspace_root,
                 attempt_number=attempt_number,
@@ -219,7 +219,13 @@ class LeanVerifier:
                 continue
             module_names = stripped[len("import ") :].split()
             for module_name in module_names:
-                candidate = workspace_root / Path(*module_name.split("."))
+                module_parts = [
+                    part[1:-1]
+                    if len(part) >= 2 and part.startswith("«") and part.endswith("»")
+                    else part
+                    for part in module_name.split(".")
+                ]
+                candidate = workspace_root / Path(*module_parts)
                 candidate = candidate.with_suffix(".lean")
                 if candidate.is_file():
                     resolved_candidate = candidate.resolve()
@@ -228,6 +234,44 @@ class LeanVerifier:
                         paths.append(resolved_candidate)
         return paths
 
+    def _build_lean_module(
+        self,
+        file_path: Path,
+        *,
+        workspace_root: Path,
+        attempt_number: int,
+    ) -> VerificationResult:
+        relative_input = file_path.relative_to(workspace_root)
+        olean_path, ilean_path = self._compiled_artifact_paths(file_path, workspace_root)
+        olean_path.parent.mkdir(parents=True, exist_ok=True)
+        command = [
+            self._lake_executable(),
+            "env",
+            "lean",
+            "-o",
+            str(olean_path),
+            "-i",
+            str(ilean_path),
+            str(relative_input),
+        ]
+        display_command = [
+            self._lake_executable(),
+            "env",
+            "lean",
+            "-o",
+            self._repo_relative_path(olean_path, workspace_root),
+            "-i",
+            self._repo_relative_path(ilean_path, workspace_root),
+            self._repo_relative_path(file_path, workspace_root),
+        ]
+        return self._run_lean_command(
+            command,
+            display_command=display_command,
+            file_path=file_path,
+            workspace_root=workspace_root,
+            attempt_number=attempt_number,
+        )
+
     def _run_lean_file(
         self,
         file_path: Path,
@@ -235,13 +279,30 @@ class LeanVerifier:
         workspace_root: Path,
         attempt_number: int,
     ) -> VerificationResult:
-        command = [self._lake_executable(), "env", "lean", str(file_path)]
+        command = [self._lake_executable(), "env", "lean", str(file_path.relative_to(workspace_root))]
         display_command = [
             self._lake_executable(),
             "env",
             "lean",
             self._repo_relative_path(file_path, workspace_root),
         ]
+        return self._run_lean_command(
+            command,
+            display_command=display_command,
+            file_path=file_path,
+            workspace_root=workspace_root,
+            attempt_number=attempt_number,
+        )
+
+    def _run_lean_command(
+        self,
+        command: list[str],
+        *,
+        display_command: list[str],
+        file_path: Path,
+        workspace_root: Path,
+        attempt_number: int,
+    ) -> VerificationResult:
         start = time.monotonic()
         try:
             completed = self.command_runner(
@@ -289,7 +350,13 @@ class LeanVerifier:
 
     @staticmethod
     def _contains_sorry_warning(text: str) -> bool:
-        return bool(re.search(r"warning: .*uses 'sorry'", text))
+        return bool(re.search(r"warning: .*uses [`']sorry[`']", text))
+
+    @staticmethod
+    def _compiled_artifact_paths(file_path: Path, workspace_root: Path) -> tuple[Path, Path]:
+        relative_path = file_path.relative_to(workspace_root)
+        compiled_base = workspace_root / ".lake" / "build" / "lib" / "lean" / relative_path
+        return compiled_base.with_suffix(".olean"), compiled_base.with_suffix(".ilean")
 
     @staticmethod
     def _repo_relative_path(path: Path, workspace_root: Path) -> str:

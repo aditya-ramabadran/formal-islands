@@ -17,6 +17,7 @@ from formal_islands.formalization.agentic import (
 )
 from formal_islands.formalization.aristotle import (
     _build_verified_child_support_files,
+    _materialize_workspace_verified_child_support_files,
     _materialize_verified_child_support_files,
     build_aristotle_formalization_prompt,
 )
@@ -336,7 +337,7 @@ def test_build_aristotle_formalization_prompt_includes_all_verified_direct_child
     assert "self-contained final scratch file" in lowered
 
 
-def test_build_aristotle_formalization_prompt_for_promoted_parent_mentions_new_parent_theorem(
+def test_build_aristotle_formalization_prompt_with_importable_children_uses_modular_packaging(
     tmp_path: Path,
 ) -> None:
     workspace = create_workspace(tmp_path)
@@ -388,7 +389,7 @@ def test_build_aristotle_formalization_prompt_for_promoted_parent_mentions_new_p
 
     lowered = prompt.lower()
     assert "materialized verified support files" in lowered
-    assert "this is a promoted parent-assembly attempt" in lowered
+    assert "this attempt already has verified direct-child theorem dependencies available" in lowered
     assert "must still be `n0_aristotle`" in prompt
     assert "not just a resubmission of one child theorem" in lowered
     assert "usage_mode" in prompt
@@ -396,7 +397,67 @@ def test_build_aristotle_formalization_prompt_for_promoted_parent_mentions_new_p
     assert "some verified direct-child support files in this snapshot are importable lean modules" in lowered
     assert "you may import those child modules directly" in lowered
     assert "do not restate a verified child theorem locally with `:= by sorry`" in lowered
-    assert "prefer importing that child module" in lowered
+    assert "the cleanest default is to import each verified direct-child module" in lowered
+    assert "already materialized in this snapshot and in the local verification workspace" in lowered
+    assert "do not create local stand-ins such as `_local` lemmas" in lowered
+    assert "self-contained final scratch file" not in lowered
+    assert "lean_code" not in prompt
+
+
+def test_build_aristotle_formalization_prompt_user_continuation_with_verified_children_is_modular(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+    scratch_path = workspace.prepare_worker_file("n0")
+    graph = build_two_child_candidate_graph()
+    child_artifact = workspace.prepare_worker_file("child")
+    child_artifact.write_text("theorem child_theorem : True := by trivial\n", encoding="utf-8")
+    graph = graph.model_copy(
+        update={
+            "nodes": [
+                candidate.model_copy(
+                    update={
+                        "formal_artifact": candidate.formal_artifact.model_copy(
+                            update={
+                                "verification": candidate.formal_artifact.verification.model_copy(
+                                    update={"artifact_path": str(child_artifact)}
+                                )
+                            }
+                        )
+                    }
+                )
+                if candidate.id in {"n1", "n2"}
+                else candidate.model_copy(
+                    update={"formalization_rationale": "User continuation request."}
+                )
+                if candidate.id == "n0"
+                else candidate
+                for candidate in graph.nodes
+            ]
+        }
+    )
+    support_files = _build_verified_child_support_files(
+        graph=graph,
+        node_id="n0",
+        workspace_root=workspace.root,
+        prefer_importable_modules=True,
+    )
+    node = next(node for node in graph.nodes if node.id == "n0")
+
+    prompt = build_aristotle_formalization_prompt(
+        graph=graph,
+        node=node,
+        desired_theorem_name="n0_aristotle",
+        relative_scratch_path=scratch_path.relative_to(workspace.root),
+        verified_child_support_files=support_files,
+    )
+
+    lowered = prompt.lower()
+    assert "user continuation request" in lowered
+    assert "packaging instruction for this child-aware attempt" in lowered
+    assert "self-contained final scratch file" not in lowered
+    assert "import_module" in prompt
+    assert "lean_code" not in prompt
 
 
 def test_materialize_verified_child_support_files_copies_existing_artifacts(tmp_path: Path) -> None:
@@ -469,12 +530,96 @@ def test_materialize_verified_child_support_files_can_stage_importable_modules(t
     first_support = next(support for support in support_files if support.child_id == "n1")
     assert first_support.usage_mode == "importable"
     assert first_support.import_module is not None
+    assert "VerifiedSupport" in str(first_support.relative_path)
+    assert first_support.relative_path.name.startswith("N1_")
 
     snapshot_root = tmp_path / "snapshot"
     _materialize_verified_child_support_files(snapshot_root=snapshot_root, support_files=support_files)
-    copied = snapshot_root / first_support.relative_path
-    assert copied.suffix == ".lean"
-    assert copied.read_text(encoding="utf-8") == child_artifact.read_text(encoding="utf-8")
+    copied_alias = snapshot_root / first_support.relative_path
+    assert copied_alias.suffix == ".lean"
+    alias_text = copied_alias.read_text(encoding="utf-8")
+    assert "Stable module for verified child node" in alias_text
+    assert child_artifact.read_text(encoding="utf-8").strip() in alias_text
+
+
+def test_materialize_verified_child_support_files_can_inline_importable_alias_without_workspace_source(
+    tmp_path: Path,
+) -> None:
+    graph = build_two_child_graph()
+    support_files = _build_verified_child_support_files(
+        graph=graph,
+        node_id="n0",
+        prefer_importable_modules=True,
+    )
+
+    first_support = next(support for support in support_files if support.child_id == "n1")
+    assert first_support.usage_mode == "importable"
+    assert first_support.import_module is not None
+    assert "VerifiedSupport" in str(first_support.relative_path)
+
+    snapshot_root = tmp_path / "snapshot"
+    _materialize_verified_child_support_files(snapshot_root=snapshot_root, support_files=support_files)
+    copied_alias = snapshot_root / first_support.relative_path
+    alias_text = copied_alias.read_text(encoding="utf-8")
+    assert "Stable module for verified child node" in alias_text
+    assert first_support.lean_code in alias_text
+
+
+def test_materialize_workspace_verified_child_support_files_writes_stable_alias_modules(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path / "lean_project")
+    child_artifact = workspace.prepare_worker_file("child")
+    child_artifact.write_text("theorem child_theorem : True := by trivial\n", encoding="utf-8")
+
+    graph = build_two_child_graph()
+    updated_nodes = [
+        node.model_copy(
+            update={
+                "formal_artifact": node.formal_artifact.model_copy(
+                    update={
+                        "verification": node.formal_artifact.verification.model_copy(
+                            update={"artifact_path": str(child_artifact)}
+                        )
+                    }
+                )
+            }
+        )
+        if node.id == "n1"
+        else node
+        for node in graph.nodes
+    ]
+    support_files = _build_verified_child_support_files(
+        graph=graph.model_copy(update={"nodes": updated_nodes}),
+        node_id="n0",
+        workspace_root=workspace.root,
+        prefer_importable_modules=True,
+    )
+
+    _materialize_workspace_verified_child_support_files(
+        workspace_root=workspace.root,
+        support_files=support_files,
+    )
+
+    first_support = next(support for support in support_files if support.child_id == "n1")
+    alias_path = workspace.root / first_support.relative_path
+    assert alias_path.is_file()
+    alias_text = alias_path.read_text(encoding="utf-8")
+    assert child_artifact.read_text(encoding="utf-8").strip() in alias_text
+
+
+def test_importable_support_module_names_are_content_addressed(tmp_path: Path) -> None:
+    graph = build_two_child_graph()
+    support_files = _build_verified_child_support_files(
+        graph=graph,
+        node_id="n0",
+        prefer_importable_modules=True,
+    )
+
+    names = {support.child_id: support.relative_path.name for support in support_files}
+    assert names["n1"].startswith("N1_")
+    assert names["n2"].startswith("N2_")
+    assert names["n1"] != names["n2"]
 
 
 def test_parent_promotion_assessment_is_cached_and_promotes_parent(tmp_path: Path) -> None:
@@ -541,6 +686,32 @@ def test_parent_promotion_assessment_cache_reuses_negative_decision(tmp_path: Pa
     log_text = progress_log.read_text(encoding="utf-8")
     assert "cache hit" in log_text.lower()
     assert "promote=False" in log_text
+
+
+def test_parent_promotion_assessment_failure_is_not_cached(tmp_path: Path) -> None:
+    graph = build_two_child_graph()
+    planning_backend = MockBackend(queued_payloads=[])
+    cache = ParentPromotionCache(decisions={}, lock=RLock())
+    progress_log = tmp_path / "_progress.log"
+
+    with use_progress_log(progress_log):
+        first_graph = _promote_informal_parents_with_verified_children(
+            graph=graph,
+            planning_backend=planning_backend,
+            parent_promotion_cache=cache,
+        )
+        second_graph = _promote_informal_parents_with_verified_children(
+            graph=first_graph,
+            planning_backend=planning_backend,
+            parent_promotion_cache=cache,
+        )
+
+    root = next(node for node in second_graph.nodes if node.id == "n0")
+    assert root.status == "informal"
+    assert len(planning_backend.requests) == 2
+    log_text = progress_log.read_text(encoding="utf-8")
+    assert "leaving informal because no planner decision was available" in log_text
+    assert "cache hit" not in log_text.lower()
 
 
 def test_parent_promotion_episode_prevents_immediate_repromotion(tmp_path: Path) -> None:
@@ -1203,7 +1374,7 @@ def test_lean_verifier_captures_command_result(tmp_path: Path) -> None:
     ) -> subprocess.CompletedProcess[str]:
         assert args[1:3] == ["env", "lean"]
         assert cwd == tmp_path.resolve()
-        assert args[3].startswith(str((tmp_path / "FormalIslands" / "Generated").resolve()))
+        assert args[3].startswith("FormalIslands/Generated/")
         assert "_attempt_1_" in args[3]
         assert args[3].endswith(".lean")
         return subprocess.CompletedProcess(args=args, returncode=0, stdout="ok", stderr="")
@@ -1239,7 +1410,7 @@ def test_lean_verifier_handles_relative_workspace_root(
         timeout: float | None = None,
     ) -> subprocess.CompletedProcess[str]:
         assert cwd == (tmp_path / "lean_project").resolve()
-        assert args[3].startswith(str((tmp_path / "lean_project" / "FormalIslands" / "Generated").resolve()))
+        assert args[3].startswith("FormalIslands/Generated/")
         assert "_attempt_1_" in args[3]
         assert args[3].endswith(".lean")
         return subprocess.CompletedProcess(args=args, returncode=0, stdout="ok", stderr="")
@@ -1269,7 +1440,7 @@ def test_lean_verifier_verifies_existing_file(tmp_path: Path) -> None:
         check: bool,
         timeout: float | None = None,
     ) -> subprocess.CompletedProcess[str]:
-        assert args[3] == str(worker_file.resolve())
+        assert args[3] == str(worker_file.relative_to(workspace.root))
         return subprocess.CompletedProcess(args=args, returncode=0, stdout="ok", stderr="")
 
     verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
@@ -1310,6 +1481,38 @@ def test_lean_verifier_rejects_sorry_warnings_even_with_zero_exit_code(tmp_path:
     assert "reported `sorry` usage" in result.stderr
 
 
+def test_lean_verifier_rejects_backticked_sorry_warnings_even_with_zero_exit_code(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=0,
+            stdout="warning: declaration uses `sorry`\n",
+            stderr="",
+        )
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    result = verifier.verify_code(
+        lean_code="theorem t : True := by\n  sorry\n",
+        node_id="n2",
+        attempt_number=1,
+    )
+
+    assert result.status == "failed"
+    assert "reported `sorry` usage" in result.stderr
+
+
 def test_lean_verifier_prebuilds_imported_local_modules_before_parent(tmp_path: Path) -> None:
     workspace = create_workspace(tmp_path)
     child_file = workspace.generated_dir / "child_dep.lean"
@@ -1333,15 +1536,53 @@ def test_lean_verifier_prebuilds_imported_local_modules_before_parent(tmp_path: 
         check: bool,
         timeout: float | None = None,
     ) -> subprocess.CompletedProcess[str]:
-        seen.append(args[3])
+        seen.append(" ".join(args))
         return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
 
     verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
     result = verifier.verify_existing_file(file_path=parent_file, attempt_number=1)
 
     assert result.status == "verified"
-    assert seen[0] == str(child_file.resolve())
-    assert seen[-1] == str(parent_file.resolve())
+    assert str(child_file.relative_to(workspace.root)) in seen[0]
+    assert " -o " in f" {seen[0]} "
+    assert str(parent_file.relative_to(workspace.root)) in seen[-1]
+
+
+def test_lean_verifier_prebuilds_imported_local_modules_with_quoted_module_names(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+    child_file = workspace.generated_dir / "child-dep.lean"
+    child_file.write_text("theorem child_dep : True := by trivial\n", encoding="utf-8")
+    parent_file = workspace.prepare_worker_file("parent")
+    parent_file.write_text(
+        "import FormalIslands.Generated.«child-dep»\n\n"
+        "theorem parent : True := by\n"
+        "  exact child_dep\n",
+        encoding="utf-8",
+    )
+
+    seen: list[str] = []
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        seen.append(" ".join(args))
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    result = verifier.verify_existing_file(file_path=parent_file, attempt_number=1)
+
+    assert result.status == "verified"
+    assert str(child_file.relative_to(workspace.root)) in seen[0]
+    assert " -o " in f" {seen[0]} "
+    assert str(parent_file.relative_to(workspace.root)) in seen[-1]
 
 
 def test_lean_verifier_captures_timeout_as_failed_result(tmp_path: Path) -> None:
