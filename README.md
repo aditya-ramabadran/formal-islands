@@ -39,9 +39,15 @@ Depending on the command, you may also see `02_candidate_graph.json` and `04_rep
 
 Runs can also be resumed later from `03_formalized_graph.json` with the `continue` command: you can seed one or more nodes back into the candidate set, append to the same `_progress.log` / `graph_history.jsonl`, and let the normal auto formalization + promotion logic continue from there.
 
-<p align="center">
-  <img src="docs/assets/heat_uniqueness.png" width="480" alt="Proof graph for heat equation uniqueness: one informal root node with two formally verified child nodes">
-</p>
+### How To Read A Run
+
+The main output is a mixed artifact, not just a success/failure bit.
+
+- **Formal verified node:** the local Lean theorem compiled and passed semantic review as a full-node match.
+- **Certified core / faithful core:** the Lean theorem verified an important local burden, but the full parent statement still has a remaining gap.
+- **Informal node with remaining proof burden:** the report explains exactly what is still left for a human reviewer or a later continuation pass.
+
+This is why partial-certification runs are first-class results here: a good run may leave the root informal while still discharging the hardest or most review-intensive local steps.
 
 ## Featured Examples
 
@@ -50,7 +56,7 @@ Live reports on [the website](https://aditya-ramabadran.github.io/formal-islands
 | Theorem | Verified |
 |---|---|
 | [Young's Convolution Inequality](https://aditya-ramabadran.github.io/formal-islands/reports/young_convolution.html) | 3 of 4 nodes formally verified |
-| [Two-Point Log-Sobolev Inequality](https://aditya-ramabadran.github.io/formal-islands/reports/two_point_log_sobolev.html) | Scalar inequality + G(u) ≥ 0 core lemma |
+| [Banach-Stone Theorem](https://aditya-ramabadran.github.io/formal-islands/reports/banach_stone.html) | 4 of 4 nodes formally verified, including a clean modular root assembled from imported verified children |
 | [Heat Equation Uniqueness](https://aditya-ramabadran.github.io/formal-islands/reports/heat_uniqueness.html) | Energy dissipation lemma + uniqueness core |
 | [Colorful Carathéodory Theorem](https://aditya-ramabadran.github.io/formal-islands/reports/colorful_caratheodory.html) | Active-vertices lemma + distance-improvement lemma + root theorem |
 | [Gershgorin Circle Theorem](https://aditya-ramabadran.github.io/formal-islands/reports/gershgorin_circle.html) | Eigenvalue bound + root theorem |
@@ -73,10 +79,42 @@ formal-islands new --backends claude/aristotle
 Or run against a featured example:
 
 ```bash
-formal-islands run two_point_log_sobolev --backends claude/aristotle --max-attempts 4
+formal-islands run banach_stone --backends claude/aristotle --max-attempts 4
 ```
 
 The workspace path and output directory are inferred automatically.
+
+## Common Commands
+
+Run the full pipeline on a theorem interactively:
+
+```bash
+formal-islands new --backends claude/aristotle
+```
+
+Run a saved example or input file end to end:
+
+```bash
+formal-islands run banach_stone --backends claude/aristotle --max-attempts 4
+```
+
+Continue an existing run from its saved graph:
+
+```bash
+formal-islands continue \
+  --output-dir artifacts/manual-testing/run19-young-convolution-inequality-gemini-aristotle \
+  --node case_1 \
+  --planning-backend gemini \
+  --formalization-backend aristotle
+```
+
+Regenerate a report from an existing graph:
+
+```bash
+formal-islands report \
+  --graph artifacts/manual-testing/run19-young-convolution-inequality-gemini-aristotle/03_formalized_graph.json \
+  --output-dir artifacts/manual-testing/run19-young-convolution-inequality-gemini-aristotle
+```
 
 ## How It Works
 
@@ -94,6 +132,8 @@ The faithfulness heuristics are intentionally conservative, but repeated `Type*`
 When all direct children of an informal parent node are verified, the parent can be promoted into the candidate set for a follow-up assembly attempt, so successful local cores can bootstrap further verification automatically.
 
 In several benchmarks, this child-first traversal is not just explanatory. It materially improves later parent-level theorem attempts by providing better staging, tighter theorem-family control, and already-certified local ingredients.
+
+In stronger recent runs, that graph structure has become real proof modularity: parent/root artifacts can assemble imported verified child modules directly, rather than copying child code into one long scratch file.
 
 After the initial candidates are exhausted, the pipeline also does a narrow “last blocker” sweep: if one remaining informal endpoint/base-case node is the only obstacle to a promising broader parent/root closure, it can be promoted and tried late in the run.
 
@@ -166,7 +206,7 @@ export ARISTOTLE_API_KEY=...
 
 [Aristotle](https://aristotle.harmonic.fun/) is Harmonic's Lean-specialized formalization API, and can only be used as a formalization backend, not for planning. It tends to produce the best Lean results.
 
-## All CLI Flags
+## Full CLI Reference
 
 ### `formal-islands run`
 
@@ -177,7 +217,7 @@ formal-islands run <input> [options]
 ```
 
 `<input>` can be:
-- A bare filename like `two_point_log_sobolev`, searched in `examples/featured/` then `examples/manual-testing/` automatically
+- A bare filename like `banach_stone`, searched in `examples/featured/` then `examples/manual-testing/` automatically
 - A path to any JSON file with `theorem_title`, `theorem_statement`, and `raw_proof_text`
 
 | Flag | Default | Description |
