@@ -59,7 +59,7 @@ Live reports on [the website](https://aditya-ramabadran.github.io/formal-islands
 | [Banach-Stone Theorem](https://aditya-ramabadran.github.io/formal-islands/reports/banach_stone.html) | 4 of 4 nodes formally verified, including a clean modular root assembled from imported verified children |
 | [Heat Equation Uniqueness](https://aditya-ramabadran.github.io/formal-islands/reports/heat_uniqueness.html) | Energy dissipation lemma + uniqueness core |
 | [Colorful Carathéodory Theorem](https://aditya-ramabadran.github.io/formal-islands/reports/colorful_caratheodory.html) | Active-vertices lemma + distance-improvement lemma + root theorem |
-| [Gershgorin Circle Theorem](https://aditya-ramabadran.github.io/formal-islands/reports/gershgorin_circle.html) | Eigenvalue bound + root theorem |
+| [Gleason-Kahane-Zelazko Theorem](https://aditya-ramabadran.github.io/formal-islands/reports/gleason_kahane_zelazko.html) | Square-preservation + polarization certified; analytic branch left explicit |
 
 ## Quick Start
 

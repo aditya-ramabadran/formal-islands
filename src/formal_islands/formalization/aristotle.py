@@ -164,6 +164,16 @@ def request_aristotle_formalization(
                 f"from {result_lean_path} to {scratch_path}"
             )
             shutil.copy2(result_lean_path, scratch_path)
+            copied_auxiliary_paths = _copy_extracted_generated_lean_files(
+                extracted_root=extracted_root,
+                workspace_root=workspace_root,
+                primary_destination=scratch_path,
+            )
+            if copied_auxiliary_paths:
+                progress(
+                    f"Aristotle project {run.project_id} for node {node_id}: copied "
+                    f"{len(copied_auxiliary_paths)} auxiliary generated Lean file(s) into the workspace"
+                )
 
             progress(
                 f"Aristotle project {run.project_id} for node {node_id}: recovering formal artifact "
@@ -837,6 +847,34 @@ def _find_result_lean_file(
     if lean_files:
         return lean_files[0]
     return None
+
+
+def _copy_extracted_generated_lean_files(
+    *,
+    extracted_root: Path,
+    workspace_root: Path,
+    primary_destination: Path,
+) -> list[Path]:
+    copied_paths: list[Path] = []
+    generated_parts = ("FormalIslands", "Generated")
+
+    for source_path in sorted(extracted_root.rglob("*.lean")):
+        try:
+            generated_index = source_path.parts.index(generated_parts[0])
+        except ValueError:
+            continue
+        remaining_parts = source_path.parts[generated_index:]
+        if tuple(remaining_parts[:2]) != generated_parts:
+            continue
+
+        destination_path = workspace_root.joinpath(*remaining_parts)
+        if destination_path == primary_destination:
+            continue
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_path, destination_path)
+        copied_paths.append(destination_path)
+
+    return copied_paths
 
 
 def _append_aristotle_summary_files(extracted_root: Path) -> None:

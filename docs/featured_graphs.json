@@ -21,9 +21,9 @@
       "graph_json": "artifacts/manual-testing/run21-colorful-caratheodory-gemini-aristotle/03_formalized_graph.json"
     },
     {
-      "id": "gershgorin_circle",
-      "report_url": "reports/gershgorin_circle.html",
-      "graph_json": "artifacts/manual-testing/run17-gershgorin-circle-gemini-aristotle-5/03_formalized_graph.json"
+      "id": "gleason_kahane_zelazko",
+      "report_url": "reports/gleason_kahane_zelazko.html",
+      "graph_json": "artifacts/manual-testing/run25-gleason-kahane-zelazko-gemini-aristotle-3/03_formalized_graph.json"
     }
   ]
 }

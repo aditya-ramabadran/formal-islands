@@ -557,6 +557,19 @@
             }
             
 
+            .report-root:has(a.node-young_convolution_inequality__formal_core:hover) a.node-young_convolution_inequality__formal_core .graph-node-box {
+              border-color: var(--highlight);
+              stroke: var(--highlight);
+              background: var(--highlight-soft);
+              fill: var(--highlight-soft);
+            }
+            .report-root:has(#node-young_convolution_inequality__formal_core:target).report-root .node-young_convolution_inequality__formal_core.node-card {
+              border-color: var(--highlight);
+              box-shadow: 0 0 0 3px rgba(217, 124, 43, 0.18), 0 12px 30px rgba(60, 40, 20, 0.06);
+              background: var(--target-panel);
+            }
+            
+
                 .report-root:has(.obligation-informal-proof-young_convolution_inequality:hover) a.node-young_convolution_inequality .graph-node-box,
 .report-root:has(.obligation-informal-proof-young_convolution_inequality:hover) .node-young_convolution_inequality.node-card {
                   border-color: var(--highlight);
@@ -579,7 +592,8 @@
                 
 
                 .report-root:has(#obligation-check-informal-proof-young_convolution_inequality:checked) .edge-young_convolution_inequality-case_1,
-.report-root:has(#obligation-check-informal-proof-young_convolution_inequality:checked) .edge-young_convolution_inequality-tonelli_integration {
+.report-root:has(#obligation-check-informal-proof-young_convolution_inequality:checked) .edge-young_convolution_inequality-tonelli_integration,
+.report-root:has(#obligation-check-informal-proof-young_convolution_inequality:checked) .edge-young_convolution_inequality-young_convolution_inequality__formal_core {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
@@ -707,6 +721,43 @@
             }
             
 
+                .report-root:has(.obligation-semantic-match-young_convolution_inequality__formal_core:hover) a.node-young_convolution_inequality__formal_core .graph-node-box,
+.report-root:has(.obligation-semantic-match-young_convolution_inequality__formal_core:hover) .node-young_convolution_inequality__formal_core.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-young_convolution_inequality__formal_core:checked) a.node-young_convolution_inequality__formal_core .graph-node-box,
+.report-root:has(#obligation-check-semantic-match-young_convolution_inequality__formal_core:checked) .node-young_convolution_inequality__formal_core.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-semantic-match-young_convolution_inequality__formal_core:checked) .edge-young_convolution_inequality-young_convolution_inequality__formal_core {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-semantic-match-young_convolution_inequality__formal_core:hover) .obligation-semantic-match-young_convolution_inequality__formal_core {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-semantic-match-young_convolution_inequality__formal_core:checked) .obligation-semantic-match-young_convolution_inequality__formal_core {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
                 .report-root:has(.obligation-boundary-young_convolution_inequality-case_1:hover) a.node-young_convolution_inequality .graph-node-box,
 .report-root:has(.obligation-boundary-young_convolution_inequality-case_1:hover) a.node-case_1 .graph-node-box,
 .report-root:has(.obligation-boundary-young_convolution_inequality-case_1:hover) .node-young_convolution_inequality.node-card,
@@ -733,7 +784,8 @@
                 
 
                 .report-root:has(#obligation-check-boundary-young_convolution_inequality-case_1:checked) .edge-young_convolution_inequality-case_1,
-.report-root:has(#obligation-check-boundary-young_convolution_inequality-case_1:checked) .edge-young_convolution_inequality-tonelli_integration {
+.report-root:has(#obligation-check-boundary-young_convolution_inequality-case_1:checked) .edge-young_convolution_inequality-tonelli_integration,
+.report-root:has(#obligation-check-boundary-young_convolution_inequality-case_1:checked) .edge-young_convolution_inequality-young_convolution_inequality__formal_core {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
@@ -776,7 +828,8 @@
 
                 .report-root:has(#obligation-check-boundary-young_convolution_inequality-tonelli_integration:checked) .edge-tonelli_integration-pointwise_holder,
 .report-root:has(#obligation-check-boundary-young_convolution_inequality-tonelli_integration:checked) .edge-young_convolution_inequality-case_1,
-.report-root:has(#obligation-check-boundary-young_convolution_inequality-tonelli_integration:checked) .edge-young_convolution_inequality-tonelli_integration {
+.report-root:has(#obligation-check-boundary-young_convolution_inequality-tonelli_integration:checked) .edge-young_convolution_inequality-tonelli_integration,
+.report-root:has(#obligation-check-boundary-young_convolution_inequality-tonelli_integration:checked) .edge-young_convolution_inequality-young_convolution_inequality__formal_core {
                   stroke: var(--checked);
                   stroke-width: 4.5;
                 }
@@ -787,6 +840,49 @@
               background: var(--preview-soft);
             }
             .report-root:has(#obligation-check-boundary-young_convolution_inequality-tonelli_integration:checked) .obligation-boundary-young_convolution_inequality-tonelli_integration {
+              border-color: var(--checked);
+              background: var(--checked-soft);
+            }
+            
+
+                .report-root:has(.obligation-boundary-young_convolution_inequality-young_convolution_inequality__formal_core:hover) a.node-young_convolution_inequality .graph-node-box,
+.report-root:has(.obligation-boundary-young_convolution_inequality-young_convolution_inequality__formal_core:hover) a.node-young_convolution_inequality__formal_core .graph-node-box,
+.report-root:has(.obligation-boundary-young_convolution_inequality-young_convolution_inequality__formal_core:hover) .node-young_convolution_inequality.node-card,
+.report-root:has(.obligation-boundary-young_convolution_inequality-young_convolution_inequality__formal_core:hover) .node-young_convolution_inequality__formal_core.node-card {
+                  border-color: var(--highlight);
+                  stroke: var(--highlight);
+                  stroke-width: 2.8;
+                  background: var(--preview-soft);
+                  fill: var(--preview-soft);
+                  filter: drop-shadow(0 8px 16px rgba(140, 79, 43, 0.14));
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-young_convolution_inequality-young_convolution_inequality__formal_core:checked) a.node-young_convolution_inequality .graph-node-box,
+.report-root:has(#obligation-check-boundary-young_convolution_inequality-young_convolution_inequality__formal_core:checked) a.node-young_convolution_inequality__formal_core .graph-node-box,
+.report-root:has(#obligation-check-boundary-young_convolution_inequality-young_convolution_inequality__formal_core:checked) .node-young_convolution_inequality.node-card,
+.report-root:has(#obligation-check-boundary-young_convolution_inequality-young_convolution_inequality__formal_core:checked) .node-young_convolution_inequality__formal_core.node-card {
+                  border-color: var(--checked);
+                  stroke: var(--checked);
+                  stroke-width: 2.9;
+                  background: var(--checked-soft);
+                  fill: var(--checked-soft);
+                }
+                
+
+                .report-root:has(#obligation-check-boundary-young_convolution_inequality-young_convolution_inequality__formal_core:checked) .edge-young_convolution_inequality-case_1,
+.report-root:has(#obligation-check-boundary-young_convolution_inequality-young_convolution_inequality__formal_core:checked) .edge-young_convolution_inequality-tonelli_integration,
+.report-root:has(#obligation-check-boundary-young_convolution_inequality-young_convolution_inequality__formal_core:checked) .edge-young_convolution_inequality-young_convolution_inequality__formal_core {
+                  stroke: var(--checked);
+                  stroke-width: 4.5;
+                }
+                
+
+            .report-root:has(.obligation-boundary-young_convolution_inequality-young_convolution_inequality__formal_core:hover) .obligation-boundary-young_convolution_inequality-young_convolution_inequality__formal_core {
+              border-color: var(--highlight);
+              background: var(--preview-soft);
+            }
+            .report-root:has(#obligation-check-boundary-young_convolution_inequality-young_convolution_inequality__formal_core:checked) .obligation-boundary-young_convolution_inequality-young_convolution_inequality__formal_core {
               border-color: var(--checked);
               background: var(--checked-soft);
             }
@@ -823,11 +919,11 @@ This is the classical finite-exponent form of Young&#x27;s convolution inequalit
     <section>
       <h2>Graph Summary</h2>
       <p>
-        <span class="pill">Nodes: 4</span>
-        <span class="pill">Edges: 3</span>
+        <span class="pill">Nodes: 5</span>
+        <span class="pill">Edges: 4</span>
         <span class="pill">Informal: 1</span>
         <span class="pill">Candidates: 0</span>
-        <span class="pill">Verified: 3</span>
+        <span class="pill">Verified: 4</span>
         <span class="pill">Failed: 0</span>
       </p>
       <div class="graph-shell">
@@ -847,11 +943,11 @@ This is the classical finite-exponent form of Young&#x27;s convolution inequalit
         </label>
         
         <div class="graph-history-status">
-          Snapshot <span data-history-index>6</span> of <span data-history-count>6</span>
+          Snapshot <span data-history-index>8</span> of <span data-history-count>8</span>
         </div>
       </div>
-      <p class="graph-history-caption" data-history-caption>Node <code class="inline-code">case_1</code> was successfully formalized, status upgraded from <code class="inline-code">candidate_formal</code> to <code class="inline-code">formal_verified</code>.</p>
-      <p class="graph-history-meta" data-history-meta>03_formalized_graph.json (case_1) · 2026-04-09T20:05:10-07:00</p>
+      <p class="graph-history-caption" data-history-caption>Node <code class="inline-code">young_convolution_inequality</code> was attempted and narrowed to verified supporting core <code class="inline-code">young_convolution_inequality__formal_core</code>.</p>
+      <p class="graph-history-meta" data-history-meta>03_formalized_graph.json (young_convolution_inequality) · 2026-04-11T09:57:14-07:00</p>
       
         <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Initial extracted proof graph." data-label="01_extracted_graph.json" data-timestamp="2026-04-09T11:17:02-07:00" hidden>
           
@@ -1085,7 +1181,7 @@ This is the classical finite-exponent form of Young&#x27;s convolution inequalit
         </div>
         
 
-        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Continuation request promoted &lt;code class=&quot;inline-code&quot;&gt;case_1&lt;/code&gt; for another formalization pass." data-label="03_formalized_graph.json (continuation request)" data-timestamp="2026-04-09T19:09:19-07:00" >
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Continuation request promoted &lt;code class=&quot;inline-code&quot;&gt;case_1&lt;/code&gt; for another formalization pass." data-label="03_formalized_graph.json (continuation request)" data-timestamp="2026-04-09T19:09:19-07:00" hidden>
           
     <div class="graph-frame">
       <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
@@ -1193,6 +1289,133 @@ This is the classical finite-exponent form of Young&#x27;s convolution inequalit
         <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Integration Step</div>
       </foreignObject>
       <text class="graph-node-id" x="294.0" y="186">tonelli_integration</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Continuation request promoted &lt;code class=&quot;inline-code&quot;&gt;young_convolution_inequality&lt;/code&gt; for another formalization pass." data-label="03_formalized_graph.json (continuation request)" data-timestamp="2026-04-11T09:38:47-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-8" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-young_convolution_inequality-case_1" d="M 210.0 83.0 C 210.0 106.2, 151.2 123.6, 126.0 141.0" marker-end="url(#graph-arrow-history-visual-8)"></path>
+<path class="graph-edge edge-young_convolution_inequality-tonelli_integration" d="M 210.0 83.0 C 210.0 106.2, 268.8 123.6, 294.0 141.0" marker-end="url(#graph-arrow-history-visual-8)"></path>
+<path class="graph-edge edge-tonelli_integration-pointwise_holder" d="M 294.0 201.0 C 294.0 224.2, 235.2 241.6, 210.0 259.0" marker-end="url(#graph-arrow-history-visual-8)"></path></g>
+        <g>
+    <a class="graph-node-link node-young_convolution_inequality status-candidate-formal" href="#node-young_convolution_inequality" data-graph-node-id="young_convolution_inequality" data-graph-node-status="candidate_formal" data-graph-node-title="Young&#x27;s convolution inequality">
+      <rect class="graph-node-box status-candidate-formal" x="144.0" y="20" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="32" r="4.6"></circle>
+      <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Young&#x27;s convolution inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="68">young_convolution_inequality</text>
+    </a>
+    
+
+    <a class="graph-node-link node-case_1 status-formal-verified" href="#node-case_1" data-graph-node-id="case_1" data-graph-node-status="formal_verified" data-graph-node-title="Case 1: p=1 or q=1">
+      <rect class="graph-node-box status-formal-verified" x="60.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="178.0" cy="150" r="4.6"></circle>
+      <foreignObject x="64.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Case 1: p=1 or q=1</div>
+      </foreignObject>
+      <text class="graph-node-id" x="126.0" y="186">case_1</text>
+    </a>
+    
+
+    <a class="graph-node-link node-pointwise_holder status-formal-verified" href="#node-pointwise_holder" data-graph-node-id="pointwise_holder" data-graph-node-status="formal_verified" data-graph-node-title="Pointwise Hölder Bound">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="268" r="4.6"></circle>
+      <foreignObject x="148.0" y="260" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Hölder Bound</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="304">pointwise_holder</text>
+    </a>
+    
+
+    <a class="graph-node-link node-tonelli_integration status-formal-verified" href="#node-tonelli_integration" data-graph-node-id="tonelli_integration" data-graph-node-status="formal_verified" data-graph-node-title="Integration Step">
+      <rect class="graph-node-box status-formal-verified" x="228.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="346.0" cy="150" r="4.6"></circle>
+      <foreignObject x="232.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Integration Step</div>
+      </foreignObject>
+      <text class="graph-node-id" x="294.0" y="186">tonelli_integration</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="visual" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;young_convolution_inequality&lt;/code&gt; was attempted and narrowed to verified supporting core &lt;code class=&quot;inline-code&quot;&gt;young_convolution_inequality__formal_core&lt;/code&gt;." data-label="03_formalized_graph.json (young_convolution_inequality)" data-timestamp="2026-04-11T09:57:14-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 342" width="516" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-visual-9" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-young_convolution_inequality-case_1" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-visual-9)"></path>
+<path class="graph-edge edge-young_convolution_inequality-tonelli_integration" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-visual-9)"></path>
+<path class="graph-edge edge-tonelli_integration-pointwise_holder" d="M 258.0 201.0 C 258.0 224.2, 258.0 241.6, 258.0 259.0" marker-end="url(#graph-arrow-history-visual-9)"></path>
+<path class="graph-edge edge-young_convolution_inequality-young_convolution_inequality__formal_core" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-visual-9)"></path></g>
+        <g>
+    <a class="graph-node-link node-young_convolution_inequality status-informal" href="#node-young_convolution_inequality" data-graph-node-id="young_convolution_inequality" data-graph-node-status="informal" data-graph-node-title="Young&#x27;s convolution inequality">
+      <rect class="graph-node-box status-informal" x="192.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Young&#x27;s convolution inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">young_convolution_inequality</text>
+    </a>
+    
+
+    <a class="graph-node-link node-case_1 status-formal-verified" href="#node-case_1" data-graph-node-id="case_1" data-graph-node-status="formal_verified" data-graph-node-title="Case 1: p=1 or q=1">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Case 1: p=1 or q=1</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">case_1</text>
+    </a>
+    
+
+    <a class="graph-node-link node-pointwise_holder status-formal-verified" href="#node-pointwise_holder" data-graph-node-id="pointwise_holder" data-graph-node-status="formal_verified" data-graph-node-title="Pointwise Hölder Bound">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="268" r="4.6"></circle>
+      <foreignObject x="196.0" y="260" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Hölder Bound</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="304">pointwise_holder</text>
+    </a>
+    
+
+    <a class="graph-node-link node-tonelli_integration status-formal-verified" href="#node-tonelli_integration" data-graph-node-id="tonelli_integration" data-graph-node-status="formal_verified" data-graph-node-title="Integration Step">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Integration Step</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">tonelli_integration</text>
+    </a>
+    
+
+    <a class="graph-node-link node-young_convolution_inequality__formal_core status-formal-verified" href="#node-young_convolution_inequality__formal_core" data-graph-node-id="young_convolution_inequality__formal_core" data-graph-node-status="formal_verified" data-graph-node-title="Certified core">
+      <rect class="graph-node-box status-formal-verified" x="360.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Certified core</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">young_convolution_inequality__formal_core</text>
     </a>
     </g>
       </svg>
@@ -1664,6 +1887,202 @@ This is the classical finite-exponent form of Young&#x27;s convolution inequalit
     
         </div>
         
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="all" data-caption-html="Continuation request promoted &lt;code class=&quot;inline-code&quot;&gt;young_convolution_inequality&lt;/code&gt; for another formalization pass." data-label="03_formalized_graph.json (continuation request)" data-timestamp="2026-04-11T09:38:47-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 420 342" width="420" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-all-8" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-young_convolution_inequality-case_1" d="M 210.0 83.0 C 210.0 106.2, 151.2 123.6, 126.0 141.0" marker-end="url(#graph-arrow-history-all-8)"></path>
+<path class="graph-edge edge-young_convolution_inequality-tonelli_integration" d="M 210.0 83.0 C 210.0 106.2, 268.8 123.6, 294.0 141.0" marker-end="url(#graph-arrow-history-all-8)"></path>
+<path class="graph-edge edge-tonelli_integration-pointwise_holder" d="M 294.0 201.0 C 294.0 224.2, 235.2 241.6, 210.0 259.0" marker-end="url(#graph-arrow-history-all-8)"></path></g>
+        <g>
+    <a class="graph-node-link node-young_convolution_inequality status-candidate-formal" href="#node-young_convolution_inequality" data-graph-node-id="young_convolution_inequality" data-graph-node-status="candidate_formal" data-graph-node-title="Young&#x27;s convolution inequality">
+      <rect class="graph-node-box status-candidate-formal" x="144.0" y="20" rx="22" ry="22" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-candidate-formal" cx="262.0" cy="32" r="4.6"></circle>
+      <foreignObject x="148.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Young&#x27;s convolution inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="68">young_convolution_inequality</text>
+    </a>
+    
+
+    <a class="graph-node-link node-case_1 status-formal-verified" href="#node-case_1" data-graph-node-id="case_1" data-graph-node-status="formal_verified" data-graph-node-title="Case 1: p=1 or q=1">
+      <rect class="graph-node-box status-formal-verified" x="60.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="178.0" cy="150" r="4.6"></circle>
+      <foreignObject x="64.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Case 1: p=1 or q=1</div>
+      </foreignObject>
+      <text class="graph-node-id" x="126.0" y="186">case_1</text>
+    </a>
+    
+
+    <a class="graph-node-link node-pointwise_holder status-formal-verified" href="#node-pointwise_holder" data-graph-node-id="pointwise_holder" data-graph-node-status="formal_verified" data-graph-node-title="Pointwise Hölder Bound">
+      <rect class="graph-node-box status-formal-verified" x="144.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="262.0" cy="268" r="4.6"></circle>
+      <foreignObject x="148.0" y="260" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Hölder Bound</div>
+      </foreignObject>
+      <text class="graph-node-id" x="210.0" y="304">pointwise_holder</text>
+    </a>
+    
+
+    <a class="graph-node-link node-tonelli_integration status-formal-verified" href="#node-tonelli_integration" data-graph-node-id="tonelli_integration" data-graph-node-status="formal_verified" data-graph-node-title="Integration Step">
+      <rect class="graph-node-box status-formal-verified" x="228.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="346.0" cy="150" r="4.6"></circle>
+      <foreignObject x="232.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Integration Step</div>
+      </foreignObject>
+      <text class="graph-node-id" x="294.0" y="186">tonelli_integration</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="all" data-caption-html="Node &lt;code class=&quot;inline-code&quot;&gt;young_convolution_inequality&lt;/code&gt; was attempted and narrowed to verified supporting core &lt;code class=&quot;inline-code&quot;&gt;young_convolution_inequality__formal_core&lt;/code&gt;." data-label="03_formalized_graph.json (young_convolution_inequality)" data-timestamp="2026-04-11T09:57:14-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 342" width="516" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-all-9" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-young_convolution_inequality-case_1" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-all-9)"></path>
+<path class="graph-edge edge-young_convolution_inequality-tonelli_integration" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-all-9)"></path>
+<path class="graph-edge edge-tonelli_integration-pointwise_holder" d="M 258.0 201.0 C 258.0 224.2, 258.0 241.6, 258.0 259.0" marker-end="url(#graph-arrow-history-all-9)"></path>
+<path class="graph-edge edge-young_convolution_inequality-young_convolution_inequality__formal_core" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-all-9)"></path></g>
+        <g>
+    <a class="graph-node-link node-young_convolution_inequality status-informal" href="#node-young_convolution_inequality" data-graph-node-id="young_convolution_inequality" data-graph-node-status="informal" data-graph-node-title="Young&#x27;s convolution inequality">
+      <rect class="graph-node-box status-informal" x="192.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Young&#x27;s convolution inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">young_convolution_inequality</text>
+    </a>
+    
+
+    <a class="graph-node-link node-case_1 status-formal-verified" href="#node-case_1" data-graph-node-id="case_1" data-graph-node-status="formal_verified" data-graph-node-title="Case 1: p=1 or q=1">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Case 1: p=1 or q=1</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">case_1</text>
+    </a>
+    
+
+    <a class="graph-node-link node-pointwise_holder status-formal-verified" href="#node-pointwise_holder" data-graph-node-id="pointwise_holder" data-graph-node-status="formal_verified" data-graph-node-title="Pointwise Hölder Bound">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="268" r="4.6"></circle>
+      <foreignObject x="196.0" y="260" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Hölder Bound</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="304">pointwise_holder</text>
+    </a>
+    
+
+    <a class="graph-node-link node-tonelli_integration status-formal-verified" href="#node-tonelli_integration" data-graph-node-id="tonelli_integration" data-graph-node-status="formal_verified" data-graph-node-title="Integration Step">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Integration Step</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">tonelli_integration</text>
+    </a>
+    
+
+    <a class="graph-node-link node-young_convolution_inequality__formal_core status-formal-verified" href="#node-young_convolution_inequality__formal_core" data-graph-node-id="young_convolution_inequality__formal_core" data-graph-node-status="formal_verified" data-graph-node-title="Certified core">
+      <rect class="graph-node-box status-formal-verified" x="360.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Certified core</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">young_convolution_inequality__formal_core</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
+
+        <div class="graph-history-frame" data-history-frame data-history-collection="all" data-caption-html="Report generation synthesized remaining proof burden text for &lt;code class=&quot;inline-code&quot;&gt;young_convolution_inequality&lt;/code&gt;." data-label="04_report_graph" data-timestamp="2026-04-11T10:00:37-07:00" hidden>
+          
+    <div class="graph-frame">
+      <svg class="graph-widget" viewBox="0 0 516 342" width="516" height="342" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Proof graph">
+        <defs>
+          <marker id="graph-arrow-history-all-10" markerWidth="8" markerHeight="8" refX="6.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,5 L7,2.5 z" fill="#b3aa9f"></path>
+          </marker>
+        </defs>
+        <g><path class="graph-edge edge-young_convolution_inequality-case_1" d="M 258.0 83.0 C 258.0 106.2, 140.4 123.6, 90.0 141.0" marker-end="url(#graph-arrow-history-all-10)"></path>
+<path class="graph-edge edge-young_convolution_inequality-tonelli_integration" d="M 258.0 83.0 C 258.0 106.2, 258.0 123.6, 258.0 141.0" marker-end="url(#graph-arrow-history-all-10)"></path>
+<path class="graph-edge edge-tonelli_integration-pointwise_holder" d="M 258.0 201.0 C 258.0 224.2, 258.0 241.6, 258.0 259.0" marker-end="url(#graph-arrow-history-all-10)"></path>
+<path class="graph-edge edge-young_convolution_inequality-young_convolution_inequality__formal_core" d="M 258.0 83.0 C 258.0 106.2, 375.6 123.6, 426.0 141.0" marker-end="url(#graph-arrow-history-all-10)"></path></g>
+        <g>
+    <a class="graph-node-link node-young_convolution_inequality status-informal" href="#node-young_convolution_inequality" data-graph-node-id="young_convolution_inequality" data-graph-node-status="informal" data-graph-node-title="Young&#x27;s convolution inequality">
+      <rect class="graph-node-box status-informal" x="192.0" y="20" rx="14" ry="14" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-informal" cx="310.0" cy="32" r="4.6"></circle>
+      <foreignObject x="196.0" y="24" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Young&#x27;s convolution inequality</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="68">young_convolution_inequality</text>
+    </a>
+    
+
+    <a class="graph-node-link node-case_1 status-formal-verified" href="#node-case_1" data-graph-node-id="case_1" data-graph-node-status="formal_verified" data-graph-node-title="Case 1: p=1 or q=1">
+      <rect class="graph-node-box status-formal-verified" x="24.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="142.0" cy="150" r="4.6"></circle>
+      <foreignObject x="28.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Case 1: p=1 or q=1</div>
+      </foreignObject>
+      <text class="graph-node-id" x="90.0" y="186">case_1</text>
+    </a>
+    
+
+    <a class="graph-node-link node-pointwise_holder status-formal-verified" href="#node-pointwise_holder" data-graph-node-id="pointwise_holder" data-graph-node-status="formal_verified" data-graph-node-title="Pointwise Hölder Bound">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="256" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="268" r="4.6"></circle>
+      <foreignObject x="196.0" y="260" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Pointwise Hölder Bound</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="304">pointwise_holder</text>
+    </a>
+    
+
+    <a class="graph-node-link node-tonelli_integration status-formal-verified" href="#node-tonelli_integration" data-graph-node-id="tonelli_integration" data-graph-node-status="formal_verified" data-graph-node-title="Integration Step">
+      <rect class="graph-node-box status-formal-verified" x="192.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="310.0" cy="150" r="4.6"></circle>
+      <foreignObject x="196.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Integration Step</div>
+      </foreignObject>
+      <text class="graph-node-id" x="258.0" y="186">tonelli_integration</text>
+    </a>
+    
+
+    <a class="graph-node-link node-young_convolution_inequality__formal_core status-formal-verified" href="#node-young_convolution_inequality__formal_core" data-graph-node-id="young_convolution_inequality__formal_core" data-graph-node-status="formal_verified" data-graph-node-title="Certified core">
+      <rect class="graph-node-box status-formal-verified" x="360.0" y="138" rx="28" ry="28" width="132" height="66"></rect>
+      <circle class="graph-node-badge status-formal-verified" cx="478.0" cy="150" r="4.6"></circle>
+      <foreignObject x="364.0" y="142" width="124" height="44" overflow="visible">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="graph-node-fo-title">Certified core</div>
+      </foreignObject>
+      <text class="graph-node-id" x="426.0" y="186">young_convolution_inequality__formal_core</text>
+    </a>
+    </g>
+      </svg>
+    </div>
+    
+        </div>
+        
     </div>
     
       </div>
@@ -1756,6 +2175,24 @@ This is the classical finite-exponent form of Young&#x27;s convolution inequalit
     </li>
     
 
+    <li class="checklist-item obligation-semantic-match-young_convolution_inequality__formal_core" data-obligation-id="semantic-match-young_convolution_inequality__formal_core">
+      <label class="checklist-label" for="obligation-check-semantic-match-young_convolution_inequality__formal_core">
+        <input id="obligation-check-semantic-match-young_convolution_inequality__formal_core" type="checkbox" />
+        <span>
+          <span class="checklist-kind">formal_semantic_match_check</span><br />
+          Check that node &#x27;young_convolution_inequality__formal_core&#x27; (Certified local core for Young&#x27;s convolution inequality) honestly represents a narrower verified Lean supporting sublemma, rather than overclaiming full coverage of its parent informal step.
+          <div class="checklist-code"><pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> young_convolution_inequality_aristotle
+    {p q r : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">1</span> ≤ p) (hq : <span class="tok-number">1</span> ≤ q) (hr : <span class="tok-number">0</span> &lt; r)
+    (hpqr : <span class="tok-number">1</span> / p + <span class="tok-number">1</span> / q = <span class="tok-number">1</span> + <span class="tok-number">1</span> / r)
+    {f g : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>≥<span class="tok-number">0</span>∞} (hf : Measurable f) (hg : Measurable g) :
+    (∫⁻ x, (∫⁻ y, f (x - y) * g y) ^ r) ^ (<span class="tok-number">1</span> / r) ≤
+      (∫⁻ y, f y ^ p) ^ (<span class="tok-number">1</span> / p) * (∫⁻ y, g y ^ q) ^ (<span class="tok-number">1</span> / q)</code></pre></div>
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-young_convolution_inequality__formal_core">young_convolution_inequality__formal_core</a></div>
+        </span>
+      </label>
+    </li>
+    
+
     <li class="checklist-item obligation-boundary-young_convolution_inequality-case_1" data-obligation-id="boundary-young_convolution_inequality-case_1">
       <label class="checklist-label" for="obligation-check-boundary-young_convolution_inequality-case_1">
         <input id="obligation-check-boundary-young_convolution_inequality-case_1" type="checkbox" />
@@ -1777,6 +2214,19 @@ This is the classical finite-exponent form of Young&#x27;s convolution inequalit
           Check that formal child &#x27;tonelli_integration&#x27; proves exactly what informal parent &#x27;young_convolution_inequality&#x27; depends on across their dependency boundary.
           
           <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-young_convolution_inequality">young_convolution_inequality</a>, <a class="node-jump" href="#node-tonelli_integration">tonelli_integration</a></div>
+        </span>
+      </label>
+    </li>
+    
+
+    <li class="checklist-item obligation-boundary-young_convolution_inequality-young_convolution_inequality__formal_core" data-obligation-id="boundary-young_convolution_inequality-young_convolution_inequality__formal_core">
+      <label class="checklist-label" for="obligation-check-boundary-young_convolution_inequality-young_convolution_inequality__formal_core">
+        <input id="obligation-check-boundary-young_convolution_inequality-young_convolution_inequality__formal_core" type="checkbox" />
+        <span>
+          <span class="checklist-kind">boundary_interface_check</span><br />
+          Check that verified supporting sublemma &#x27;young_convolution_inequality__formal_core&#x27; certifies the specific concrete local core that informal parent &#x27;young_convolution_inequality&#x27; depends on, without overclaiming full coverage of the parent node.
+          
+          <div class="checklist-nodes">Related nodes: <a class="node-jump" href="#node-young_convolution_inequality">young_convolution_inequality</a>, <a class="node-jump" href="#node-young_convolution_inequality__formal_core">young_convolution_inequality__formal_core</a></div>
         </span>
       </label>
     </li>
@@ -1803,17 +2253,17 @@ This is the classical finite-exponent form of Young&#x27;s convolution inequalit
     <article class="node-card node-young_convolution_inequality" id="node-young_convolution_inequality" data-node-id="young_convolution_inequality" data-node-title="Young&#x27;s convolution inequality" data-node-status="informal">
       <h3>Young&#x27;s convolution inequality</h3>
       <p class="meta">Node id: young_convolution_inequality | Status: informal</p>
-      <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-case_1">case_1</a>, <a class="node-jump" href="#node-tonelli_integration">tonelli_integration</a></p>
+      <p class="meta">Depends on (child nodes): <a class="node-jump" href="#node-case_1">case_1</a>, <a class="node-jump" href="#node-tonelli_integration">tonelli_integration</a>, <a class="node-jump" href="#node-young_convolution_inequality__formal_core">young_convolution_inequality__formal_core</a></p>
       
       
-      
+      <p class="meta">Most recent formalization episode: produced a verified supporting core after 1 Lean verification attempt. Most recent formalization attempt produced the verified supporting core &#x27;young_convolution_inequality__formal_core&#x27; rather than a full-node theorem.</p>
       <p><strong>Informal statement:</strong></p>
       <div class="math-text">Let $1 \le p,q,r &lt; \infty$ satisfy $1 + \frac1r = \frac1p + \frac1q$. Let $f \in L^p(\mathbb{R})$ and $g \in L^q(\mathbb{R})$. Then $f*g \in L^r(\mathbb{R})$ and $\|f*g\|_{L^r} \le \|f\|_{L^p}\,\|g\|_{L^q}$.</div>
       <p><strong>Informal proof:</strong></p>
       <div class="math-text">Throughout the proof we work with absolute values, so it is enough to estimate the convolution of $|f|$ and $|g|$. Thus replacing $f$ and $g$ by $|f|$ and $|g|$ can only increase the left-hand side, and we may assume $f,g \ge 0$. We split the proof into two cases. The case where one of the exponents equals 1 is proved using Minkowski&#x27;s integral inequality. For the case where $p&gt;1$ and $q&gt;1$, we establish a pointwise bound via Hölder&#x27;s inequality, and then integrate using Tonelli&#x27;s theorem to obtain the final norm bound.</div>
       
-      <p><strong>Remaining proof burden (assuming results of <a class="node-jump" href="#node-case_1">case_1</a>, <a class="node-jump" href="#node-tonelli_integration">tonelli_integration</a>):</strong></p>
-      <div class="math-text">With the boundary case for $p=1 \lor q=1$ and the integrated Tonelli bound for $p&gt;1 \land q&gt;1$ formally verified, the remaining proof burden at the parent level is primarily an assembly step. A reviewer still needs to verify the initial reduction step that justifies working with absolute values, effectively bridging general $L^p$ functions to the non-negative functions used in the child lemmas. Finally, the parent proof must formalize the case split on the exponents and apply a $1/r$ power to the Tonelli integration result to deduce the standard $L^r$ norm bound for the second case.</div>
+      <p><strong>Remaining proof burden (assuming results of <a class="node-jump" href="#node-case_1">case_1</a>, <a class="node-jump" href="#node-tonelli_integration">tonelli_integration</a>, <a class="node-jump" href="#node-young_convolution_inequality__formal_core">young_convolution_inequality__formal_core</a>):</strong></p>
+      <div class="math-text">With the measure-theoretic core of the theorem fully verified for non-negative extended real-valued functions (via <code class="inline-code">young_convolution_inequality__formal_core</code>, which already assembles the bounds from <code class="inline-code">case_1</code> and <code class="inline-code">tonelli_integration</code>), the parent node is now primarily a lifting and translation step. The remaining informal proof burden is to formally justify the reduction to absolute values—verifying that pointwise bounding $|f * g|$ by $|f| * |g|$ implies the desired norm inequality—and to translate the established <code class="inline-code">ENNReal</code> integral bounds into the standard $L^p$, $L^q$, and $L^r$ functional analysis APIs for real- or complex-valued functions.</div>
     
       
     </article>
@@ -2573,6 +3023,443 @@ Hint: Omit it from the simp argument list.
   ̲  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲div_mul_cancel₀ 1 (̵ ̵b̵y̵(̲b̲y̲ positivity : (̵ ̵q̵(̲q̲ : ℝ̵ ̵)̵ℝ̲)̲ ≠ 0̵ ̵)̵ ̵]̵,̵ ̵s̵h̵o̵w̵ ̵0̵ ̵≤̵ ̵1̵ ̵-̵ ̵q̵ ̵/̵ ̵r̵ ̵b̵y̵ ̵n̵l̵i̵n̵a̵r̵i̵t̵h̵ ̵[̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵p̵ ̵h̵r̵.̵n̵e̵&#x27;̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵q̵ ̵h̵r̵.̵n̵e̵&#x27;̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵1̵ ̵h̵r̵.̵n̵e̵&#x27;̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵1̵ ̵(̵ ̵b̵y̵ ̵p̵o̵s̵i̵t̵i̵v̵i̵t̵y̵ ̵:̵ ̵(̵ ̵p̵ ̵:̵ ̵ℝ̵ ̵)̵ ̵≠̵ ̵0̵ ̵)̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵1̵ ̵(̵ ̵b̵y̵ ̵p̵o̵s̵i̵t̵i̵v̵i̵t̵y̵ ̵:̵ ̵(̵ ̵q̵ ̵:̵ ̵ℝ̵ ̵)̵ ̵≠̵ ̵0̵ ̵)̵ ̵]̵ ̵]̵0̲)̲]̲]̲
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+
+
+stderr:
+</code></pre>
+          </details>
+        
+    </article>
+    
+
+    <article class="node-card node-young_convolution_inequality__formal_core" id="node-young_convolution_inequality__formal_core" data-node-id="young_convolution_inequality__formal_core" data-node-title="Certified local core for Young&#x27;s convolution inequality" data-node-status="formal_verified">
+      <h3>Certified local core for Young&#x27;s convolution inequality</h3>
+      <p class="meta">Node id: young_convolution_inequality__formal_core | Status: formal_verified</p>
+      <p class="meta">Used by (parent nodes): <a class="node-jump" href="#node-young_convolution_inequality">young_convolution_inequality</a></p>
+      <p class="meta">Display label: Certified core</p>
+      
+      
+      <p><strong>Informal statement:</strong></p>
+      <div class="math-text">Let \( p, q \ge 1 \) and \( r &gt; 0 \) be real numbers satisfying \( 1/p + 1/q = 1 + 1/r \). If \( f, g : \mathbb{R} \to [0, \infty] \) are measurable functions, then \( \left( \int_{\mathbb{R}} \left( \int_{\mathbb{R}} f(x - y) g(y) \, dy \right)^r \, dx \right)^{1/r} \le \left( \int_{\mathbb{R}} f(y)^p \, dy \right)^{1/p} \left( \int_{\mathbb{R}} g(y)^q \, dy \right)^{1/q} \).</div>
+      <p><strong>Informal proof:</strong></p>
+      <div class="math-text">This node records a verified supporting sublemma extracted from the formalization of parent node &#x27;young_convolution_inequality&#x27;. This lemma establishes the convolution inequality specifically for non-negative, extended real-valued measurable functions on \( \mathbb{R} \). It formalizes the step in the main proof where one reduces the problem to absolute values, providing the explicit integral bounds that are then used to conclude the theorem for general functions in \( L^p \) and \( L^q \).</div>
+      
+      
+        <h4>Formal Artifact</h4>
+        <p><strong>Lean theorem name:</strong> young_convolution_inequality_aristotle</p>
+        <p><strong>Coverage:</strong> faithful core</p><p class="meta">The verified Lean theorem proves Young&#x27;s convolution inequality for non-negative extended real-valued functions (ℝ → ℝ≥0∞). This perfectly aligns with the informal proof&#x27;s note that &#x27;it is enough to estimate the convolution of |f| and |g|&#x27;. While it does not directly use the L^p space API for real-valued functions, it completely encapsulates the main analytical difficulty of the target node. We override the heuristic&#x27;s downgrade to &#x27;concrete_sublemma&#x27; because this ENNReal formulation is the standard, full-strength measure-theoretic core of the theorem, covering almost the entirety of the node&#x27;s proof burden.</p>
+        <div class="statement-code">
+          <strong>Lean statement:</strong>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">theorem</span> young_convolution_inequality_aristotle
+    {p q r : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">1</span> ≤ p) (hq : <span class="tok-number">1</span> ≤ q) (hr : <span class="tok-number">0</span> &lt; r)
+    (hpqr : <span class="tok-number">1</span> / p + <span class="tok-number">1</span> / q = <span class="tok-number">1</span> + <span class="tok-number">1</span> / r)
+    {f g : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>≥<span class="tok-number">0</span>∞} (hf : Measurable f) (hg : Measurable g) :
+    (∫⁻ x, (∫⁻ y, f (x - y) * g y) ^ r) ^ (<span class="tok-number">1</span> / r) ≤
+      (∫⁻ y, f y ^ p) ^ (<span class="tok-number">1</span> / p) * (∫⁻ y, g y ^ q) ^ (<span class="tok-number">1</span> / q)</code></pre>
+        </div>
+        <p><strong>Verification status:</strong> verified</p>
+        <p><strong>Verification command:</strong> <code>lake env lean lean_project/FormalIslands/Generated/young_convolution_inequality_worker_20260411-093847_8ad23776.lean</code></p>
+        <details>
+          <summary>Lean code</summary>
+          <pre><code class="language-lean lean-code"><span class="tok-keyword">import</span> Mathlib
+
+/-!
+# Young&#x27;s convolution inequality
+
+Let $<span class="tok-number">1</span> ≤ p, q, r &lt; ∞$ satisfy $<span class="tok-number">1</span> + <span class="tok-number">1</span>/r = <span class="tok-number">1</span>/p + <span class="tok-number">1</span>/q$.
+Let $f ∈ Lp(<span class="tok-type">ℝ</span>)$ and $g ∈ Lq(<span class="tok-type">ℝ</span>)$. Then $f*g ∈ Lr(<span class="tok-type">ℝ</span>)$ and
+$‖f*g‖_{Lr} ≤ ‖f‖_{Lp} · ‖g‖_{Lq}$.
+
+This file combines two <span class="tok-tactic">cases</span>:
+- Case <span class="tok-number">1</span>: one of the exponents equals <span class="tok-number">1</span> (Minkowski&#x27;s integral inequality).
+- Case <span class="tok-number">2</span>: both p &gt; <span class="tok-number">1</span> and q &gt; <span class="tok-number">1</span> (pointwise Hölder bound + Tonelli integration).
+-/
+
+<span class="tok-keyword">open</span> MeasureTheory ENNReal Set
+<span class="tok-keyword">open</span> scoped NNReal
+
+noncomputable <span class="tok-keyword">section</span>
+
+<span class="tok-keyword">namespace</span> YoungConvolution
+
+/-! ## Helper lemmas for Case <span class="tok-number">1</span> -/
+
+private <span class="tok-keyword">lemma</span> lintegral_convolution_comm (f g : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>≥<span class="tok-number">0</span>∞) (x : <span class="tok-type">ℝ</span>) :
+    ∫⁻ y, f (x - y) * g y = ∫⁻ y, g (x - y) * f y := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">rw</span> [ ← MeasureTheory.lintegral_sub_left_eq_self ] ; congr ; ext y ; <span class="tok-tactic">ring</span>
+
+private <span class="tok-keyword">lemma</span> young_lintegral_rpow_p_eq_one {q : <span class="tok-type">ℝ</span>} (hq : <span class="tok-number">1</span> ≤ q)
+    {f g : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>≥<span class="tok-number">0</span>∞} (hf : Measurable f) (hg : Measurable g) :
+    ∫⁻ x, (∫⁻ y, f (x - y) * g y) ^ q ≤
+      (∫⁻ y, f y) ^ q * ∫⁻ y, g y ^ q := <span class="tok-tactic">by</span>
+  by_cases hq&#x27; : q = <span class="tok-number">1</span>;
+  · <span class="tok-tactic">simp</span> +decide only [hq&#x27;, rpow_one];
+    <span class="tok-tactic">rw</span> [ ← MeasureTheory.lintegral_lintegral_swap ];
+    · <span class="tok-tactic">simp</span> +decide [ sub_eq_add_neg, mul_comm, MeasureTheory.lintegral_const_mul&#x27;, MeasureTheory.lintegral_mul_const&#x27; ];
+      <span class="tok-tactic">rw</span> [ mul_comm, ← MeasureTheory.lintegral_lintegral_mul ];
+      · <span class="tok-tactic">exact</span> le_of_eq ( MeasureTheory.lintegral_congr <span class="tok-keyword">fun</span> x =&gt; MeasureTheory.lintegral_add_right_eq_self ( <span class="tok-keyword">fun</span> y =&gt; g x * f y ) _ );
+      · <span class="tok-tactic">exact</span> hg.aemeasurable;
+      · <span class="tok-tactic">exact</span> hf.aemeasurable;
+    · fun_prop;
+  · <span class="tok-tactic">have</span> h_case2 : ∀ x, (∫⁻ y, f (x - y) * g y) ^ q ≤ (∫⁻ y, f (x - y)) ^ (q - <span class="tok-number">1</span>) * ∫⁻ y, f (x - y) * g y ^ q := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">intro</span> x;
+      <span class="tok-tactic">have</span> := @ENNReal.lintegral_mul_le_Lp_mul_Lq;
+      specialize this MeasureTheory.MeasureSpace.volume ( <span class="tok-tactic">show</span> ( q / ( q - <span class="tok-number">1</span> ) ).HolderConjugate q from ?_ ) ( <span class="tok-tactic">show</span> AEMeasurable ( <span class="tok-keyword">fun</span> y =&gt; f ( x - y ) ^ ( ( q - <span class="tok-number">1</span> ) / q ) ) MeasureTheory.MeasureSpace.volume from ?_ ) ( <span class="tok-tactic">show</span> AEMeasurable ( <span class="tok-keyword">fun</span> y =&gt; f ( x - y ) ^ ( <span class="tok-number">1</span> / q ) * g y ) MeasureTheory.MeasureSpace.volume from ?_ );
+      · <span class="tok-tactic">constructor</span> &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+        · grind;
+        · <span class="tok-tactic">exact</span> div_pos ( <span class="tok-tactic">by</span> positivity ) ( sub_pos.mpr ( lt_of_le_of_ne hq ( Ne.symm hq&#x27; ) ) );
+        · positivity;
+      · <span class="tok-tactic">exact</span> ( hf.comp ( measurable_const.sub measurable_id&#x27; ) |&gt; Measurable.pow_const &lt;| _ ) |&gt; Measurable.aemeasurable;
+      · <span class="tok-tactic">exact</span> AEMeasurable.mul ( AEMeasurable.pow_const ( hf.comp ( measurable_const.sub measurable_id&#x27; ) |&gt; Measurable.aemeasurable ) _ ) hg.aemeasurable;
+      · convert ENNReal.rpow_le_rpow this ( <span class="tok-tactic">show</span> <span class="tok-number">0</span> ≤ q <span class="tok-tactic">by</span> positivity ) using <span class="tok-number">1</span> &lt;;&gt; <span class="tok-tactic">norm_num</span> [ ← mul_assoc, ← ENNReal.rpow_mul ];
+        · congr! <span class="tok-number">2</span>;
+          ext y; <span class="tok-tactic">rw</span> [ ← ENNReal.rpow_add_of_nonneg ] &lt;;&gt; <span class="tok-tactic">ring</span> &lt;;&gt; <span class="tok-tactic">norm_num</span> [ <span class="tok-tactic">show</span> q ≠ <span class="tok-number">0</span> <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ] ;
+          · <span class="tok-tactic">ring</span>;
+          · <span class="tok-tactic">exact</span> inv_le_one_of_one_le₀ hq;
+          · positivity;
+        · <span class="tok-tactic">rw</span> [ ENNReal.mul_rpow_of_nonneg ];
+          · <span class="tok-tactic">rw</span> [ ← ENNReal.rpow_mul, ← ENNReal.rpow_mul ] ; <span class="tok-tactic">norm_num</span> [ <span class="tok-tactic">show</span> q ≠ <span class="tok-number">0</span> <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span>, <span class="tok-tactic">show</span> q - <span class="tok-number">1</span> ≠ <span class="tok-number">0</span> <span class="tok-tactic">by</span> contrapose! hq&#x27;; <span class="tok-tactic">linarith</span> ];
+            congr! <span class="tok-number">2</span>;
+            ext y; <span class="tok-tactic">rw</span> [ ENNReal.mul_rpow_of_nonneg _ _ ( <span class="tok-tactic">by</span> positivity ), ← ENNReal.rpow_mul ] ; <span class="tok-tactic">norm_num</span> [ <span class="tok-tactic">show</span> q ≠ <span class="tok-number">0</span> <span class="tok-tactic">by</span> positivity ] ;
+          · positivity;
+    <span class="tok-tactic">have</span> h_integral : ∫⁻ x, (∫⁻ y, f (x - y) * g y) ^ q ≤ (∫⁻ y, f y) ^ (q - <span class="tok-number">1</span>) * ∫⁻ x, ∫⁻ y, f (x - y) * g y ^ q := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">refine</span>&#x27; le_trans ( MeasureTheory.lintegral_mono <span class="tok-keyword">fun</span> x =&gt; h_case2 x ) _;
+      <span class="tok-tactic">rw</span> [ ← MeasureTheory.lintegral_const_mul ];
+      · <span class="tok-tactic">refine</span>&#x27; MeasureTheory.lintegral_mono <span class="tok-keyword">fun</span> x =&gt; _;
+        <span class="tok-tactic">rw</span> [ MeasureTheory.lintegral_sub_left_eq_self ];
+      · fun_prop (disch := <span class="tok-tactic">norm_num</span>);
+    <span class="tok-tactic">have</span> h_fubini : ∫⁻ x, ∫⁻ y, f (x - y) * g y ^ q = ∫⁻ y, ∫⁻ x, f (x - y) * g y ^ q := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">rw</span> [ ← MeasureTheory.lintegral_lintegral_swap ];
+      fun_prop;
+    simp_all +decide [ MeasureTheory.lintegral_const_mul&#x27; ];
+    convert h_integral using <span class="tok-number">1</span>;
+    <span class="tok-tactic">rw</span> [ <span class="tok-tactic">show</span> ( ∫⁻ y : <span class="tok-type">ℝ</span>, ∫⁻ x : <span class="tok-type">ℝ</span>, f ( x - y ) * g y ^ q ) = ( ∫⁻ y : <span class="tok-type">ℝ</span>, g y ^ q ) * ( ∫⁻ y : <span class="tok-type">ℝ</span>, f y ) from ?_ ];
+    · <span class="tok-tactic">rw</span> [ <span class="tok-tactic">show</span> q = q - <span class="tok-number">1</span> + <span class="tok-number">1</span> <span class="tok-tactic">by</span> <span class="tok-tactic">ring</span>, ENNReal.rpow_add_of_nonneg ] &lt;;&gt; <span class="tok-tactic">norm_num</span> ; <span class="tok-tactic">ring</span>;
+      <span class="tok-tactic">linarith</span>;
+    · <span class="tok-tactic">simp</span> +decide [ mul_comm, MeasureTheory.lintegral_mul_const&#x27; ];
+      <span class="tok-tactic">rw</span> [ mul_comm, ← MeasureTheory.lintegral_lintegral_mul ];
+      · <span class="tok-tactic">exact</span> MeasureTheory.lintegral_congr <span class="tok-keyword">fun</span> x =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ MeasureTheory.lintegral_sub_right_eq_self ( <span class="tok-keyword">fun</span> y =&gt; g x ^ q * f y ) ] ;
+      · <span class="tok-tactic">exact</span> hg.pow_const _ |&gt; Measurable.aemeasurable;
+      · <span class="tok-tactic">exact</span> hf.aemeasurable
+
+/-! ## Case <span class="tok-number">1</span>: one of the exponents equals <span class="tok-number">1</span> -/
+
+private <span class="tok-keyword">theorem</span> case_1
+    {p q r : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">1</span> ≤ p) (hq : <span class="tok-number">1</span> ≤ q) (hr : <span class="tok-number">0</span> &lt; r)
+    (hpqr : <span class="tok-number">1</span> / p + <span class="tok-number">1</span> / q = <span class="tok-number">1</span> + <span class="tok-number">1</span> / r)
+    (h1 : p = <span class="tok-number">1</span> ∨ q = <span class="tok-number">1</span>)
+    {f g : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>≥<span class="tok-number">0</span>∞} (hf : Measurable f) (hg : Measurable g) :
+    (∫⁻ x, (∫⁻ y, f (x - y) * g y) ^ r) ^ (<span class="tok-number">1</span> / r) ≤
+      (∫⁻ y, f y ^ p) ^ (<span class="tok-number">1</span> / p) * (∫⁻ y, g y ^ q) ^ (<span class="tok-number">1</span> / q) := <span class="tok-tactic">by</span>
+  rcases h1 <span class="tok-keyword">with</span> ( rfl | rfl ) &lt;;&gt; <span class="tok-tactic">norm_num</span> at *;
+  · subst hpqr;
+    <span class="tok-tactic">refine</span>&#x27; le_trans ( ENNReal.rpow_le_rpow ( young_lintegral_rpow_p_eq_one ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) hf hg ) ( <span class="tok-tactic">by</span> positivity ) ) _;
+    <span class="tok-tactic">rw</span> [ ENNReal.mul_rpow_of_nonneg _ _ ( <span class="tok-tactic">by</span> positivity ), ← ENNReal.rpow_mul, mul_inv_cancel₀ ( <span class="tok-tactic">by</span> positivity ), ENNReal.rpow_one ];
+  · simp_all +decide [ add_comm ];
+    convert ENNReal.rpow_le_rpow ( young_lintegral_rpow_p_eq_one ( <span class="tok-tactic">show</span> <span class="tok-number">1</span> ≤ r <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) hg hf ) ( inv_nonneg.<span class="tok-number">2</span> ( zero_le_one.trans hp ) ) using <span class="tok-number">1</span>;
+    · <span class="tok-tactic">exact</span> congr_arg₂ _ ( MeasureTheory.lintegral_congr <span class="tok-keyword">fun</span> x =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ ← lintegral_convolution_comm ] ) rfl;
+    · <span class="tok-tactic">rw</span> [ ENNReal.mul_rpow_of_nonneg _ _ ( <span class="tok-tactic">by</span> positivity ), ← ENNReal.rpow_mul, mul_inv_cancel₀ ( <span class="tok-tactic">by</span> positivity ), ENNReal.rpow_one, mul_comm ]
+
+/-! ## Helper lemmas for Case <span class="tok-number">2</span> -/
+
+private <span class="tok-keyword">lemma</span> lintegral_comp_sub_left (f : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>≥<span class="tok-number">0</span>∞) (x : <span class="tok-type">ℝ</span>) :
+    ∫⁻ y, f (x - y) = ∫⁻ y, f y := <span class="tok-tactic">by</span>
+  change ∫⁻ y, f ((MeasurableEquiv.subLeft x) y) = ∫⁻ y, f y
+  <span class="tok-tactic">rw</span> [← lintegral_map_equiv f (MeasurableEquiv.subLeft x)]
+  congr <span class="tok-number">1</span>
+  <span class="tok-tactic">exact</span> Measure.map_sub_left_eq_self volume x
+
+private <span class="tok-keyword">theorem</span> lintegral_three_mul_le
+    {a b c : <span class="tok-type">ℝ</span>} (ha : <span class="tok-number">1</span> &lt; a) (hb : <span class="tok-number">1</span> &lt; b) (hc : <span class="tok-number">1</span> &lt; c)
+    (habc : <span class="tok-number">1</span>/a + <span class="tok-number">1</span>/b + <span class="tok-number">1</span>/c = <span class="tok-number">1</span>)
+    {F₁ F₂ F₃ : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>≥<span class="tok-number">0</span>∞}
+    (hF₁ : AEMeasurable F₁) (hF₂ : AEMeasurable F₂) (hF₃ : AEMeasurable F₃) :
+    ∫⁻ x, F₁ x * F₂ x * F₃ x ≤
+      (∫⁻ x, F₁ x ^ a) ^ (<span class="tok-number">1</span>/a) *
+      (∫⁻ x, F₂ x ^ b) ^ (<span class="tok-number">1</span>/b) *
+      (∫⁻ x, F₃ x ^ c) ^ (<span class="tok-number">1</span>/c) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_holder1 : ∫⁻ (x : <span class="tok-type">ℝ</span>), F₁ x * F₂ x * F₃ x ∂volume ≤ (∫⁻ (x : <span class="tok-type">ℝ</span>), F₁ x ^ a ∂volume) ^ (<span class="tok-number">1</span> / a) * (∫⁻ (x : <span class="tok-type">ℝ</span>), (F₂ x * F₃ x) ^ (a / (a - <span class="tok-number">1</span>)) ∂volume) ^ (<span class="tok-number">1</span> / (a / (a - <span class="tok-number">1</span>))) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h_holder : ∫⁻ (x : <span class="tok-type">ℝ</span>), F₁ x * (F₂ x * F₃ x) ∂volume ≤ (∫⁻ (x : <span class="tok-type">ℝ</span>), F₁ x ^ a ∂volume) ^ (<span class="tok-number">1</span> / a) * (∫⁻ (x : <span class="tok-type">ℝ</span>), (F₂ x * F₃ x) ^ (a / (a - <span class="tok-number">1</span>)) ∂volume) ^ (<span class="tok-number">1</span> / (a / (a - <span class="tok-number">1</span>))) := <span class="tok-tactic">by</span>
+      apply_rules [ lintegral_mul_le_Lp_mul_Lq ];
+      · <span class="tok-tactic">exact</span> (Real.holderConjugate_iff_eq_conjExponent ha).mpr rfl;
+      · <span class="tok-tactic">exact</span> hF₂.mul hF₃;
+    <span class="tok-tactic">simpa</span> only [ mul_assoc ] using h_holder;
+  <span class="tok-tactic">have</span> h_holder2 : ∫⁻ (x : <span class="tok-type">ℝ</span>), (F₂ x * F₃ x) ^ (a / (a - <span class="tok-number">1</span>)) ∂volume ≤ (∫⁻ (x : <span class="tok-type">ℝ</span>), F₂ x ^ b ∂volume) ^ (a / (a - <span class="tok-number">1</span>) / b) * (∫⁻ (x : <span class="tok-type">ℝ</span>), F₃ x ^ c ∂volume) ^ (a / (a - <span class="tok-number">1</span>) / c) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">have</span> h_holder2 : ∫⁻ (x : <span class="tok-type">ℝ</span>), F₂ x ^ (a / (a - <span class="tok-number">1</span>)) * F₃ x ^ (a / (a - <span class="tok-number">1</span>)) ∂volume ≤ (∫⁻ (x : <span class="tok-type">ℝ</span>), F₂ x ^ b ∂volume) ^ (a / (a - <span class="tok-number">1</span>) / b) * (∫⁻ (x : <span class="tok-type">ℝ</span>), F₃ x ^ c ∂volume) ^ (a / (a - <span class="tok-number">1</span>) / c) := <span class="tok-tactic">by</span>
+      <span class="tok-tactic">have</span> h_holder2 : ∫⁻ (x : <span class="tok-type">ℝ</span>), F₂ x ^ (a / (a - <span class="tok-number">1</span>)) * F₃ x ^ (a / (a - <span class="tok-number">1</span>)) ∂volume ≤ (∫⁻ (x : <span class="tok-type">ℝ</span>), (F₂ x ^ (a / (a - <span class="tok-number">1</span>))) ^ (b / (a / (a - <span class="tok-number">1</span>))) ∂volume) ^ ((a / (a - <span class="tok-number">1</span>)) / b) * (∫⁻ (x : <span class="tok-type">ℝ</span>), (F₃ x ^ (a / (a - <span class="tok-number">1</span>))) ^ (c / (a / (a - <span class="tok-number">1</span>))) ∂volume) ^ ((a / (a - <span class="tok-number">1</span>)) / c) := <span class="tok-tactic">by</span>
+        convert lintegral_mul_le_Lp_mul_Lq volume _ _ _ using <span class="tok-number">3</span>;
+        · group;
+        · group;
+        · <span class="tok-tactic">constructor</span>;
+          · grind +splitImp;
+          · <span class="tok-tactic">exact</span> div_pos ( <span class="tok-tactic">by</span> positivity ) ( div_pos ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) );
+          · <span class="tok-tactic">exact</span> div_pos ( <span class="tok-tactic">by</span> positivity ) ( div_pos ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) );
+        · <span class="tok-tactic">exact</span> hF₂.pow_const _;
+        · <span class="tok-tactic">exact</span> hF₃.pow_const _;
+      convert h_holder2 using <span class="tok-number">4</span> &lt;;&gt; <span class="tok-tactic">norm_num</span> [ ← ENNReal.rpow_mul ];
+      · <span class="tok-tactic">exact</span> funext <span class="tok-keyword">fun</span> x =&gt; <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ mul_div_cancel₀ _ ( ne_of_gt ( div_pos ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ) ) ] ;
+      · <span class="tok-tactic">rw</span> [ mul_div_cancel₀ _ ( ne_of_gt ( div_pos ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ) ) ];
+    convert h_holder2 using <span class="tok-number">3</span> ; <span class="tok-tactic">rw</span> [ ENNReal.mul_rpow_of_nonneg _ _ ( <span class="tok-tactic">by</span> <span class="tok-tactic">exact</span> div_nonneg ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ) ];
+  convert h_holder1.trans ( mul_le_mul_left&#x27; ( ENNReal.rpow_le_rpow h_holder2 _ ) _ ) using <span class="tok-number">1</span>;
+  · <span class="tok-tactic">rw</span> [ ENNReal.mul_rpow_of_nonneg ] &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+    · <span class="tok-tactic">rw</span> [ ← ENNReal.rpow_mul, ← ENNReal.rpow_mul ];
+      <span class="tok-tactic">norm_num</span> [ div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm, ne_of_gt ( sub_pos.mpr ha ), ne_of_gt ( zero_lt_one.trans ha ), ne_of_gt ( zero_lt_one.trans hb ), ne_of_gt ( zero_lt_one.trans hc ) ];
+    · <span class="tok-tactic">exact</span> div_nonneg ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> );
+  · <span class="tok-tactic">exact</span> div_nonneg zero_le_one ( div_nonneg ( <span class="tok-tactic">by</span> positivity ) ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> ) )
+
+private <span class="tok-keyword">theorem</span> pointwise_holder
+    {p q r : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">1</span> &lt; p) (hq : <span class="tok-number">1</span> &lt; q) (hr : <span class="tok-number">0</span> &lt; r)
+    (hpqr : <span class="tok-number">1</span> / p + <span class="tok-number">1</span> / q = <span class="tok-number">1</span> + <span class="tok-number">1</span> / r)
+    {f g : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>≥<span class="tok-number">0</span>∞} (hf : Measurable f) (hg : Measurable g) (x : <span class="tok-type">ℝ</span>) :
+    ∫⁻ y, f (x - y) * g y ≤
+      (∫⁻ y, f (x - y) ^ p * g y ^ q) ^ (<span class="tok-number">1</span> / r) *
+      (∫⁻ y, f y ^ p) ^ (<span class="tok-number">1</span> / p - <span class="tok-number">1</span> / r) *
+      (∫⁻ y, g y ^ q) ^ (<span class="tok-number">1</span> / q - <span class="tok-number">1</span> / r) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> hs_pos : <span class="tok-number">0</span> &lt; <span class="tok-number">1</span> / p - <span class="tok-number">1</span> / r := <span class="tok-tactic">by</span>
+    ring_nf at *; nlinarith [ inv_pos.mpr hr, inv_pos.mpr ( zero_lt_one.trans hp ), inv_pos.mpr ( zero_lt_one.trans hq ), mul_inv_cancel₀ ( ne_of_gt hr ), mul_inv_cancel₀ ( ne_of_gt ( zero_lt_one.trans hp ) ), mul_inv_cancel₀ ( ne_of_gt ( zero_lt_one.trans hq ) ) ] ;
+  <span class="tok-tactic">have</span> ht_pos : <span class="tok-number">0</span> &lt; <span class="tok-number">1</span> / q - <span class="tok-number">1</span> / r := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">linarith</span> [ one_div_lt_one_div_of_lt zero_lt_one hp, one_div_lt_one_div_of_lt zero_lt_one hq ]
+  set s := <span class="tok-number">1</span> / (<span class="tok-number">1</span> / p - <span class="tok-number">1</span> / r)
+  set t := <span class="tok-number">1</span> / (<span class="tok-number">1</span> / q - <span class="tok-number">1</span> / r);
+  <span class="tok-tactic">have</span> h_holder : ∫⁻ y, (f (x - y)) ^ (p / r) * (g y) ^ (q / r) * (f (x - y)) ^ (<span class="tok-number">1</span> - p / r) * (g y) ^ (<span class="tok-number">1</span> - q / r) ≤
+               (∫⁻ y, ((f (x - y)) ^ (p / r) * (g y) ^ (q / r)) ^ r) ^ (<span class="tok-number">1</span> / r) * (∫⁻ y, (f (x - y)) ^ ((<span class="tok-number">1</span> - p / r) * s)) ^ (<span class="tok-number">1</span> / s) *
+               (∫⁻ y, (g y) ^ ((<span class="tok-number">1</span> - q / r) * t)) ^ (<span class="tok-number">1</span> / t) := <span class="tok-tactic">by</span>
+                 convert lintegral_three_mul_le ( <span class="tok-tactic">show</span> <span class="tok-number">1</span> &lt; r <span class="tok-tactic">by</span>
+                                                   contrapose! hs_pos; ring_nf at *; nlinarith [ inv_pos.<span class="tok-number">2</span> hr, mul_inv_cancel₀ hr.ne&#x27; ] ; ) ( <span class="tok-tactic">show</span> <span class="tok-number">1</span> &lt; s <span class="tok-tactic">by</span>
+                                                                           <span class="tok-tactic">exact</span> one_lt_one_div hs_pos ( <span class="tok-tactic">by</span> ring_nf at *; nlinarith [ mul_inv_cancel₀ ( ne_of_gt hr ) ] ) ; ) ( <span class="tok-tactic">show</span> <span class="tok-number">1</span> &lt; t <span class="tok-tactic">by</span>
+                                                                                                   <span class="tok-tactic">rw</span> [ lt_div_iff₀ ] &lt;;&gt; <span class="tok-tactic">norm_num</span> at *;
+                                                                                                   · <span class="tok-tactic">linarith</span> [ inv_pos.<span class="tok-number">2</span> ( zero_lt_one.trans hp ), inv_pos.<span class="tok-number">2</span> ( zero_lt_one.trans hq ), inv_pos.<span class="tok-number">2</span> hr ];
+                                                                                                   · grobner ) _ _ _ _ using <span class="tok-number">1</span>;
+                 · <span class="tok-tactic">simp</span> +decide only [← rpow_mul];
+                 · grind;
+                 · fun_prop;
+                 · fun_prop;
+                 · <span class="tok-tactic">exact</span> hg.pow_const _ |&gt; Measurable.aemeasurable;
+  convert h_holder using <span class="tok-number">3</span>;
+  · <span class="tok-tactic">simp</span> +decide [ mul_assoc, mul_comm, mul_left_comm, ← ENNReal.rpow_add_of_nonneg, div_nonneg ( zero_le_one.trans hp.le ) hr.le, div_nonneg ( zero_le_one.trans hq.le ) hr.le ];
+    <span class="tok-tactic">simp</span> +decide [ ← mul_assoc, ← ENNReal.rpow_add_of_nonneg, <span class="tok-tactic">show</span> <span class="tok-number">0</span> ≤ p / r <span class="tok-tactic">by</span> positivity, <span class="tok-tactic">show</span> <span class="tok-number">0</span> ≤ q / r <span class="tok-tactic">by</span> positivity, <span class="tok-tactic">show</span> <span class="tok-number">0</span> ≤ <span class="tok-number">1</span> - p / r <span class="tok-tactic">by</span> nlinarith [ div_mul_cancel₀ p hr.ne&#x27;, div_mul_cancel₀ q hr.ne&#x27;, div_mul_cancel₀ <span class="tok-number">1</span> hr.ne&#x27;, div_mul_cancel₀ <span class="tok-number">1</span> ( <span class="tok-tactic">by</span> positivity : ( p : <span class="tok-type">ℝ</span> ) ≠ <span class="tok-number">0</span> ), div_mul_cancel₀ <span class="tok-number">1</span> ( <span class="tok-tactic">by</span> positivity : ( q : <span class="tok-type">ℝ</span> ) ≠ <span class="tok-number">0</span> ) ], <span class="tok-tactic">show</span> <span class="tok-number">0</span> ≤ <span class="tok-number">1</span> - q / r <span class="tok-tactic">by</span> nlinarith [ div_mul_cancel₀ p hr.ne&#x27;, div_mul_cancel₀ q hr.ne&#x27;, div_mul_cancel₀ <span class="tok-number">1</span> hr.ne&#x27;, div_mul_cancel₀ <span class="tok-number">1</span> ( <span class="tok-tactic">by</span> positivity : ( p : <span class="tok-type">ℝ</span> ) ≠ <span class="tok-number">0</span> ), div_mul_cancel₀ <span class="tok-number">1</span> ( <span class="tok-tactic">by</span> positivity : ( q : <span class="tok-type">ℝ</span> ) ≠ <span class="tok-number">0</span> ) ] ];
+    <span class="tok-tactic">rw</span> [ mul_right_comm, ← ENNReal.rpow_add_of_nonneg ] &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+    · positivity;
+    · ring_nf at *; nlinarith [ inv_pos.<span class="tok-number">2</span> hr, inv_pos.<span class="tok-number">2</span> ( zero_lt_one.trans hp ), inv_pos.<span class="tok-number">2</span> ( zero_lt_one.trans hq ), mul_inv_cancel₀ ( ne_of_gt hr ), mul_inv_cancel₀ ( ne_of_gt ( zero_lt_one.trans hp ) ), mul_inv_cancel₀ ( ne_of_gt ( zero_lt_one.trans hq ) ) ] ;
+  · congr! <span class="tok-number">2</span>;
+    ext y; <span class="tok-tactic">rw</span> [ ENNReal.mul_rpow_of_nonneg _ _ ( <span class="tok-tactic">by</span> positivity ) ] ; <span class="tok-tactic">rw</span> [ ← ENNReal.rpow_mul, ← ENNReal.rpow_mul ] ; ring_nf; <span class="tok-tactic">norm_num</span> [ hr.ne&#x27; ] ;
+  · <span class="tok-tactic">simp</span> +zetaDelta at *;
+    <span class="tok-tactic">rw</span> [ <span class="tok-tactic">show</span> ( <span class="tok-number">1</span> - p / r ) * ( p⁻¹ - r⁻¹ ) ⁻¹ = p <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ ← div_eq_mul_inv ] ; <span class="tok-tactic">rw</span> [ div_eq_iff ] &lt;;&gt; nlinarith [ mul_inv_cancel₀ ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> : p ≠ <span class="tok-number">0</span> ), mul_inv_cancel₀ ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> : r ≠ <span class="tok-number">0</span> ), mul_div_cancel₀ p ( <span class="tok-tactic">by</span> <span class="tok-tactic">linarith</span> : r ≠ <span class="tok-number">0</span> ) ] ];
+    <span class="tok-tactic">rw</span> [ ← lintegral_comp_sub_left ];
+  · <span class="tok-tactic">rw</span> [ <span class="tok-tactic">show</span> ( <span class="tok-number">1</span> - q / r ) * t = q <span class="tok-tactic">by</span> <span class="tok-tactic">rw</span> [ mul_div, div_eq_iff ] &lt;;&gt; nlinarith [ one_div_mul_cancel ( <span class="tok-tactic">show</span> r ≠ <span class="tok-number">0</span> <span class="tok-tactic">by</span> positivity ), one_div_mul_cancel ( <span class="tok-tactic">show</span> q ≠ <span class="tok-number">0</span> <span class="tok-tactic">by</span> positivity ), one_div_mul_cancel ( <span class="tok-tactic">show</span> p ≠ <span class="tok-number">0</span> <span class="tok-tactic">by</span> positivity ), div_mul_cancel₀ q hr.ne&#x27; ] ];
+  · <span class="tok-tactic">rw</span> [ one_div_one_div ]
+
+private <span class="tok-keyword">lemma</span> double_integral_eq
+    {p q : <span class="tok-type">ℝ</span>}
+    {f g : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>≥<span class="tok-number">0</span>∞} (hf : Measurable f) (hg : Measurable g) :
+    ∫⁻ x, ∫⁻ y, f (x - y) ^ p * g y ^ q =
+      (∫⁻ x, f x ^ p) * (∫⁻ y, g y ^ q) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_tonelli : ∫⁻ x, ∫⁻ y, f (x - y) ^ p * g y ^ q = ∫⁻ y, ∫⁻ x, f (x - y) ^ p * g y ^ q := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">rw</span> [ ← MeasureTheory.lintegral_lintegral_swap ];
+    fun_prop;
+  <span class="tok-tactic">rw</span> [ h_tonelli, ← MeasureTheory.lintegral_const_mul ];
+  · <span class="tok-tactic">refine</span>&#x27; MeasureTheory.lintegral_congr <span class="tok-keyword">fun</span> y =&gt; _;
+    <span class="tok-tactic">rw</span> [ MeasureTheory.lintegral_mul_const ];
+    · <span class="tok-tactic">rw</span> [ eq_comm, ← MeasureTheory.lintegral_sub_right_eq_self ];
+    · <span class="tok-tactic">exact</span> Measurable.pow_const ( hf.comp ( measurable_id.sub measurable_const ) ) _;
+  · <span class="tok-tactic">exact</span> hg.pow_const _
+
+private <span class="tok-keyword">lemma</span> pointwise_rpow_bound
+    {p q r : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">1</span> &lt; p) (hq : <span class="tok-number">1</span> &lt; q) (hr : <span class="tok-number">0</span> &lt; r)
+    (hpqr : <span class="tok-number">1</span> / p + <span class="tok-number">1</span> / q = <span class="tok-number">1</span> + <span class="tok-number">1</span> / r)
+    {f g : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>≥<span class="tok-number">0</span>∞} (hf : Measurable f) (hg : Measurable g) (x : <span class="tok-type">ℝ</span>) :
+    (∫⁻ y, f (x - y) * g y) ^ r ≤
+      (∫⁻ y, f (x - y) ^ p * g y ^ q) *
+      (∫⁻ y, f y ^ p) ^ (r / p - <span class="tok-number">1</span>) *
+      (∫⁻ y, g y ^ q) ^ (r / q - <span class="tok-number">1</span>) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">have</span> h_holder : ∫⁻ y, f (x - y) * g y ≤ (∫⁻ y, f (x - y) ^ p * g y ^ q) ^ (<span class="tok-number">1</span> / r) * (∫⁻ y, f y ^ p) ^ (<span class="tok-number">1</span> / p - <span class="tok-number">1</span> / r) * (∫⁻ y, g y ^ q) ^ (<span class="tok-number">1</span> / q - <span class="tok-number">1</span> / r) := <span class="tok-tactic">by</span>
+    <span class="tok-tactic">exact</span> pointwise_holder hp hq hr hpqr hf hg x;
+  <span class="tok-tactic">refine</span>&#x27; le_trans ( ENNReal.rpow_le_rpow h_holder ( <span class="tok-tactic">by</span> positivity ) ) _;
+  <span class="tok-tactic">rw</span> [ ENNReal.mul_rpow_of_nonneg, ENNReal.mul_rpow_of_nonneg ] &lt;;&gt; try positivity;
+  <span class="tok-tactic">rw</span> [ ← ENNReal.rpow_mul, ← ENNReal.rpow_mul, ← ENNReal.rpow_mul ] ; ring_nf ; <span class="tok-tactic">norm_num</span> [ hr.ne&#x27; ]
+
+/-! ## Case <span class="tok-number">2</span>: both exponents strictly greater than <span class="tok-number">1</span> -/
+
+private <span class="tok-keyword">theorem</span> case_2
+    {p q r : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">1</span> &lt; p) (hq : <span class="tok-number">1</span> &lt; q) (hr : <span class="tok-number">0</span> &lt; r)
+    (hpqr : <span class="tok-number">1</span> / p + <span class="tok-number">1</span> / q = <span class="tok-number">1</span> + <span class="tok-number">1</span> / r)
+    {f g : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>≥<span class="tok-number">0</span>∞} (hf : Measurable f) (hg : Measurable g) :
+    ∫⁻ x, (∫⁻ y, f (x - y) * g y) ^ r ≤
+      (∫⁻ y, f y ^ p) ^ (r / p) * (∫⁻ y, g y ^ q) ^ (r / q) := <span class="tok-tactic">by</span>
+  <span class="tok-tactic">refine</span>&#x27; le_trans _ ( _ : _ ≤ _ );
+  <span class="tok-tactic">exact</span> ( ∫⁻ x, ∫⁻ y, f ( x - y ) ^ p * g y ^ q ) * ( ∫⁻ y, f y ^ p ) ^ ( r / p - <span class="tok-number">1</span> ) * ( ∫⁻ y, g y ^ q ) ^ ( r / q - <span class="tok-number">1</span> );
+  · <span class="tok-tactic">refine</span>&#x27; le_trans _ ( _ : _ ≤ _ );
+    <span class="tok-tactic">exact</span> ∫⁻ x, ( ∫⁻ y, f ( x - y ) ^ p * g y ^ q ) * ( ∫⁻ y, f y ^ p ) ^ ( r / p - <span class="tok-number">1</span> ) * ( ∫⁻ y, g y ^ q ) ^ ( r / q - <span class="tok-number">1</span> );
+    · <span class="tok-tactic">refine</span>&#x27; MeasureTheory.lintegral_mono <span class="tok-keyword">fun</span> x =&gt; _;
+      convert pointwise_rpow_bound hp hq hr hpqr hf hg x using <span class="tok-number">1</span>;
+    · <span class="tok-tactic">rw</span> [ MeasureTheory.lintegral_mul_const, MeasureTheory.lintegral_mul_const ];
+      · fun_prop;
+      · fun_prop;
+  · <span class="tok-tactic">rw</span> [ <span class="tok-tactic">show</span> r / p = <span class="tok-number">1</span> + ( r / p - <span class="tok-number">1</span> ) <span class="tok-tactic">by</span> <span class="tok-tactic">ring</span>, <span class="tok-tactic">show</span> r / q = <span class="tok-number">1</span> + ( r / q - <span class="tok-number">1</span> ) <span class="tok-tactic">by</span> <span class="tok-tactic">ring</span>, ENNReal.rpow_add_of_nonneg, ENNReal.rpow_add_of_nonneg ] &lt;;&gt; <span class="tok-tactic">norm_num</span>;
+    · <span class="tok-tactic">rw</span> [ double_integral_eq hf hg ] ; ring_nf ; <span class="tok-tactic">norm_num</span>;
+    · field_simp at hpqr;
+      <span class="tok-tactic">rw</span> [ le_div_iff₀ ] &lt;;&gt; nlinarith [ mul_pos hr ( sub_pos.mpr hp ), mul_pos hr ( sub_pos.mpr hq ) ];
+    · field_simp at hpqr;
+      <span class="tok-tactic">rw</span> [ le_div_iff₀ ] &lt;;&gt; nlinarith [ mul_pos hr ( sub_pos.mpr hp ), mul_pos hr ( sub_pos.mpr hq ) ]
+
+/-! ## Main <span class="tok-keyword">theorem</span>: Young&#x27;s convolution inequality -/
+
+/<span class="tok-comment">--</span>
+**Young&#x27;s convolution inequality.**
+
+Let $<span class="tok-number">1</span> ≤ p, q, r &lt; ∞$ satisfy $<span class="tok-number">1</span>/p + <span class="tok-number">1</span>/q = <span class="tok-number">1</span> + <span class="tok-number">1</span>/r$.
+For measurable functions $f, g : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>≥<span class="tok-number">0</span>∞$,
+$$
+\left(\int (f * g)^r\right)^{<span class="tok-number">1</span>/r} ≤ \left(\int f^p\right)^{<span class="tok-number">1</span>/p} \cdot \left(\int g^q\right)^{<span class="tok-number">1</span>/q}.
+$$
+-/
+<span class="tok-keyword">theorem</span> young_convolution_inequality_aristotle
+    {p q r : <span class="tok-type">ℝ</span>} (hp : <span class="tok-number">1</span> ≤ p) (hq : <span class="tok-number">1</span> ≤ q) (hr : <span class="tok-number">0</span> &lt; r)
+    (hpqr : <span class="tok-number">1</span> / p + <span class="tok-number">1</span> / q = <span class="tok-number">1</span> + <span class="tok-number">1</span> / r)
+    {f g : <span class="tok-type">ℝ</span> → <span class="tok-type">ℝ</span>≥<span class="tok-number">0</span>∞} (hf : Measurable f) (hg : Measurable g) :
+    (∫⁻ x, (∫⁻ y, f (x - y) * g y) ^ r) ^ (<span class="tok-number">1</span> / r) ≤
+      (∫⁻ y, f y ^ p) ^ (<span class="tok-number">1</span> / p) * (∫⁻ y, g y ^ q) ^ (<span class="tok-number">1</span> / q) := <span class="tok-tactic">by</span>
+  <span class="tok-comment">-- Split into two cases: one exponent equals 1, or both &gt; 1.</span>
+  by_cases h1 : p = <span class="tok-number">1</span> ∨ q = <span class="tok-number">1</span>
+  · <span class="tok-tactic">exact</span> case_1 hp hq hr hpqr h1 hf hg
+  · push_neg at h1
+    <span class="tok-tactic">have</span> hp&#x27; : <span class="tok-number">1</span> &lt; p := lt_of_le_of_ne hp (Ne.symm h1.<span class="tok-number">1</span>)
+    <span class="tok-tactic">have</span> hq&#x27; : <span class="tok-number">1</span> &lt; q := lt_of_le_of_ne hq (Ne.symm h1.<span class="tok-number">2</span>)
+    <span class="tok-comment">-- Use Case 2: take (1/r)-th power of the r-th power bound</span>
+    <span class="tok-tactic">have</span> h_rpow := case_2 hp&#x27; hq&#x27; hr hpqr hf hg
+    <span class="tok-tactic">calc</span> (∫⁻ x, (∫⁻ y, f (x - y) * g y) ^ r) ^ (<span class="tok-number">1</span> / r)
+        ≤ ((∫⁻ y, f y ^ p) ^ (r / p) * (∫⁻ y, g y ^ q) ^ (r / q)) ^ (<span class="tok-number">1</span> / r) := <span class="tok-tactic">by</span>
+          <span class="tok-tactic">exact</span> ENNReal.rpow_le_rpow h_rpow (<span class="tok-tactic">by</span> positivity)
+      _ = (∫⁻ y, f y ^ p) ^ (<span class="tok-number">1</span> / p) * (∫⁻ y, g y ^ q) ^ (<span class="tok-number">1</span> / q) := <span class="tok-tactic">by</span>
+          <span class="tok-tactic">rw</span> [ENNReal.mul_rpow_of_nonneg _ _ (<span class="tok-tactic">by</span> positivity),
+              ← ENNReal.rpow_mul, ← ENNReal.rpow_mul]
+          congr <span class="tok-number">1</span>
+          · <span class="tok-tactic">show</span> _ ^ (r / p * (<span class="tok-number">1</span> / r)) = _ ^ (<span class="tok-number">1</span> / p)
+            congr <span class="tok-number">1</span>; field_simp
+          · <span class="tok-tactic">show</span> _ ^ (r / q * (<span class="tok-number">1</span> / r)) = _ ^ (<span class="tok-number">1</span> / q)
+            congr <span class="tok-number">1</span>; field_simp
+
+<span class="tok-keyword">end</span> YoungConvolution
+</code></pre>
+        </details>
+        <details>
+          <summary>Verification logs</summary>
+          <pre><code>stdout:
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/young_convolution_inequality_worker_20260411-093847_8ad23776.lean:35:47: warning: This simp argument is unused:
+  MeasureTheory.lintegral_const_mul&#x27;
+
+Hint: Omit it from the simp argument list.
+  simp +decide [̵ ̵s̵u̵b̵_̵e̵q̵_̵a̵d̵d̵_̵n̵e̵g̵,̵[̲s̲u̲b̲_̲e̲q̲_̲a̲d̲d̲_̲n̲e̲g̲,̲ mul_comm, M̵e̵a̵s̵u̵r̵e̵T̵h̵e̵o̵r̵y̵.̵l̵i̵n̵t̵e̵g̵r̵a̵l̵_̵c̵o̵n̵s̵t̵_̵m̵u̵l̵&#x27;̵,̵ ̵M̵e̵a̵s̵u̵r̵e̵T̵h̵e̵o̵r̵y̵.̵l̵i̵n̵t̵e̵g̵r̵a̵l̵_̵m̵u̵l̵_̵c̵o̵n̵s̵t̵&#x27;̵ ̵]̵M̲e̲a̲s̲u̲r̲e̲T̲h̲e̲o̲r̲y̲.̲l̲i̲n̲t̲e̲g̲r̲a̲l̲_̲m̲u̲l̲_̲c̲o̲n̲s̲t̲&#x27;̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/young_convolution_inequality_worker_20260411-093847_8ad23776.lean:35:83: warning: This simp argument is unused:
+  MeasureTheory.lintegral_mul_const&#x27;
+
+Hint: Omit it from the simp argument list.
+  simp +decide [̵ ̵s̵u̵b̵_̵e̵q̵_̵a̵d̵d̵_̵n̵e̵g̵,̵[̲s̲u̲b̲_̲e̲q̲_̲a̲d̲d̲_̲n̲e̲g̲,̲ mul_comm, M̵e̵a̵s̵u̵r̵e̵T̵h̵e̵o̵r̵y̵.̵l̵i̵n̵t̵e̵g̵r̵a̵l̵_̵c̵o̵n̵s̵t̵_̵m̵u̵l̵&#x27;̵,̵ ̵M̵e̵a̵s̵u̵r̵e̵T̵h̵e̵o̵r̵y̵.̵l̵i̵n̵t̵e̵g̵r̵a̵l̵_̵m̵u̵l̵_̵c̵o̵n̵s̵t̵&#x27;̵ ̵]̵M̲e̲a̲s̲u̲r̲e̲T̲h̲e̲o̲r̲y̲.̲l̲i̲n̲t̲e̲g̲r̲a̲l̲_̲c̲o̲n̲s̲t̲_̲m̲u̲l̲&#x27;̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/young_convolution_inequality_worker_20260411-093847_8ad23776.lean:71:23: warning: This simp argument is unused:
+  MeasureTheory.lintegral_const_mul&#x27;
+
+Hint: Omit it from the simp argument list.
+  simp_all +decide ̵[̵ ̵M̵e̵a̵s̵u̵r̵e̵T̵h̵e̵o̵r̵y̵.̵l̵i̵n̵t̵e̵g̵r̵a̵l̵_̵c̵o̵n̵s̵t̵_̵m̵u̵l̵&#x27;̵ ̵]̵
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/young_convolution_inequality_worker_20260411-093847_8ad23776.lean:76:31: warning: This simp argument is unused:
+  MeasureTheory.lintegral_mul_const&#x27;
+
+Hint: Omit it from the simp argument list.
+  s̵i̵m̵p̵ ̵+̵d̵e̵c̵i̵d̵e̵ ̵[̵ ̵m̵u̵l̵_̵c̵o̵m̵m̵,̵ ̵M̵e̵a̵s̵u̵r̵e̵T̵h̵e̵o̵r̵y̵.̵l̵i̵n̵t̵e̵g̵r̵a̵l̵_̵m̵u̵l̵_̵c̵o̵n̵s̵t̵&#x27;̵ ̵]̵s̲i̲m̲p̲ ̲+̲d̲e̲c̲i̲d̲e̲ ̲[̲m̲u̲l̲_̲c̲o̲m̲m̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/young_convolution_inequality_worker_20260411-093847_8ad23776.lean:140:28: warning: `mul_le_mul_left&#x27;` has been deprecated: Use `mul_le_mul_right` instead
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/young_convolution_inequality_worker_20260411-093847_8ad23776.lean:176:40: warning: This simp argument is unused:
+  mul_left_comm
+
+Hint: Omit it from the simp argument list.
+  simp +decide [ ̵mul_assoc, mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵← ENNReal.rpow_add_of_nonneg,
+  ̲  ̲ ̲ ̲div_nonneg ( ̵zero_le_one.trans hp.le ̵) hr.le, div_nonneg ( ̵zero_le_one.trans hq.le ̵) hr.le ̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/young_convolution_inequality_worker_20260411-093847_8ad23776.lean:176:55: warning: This simp argument is unused:
+  ← ENNReal.rpow_add_of_nonneg
+
+Hint: Omit it from the simp argument list.
+  simp +decide [̵ ̵m̵u̵l̵_̵a̵s̵s̵o̵c̵,̵[̲m̲u̲l̲_̲a̲s̲s̲o̲c̲,̲ mul_comm, mul_left_comm, ←̵ ̵E̵N̵N̵R̵e̵a̵l̵.̵r̵p̵o̵w̵_̵a̵d̵d̵_̵o̵f̵_̵n̵o̵n̵n̵e̵g̵,̵ ̵div_nonneg (̵ ̵z̵e̵r̵o̵_̵l̵e̵_̵o̵n̵e̵.̵t̵r̵a̵n̵s̵ ̵h̵p̵.̵l̵e̵ ̵)̵(̲z̲e̲r̲o̲_̲l̲e̲_̲o̲n̲e̲.̲t̲r̲a̲n̲s̲ ̲h̲p̲.̲l̲e̲)̲ hr.le,
+  ̲  ̲ ̲ ̲div_nonneg (̵ ̵z̵e̵r̵o̵_̵l̵e̵_̵o̵n̵e̵.̵t̵r̵a̵n̵s̵ ̵h̵q̵.̵l̵e̵ ̵)̵ ̵h̵r̵.̵l̵e̵ ̵]̵(̲z̲e̲r̲o̲_̲l̲e̲_̲o̲n̲e̲.̲t̲r̲a̲n̲s̲ ̲h̲q̲.̲l̲e̲)̲ ̲h̲r̲.̲l̲e̲]̲
+
+Note: Simp arguments with `←` have the additional effect of removing the other direction from the simp set, even if the simp argument itself is unused. If the hint above does not work, try replacing `←` with `-` to only get that effect and silence this warning.
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/young_convolution_inequality_worker_20260411-093847_8ad23776.lean:176:131: warning: This simp argument is unused:
+  div_nonneg (zero_le_one.trans hq.le) hr.le
+
+Hint: Omit it from the simp argument list.
+  simp +decide [̵ ̵m̵u̵l̵_̵a̵s̵s̵o̵c̵,̵[̲m̲u̲l̲_̲a̲s̲s̲o̲c̲,̲ mul_comm, mul_left_comm, ← ENNReal.rpow_add_of_nonneg,
+  ̲  ̲ ̲ ̲div_nonneg (̵ ̵z̵e̵r̵o̵_̵l̵e̵_̵o̵n̵e̵.̵t̵r̵a̵n̵s̵ ̵h̵p̵.̵l̵e̵ ̵)̵ ̵h̵r̵.̵l̵e̵,̵ ̵d̵i̵v̵_̵n̵o̵n̵n̵e̵g̵ ̵(̵ ̵z̵e̵r̵o̵_̵l̵e̵_̵o̵n̵e̵.̵t̵r̵a̵n̵s̵ ̵h̵q̵.̵l̵e̵ ̵)̵ ̵h̵r̵.̵l̵e̵ ̵]̵(̲z̲e̲r̲o̲_̲l̲e̲_̲o̲n̲e̲.̲t̲r̲a̲n̲s̲ ̲h̲p̲.̲l̲e̲)̲ ̲h̲r̲.̲l̲e̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/young_convolution_inequality_worker_20260411-093847_8ad23776.lean:177:92: warning: This simp argument is unused:
+  show 0 ≤ q / r by positivity
+
+Hint: Omit it from the simp argument list.
+  simp +decide [̵ ̵←̵[̲←̲ mul_assoc, ← ENNReal.rpow_add_of_nonneg, show 0 ≤ p / r by positivity,
+  ̲  ̲ ̲ ̲ ̲ ̲show 0 ≤ q̵ ̵/̵ ̵r̵ ̵b̵y̵ ̵p̵o̵s̵i̵t̵i̵v̵i̵t̵y̵,̵ ̵s̵h̵o̵w̵ ̵0̵ ̵≤̵ ̵1 - p / r by
+  ̲  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲nlinarith [̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵[̲d̲i̲v̲_̲m̲u̲l̲_̲c̲a̲n̲c̲e̲l̲₀̲ p h̵r̵.̵n̵e̵&#x27;̵,̵h̲r̲.̲n̲e̲&#x27;̲,̲ div_mul_cancel₀ q h̵r̵.̵n̵e̵&#x27;̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵1̵ ̵h̵r̵.̵n̵e̵&#x27;̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵1̵ ̵(̵ ̵b̵y̵ ̵p̵o̵s̵i̵t̵i̵v̵i̵t̵y̵h̲r̲.̲n̲e̲&#x27;̲,̲ ̲d̲i̲v̲_̲m̲u̲l̲_̲c̲a̲n̲c̲e̲l̲₀̲ ̲1̲ ̲h̲r̲.̲n̲e̲&#x27;̲,̲
+  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲d̲i̲v̲_̲m̲u̲l̲_̲c̲a̲n̲c̲e̲l̲₀̲ ̲1̲ ̲(̲b̲y̲ ̲p̲o̲s̲i̲t̲i̲v̲i̲t̲y̲ : (̵ ̵p̵ ̵:̵ ̵ℝ̵ ̵)̵(̲p̲ ̲:̲ ̲ℝ̲)̲ ≠ 0̵ ̵)̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵1̵ ̵(̵ ̵b̵y̵ ̵p̵o̵s̵i̵t̵i̵v̵i̵t̵y̵ ̵:̵ ̵(̵ ̵q̵ ̵:̵ ̵ℝ̵ ̵)̵ ̵≠̵ ̵0̵ ̵)̵ ̵]̵,̵0̲)̲,̲
+  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲d̲i̲v̲_̲m̲u̲l̲_̲c̲a̲n̲c̲e̲l̲₀̲ ̲1̲ ̲(̲b̲y̲ ̲p̲o̲s̲i̲t̲i̲v̲i̲t̲y̲ ̲:̲ ̲(̲q̲ ̲:̲ ̲ℝ̲)̲ ̲≠̲ ̲0̲)̲]̲,̲
+  ̲  ̲ ̲ ̲ ̲ ̲show 0 ≤ 1 - q / r by
+  ̲  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲nlinarith [̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵[̲d̲i̲v̲_̲m̲u̲l̲_̲c̲a̲n̲c̲e̲l̲₀̲ p h̵r̵.̵n̵e̵&#x27;̵,̵h̲r̲.̲n̲e̲&#x27;̲,̲ div_mul_cancel₀ q h̵r̵.̵n̵e̵&#x27;̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵1̵ ̵h̵r̵.̵n̵e̵&#x27;̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵1̵ ̵(̵ ̵b̵y̵ ̵p̵o̵s̵i̵t̵i̵v̵i̵t̵y̵h̲r̲.̲n̲e̲&#x27;̲,̲ ̲d̲i̲v̲_̲m̲u̲l̲_̲c̲a̲n̲c̲e̲l̲₀̲ ̲1̲ ̲h̲r̲.̲n̲e̲&#x27;̲,̲
+  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲d̲i̲v̲_̲m̲u̲l̲_̲c̲a̲n̲c̲e̲l̲₀̲ ̲1̲ ̲(̲b̲y̲ ̲p̲o̲s̲i̲t̲i̲v̲i̲t̲y̲ : (̵ ̵p̵ ̵:̵ ̵ℝ̵ ̵)̵(̲p̲ ̲:̲ ̲ℝ̲)̲ ≠ 0̵ ̵)̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵1̵ ̵(̵ ̵b̵y̵ ̵p̵o̵s̵i̵t̵i̵v̵i̵t̵y̵ ̵:̵ ̵(̵ ̵q̵ ̵:̵ ̵ℝ̵ ̵)̵ ̵≠̵ ̵0̵ ̵)̵ ̵]̵ ̵]̵0̲)̲,̲
+  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲d̲i̲v̲_̲m̲u̲l̲_̲c̲a̲n̲c̲e̲l̲₀̲ ̲1̲ ̲(̲b̲y̲ ̲p̲o̲s̲i̲t̲i̲v̲i̲t̲y̲ ̲:̲ ̲(̲q̲ ̲:̲ ̲ℝ̲)̲ ̲≠̲ ̲0̲)̲]̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/young_convolution_inequality_worker_20260411-093847_8ad23776.lean:177:342: warning: This simp argument is unused:
+  show 0 ≤ 1 - q / r by
+        nlinarith [div_mul_cancel₀ p hr.ne&#x27;, div_mul_cancel₀ q hr.ne&#x27;, div_mul_cancel₀ 1 hr.ne&#x27;,
+          div_mul_cancel₀ 1 (by positivity : (p : ℝ) ≠ 0), div_mul_cancel₀ 1 (by positivity : (q : ℝ) ≠ 0)]
+
+Hint: Omit it from the simp argument list.
+  simp +decide [̵ ̵←̵[̲←̲ mul_assoc, ← ENNReal.rpow_add_of_nonneg, show 0 ≤ p / r by positivity,
+  ̲  ̲ ̲ ̲ ̲ ̲show 0 ≤ q / r by positivity,
+  ̲  ̲ ̲ ̲ ̲ ̲show 0 ≤ 1 - p / r by
+  ̲  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲nlinarith [̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵[̲d̲i̲v̲_̲m̲u̲l̲_̲c̲a̲n̲c̲e̲l̲₀̲ p hr.ne&#x27;, div_mul_cancel₀ q hr.ne&#x27;, div_mul_cancel₀ 1 hr.ne&#x27;,
+  ̲  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲div_mul_cancel₀ 1 (̵ ̵b̵y̵(̲b̲y̲ positivity : (̵ ̵p̵(̲p̲ : ℝ̵ ̵)̵ℝ̲)̲ ≠ 0̵ ̵)̵,̵0̲)̲,̲
+  ̲  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲div_mul_cancel₀ 1 (̵ ̵b̵y̵(̲b̲y̲ positivity : (̵ ̵q̵(̲q̲ : ℝ̵ ̵)̵ℝ̲)̲ ≠ 0̵ ̵)̵ ̵]̵,̵ ̵s̵h̵o̵w̵ ̵0̵ ̵≤̵ ̵1̵ ̵-̵ ̵q̵ ̵/̵ ̵r̵ ̵b̵y̵ ̵n̵l̵i̵n̵a̵r̵i̵t̵h̵ ̵[̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵p̵ ̵h̵r̵.̵n̵e̵&#x27;̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵q̵ ̵h̵r̵.̵n̵e̵&#x27;̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵1̵ ̵h̵r̵.̵n̵e̵&#x27;̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵1̵ ̵(̵ ̵b̵y̵ ̵p̵o̵s̵i̵t̵i̵v̵i̵t̵y̵ ̵:̵ ̵(̵ ̵p̵ ̵:̵ ̵ℝ̵ ̵)̵ ̵≠̵ ̵0̵ ̵)̵,̵ ̵d̵i̵v̵_̵m̵u̵l̵_̵c̵a̵n̵c̵e̵l̵₀̵ ̵1̵ ̵(̵ ̵b̵y̵ ̵p̵o̵s̵i̵t̵i̵v̵i̵t̵y̵ ̵:̵ ̵(̵ ̵q̵ ̵:̵ ̵ℝ̵ ̵)̵ ̵≠̵ ̵0̵ ̵)̵ ̵]̵ ̵]̵0̲)̲]̲]̲
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+/Users/adihaya/GitHub/formal-islands/lean_project/FormalIslands/Generated/young_convolution_inequality_worker_20260411-093847_8ad23776.lean:262:4: warning: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you&#x27;d rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro &quot;push_neg&quot; cfg:optConfig loc:(location)? : tactic =&gt;
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
 
 
 stderr:

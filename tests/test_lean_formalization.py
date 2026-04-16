@@ -16,6 +16,7 @@ from formal_islands.formalization.agentic import (
     recover_agentic_artifact_from_scratch_file,
 )
 from formal_islands.formalization.aristotle import (
+    _copy_extracted_generated_lean_files,
     _build_verified_child_support_files,
     _materialize_workspace_verified_child_support_files,
     _materialize_verified_child_support_files,
@@ -606,6 +607,61 @@ def test_materialize_workspace_verified_child_support_files_writes_stable_alias_
     assert alias_path.is_file()
     alias_text = alias_path.read_text(encoding="utf-8")
     assert child_artifact.read_text(encoding="utf-8").strip() in alias_text
+
+
+def test_copy_extracted_generated_lean_files_restores_auxiliary_modules(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path / "lean_project")
+    extracted_root = tmp_path / "extracted"
+    primary_source = (
+        extracted_root / "job" / "FormalIslands" / "Generated" / "target_worker_abc123.lean"
+    )
+    helper_source = extracted_root / "job" / "FormalIslands" / "Generated" / "EntireFunction.lean"
+    nested_helper_source = (
+        extracted_root
+        / "job"
+        / "FormalIslands"
+        / "Generated"
+        / "VerifiedSupport"
+        / "ChildHelper_deadbeef.lean"
+    )
+    ignored_source = extracted_root / "job" / "OtherProject" / "Generated" / "Ignored.lean"
+
+    primary_source.parent.mkdir(parents=True, exist_ok=True)
+    helper_source.write_text("theorem helper : True := by trivial\n", encoding="utf-8")
+    primary_source.write_text("theorem target : True := by trivial\n", encoding="utf-8")
+    nested_helper_source.parent.mkdir(parents=True, exist_ok=True)
+    nested_helper_source.write_text("theorem child_helper : True := by trivial\n", encoding="utf-8")
+    ignored_source.parent.mkdir(parents=True, exist_ok=True)
+    ignored_source.write_text("theorem ignored : True := by trivial\n", encoding="utf-8")
+
+    primary_destination = workspace.root / "FormalIslands" / "Generated" / primary_source.name
+    primary_destination.parent.mkdir(parents=True, exist_ok=True)
+    primary_destination.write_text("theorem existing : True := by trivial\n", encoding="utf-8")
+
+    copied_paths = _copy_extracted_generated_lean_files(
+        extracted_root=extracted_root,
+        workspace_root=workspace.root,
+        primary_destination=primary_destination,
+    )
+
+    helper_destination = workspace.root / "FormalIslands" / "Generated" / "EntireFunction.lean"
+    nested_helper_destination = (
+        workspace.root
+        / "FormalIslands"
+        / "Generated"
+        / "VerifiedSupport"
+        / "ChildHelper_deadbeef.lean"
+    )
+
+    assert helper_destination in copied_paths
+    assert nested_helper_destination in copied_paths
+    assert helper_destination.read_text(encoding="utf-8") == helper_source.read_text(encoding="utf-8")
+    assert (
+        nested_helper_destination.read_text(encoding="utf-8")
+        == nested_helper_source.read_text(encoding="utf-8")
+    )
+    assert not (workspace.root / "OtherProject" / "Generated" / "Ignored.lean").exists()
+    assert primary_destination.read_text(encoding="utf-8") == "theorem existing : True := by trivial\n"
 
 
 def test_importable_support_module_names_are_content_addressed(tmp_path: Path) -> None:
