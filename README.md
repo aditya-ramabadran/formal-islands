@@ -1,4 +1,4 @@
-# Formal Islands
+# [Formal Islands](https://aditya-ramabadran.github.io/formal-islands/)
 
 **Partial formal certification for natural-language mathematical proofs.**
 
