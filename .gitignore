@@ -17,5 +17,6 @@ lean_project/test_*.lean
 
 artifacts/
 dev/
+paper/
 .env
 auth.json

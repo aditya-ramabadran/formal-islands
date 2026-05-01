@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import subprocess
 import sys
@@ -332,6 +333,175 @@ def test_gemini_backend_defaults_to_360_second_timeout() -> None:
     backend = GeminiCLIBackend()
 
     assert backend.timeout_seconds == 360.0
+
+
+def test_gemini_backend_retries_transient_capacity_malformed_response(
+    tmp_path: Path,
+) -> None:
+    backend = GeminiCLIBackend(
+        model="gemini-2.5-flash",
+        log_dir=tmp_path / "logs",
+        transient_retry_attempts=2,
+        transient_retry_delay_seconds=0.25,
+    )
+    request = StructuredBackendRequest(
+        prompt="Return the graph.",
+        system_prompt="Return JSON only.",
+        json_schema={"type": "object"},
+        task_name="plan_theorem",
+    )
+
+    completed_attempts = [
+        subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=json.dumps({"response": "not json"}),
+            stderr=(
+                "Attempt 1 failed: You have exhausted your capacity on this model. "
+                "Your quota will reset after 8s.. Retrying after 9423ms..."
+            ),
+        ),
+        subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=json.dumps({"response": json.dumps({"nodes": []}), "error": None}),
+            stderr="",
+        ),
+    ]
+    sleep_delays: list[float] = []
+
+    def fake_sleep(delay: float) -> None:
+        sleep_delays.append(delay)
+
+    with patch("shutil.which", return_value="/usr/bin/gemini"), patch(
+        "subprocess.run", side_effect=completed_attempts
+    ) as run_mock, patch("formal_islands.backends.gemini_cli.time.sleep", side_effect=fake_sleep):
+        response = backend.run_structured(request)
+
+    assert run_mock.call_count == 2
+    assert sleep_delays == [0.25]
+    assert response.payload == {"nodes": []}
+    logs = sorted((tmp_path / "logs").glob("plan_theorem_*.json"))
+    assert logs
+    payload = json.loads(logs[0].read_text(encoding="utf-8"))
+    assert payload["status"] == "completed"
+    assert payload["transient_attempt_count"] == 2
+    assert payload["transient_errors"] == [
+        "Gemini CLI response field did not contain a JSON object"
+    ]
+
+
+def test_aristotle_backend_retries_capacity_limited_submission(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from aristotlelib import AristotleAPIError, ProjectStatus
+
+    from formal_islands.backends.aristotle import AristotleBackend
+
+    class FakeProject:
+        project_id = "project-123"
+        status = ProjectStatus.COMPLETE
+
+    calls: list[tuple[str, Path]] = []
+
+    async def fake_create_from_directory(*, prompt: str, project_dir: Path) -> FakeProject:
+        calls.append((prompt, project_dir))
+        if len(calls) == 1:
+            raise AristotleAPIError(
+                "You have too many requests in progress. Please cancel or wait for a "
+                "project to complete before starting a new one."
+            )
+        return FakeProject()
+
+    sleep_delays: list[float] = []
+
+    async def fake_sleep(delay: float) -> None:
+        sleep_delays.append(delay)
+
+    monkeypatch.setattr(
+        "formal_islands.backends.aristotle.Project.create_from_directory",
+        fake_create_from_directory,
+    )
+    monkeypatch.setattr("formal_islands.backends.aristotle.asyncio.sleep", fake_sleep)
+    backend = AristotleBackend(
+        log_dir=tmp_path / "logs",
+        submission_retry_attempts=3,
+        submission_retry_initial_delay_seconds=0.25,
+        submission_retry_max_delay_seconds=10.0,
+    )
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    log_path = tmp_path / "logs" / "aristotle.json"
+
+    project, attempt_count, submission_errors = asyncio.run(
+        backend._create_project_with_retries(
+            prompt="Prove 1 = 1.",
+            project_dir=project_dir,
+            task_name="node",
+            log_path=log_path,
+            started_at=0.0,
+        )
+    )
+
+    assert project.project_id == "project-123"
+    assert attempt_count == 2
+    assert len(calls) == 2
+    assert sleep_delays == [0.25]
+    assert len(submission_errors) == 1
+    assert "too many requests in progress" in submission_errors[0].lower()
+    payload = json.loads(log_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "submission_retry_wait"
+    assert payload["submission_attempt_count"] == 1
+    assert payload["retry_delay_seconds"] == 0.25
+
+
+def test_aristotle_backend_does_not_retry_non_capacity_submission_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from aristotlelib import AristotleAPIError
+
+    from formal_islands.backends.aristotle import AristotleBackend
+
+    calls = 0
+
+    async def fake_create_from_directory(*, prompt: str, project_dir: Path) -> object:
+        nonlocal calls
+        calls += 1
+        raise AristotleAPIError("invalid request")
+
+    async def fake_sleep(delay: float) -> None:  # pragma: no cover - should not be called
+        raise AssertionError("non-capacity errors should not sleep before retrying")
+
+    monkeypatch.setattr(
+        "formal_islands.backends.aristotle.Project.create_from_directory",
+        fake_create_from_directory,
+    )
+    monkeypatch.setattr("formal_islands.backends.aristotle.asyncio.sleep", fake_sleep)
+    backend = AristotleBackend(
+        log_dir=tmp_path / "logs",
+        submission_retry_attempts=3,
+        submission_retry_initial_delay_seconds=0.25,
+    )
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    log_path = tmp_path / "logs" / "aristotle.json"
+
+    with pytest.raises(BackendInvocationError, match="invalid request"):
+        asyncio.run(
+            backend._create_project_with_retries(
+                prompt="Prove 1 = 1.",
+                project_dir=project_dir,
+                task_name="node",
+                log_path=log_path,
+                started_at=0.0,
+            )
+        )
+
+    assert calls == 1
+    payload = json.loads(log_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "submission_failed"
+    assert payload["submission_attempt_count"] == 1
+    assert payload["submission_errors"] == ["invalid request"]
 
 
 def test_gemini_backend_writes_debug_log_when_timeout_returns_bytes(tmp_path: Path) -> None:

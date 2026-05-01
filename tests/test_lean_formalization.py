@@ -8,6 +8,7 @@ from threading import RLock
 import pytest
 
 from formal_islands.backends import AristotleBackend, BackendInvocationError, MockBackend
+from formal_islands.continuation import format_continuation_rationale
 from formal_islands.formalization.agentic import (
     _extract_named_lean_theorem,
     _extract_primary_lean_theorem,
@@ -32,6 +33,7 @@ from formal_islands.formalization.loop import (
     _build_agentic_faithfulness_feedback,
     _build_aristotle_faithfulness_feedback,
     _integrate_successful_formalization,
+    _merge_formalization_outcome,
     _promote_last_blocker_nodes,
     _promote_informal_parents_with_verified_children,
     _should_run_bonus_retry,
@@ -262,6 +264,42 @@ def test_build_agentic_formalization_request_includes_concrete_setting_guidance(
     assert "reserved keyword" in request.prompt.lower()
     assert "component of the sketch" in request.prompt.lower()
     assert "formal-islands-search" in request.prompt.lower()
+    assert "User continuation instructions (must follow)" not in request.prompt
+
+
+def test_build_agentic_formalization_request_promotes_continuation_instructions(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+    scratch_path = workspace.prepare_worker_file("n2")
+    graph = build_graph()
+    graph = graph.model_copy(
+        update={
+            "nodes": [
+                node.model_copy(
+                    update={
+                        "formalization_rationale": format_continuation_rationale(
+                            "Use the concrete retained-mode subtype `{j : Fin d // j ≠ k}`."
+                        )
+                    }
+                )
+                if node.id == "n2"
+                else node
+                for node in graph.nodes
+            ]
+        }
+    )
+
+    request = build_agentic_formalization_request(
+        graph=graph,
+        node_id="n2",
+        workspace_root=workspace.root,
+        scratch_file_path=scratch_path,
+    )
+
+    assert "User continuation instructions (must follow)" in request.prompt
+    assert "high-priority theorem-shape" in request.prompt
+    assert "{j : Fin d // j ≠ k}" in request.prompt
 
 
 def test_build_agentic_formalization_request_includes_all_verified_direct_children(tmp_path: Path) -> None:
@@ -314,6 +352,43 @@ def test_build_aristotle_formalization_prompt_marks_ambient_theorem_as_context_o
     assert "fail rather than returning a trivial or over-shrunk theorem" in prompt.lower()
     assert "reserved keyword" in prompt.lower()
     assert "lambda1" in prompt.lower()
+    assert "user continuation instructions (must follow)" not in prompt.lower()
+
+
+def test_build_aristotle_formalization_prompt_promotes_continuation_instructions(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+    scratch_path = workspace.prepare_worker_file("n2")
+    graph = build_graph()
+    graph = graph.model_copy(
+        update={
+            "nodes": [
+                node.model_copy(
+                    update={
+                        "formalization_rationale": format_continuation_rationale(
+                            "Use the concrete retained-mode subtype `{j : Fin d // j ≠ k}`."
+                        )
+                    }
+                )
+                if node.id == "n2"
+                else node
+                for node in graph.nodes
+            ]
+        }
+    )
+    node = next(node for node in graph.nodes if node.id == "n2")
+
+    prompt = build_aristotle_formalization_prompt(
+        graph=graph,
+        node=node,
+        desired_theorem_name="n2_aristotle",
+        relative_scratch_path=scratch_path.relative_to(workspace.root),
+    )
+
+    assert "User continuation instructions (must follow)" in prompt
+    assert "high-priority theorem-shape" in prompt
+    assert "{j : Fin d // j ≠ k}" in prompt
 
 
 def test_build_aristotle_formalization_prompt_includes_all_verified_direct_children(tmp_path: Path) -> None:
@@ -609,7 +684,9 @@ def test_materialize_workspace_verified_child_support_files_writes_stable_alias_
     assert child_artifact.read_text(encoding="utf-8").strip() in alias_text
 
 
-def test_copy_extracted_generated_lean_files_restores_auxiliary_modules(tmp_path: Path) -> None:
+def test_copy_extracted_generated_lean_files_restores_auxiliary_modules_without_support_cache(
+    tmp_path: Path,
+) -> None:
     workspace = create_workspace(tmp_path / "lean_project")
     extracted_root = tmp_path / "extracted"
     primary_source = (
@@ -654,12 +731,9 @@ def test_copy_extracted_generated_lean_files_restores_auxiliary_modules(tmp_path
     )
 
     assert helper_destination in copied_paths
-    assert nested_helper_destination in copied_paths
+    assert nested_helper_destination not in copied_paths
     assert helper_destination.read_text(encoding="utf-8") == helper_source.read_text(encoding="utf-8")
-    assert (
-        nested_helper_destination.read_text(encoding="utf-8")
-        == nested_helper_source.read_text(encoding="utf-8")
-    )
+    assert not nested_helper_destination.exists()
     assert not (workspace.root / "OtherProject" / "Generated" / "Ignored.lean").exists()
     assert primary_destination.read_text(encoding="utf-8") == "theorem existing : True := by trivial\n"
 
@@ -1236,6 +1310,129 @@ def test_full_node_verification_swallows_direct_supporting_formal_core() -> None
     assert not updated.edges
 
 
+def test_batch_merge_preserves_swallowed_supporting_formal_core_deletion() -> None:
+    full_artifact = FormalArtifact(
+        lean_theorem_name="n1_full",
+        lean_statement="theorem n1_full : True",
+        lean_code="theorem n1_full : True := by trivial",
+        faithfulness_classification="full_node",
+        verification=VerificationResult(status="verified", command="lake env lean"),
+    )
+    support_artifact = FormalArtifact(
+        lean_theorem_name="n1_core",
+        lean_statement="theorem n1_core : True",
+        lean_code="theorem n1_core : True := by trivial",
+        faithfulness_classification="concrete_sublemma",
+        verification=VerificationResult(status="verified", command="lake env lean"),
+    )
+    batch_base_graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(id="n0", title="Root", informal_statement="Root.", informal_proof_text="Use n1."),
+            ProofNode(
+                id="n1",
+                title="Parent step",
+                informal_statement="Parent step.",
+                informal_proof_text="Use core.",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Retry parent step after core.",
+            ),
+            ProofNode(
+                id="n1__formal_core",
+                title="Certified local core for Parent step",
+                informal_statement="Core.",
+                informal_proof_text="Core.",
+                status="formal_verified",
+                formal_artifact=support_artifact,
+            ),
+        ],
+        edges=[
+            ProofEdge(source_id="n0", target_id="n1"),
+            ProofEdge(source_id="n1", target_id="n1__formal_core", label="formal_sublemma_for"),
+        ],
+    )
+
+    worker_updated_graph = _integrate_successful_formalization(
+        graph=batch_base_graph,
+        backend=None,
+        planning_backend=None,
+        node_id="n1",
+        artifact=full_artifact,
+        verification_status="verified",
+        enable_parent_promotion=False,
+    )
+    merged = _merge_formalization_outcome(
+        current_graph=batch_base_graph,
+        batch_base_graph=batch_base_graph,
+        updated_graph=worker_updated_graph,
+    )
+
+    assert any(node.id == "n1" and node.status == "formal_verified" for node in merged.nodes)
+    assert all(node.id != "n1__formal_core" for node in merged.nodes)
+    assert all(edge.target_id != "n1__formal_core" for edge in merged.edges)
+
+
+def test_concrete_sublemma_promotion_reuses_equivalent_existing_support_core() -> None:
+    artifact = FormalArtifact(
+        lean_theorem_name="n0_core_new",
+        lean_statement="theorem n0_core : True",
+        lean_code="theorem n0_core : True := by trivial",
+        faithfulness_classification="concrete_sublemma",
+        verification=VerificationResult(status="verified", command="lake env lean"),
+    )
+    previous_artifact = artifact.model_copy(update={"lean_theorem_name": "n0_core_old"})
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Main claim",
+                informal_statement="Main claim.",
+                informal_proof_text="Use the certified local core.",
+                status="candidate_formal",
+                formalization_priority=1,
+                formalization_rationale="Retry parent.",
+            ),
+            ProofNode(
+                id="n0__formal_core",
+                title="Certified local core for Main claim",
+                informal_statement="Old core.",
+                informal_proof_text="Old proof.",
+                status="formal_verified",
+                formal_artifact=previous_artifact,
+            ),
+        ],
+        edges=[
+            ProofEdge(source_id="n0", target_id="n0__formal_core", label="formal_sublemma_for")
+        ],
+    )
+
+    updated = _integrate_successful_formalization(
+        graph=graph,
+        backend=None,
+        planning_backend=None,
+        node_id="n0",
+        artifact=artifact,
+        verification_status="verified",
+        enable_parent_promotion=False,
+    )
+
+    support_nodes = [node for node in updated.nodes if node.id.startswith("n0__formal_core")]
+    root = next(node for node in updated.nodes if node.id == "n0")
+    assert root.last_formalization_note == (
+        "Most recent formalization attempt produced the verified supporting core "
+        "'n0__formal_core' rather than a full-node theorem."
+    )
+    assert [node.id for node in support_nodes] == ["n0__formal_core"]
+    assert support_nodes[0].formal_artifact.lean_theorem_name == "n0_core_new"
+    assert [edge.target_id for edge in updated.edges] == ["n0__formal_core"]
+
+
 def test_faithfulness_feedback_locks_theorem_family_for_setting_fix() -> None:
     verification = FormalArtifact(
         lean_theorem_name="narrow_energy_split",
@@ -1805,6 +2002,7 @@ def test_formalize_candidate_node_agentic_mode_reverifies_worker_file(tmp_path: 
         graph=build_graph(),
         node_id="n2",
         mode="agentic",
+        max_attempts=2,
     )
 
     updated_node = next(node for node in outcome.graph.nodes if node.id == "n2")
@@ -2279,6 +2477,7 @@ def test_formalize_candidate_node_agentic_uses_at_most_one_faithfulness_retry(
         graph=build_graph(),
         node_id="n2",
         mode="agentic",
+        max_attempts=2,
     )
 
     updated_node = next(node for node in outcome.graph.nodes if node.id == "n2")

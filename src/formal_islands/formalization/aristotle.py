@@ -13,6 +13,7 @@ from pathlib import Path
 
 from formal_islands.backends.aristotle import AristotleBackend
 from formal_islands.backends.base import BackendOutputError
+from formal_islands.continuation import extract_continuation_instructions
 from formal_islands.formalization.agentic import recover_agentic_artifact_from_scratch_file
 from formal_islands.formalization.pipeline import (
     build_local_proof_context,
@@ -218,6 +219,7 @@ def build_aristotle_formalization_prompt(
     sketch = build_node_coverage_sketch(node)
     local_context = build_local_proof_context(graph, node.id)
     direct_child_context = build_verified_direct_child_context(graph, node.id)
+    continuation_instructions = extract_continuation_instructions(node.formalization_rationale)
     children = {edge.target_id for edge in graph.edges if edge.source_id == node.id}
     support_by_child_id = {
         support.child_id: support for support in (verified_child_support_files or [])
@@ -271,6 +273,17 @@ def build_aristotle_formalization_prompt(
             formalization_priority=node.formalization_priority,
             formalization_rationale=node.formalization_rationale,
         ),
+        (
+            "User continuation instructions (must follow):\n"
+            f"{continuation_instructions}\n\n"
+            "These instructions were supplied by the user for this continuation attempt. "
+            "Treat them as high-priority theorem-shape and proof-strategy constraints. "
+            "If they conflict with generic fallback advice, follow the user "
+            "continuation instructions while still avoiding sorrys, axioms, "
+            "or semantically weaker side facts."
+        )
+        if continuation_instructions
+        else "",
         "Coverage sketch:",
         _format_coverage_sketch(sketch),
         "Local proof neighborhood:",
@@ -481,6 +494,7 @@ def _render_aristotle_scratch_header(
     sketch = build_node_coverage_sketch(node)
     local_context = build_local_proof_context(graph, node.id)
     direct_child_context = build_verified_direct_child_context(graph, node.id)
+    continuation_instructions = extract_continuation_instructions(node.formalization_rationale)
     importable_support_files = [
         support for support in (verified_child_support_files or []) if support.usage_mode == "importable"
     ]
@@ -524,6 +538,21 @@ def _render_aristotle_scratch_header(
                 formalization_rationale=node.formalization_rationale,
             ),
             "",
+            *(
+                [
+                    "User continuation instructions (must follow):",
+                    continuation_instructions,
+                    "",
+                    (
+                        "These instructions were supplied by the user for this "
+                        "continuation attempt. Treat them as high-priority "
+                        "theorem-shape and proof-strategy constraints."
+                    ),
+                    "",
+                ]
+                if continuation_instructions
+                else []
+            ),
             "Coverage sketch:",
             _format_coverage_sketch(sketch),
             "",
@@ -865,6 +894,12 @@ def _copy_extracted_generated_lean_files(
             continue
         remaining_parts = source_path.parts[generated_index:]
         if tuple(remaining_parts[:2]) != generated_parts:
+            continue
+        if len(remaining_parts) >= 3 and remaining_parts[2] == "VerifiedSupport":
+            # Verified support modules are trusted local artifacts materialized from
+            # already-verified children. Aristotle receives them as inputs, but its
+            # returned project may contain edited or placeholder copies. Never copy
+            # those back over the local support cache.
             continue
 
         destination_path = workspace_root.joinpath(*remaining_parts)

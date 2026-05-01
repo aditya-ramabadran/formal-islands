@@ -28,6 +28,14 @@ GEMINI_AGENTIC_FORMALIZATION_PROMPT_ADDITION = (
     "and make the Lean file compile cleanly before returning."
 )
 
+GEMINI_TRANSIENT_CAPACITY_MESSAGES = (
+    "exhausted your capacity",
+    "quota will reset",
+    "too many requests",
+    "rate limit",
+    "resource exhausted",
+)
+
 
 @dataclass(frozen=True)
 class GeminiCLIBackend:
@@ -39,6 +47,8 @@ class GeminiCLIBackend:
     log_dir: Path | None = None
     use_yolo: bool = False
     approval_mode: str | None = "auto_edit"
+    transient_retry_attempts: int = 5
+    transient_retry_delay_seconds: float = 60.0
 
     def run_structured(self, request: StructuredBackendRequest) -> StructuredBackendResponse:
         return self._run_gemini_prompt(
@@ -102,6 +112,8 @@ class GeminiCLIBackend:
                 "use_yolo": self.use_yolo,
                 "approval_mode": effective_approval_mode,
                 "timeout_seconds": timeout_seconds,
+                "transient_retry_attempts": self.transient_retry_attempts,
+                "transient_retry_delay_seconds": self.transient_retry_delay_seconds,
                 "started_at_epoch_seconds": started_at,
             },
         )
@@ -130,12 +142,14 @@ class GeminiCLIBackend:
                         "json_schema": request.json_schema,
                         "model": self.model,
                         "agentic": agentic,
-                        "use_yolo": self.use_yolo,
-                        "approval_mode": effective_approval_mode,
-                        "timeout_seconds": timeout_seconds,
-                        "started_at_epoch_seconds": started_at,
-                        "elapsed_seconds": time.time() - started_at,
-                        "stream_events": stream_events,
+                    "use_yolo": self.use_yolo,
+                    "approval_mode": effective_approval_mode,
+                    "timeout_seconds": timeout_seconds,
+                    "transient_retry_attempts": self.transient_retry_attempts,
+                    "transient_retry_delay_seconds": self.transient_retry_delay_seconds,
+                    "started_at_epoch_seconds": started_at,
+                    "elapsed_seconds": time.time() - started_at,
+                    "stream_events": stream_events,
                         "raw_stdout": stream_result.raw_stdout,
                         "raw_stderr": stream_result.raw_stderr,
                         "error": (
@@ -167,6 +181,8 @@ class GeminiCLIBackend:
                         "use_yolo": self.use_yolo,
                         "approval_mode": effective_approval_mode,
                         "timeout_seconds": timeout_seconds,
+                        "transient_retry_attempts": self.transient_retry_attempts,
+                        "transient_retry_delay_seconds": self.transient_retry_delay_seconds,
                         "started_at_epoch_seconds": started_at,
                         "elapsed_seconds": time.time() - started_at,
                         "exit_code": stream_result.returncode,
@@ -204,6 +220,8 @@ class GeminiCLIBackend:
                         "use_yolo": self.use_yolo,
                         "approval_mode": effective_approval_mode,
                         "timeout_seconds": timeout_seconds,
+                        "transient_retry_attempts": self.transient_retry_attempts,
+                        "transient_retry_delay_seconds": self.transient_retry_delay_seconds,
                         "started_at_epoch_seconds": started_at,
                         "elapsed_seconds": time.time() - started_at,
                         "exit_code": stream_result.returncode,
@@ -232,6 +250,8 @@ class GeminiCLIBackend:
                     "use_yolo": self.use_yolo,
                     "approval_mode": effective_approval_mode,
                     "timeout_seconds": timeout_seconds,
+                    "transient_retry_attempts": self.transient_retry_attempts,
+                    "transient_retry_delay_seconds": self.transient_retry_delay_seconds,
                     "started_at_epoch_seconds": started_at,
                     "elapsed_seconds": time.time() - started_at,
                     "exit_code": stream_result.returncode,
@@ -257,108 +277,178 @@ class GeminiCLIBackend:
                 },
             )
 
-        try:
-            completed = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                cwd=request.cwd,
-                env=env,
-                check=False,
-                timeout=timeout_seconds,
-            )
-        except subprocess.TimeoutExpired as exc:
-            self._write_log(
-                log_path,
-                {
-                    "status": "timeout",
-                    "task_name": request.task_name,
-                    "backend_name": "gemini_cli",
-                    "command": command,
-                    "cwd": str(request.cwd) if request.cwd else None,
-                    "system_prompt": request.system_prompt,
-                    "prompt": request.prompt,
-                    "rendered_prompt": rendered_prompt,
-                    "json_schema": request.json_schema,
-                    "model": self.model,
-                    "agentic": agentic,
-                    "use_yolo": self.use_yolo,
-                    "approval_mode": effective_approval_mode,
-                    "timeout_seconds": timeout_seconds,
-                    "started_at_epoch_seconds": started_at,
-                    "elapsed_seconds": time.time() - started_at,
-                    "raw_stdout": exc.stdout or "",
-                    "raw_stderr": exc.stderr or "",
-                    "error": (
-                        "Gemini CLI timed out while waiting for structured output "
-                        f"for task '{request.task_name}' after {timeout_seconds} seconds."
-                    ),
-                },
-            )
-            raise BackendInvocationError(
-                "Gemini CLI timed out while waiting for structured output "
-                f"for task '{request.task_name}' after {timeout_seconds} seconds."
-            ) from exc
+        max_attempts = max(1, self.transient_retry_attempts)
+        transient_errors: list[str] = []
+        completed: subprocess.CompletedProcess[str] | None = None
+        payload: dict[str, Any] | None = None
+        response_wrapper: dict[str, Any] | None = None
+        for attempt in range(1, max_attempts + 1):
+            try:
+                completed = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True,
+                    cwd=request.cwd,
+                    env=env,
+                    check=False,
+                    timeout=timeout_seconds,
+                )
+            except subprocess.TimeoutExpired as exc:
+                self._write_log(
+                    log_path,
+                    {
+                        "status": "timeout",
+                        "task_name": request.task_name,
+                        "backend_name": "gemini_cli",
+                        "command": command,
+                        "cwd": str(request.cwd) if request.cwd else None,
+                        "system_prompt": request.system_prompt,
+                        "prompt": request.prompt,
+                        "rendered_prompt": rendered_prompt,
+                        "json_schema": request.json_schema,
+                        "model": self.model,
+                        "agentic": agentic,
+                        "use_yolo": self.use_yolo,
+                        "approval_mode": effective_approval_mode,
+                        "timeout_seconds": timeout_seconds,
+                        "transient_retry_attempts": self.transient_retry_attempts,
+                        "transient_retry_delay_seconds": self.transient_retry_delay_seconds,
+                        "started_at_epoch_seconds": started_at,
+                        "elapsed_seconds": time.time() - started_at,
+                        "raw_stdout": exc.stdout or "",
+                        "raw_stderr": exc.stderr or "",
+                        "transient_errors": transient_errors,
+                        "error": (
+                            "Gemini CLI timed out while waiting for structured output "
+                            f"for task '{request.task_name}' after {timeout_seconds} seconds."
+                        ),
+                    },
+                )
+                raise BackendInvocationError(
+                    "Gemini CLI timed out while waiting for structured output "
+                    f"for task '{request.task_name}' after {timeout_seconds} seconds."
+                ) from exc
 
-        if completed.returncode != 0:
-            self._write_log(
-                log_path,
-                {
-                    "status": "failed",
-                    "task_name": request.task_name,
-                    "backend_name": "gemini_cli",
-                    "command": command,
-                    "cwd": str(request.cwd) if request.cwd else None,
-                    "system_prompt": request.system_prompt,
-                    "prompt": request.prompt,
-                    "rendered_prompt": rendered_prompt,
-                    "json_schema": request.json_schema,
-                    "model": self.model,
-                    "agentic": agentic,
-                    "use_yolo": self.use_yolo,
-                    "approval_mode": effective_approval_mode,
-                    "timeout_seconds": timeout_seconds,
-                    "started_at_epoch_seconds": started_at,
-                    "elapsed_seconds": time.time() - started_at,
-                    "exit_code": completed.returncode,
-                    "raw_stdout": completed.stdout,
-                    "raw_stderr": completed.stderr,
-                    "error": f"Gemini CLI failed with exit code {completed.returncode}: {completed.stderr.strip()}",
-                },
-            )
-            raise BackendInvocationError(
-                f"Gemini CLI failed with exit code {completed.returncode}: {completed.stderr.strip()}"
-            )
+            if completed.returncode != 0:
+                error = (
+                    f"Gemini CLI failed with exit code {completed.returncode}: "
+                    f"{completed.stderr.strip()}"
+                )
+                if self._should_retry_transient_capacity(
+                    completed.stdout,
+                    completed.stderr,
+                    error,
+                    attempt=attempt,
+                    max_attempts=max_attempts,
+                ):
+                    transient_errors.append(error)
+                    self._write_transient_retry_log(
+                        log_path=log_path,
+                        request=request,
+                        command=command,
+                        rendered_prompt=rendered_prompt,
+                        agentic=agentic,
+                        approval_mode=effective_approval_mode,
+                        timeout_seconds=timeout_seconds,
+                        started_at=started_at,
+                        attempt=attempt,
+                        completed=completed,
+                        transient_errors=transient_errors,
+                    )
+                    time.sleep(self.transient_retry_delay_seconds)
+                    continue
 
-        try:
-            payload, response_wrapper = self._parse_json_response(completed.stdout)
-        except BackendOutputError as exc:
-            self._write_log(
-                log_path,
-                {
-                    "status": "failed",
-                    "task_name": request.task_name,
-                    "backend_name": "gemini_cli",
-                    "command": command,
-                    "cwd": str(request.cwd) if request.cwd else None,
-                    "system_prompt": request.system_prompt,
-                    "prompt": request.prompt,
-                    "rendered_prompt": rendered_prompt,
-                    "json_schema": request.json_schema,
-                    "model": self.model,
-                    "agentic": agentic,
-                    "use_yolo": self.use_yolo,
-                    "approval_mode": effective_approval_mode,
-                    "timeout_seconds": timeout_seconds,
-                    "started_at_epoch_seconds": started_at,
-                    "elapsed_seconds": time.time() - started_at,
-                    "exit_code": completed.returncode,
-                    "raw_stdout": completed.stdout,
-                    "raw_stderr": completed.stderr,
-                    "error": str(exc),
-                },
-            )
-            raise
+                self._write_log(
+                    log_path,
+                    {
+                        "status": "failed",
+                        "task_name": request.task_name,
+                        "backend_name": "gemini_cli",
+                        "command": command,
+                        "cwd": str(request.cwd) if request.cwd else None,
+                        "system_prompt": request.system_prompt,
+                        "prompt": request.prompt,
+                        "rendered_prompt": rendered_prompt,
+                        "json_schema": request.json_schema,
+                        "model": self.model,
+                        "agentic": agentic,
+                        "use_yolo": self.use_yolo,
+                        "approval_mode": effective_approval_mode,
+                        "timeout_seconds": timeout_seconds,
+                        "transient_retry_attempts": self.transient_retry_attempts,
+                        "transient_retry_delay_seconds": self.transient_retry_delay_seconds,
+                        "started_at_epoch_seconds": started_at,
+                        "elapsed_seconds": time.time() - started_at,
+                        "exit_code": completed.returncode,
+                        "raw_stdout": completed.stdout,
+                        "raw_stderr": completed.stderr,
+                        "transient_errors": transient_errors,
+                        "error": error,
+                    },
+                )
+                raise BackendInvocationError(error)
+
+            try:
+                payload, response_wrapper = self._parse_json_response(completed.stdout)
+                break
+            except BackendOutputError as exc:
+                error = str(exc)
+                if self._should_retry_transient_capacity(
+                    completed.stdout,
+                    completed.stderr,
+                    error,
+                    attempt=attempt,
+                    max_attempts=max_attempts,
+                ):
+                    transient_errors.append(error)
+                    self._write_transient_retry_log(
+                        log_path=log_path,
+                        request=request,
+                        command=command,
+                        rendered_prompt=rendered_prompt,
+                        agentic=agentic,
+                        approval_mode=effective_approval_mode,
+                        timeout_seconds=timeout_seconds,
+                        started_at=started_at,
+                        attempt=attempt,
+                        completed=completed,
+                        transient_errors=transient_errors,
+                    )
+                    time.sleep(self.transient_retry_delay_seconds)
+                    continue
+
+                self._write_log(
+                    log_path,
+                    {
+                        "status": "failed",
+                        "task_name": request.task_name,
+                        "backend_name": "gemini_cli",
+                        "command": command,
+                        "cwd": str(request.cwd) if request.cwd else None,
+                        "system_prompt": request.system_prompt,
+                        "prompt": request.prompt,
+                        "rendered_prompt": rendered_prompt,
+                        "json_schema": request.json_schema,
+                        "model": self.model,
+                        "agentic": agentic,
+                        "use_yolo": self.use_yolo,
+                        "approval_mode": effective_approval_mode,
+                        "timeout_seconds": timeout_seconds,
+                        "transient_retry_attempts": self.transient_retry_attempts,
+                        "transient_retry_delay_seconds": self.transient_retry_delay_seconds,
+                        "started_at_epoch_seconds": started_at,
+                        "elapsed_seconds": time.time() - started_at,
+                        "exit_code": completed.returncode,
+                        "raw_stdout": completed.stdout,
+                        "raw_stderr": completed.stderr,
+                        "transient_errors": transient_errors,
+                        "error": error,
+                    },
+                )
+                raise
+
+        if completed is None or payload is None or response_wrapper is None:
+            raise BackendInvocationError("Gemini CLI did not return structured output")
 
         self._write_log(
             log_path,
@@ -377,11 +467,15 @@ class GeminiCLIBackend:
                 "use_yolo": self.use_yolo,
                 "approval_mode": effective_approval_mode,
                 "timeout_seconds": timeout_seconds,
+                "transient_retry_attempts": self.transient_retry_attempts,
+                "transient_retry_delay_seconds": self.transient_retry_delay_seconds,
                 "started_at_epoch_seconds": started_at,
                 "elapsed_seconds": time.time() - started_at,
                 "exit_code": completed.returncode,
                 "raw_stdout": completed.stdout,
                 "raw_stderr": completed.stderr,
+                "transient_attempt_count": len(transient_errors) + 1,
+                "transient_errors": transient_errors,
                 "payload": payload,
                 "response_wrapper": response_wrapper,
             },
@@ -399,6 +493,64 @@ class GeminiCLIBackend:
                 "response_wrapper": response_wrapper,
             },
         )
+
+    def _write_transient_retry_log(
+        self,
+        *,
+        log_path: Path | None,
+        request: StructuredBackendRequest,
+        command: list[str],
+        rendered_prompt: str,
+        agentic: bool,
+        approval_mode: str | None,
+        timeout_seconds: float | None,
+        started_at: float,
+        attempt: int,
+        completed: subprocess.CompletedProcess[str],
+        transient_errors: list[str],
+    ) -> None:
+        self._write_log(
+            log_path,
+            {
+                "status": "transient_retry_wait",
+                "task_name": request.task_name,
+                "backend_name": "gemini_cli",
+                "command": command,
+                "cwd": str(request.cwd) if request.cwd else None,
+                "system_prompt": request.system_prompt,
+                "prompt": request.prompt,
+                "rendered_prompt": rendered_prompt,
+                "json_schema": request.json_schema,
+                "model": self.model,
+                "agentic": agentic,
+                "use_yolo": self.use_yolo,
+                "approval_mode": approval_mode,
+                "timeout_seconds": timeout_seconds,
+                "transient_retry_attempts": self.transient_retry_attempts,
+                "transient_retry_delay_seconds": self.transient_retry_delay_seconds,
+                "started_at_epoch_seconds": started_at,
+                "elapsed_seconds": time.time() - started_at,
+                "exit_code": completed.returncode,
+                "raw_stdout": completed.stdout,
+                "raw_stderr": completed.stderr,
+                "transient_attempt_count": attempt,
+                "retry_delay_seconds": self.transient_retry_delay_seconds,
+                "transient_errors": transient_errors,
+            },
+        )
+
+    @staticmethod
+    def _is_transient_capacity_text(*parts: str) -> bool:
+        text = "\n".join(parts).lower()
+        return any(message in text for message in GEMINI_TRANSIENT_CAPACITY_MESSAGES)
+
+    def _should_retry_transient_capacity(
+        self,
+        *parts: str,
+        attempt: int,
+        max_attempts: int,
+    ) -> bool:
+        return attempt < max_attempts and self._is_transient_capacity_text(*parts)
 
     def _resolve_executable(self) -> Path | None:
         if "/" in self.executable:

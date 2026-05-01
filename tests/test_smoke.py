@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import tarfile
 from argparse import Namespace
 from pathlib import Path
 
@@ -13,6 +14,7 @@ from formal_islands.backends import (
     BackendUnavailableError,
     MockBackend,
 )
+from formal_islands.backends.aristotle import AristotleProjectRun
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.formalization import FormalizationOutcome, formalize_candidate_nodes
 from formal_islands.models import ProofEdge, ProofGraph, ProofNode
@@ -27,6 +29,7 @@ from formal_islands.progress import append_graph_summary_to_progress_log
 from formal_islands.smoke import (
     _backend_failure_outcome,
     _cleanup_archive_artifacts,
+    _collect_continuation_instructions,
     _prepare_graph_for_continuation,
     cmd_plan,
     cmd_report,
@@ -44,6 +47,12 @@ from formal_islands.report import export_report_bundle, render_html_report
 from formal_islands.extraction import extract_proof_graph, select_formalization_candidates
 from formal_islands.formalization import formalize_candidate_node
 from formal_islands.backends import ClaudeCodeBackend, CodexCLIBackend, GeminiCLIBackend
+from formal_islands.direct_root import (
+    DIRECT_ROOT_THEOREM_NAME,
+    _contains_theorem_declaration,
+    build_direct_root_aristotle_prompt,
+    run_direct_root_aristotle_diagnostic,
+)
 
 
 def build_workspace(root: Path) -> LeanWorkspace:
@@ -90,6 +99,171 @@ def test_load_input_payload_backfills_theorem_title_from_legacy_hint(tmp_path: P
     payload = load_input_payload(input_path)
 
     assert payload["theorem_title"] == "Legacy title"
+
+
+def test_direct_root_prompt_is_compact_but_faithfulness_constrained() -> None:
+    prompt = build_direct_root_aristotle_prompt(
+        theorem_title="Toy theorem",
+        theorem_statement="For every natural number n, n = n.",
+        raw_proof_text="This follows by reflexivity.",
+        relative_scratch_path=Path("FormalIslands/Generated/direct_root_toy.lean"),
+    )
+
+    assert "Direct-root diagnostic task" in prompt
+    assert DIRECT_ROOT_THEOREM_NAME in prompt
+    assert "For every natural number n, n = n." in prompt
+    assert "This follows by reflexivity." in prompt
+    assert "Do not convert a difficult intermediate identity" in prompt
+    assert "If the informal proof derives a fact" in prompt
+    assert "Formal Islands" not in prompt
+    assert "proof graph" not in prompt
+    assert "verified child lemmas" not in prompt
+    assert "Verified direct child" not in prompt
+    assert "Target node" not in prompt
+    assert "Coverage sketch" not in prompt
+
+
+def test_direct_root_theorem_declaration_detection_ignores_comments() -> None:
+    assert _contains_theorem_declaration(
+        f"theorem {DIRECT_ROOT_THEOREM_NAME} : True := by trivial",
+        DIRECT_ROOT_THEOREM_NAME,
+    )
+    assert not _contains_theorem_declaration(
+        f"/- Please prove theorem {DIRECT_ROOT_THEOREM_NAME}. -/\n#check True",
+        DIRECT_ROOT_THEOREM_NAME,
+    )
+
+
+def test_run_direct_root_aristotle_diagnostic_recovers_and_verifies_file(
+    tmp_path: Path,
+) -> None:
+    workspace = build_workspace(tmp_path / "lean_project")
+    output_dir = tmp_path / "out"
+    tar_path = tmp_path / "result.tar.gz"
+    returned_root = tmp_path / "returned"
+    returned_file = returned_root / "FormalIslands" / "Generated" / "DirectRootResult.lean"
+    returned_file.parent.mkdir(parents=True)
+    returned_file.write_text(
+        "import Mathlib\n\n"
+        f"theorem {DIRECT_ROOT_THEOREM_NAME} : True := by\n"
+        "  trivial\n",
+        encoding="utf-8",
+    )
+    with tarfile.open(tar_path, "w:gz") as tar:
+        tar.add(returned_root, arcname=".")
+
+    class FakeAristotleBackend:
+        log_dir = output_dir / "_backend_logs"
+
+        def submit_project(self, *, prompt: str, project_dir: Path, task_name: str):
+            assert "Direct-root diagnostic task" in prompt
+            assert task_name.startswith("direct_root_aristotle_")
+            assert project_dir.exists()
+            return AristotleProjectRun(
+                project_id="proj-test",
+                status="COMPLETE",
+                result_tar_path=tar_path,
+                status_history=["COMPLETE"],
+                log_path=output_dir / "_backend_logs" / "fake.json",
+                elapsed_seconds=1.0,
+                project_snapshot_dir=project_dir,
+                prompt=prompt,
+                task_name=task_name,
+            )
+
+    def fake_runner(*args, **kwargs):
+        return subprocess.CompletedProcess(args=args[0], returncode=0, stdout="", stderr="")
+
+    diagnostic = run_direct_root_aristotle_diagnostic(
+        backend=FakeAristotleBackend(),  # type: ignore[arg-type]
+        verifier=LeanVerifier(workspace=workspace, command_runner=fake_runner),
+        input_payload={
+            "theorem_title": "Toy root",
+            "theorem_statement": "True.",
+            "raw_proof_text": "Trivial.",
+        },
+        output_dir=output_dir,
+        max_attempts=2,
+    )
+
+    assert diagnostic.verified_root
+    assert len(diagnostic.attempt_history) == 1
+    assert diagnostic.attempt_history[0]["attempt_number"] == 1
+    assert diagnostic.contains_desired_theorem
+    assert diagnostic.scratch_path.read_text(encoding="utf-8").count(DIRECT_ROOT_THEOREM_NAME) == 1
+    assert (output_dir / "direct_root_prompt.txt").exists()
+    assert (output_dir / "aristotle_result_attempt_1").is_dir()
+
+
+def test_run_direct_root_aristotle_diagnostic_retries_until_verified(
+    tmp_path: Path,
+) -> None:
+    workspace = build_workspace(tmp_path / "lean_project")
+    output_dir = tmp_path / "out"
+
+    def build_tar(name: str, text: str) -> Path:
+        tar_path = tmp_path / f"{name}.tar.gz"
+        returned_root = tmp_path / name
+        returned_file = returned_root / "FormalIslands" / "Generated" / f"{name}.lean"
+        returned_file.parent.mkdir(parents=True)
+        returned_file.write_text(text, encoding="utf-8")
+        with tarfile.open(tar_path, "w:gz") as tar:
+            tar.add(returned_root, arcname=".")
+        return tar_path
+
+    bad_tar = build_tar(
+        "bad_result",
+        "import Mathlib\n\ntheorem wrong_name : True := by\n  trivial\n",
+    )
+    good_tar = build_tar(
+        "good_result",
+        "import Mathlib\n\n"
+        f"theorem {DIRECT_ROOT_THEOREM_NAME} : True := by\n"
+        "  trivial\n",
+    )
+
+    class FakeAristotleBackend:
+        log_dir = output_dir / "_backend_logs"
+        call_count = 0
+
+        def submit_project(self, *, prompt: str, project_dir: Path, task_name: str):
+            self.call_count += 1
+            return AristotleProjectRun(
+                project_id=f"proj-{self.call_count}",
+                status="COMPLETE",
+                result_tar_path=bad_tar if self.call_count == 1 else good_tar,
+                status_history=["COMPLETE"],
+                log_path=output_dir / "_backend_logs" / f"fake-{self.call_count}.json",
+                elapsed_seconds=1.0,
+                project_snapshot_dir=project_dir,
+                prompt=prompt,
+                task_name=task_name,
+            )
+
+    backend = FakeAristotleBackend()
+
+    def fake_runner(*args, **kwargs):
+        return subprocess.CompletedProcess(args=args[0], returncode=0, stdout="", stderr="")
+
+    diagnostic = run_direct_root_aristotle_diagnostic(
+        backend=backend,  # type: ignore[arg-type]
+        verifier=LeanVerifier(workspace=workspace, command_runner=fake_runner),
+        input_payload={
+            "theorem_title": "Toy root",
+            "theorem_statement": "True.",
+            "raw_proof_text": "Trivial.",
+        },
+        output_dir=output_dir,
+        max_attempts=3,
+    )
+
+    assert backend.call_count == 2
+    assert diagnostic.verified_root
+    assert len(diagnostic.attempt_history) == 2
+    assert diagnostic.attempt_history[0]["verified_root"] is False
+    assert diagnostic.attempt_history[1]["verified_root"] is True
+    assert (output_dir / "aristotle_result_attempt_1").is_dir()
+    assert (output_dir / "aristotle_result_attempt_2").is_dir()
 
 
 def test_select_candidate_node_id_uses_lowest_priority_number_then_id() -> None:
@@ -590,6 +764,59 @@ def test_prepare_graph_for_continuation_resets_requested_failed_node() -> None:
     assert node.last_formalization_failure_kind is None
     assert node.last_formalization_note is None
     assert node.formal_artifact is None
+
+
+def test_prepare_graph_for_continuation_embeds_extra_user_instructions() -> None:
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="If A then B.",
+        root_node_id="n1",
+        nodes=[
+            ProofNode(
+                id="n1",
+                title="Main claim",
+                informal_statement="B",
+                informal_proof_text="Use lemma",
+                status="informal",
+            ),
+        ],
+        edges=[],
+    )
+
+    updated = _prepare_graph_for_continuation(
+        graph=graph,
+        node_ids=["n1"],
+        continuation_instructions=(
+            "Restate the retained-mode index type as `{j : Fin d // j ≠ k}`."
+        ),
+    )
+
+    node = next(node for node in updated.nodes if node.id == "n1")
+    assert node.status == "candidate_formal"
+    assert node.formalization_rationale is not None
+    assert "Additional user instructions" in node.formalization_rationale
+    assert "{j : Fin d // j ≠ k}" in node.formalization_rationale
+
+
+def test_collect_continuation_instructions_combines_inline_file_and_lean_statement(
+    tmp_path: Path,
+) -> None:
+    instructions_file = tmp_path / "continue.txt"
+    instructions_file.write_text("Use the existing finite-product lemma.", encoding="utf-8")
+
+    text = _collect_continuation_instructions(
+        Namespace(
+            instructions=["Prefer the concrete retained-mode setting."],
+            instructions_file=[str(instructions_file)],
+            lean_statement="theorem n1_aristotle : True := by",
+        )
+    )
+
+    assert text is not None
+    assert "Prefer the concrete retained-mode setting." in text
+    assert "Use the existing finite-product lemma." in text
+    assert "Preferred Lean theorem statement" in text
+    assert "theorem n1_aristotle" in text
 
 
 def test_build_backend_configures_backend_logs(tmp_path: Path) -> None:
@@ -1296,6 +1523,9 @@ def test_cmd_continue_attempts_requested_nodes_then_auto_continues(
             output_dir=str(output_dir),
             workspace="lean_project",
             node_ids=["case_1"],
+            instructions=None,
+            instructions_file=None,
+            lean_statement=None,
             max_attempts=4,
             formalization_mode="agentic",
             formalization_timeout_seconds=None,
@@ -1450,6 +1680,9 @@ def test_cmd_continue_carries_attempted_nodes_into_auto_phase(
             output_dir=str(output_dir),
             workspace="lean_project",
             node_ids=["root"],
+            instructions=None,
+            instructions_file=None,
+            lean_statement=None,
             max_attempts=4,
             formalization_mode="agentic",
             formalization_timeout_seconds=None,

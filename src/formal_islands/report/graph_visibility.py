@@ -49,13 +49,42 @@ def subsumed_informal_node_ids(graph: ProofGraph) -> set[str]:
     return hidden_ids
 
 
+def subsumed_support_core_node_ids(graph: ProofGraph) -> set[str]:
+    """Identify stale formal-core children of already verified parent nodes.
+
+    These support nodes are useful while a parent is still informal.  Once the parent itself
+    is fully verified, displaying both the parent and its direct supporting core overstates
+    the remaining graph structure and can double-count the same proof obligation.
+    """
+
+    node_by_id = {node.id: node for node in graph.nodes}
+    hidden_ids: set[str] = set()
+    for edge in graph.edges:
+        if edge.label != "formal_sublemma_for":
+            continue
+        parent = node_by_id.get(edge.source_id)
+        child = node_by_id.get(edge.target_id)
+        if parent is None or child is None:
+            continue
+        if parent.status != "formal_verified":
+            continue
+        if child.status != "formal_verified" or child.formal_artifact is None:
+            continue
+        hidden_ids.add(child.id)
+    return hidden_ids
+
+
 def display_graph_without_hidden_subsumed_nodes(
     graph: ProofGraph,
     hidden_node_ids: set[str] | None = None,
 ) -> ProofGraph:
     """Return a copy of the graph with hidden subsumed nodes removed."""
 
-    hidden_node_ids = subsumed_informal_node_ids(graph) if hidden_node_ids is None else hidden_node_ids
+    hidden_node_ids = (
+        subsumed_informal_node_ids(graph) | subsumed_support_core_node_ids(graph)
+        if hidden_node_ids is None
+        else hidden_node_ids
+    )
     if not hidden_node_ids:
         return graph
     visible_nodes = [node for node in graph.nodes if node.id not in hidden_node_ids]

@@ -27,6 +27,8 @@ TERMINAL_STATUSES = {
     ProjectStatus.CANCELED,
 }
 
+ARISTOTLE_CAPACITY_LIMIT_MESSAGE = "too many requests in progress"
+
 
 @dataclass(frozen=True)
 class AristotleProjectRun:
@@ -51,6 +53,9 @@ class AristotleBackend:
     timeout_seconds: float | None = None
     polling_interval_seconds: float = 30.0
     cancel_on_timeout: bool = True
+    submission_retry_attempts: int = 12
+    submission_retry_initial_delay_seconds: float = 60.0
+    submission_retry_max_delay_seconds: float = 3600.0
 
     def submit_project(
         self,
@@ -92,6 +97,11 @@ class AristotleBackend:
                 "prompt": prompt,
                 "timeout_seconds": self.timeout_seconds,
                 "polling_interval_seconds": self.polling_interval_seconds,
+                "submission_retry_attempts": self.submission_retry_attempts,
+                "submission_retry_initial_delay_seconds": (
+                    self.submission_retry_initial_delay_seconds
+                ),
+                "submission_retry_max_delay_seconds": self.submission_retry_max_delay_seconds,
                 "started_at_epoch_seconds": started_at,
             },
         )
@@ -111,6 +121,11 @@ class AristotleBackend:
                     "prompt": prompt,
                     "timeout_seconds": self.timeout_seconds,
                     "polling_interval_seconds": self.polling_interval_seconds,
+                    "submission_retry_attempts": self.submission_retry_attempts,
+                    "submission_retry_initial_delay_seconds": (
+                        self.submission_retry_initial_delay_seconds
+                    ),
+                    "submission_retry_max_delay_seconds": self.submission_retry_max_delay_seconds,
                     "started_at_epoch_seconds": started_at,
                     "elapsed_seconds": time.time() - started_at,
                     "error": (
@@ -122,14 +137,22 @@ class AristotleBackend:
                 "ARISTOTLE_API_KEY is not set. Export it before using the Aristotle backend."
             )
 
-        try:
-            project = await Project.create_from_directory(prompt=prompt, project_dir=project_dir)
-        except AristotleAPIError as exc:
-            raise BackendInvocationError(f"Aristotle project submission failed: {exc}") from exc
+        (
+            project,
+            submission_attempt_count,
+            submission_errors,
+        ) = await self._create_project_with_retries(
+            prompt=prompt,
+            project_dir=project_dir,
+            task_name=task_name,
+            log_path=log_path,
+            started_at=started_at,
+        )
 
         status_history = [project.status.name]
         progress(
-            f"Aristotle backend: project {project.project_id} created with status {project.status.name}; "
+            f"Aristotle backend: project {project.project_id} created with status "
+            f"{project.status.name}; "
             "waiting for terminal status"
         )
         response_payload: dict[str, Any] = {
@@ -137,6 +160,8 @@ class AristotleBackend:
             "status": project.status.name,
             "status_history": status_history.copy(),
             "started_at_epoch_seconds": started_at,
+            "submission_attempt_count": submission_attempt_count,
+            "submission_errors": submission_errors,
         }
 
         try:
@@ -161,6 +186,8 @@ class AristotleBackend:
                     "elapsed_seconds": time.time() - started_at,
                     "project_id": project.project_id,
                     "status_history": status_history,
+                    "submission_attempt_count": submission_attempt_count,
+                    "submission_errors": submission_errors,
                     "error": str(exc),
                 },
             )
@@ -168,7 +195,8 @@ class AristotleBackend:
 
         terminal_status = project.status
         progress(
-            f"Aristotle backend: project {project.project_id} reached terminal status {terminal_status.name}; "
+            f"Aristotle backend: project {project.project_id} reached terminal status "
+            f"{terminal_status.name}; "
             "downloading solution"
         )
         response_payload["status"] = terminal_status.name
@@ -193,8 +221,13 @@ class AristotleBackend:
                     "elapsed_seconds": time.time() - started_at,
                     "project_id": project.project_id,
                     "status_history": status_history,
+                    "submission_attempt_count": submission_attempt_count,
+                    "submission_errors": submission_errors,
                     "project_status": terminal_status.name,
-                    "error": f"Aristotle project finished with status {terminal_status.name} and no downloadable solution.",
+                    "error": (
+                        f"Aristotle project finished with status {terminal_status.name} "
+                        "and no downloadable solution."
+                    ),
                 },
             )
             raise BackendInvocationError(
@@ -223,6 +256,8 @@ class AristotleBackend:
                     "elapsed_seconds": time.time() - started_at,
                     "project_id": project.project_id,
                     "status_history": status_history,
+                    "submission_attempt_count": submission_attempt_count,
+                    "submission_errors": submission_errors,
                     "project_status": terminal_status.name,
                     "error": f"Failed to download Aristotle solution: {exc}",
                 },
@@ -247,6 +282,8 @@ class AristotleBackend:
                 "elapsed_seconds": elapsed_seconds,
                 "project_id": project.project_id,
                 "status_history": status_history,
+                "submission_attempt_count": submission_attempt_count,
+                "submission_errors": submission_errors,
                 "project_status": terminal_status.name,
                 "result_tar_path": str(solution_path),
                 "project_response": response_payload,
@@ -263,6 +300,102 @@ class AristotleBackend:
             project_snapshot_dir=project_dir,
             prompt=prompt,
             task_name=task_name,
+        )
+
+    async def _create_project_with_retries(
+        self,
+        *,
+        prompt: str,
+        project_dir: Path,
+        task_name: str,
+        log_path: Path | None,
+        started_at: float,
+    ) -> tuple[Project, int, list[str]]:
+        """Create an Aristotle project, retrying only transient capacity-limit failures."""
+
+        max_attempts = max(1, self.submission_retry_attempts)
+        submission_errors: list[str] = []
+        for attempt in range(1, max_attempts + 1):
+            try:
+                project = await Project.create_from_directory(
+                    prompt=prompt,
+                    project_dir=project_dir,
+                )
+                if attempt > 1:
+                    progress(
+                        f"Aristotle backend: submitted {task_name} after {attempt} attempts"
+                    )
+                return project, attempt, submission_errors
+            except AristotleAPIError as exc:
+                error_message = str(exc)
+                submission_errors.append(error_message)
+                should_retry = self._is_capacity_limit_error(exc) and attempt < max_attempts
+                if not should_retry:
+                    self._write_log(
+                        log_path,
+                        {
+                            "status": "submission_failed",
+                            "task_name": task_name,
+                            "backend_name": "aristotle",
+                            "project_dir": str(project_dir),
+                            "prompt": prompt,
+                            "timeout_seconds": self.timeout_seconds,
+                            "polling_interval_seconds": self.polling_interval_seconds,
+                            "submission_retry_attempts": self.submission_retry_attempts,
+                            "submission_retry_initial_delay_seconds": (
+                                self.submission_retry_initial_delay_seconds
+                            ),
+                            "submission_retry_max_delay_seconds": (
+                                self.submission_retry_max_delay_seconds
+                            ),
+                            "started_at_epoch_seconds": started_at,
+                            "elapsed_seconds": time.time() - started_at,
+                            "submission_attempt_count": attempt,
+                            "submission_errors": submission_errors,
+                            "error": f"Aristotle project submission failed: {error_message}",
+                        },
+                    )
+                    raise BackendInvocationError(
+                        f"Aristotle project submission failed: {error_message}"
+                    ) from exc
+
+                delay_seconds = min(
+                    self.submission_retry_initial_delay_seconds * (2 ** (attempt - 1)),
+                    self.submission_retry_max_delay_seconds,
+                )
+                progress(
+                    f"Aristotle backend: project submission for {task_name} hit Aristotle "
+                    f"capacity limit on attempt {attempt}/{max_attempts}; retrying in "
+                    f"{delay_seconds:g}s"
+                )
+                self._write_log(
+                    log_path,
+                    {
+                        "status": "submission_retry_wait",
+                        "task_name": task_name,
+                        "backend_name": "aristotle",
+                        "project_dir": str(project_dir),
+                        "prompt": prompt,
+                        "timeout_seconds": self.timeout_seconds,
+                        "polling_interval_seconds": self.polling_interval_seconds,
+                        "submission_retry_attempts": self.submission_retry_attempts,
+                        "submission_retry_initial_delay_seconds": (
+                            self.submission_retry_initial_delay_seconds
+                        ),
+                        "submission_retry_max_delay_seconds": (
+                            self.submission_retry_max_delay_seconds
+                        ),
+                        "started_at_epoch_seconds": started_at,
+                        "elapsed_seconds": time.time() - started_at,
+                        "submission_attempt_count": attempt,
+                        "retry_delay_seconds": delay_seconds,
+                        "submission_errors": submission_errors,
+                    },
+                )
+                await asyncio.sleep(delay_seconds)
+
+        raise AssertionError(
+            "unreachable: Aristotle submission retry loop always returns or raises"
         )
 
     async def _wait_for_terminal_status(
@@ -335,7 +468,12 @@ class AristotleBackend:
         return self.log_dir / f"{task_name}_{time.strftime('%Y%m%d-%H%M%S')}_{uuid.uuid4().hex[:8]}.json"
 
     @staticmethod
+    def _is_capacity_limit_error(exc: BaseException) -> bool:
+        return ARISTOTLE_CAPACITY_LIMIT_MESSAGE in str(exc).lower()
+
+    @staticmethod
     def _write_log(path: Path | None, payload: dict[str, Any]) -> None:
         if path is None:
             return
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

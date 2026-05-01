@@ -97,7 +97,7 @@ class ParentPromotionEpisode:
 
 
 FormalizationUpdateCallback = Callable[[FormalizationOutcome], None]
-DEFAULT_FORMALIZATION_ATTEMPTS = 2
+DEFAULT_FORMALIZATION_ATTEMPTS = 4
 MAX_TOTAL_FORMALIZATION_ATTEMPTS = 4
 CANONICAL_ABSTRACTION_REVIEW_THRESHOLD = 2
 FormalizationBackend = StructuredBackend | AristotleBackend
@@ -2533,7 +2533,12 @@ def _promote_concrete_sublemma(
     artifact: FormalArtifact,
 ) -> tuple[ProofGraph, str]:
     parent = next(node for node in graph.nodes if node.id == parent_node_id)
-    child_id = _fresh_support_node_id(graph, parent_node_id)
+    existing_child_id = _matching_support_core_node_id(
+        graph=graph,
+        parent_node_id=parent_node_id,
+        artifact=artifact,
+    )
+    child_id = existing_child_id or _fresh_support_node_id(graph, parent_node_id)
     child_title = f"Certified local core for {parent.title}"
     child_statement, child_proof = _build_concrete_sublemma_text(
         graph=graph,
@@ -2566,20 +2571,23 @@ def _promote_concrete_sublemma(
                 )
             )
         else:
-            updated_nodes.append(node)
-    updated_nodes.append(support_node)
+            updated_nodes.append(support_node if node.id == child_id else node)
+
+    if existing_child_id is None:
+        updated_nodes.append(support_node)
 
     updated_edges = list(graph.edges)
-    updated_edges.append(
-        ProofEdge(
-            source_id=parent_node_id,
-            target_id=child_id,
-            label="formal_sublemma_for",
-            explanation=(
-                "This verified Lean theorem certifies a narrower concrete local core used inside the parent informal step."
-            ),
+    if existing_child_id is None:
+        updated_edges.append(
+            ProofEdge(
+                source_id=parent_node_id,
+                target_id=child_id,
+                label="formal_sublemma_for",
+                explanation=(
+                    "This verified Lean theorem certifies a narrower concrete local core used inside the parent informal step."
+                ),
+            )
         )
-    )
     return graph.model_copy(update={"nodes": updated_nodes, "edges": updated_edges}), child_id
 
 
@@ -2593,6 +2601,15 @@ def _merge_formalization_outcome(
 
     base_nodes = {node.id: node for node in batch_base_graph.nodes}
     current_nodes = {node.id: node for node in current_graph.nodes}
+    updated_node_ids = {node.id for node in updated_graph.nodes}
+
+    # Some integrations intentionally delete nodes relative to their batch snapshot.  The
+    # main current example is swallowing a `__formal_core` child once its parent verifies
+    # as a full node.  Preserve those deletions when merging a worker result back into the
+    # shared graph; otherwise stale support cores can reappear in the final report.
+    for removed_node_id in set(base_nodes) - updated_node_ids:
+        current_nodes.pop(removed_node_id, None)
+
     for node in updated_graph.nodes:
         base_node = base_nodes.get(node.id)
         if base_node is None or node != base_node:
@@ -2607,6 +2624,24 @@ def _merge_formalization_outcome(
         (edge.source_id, edge.target_id, edge.label, edge.explanation)
         for edge in current_edges
     }
+    updated_edges = {
+        (edge.source_id, edge.target_id, edge.label, edge.explanation)
+        for edge in updated_graph.edges
+    }
+
+    removed_edge_keys = base_edges - updated_edges
+    if removed_edge_keys:
+        current_edges = [
+            edge
+            for edge in current_edges
+            if (edge.source_id, edge.target_id, edge.label, edge.explanation)
+            not in removed_edge_keys
+        ]
+        seen_edges = {
+            (edge.source_id, edge.target_id, edge.label, edge.explanation)
+            for edge in current_edges
+        }
+
     for edge in updated_graph.edges:
         edge_key = (edge.source_id, edge.target_id, edge.label, edge.explanation)
         if edge_key in base_edges or edge_key in seen_edges:
@@ -3132,6 +3167,36 @@ def _fresh_support_node_id(graph: ProofGraph, parent_node_id: str) -> str:
         candidate = f"{base}_{index}"
         index += 1
     return candidate
+
+
+def _normalized_support_core_statement(artifact: FormalArtifact) -> str:
+    return " ".join(artifact.lean_statement.split())
+
+
+def _matching_support_core_node_id(
+    *,
+    graph: ProofGraph,
+    parent_node_id: str,
+    artifact: FormalArtifact,
+) -> str | None:
+    """Return an existing equivalent support-core child for this parent, if any."""
+
+    candidate_statement = _normalized_support_core_statement(artifact)
+    if not candidate_statement:
+        return None
+    node_by_id = {node.id: node for node in graph.nodes}
+    for edge in graph.edges:
+        if edge.source_id != parent_node_id or edge.label != "formal_sublemma_for":
+            continue
+        child = node_by_id.get(edge.target_id)
+        child_artifact = child.formal_artifact if child is not None else None
+        if child_artifact is None:
+            continue
+        if child_artifact.faithfulness_classification != artifact.faithfulness_classification:
+            continue
+        if _normalized_support_core_statement(child_artifact) == candidate_statement:
+            return child.id
+    return None
 
 
 def _recover_agentic_backend_failure(

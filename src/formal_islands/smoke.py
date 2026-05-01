@@ -20,6 +20,11 @@ from formal_islands.backends import (
     GeminiCLIBackend,
     StructuredBackend,
 )
+from formal_islands.continuation import format_continuation_rationale
+from formal_islands.direct_root import (
+    run_direct_root_aristotle_diagnostic,
+    write_direct_root_diagnostic_summary,
+)
 from formal_islands.examples import TOY_RAW_PROOF, TOY_THEOREM_STATEMENT
 from formal_islands.extraction import (
     extract_proof_graph,
@@ -223,6 +228,32 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     continue_parser.add_argument(
+        "--instructions",
+        action="append",
+        default=None,
+        help=(
+            "Extra continuation guidance to pass into the next formalization prompt. "
+            "Repeat the flag to concatenate multiple instruction blocks."
+        ),
+    )
+    continue_parser.add_argument(
+        "--instructions-file",
+        action="append",
+        default=None,
+        help=(
+            "Path to a text file containing extra continuation guidance. "
+            "Repeat the flag to concatenate multiple files."
+        ),
+    )
+    continue_parser.add_argument(
+        "--lean-statement",
+        default=None,
+        help=(
+            "Optional preferred Lean theorem statement or theorem-shape hint for the "
+            "continued node attempt."
+        ),
+    )
+    continue_parser.add_argument(
         "--max-attempts",
         type=int,
         default=DEFAULT_FORMALIZATION_ATTEMPTS,
@@ -245,6 +276,47 @@ def build_parser() -> argparse.ArgumentParser:
     add_graph_input_arg(report_parser)
     add_output_dir_arg(report_parser)
     report_parser.set_defaults(func=cmd_report)
+
+    direct_root_parser = subparsers.add_parser(
+        "direct-root",
+        help="Run an Aristotle direct-root diagnostic on a theorem/proof JSON input.",
+    )
+    add_input_args(direct_root_parser)
+    direct_root_parser.add_argument(
+        "--output-dir",
+        default=None,
+        help=(
+            "Directory where direct full/root attempt diagnostic outputs should be written. "
+            "Default: auto-derived from input filename and timestamp."
+        ),
+    )
+    direct_root_parser.add_argument(
+        "--workspace",
+        default=None,
+        help=(
+            "Path to the local Lean workspace. "
+            "Default: auto-discovered lean_project/ relative to the repo root."
+        ),
+    )
+    direct_root_parser.add_argument(
+        "--formalization-backend",
+        choices=["aristotle"],
+        default="aristotle",
+        help="Formalization backend for this diagnostic. Currently only Aristotle is supported.",
+    )
+    direct_root_parser.add_argument(
+        "--max-attempts",
+        "--max_attempts",
+        dest="max_attempts",
+        type=int,
+        default=DEFAULT_FORMALIZATION_ATTEMPTS,
+        help=(
+            "Maximum number of bounded Aristotle direct-root attempts. Default: "
+            f"{DEFAULT_FORMALIZATION_ATTEMPTS}."
+        ),
+    )
+    add_formalization_timeout_arg(direct_root_parser)
+    direct_root_parser.set_defaults(func=cmd_direct_root)
 
     run_parser = subparsers.add_parser("run-example")
     add_backend_args(run_parser)
@@ -460,12 +532,44 @@ def _normalize_requested_node_ids(raw_node_ids: list[str] | None) -> list[str]:
     return normalized
 
 
-def _prepare_graph_for_continuation(*, graph: ProofGraph, node_ids: list[str]) -> ProofGraph:
+def _collect_continuation_instructions(args: argparse.Namespace) -> str | None:
+    parts: list[str] = []
+    for raw in getattr(args, "instructions", None) or []:
+        text = str(raw).strip()
+        if text:
+            parts.append(text)
+
+    for raw_path in getattr(args, "instructions_file", None) or []:
+        path = Path(str(raw_path)).expanduser()
+        text = path.read_text(encoding="utf-8").strip()
+        if text:
+            parts.append(f"Instructions from {path}:\n{text}")
+
+    lean_statement = getattr(args, "lean_statement", None)
+    if lean_statement is not None and str(lean_statement).strip():
+        parts.append(
+            "Preferred Lean theorem statement or theorem-shape hint:\n"
+            f"{str(lean_statement).strip()}"
+        )
+
+    if not parts:
+        return None
+    return "\n\n".join(parts)
+
+
+def _prepare_graph_for_continuation(
+    *,
+    graph: ProofGraph,
+    node_ids: list[str],
+    continuation_instructions: str | None = None,
+) -> ProofGraph:
     requested = set(node_ids)
     nodes_by_id = {node.id: node for node in graph.nodes}
     missing = [node_id for node_id in node_ids if node_id not in nodes_by_id]
     if missing:
         raise ValueError(f"continuation requested unknown node ids: {', '.join(missing)}")
+
+    rationale = format_continuation_rationale(continuation_instructions)
 
     updated_nodes = []
     for node in graph.nodes:
@@ -481,7 +585,7 @@ def _prepare_graph_for_continuation(*, graph: ProofGraph, node_ids: list[str]) -
                 update={
                     "status": "candidate_formal",
                     "formalization_priority": node.formalization_priority or 1,
-                    "formalization_rationale": "User continuation request.",
+                    "formalization_rationale": rationale,
                     "last_formalization_attempt_count": None,
                     "last_formalization_outcome": None,
                     "last_formalization_failure_kind": None,
@@ -734,6 +838,7 @@ def cmd_continue(args: argparse.Namespace) -> int:
         )
 
     requested_node_ids = _normalize_requested_node_ids(getattr(args, "node_ids", []))
+    continuation_instructions = _collect_continuation_instructions(args)
     with use_progress_log(output_dir / PROGRESS_LOG_FILENAME), use_graph_history_log(
         output_dir / GRAPH_HISTORY_LOG_FILENAME
     ):
@@ -754,6 +859,7 @@ def cmd_continue(args: argparse.Namespace) -> int:
                         args,
                         resolve_backend_name(args, formalization=True),
                     ),
+                    "has_continuation_instructions": continuation_instructions is not None,
                 },
             )
             progress("continuation stage starting")
@@ -761,11 +867,14 @@ def cmd_continue(args: argparse.Namespace) -> int:
                 "user continuation request: attempting node(s) "
                 + ", ".join(requested_node_ids)
             )
+            if continuation_instructions:
+                progress("user continuation request includes extra formalization instructions")
             graph = load_graph(graph_path)
             _log_dependency_direction_warnings(graph, context="continuation stage")
             continued_graph = _prepare_graph_for_continuation(
                 graph=graph,
                 node_ids=requested_node_ids,
+                continuation_instructions=continuation_instructions,
             )
             write_graph(continued_graph, graph_path)
             _append_graph_logs(
@@ -774,7 +883,11 @@ def cmd_continue(args: argparse.Namespace) -> int:
                 previous_graph=graph,
                 event="continuation_request",
                 node_id=requested_node_ids[0] if len(requested_node_ids) == 1 else None,
-                metadata={"requested_nodes": requested_node_ids},
+                metadata={
+                    "requested_nodes": requested_node_ids,
+                    "has_continuation_instructions": continuation_instructions is not None,
+                    "continuation_instructions": continuation_instructions,
+                },
             )
 
             planning_backend_name = resolve_backend_name(args, formalization=False)
@@ -929,6 +1042,60 @@ def cmd_report(args: argparse.Namespace) -> int:
         html_path.write_text(html, encoding="utf-8")
         print(bundle_path)
         print(html_path)
+    return 0
+
+
+def cmd_direct_root(args: argparse.Namespace) -> int:
+    input_path = Path(args.input)
+    output_dir = ensure_output_dir(
+        Path(args.output_dir)
+        if args.output_dir is not None
+        else default_direct_root_output_dir_for_input(input_path)
+    )
+    workspace = _resolve_workspace(getattr(args, "workspace", None))
+    with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+        _log_cli_invocation(
+            command_name=str(getattr(args, "command", "direct-root")),
+            args=args,
+            effective={
+                "input_path": str(input_path),
+                "output_dir": str(output_dir),
+                "workspace": str(workspace),
+                "formalization_backend": "aristotle",
+                "formalization_timeout_seconds": resolve_formalization_timeout(
+                    args,
+                    "aristotle",
+                ),
+                "max_attempts": args.max_attempts,
+            },
+        )
+        progress("direct-root diagnostic stage starting")
+        input_payload = load_input_payload(input_path)
+        backend = build_backend(
+            "aristotle",
+            model=None,
+            log_dir=output_dir / "_backend_logs",
+            timeout_seconds=resolve_formalization_timeout(args, "aristotle"),
+            formalization=True,
+        )
+        if not isinstance(backend, AristotleBackend):
+            raise TypeError("direct-root diagnostic expected an Aristotle backend")
+        verifier = LeanVerifier(workspace=LeanWorkspace(root=Path(workspace)))
+        diagnostic = run_direct_root_aristotle_diagnostic(
+            backend=backend,
+            verifier=verifier,
+            input_payload=input_payload,
+            output_dir=output_dir,
+            max_attempts=args.max_attempts,
+        )
+        summary_path = output_dir / "direct_root_summary.json"
+        write_direct_root_diagnostic_summary(diagnostic, summary_path)
+        progress(
+            "direct-root diagnostic finished with "
+            f"verified_root={diagnostic.verified_root}"
+        )
+        print(summary_path)
+        print(diagnostic.scratch_path)
     return 0
 
 
@@ -1508,6 +1675,14 @@ def default_output_dir_for_input(path: Path, args: argparse.Namespace | None = N
         formalization = resolve_backend_name(args, formalization=True)
         return Path("artifacts/manual-testing") / f"{stem}-{planning}-{formalization}-{timestamp}"
     return Path("artifacts/manual-testing") / f"{stem}-{timestamp}"
+
+
+def default_direct_root_output_dir_for_input(path: Path) -> Path:
+    """Derive a direct full/root-attempt artifact directory from an input JSON path."""
+
+    stem = path.stem.replace("_", "-")
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    return Path("artifacts/direct-full-attempts") / f"{stem}-aristotle-{timestamp}"
 
 
 def select_candidate_node_id(graph: ProofGraph, requested_node_id: str = "auto") -> str:

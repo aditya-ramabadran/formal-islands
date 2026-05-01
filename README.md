@@ -261,11 +261,20 @@ Resume a finished run from its existing `03_formalized_graph.json`, reintroducin
 formal-islands continue \
   --output-dir artifacts/manual-testing/run19-young-convolution-inequality-gemini-aristotle \
   --node case_1 \
+  --instructions "Keep the endpoint case in the original measure-theoretic setting." \
   --planning-backend gemini \
   --formalization-backend aristotle
 ```
 
 This appends to the same `_progress.log` and `graph_history.jsonl`, rewrites `03_formalized_graph.json` and `03_formalization_summaries.json`, and regenerates the report.
+
+Continuation can also carry targeted human guidance into the next formalization prompt:
+
+- `--instructions "..."` appends inline advice, such as a preferred indexing convention or proof route.
+- `--instructions-file path/to/hints.txt` appends a longer hint file.
+- `--lean-statement "theorem ..."` appends a preferred Lean theorem statement or theorem-shape hint.
+
+These hints are stored in the continued node's formalization rationale, so they remain visible in the graph, progress history, prompts, and report.
 
 ## Input Format
 

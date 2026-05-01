@@ -10,6 +10,7 @@ from formal_islands.models import ProofGraph, ProofNode, ReviewObligation
 from formal_islands.progress import GraphHistoryEntry
 from formal_islands.report.graph_visibility import (
     display_graph_without_hidden_subsumed_nodes,
+    subsumed_support_core_node_ids,
     subsumed_informal_node_ids,
 )
 from formal_islands.report.graph_widget import (
@@ -59,6 +60,33 @@ def _subsumed_cleanup_caption(hidden_nodes: list[ProofNode]) -> str:
     )
 
 
+def _support_core_cleanup_caption(hidden_nodes: list[ProofNode]) -> str:
+    if not hidden_nodes:
+        return ""
+    if len(hidden_nodes) == 1:
+        return (
+            f"Final display cleanup hid stale supporting core `{hidden_nodes[0].id}` because its parent node "
+            "is now fully verified."
+        )
+    formatted = ", ".join(f"`{node.id}`" for node in hidden_nodes)
+    return (
+        f"Final display cleanup hid stale supporting cores {formatted} because their parent nodes are now "
+        "fully verified."
+    )
+
+
+def _cleanup_caption(*, hidden_informal_nodes: list[ProofNode], hidden_support_nodes: list[ProofNode]) -> str:
+    captions = [
+        caption
+        for caption in (
+            _subsumed_cleanup_caption(hidden_informal_nodes),
+            _support_core_cleanup_caption(hidden_support_nodes),
+        )
+        if caption
+    ]
+    return " ".join(captions)
+
+
 def _render_hidden_subsumed_nodes_section(hidden_nodes: list[ProofNode], graph: ProofGraph) -> str:
     if not hidden_nodes:
         return ""
@@ -72,6 +100,25 @@ def _render_hidden_subsumed_nodes_section(hidden_nodes: list[ProofNode], graph: 
         <p class="graph-caption">
           These informal nodes are hidden from the final graph display because a formal-verified parent theorem
           appears to have discharged them internally. They remain in the saved artifacts and graph history.
+        </p>
+        <div class="nodes-grid nodes-grid-subsumed">
+          {hidden_sections}
+        </div>
+      </details>
+    """
+
+
+def _render_hidden_support_nodes_section(hidden_nodes: list[ProofNode], graph: ProofGraph) -> str:
+    if not hidden_nodes:
+        return ""
+    hidden_sections = "\n".join(_render_node_section(node, graph) for node in hidden_nodes)
+    summary = f"Hidden stale support cores ({len(hidden_nodes)})"
+    return f"""
+      <details class="subsumed-nodes">
+        <summary>{escape(summary)}</summary>
+        <p class="graph-caption">
+          These verified support-core nodes are hidden from the final graph display because their parent node
+          is now fully verified. They remain in the saved artifacts and graph history.
         </p>
         <div class="nodes-grid nodes-grid-subsumed">
           {hidden_sections}
@@ -103,8 +150,10 @@ def export_report_bundle(
     """Export a JSON-serializable report bundle."""
 
     hidden_subsumed_ids = subsumed_informal_node_ids(graph)
-    display_graph = display_graph_without_hidden_subsumed_nodes(graph, hidden_subsumed_ids)
-    display_obligations = _display_review_obligations(obligations, hidden_node_ids=hidden_subsumed_ids)
+    hidden_support_ids = subsumed_support_core_node_ids(graph)
+    hidden_node_ids = hidden_subsumed_ids | hidden_support_ids
+    display_graph = display_graph_without_hidden_subsumed_nodes(graph, hidden_node_ids)
+    display_obligations = _display_review_obligations(obligations, hidden_node_ids=hidden_node_ids)
     bundle = {
         "graph": sanitize_report_payload(display_graph.model_dump(mode="json")),
         "review_obligations": [obligation.model_dump(mode="json") for obligation in display_obligations],
@@ -123,23 +172,30 @@ def render_html_report(
     """Render a static HTML report with a pure SVG/CSS graph widget."""
 
     hidden_subsumed_ids = subsumed_informal_node_ids(graph)
-    display_graph = display_graph_without_hidden_subsumed_nodes(graph, hidden_subsumed_ids)
-    display_obligations = _display_review_obligations(obligations, hidden_node_ids=hidden_subsumed_ids)
+    hidden_support_ids = subsumed_support_core_node_ids(graph)
+    hidden_node_ids = hidden_subsumed_ids | hidden_support_ids
+    display_graph = display_graph_without_hidden_subsumed_nodes(graph, hidden_node_ids)
+    display_obligations = _display_review_obligations(obligations, hidden_node_ids=hidden_node_ids)
     status_counts = Counter(node.status for node in display_graph.nodes)
     checklist_items = "\n".join(_render_checklist_item(obligation, graph) for obligation in display_obligations)
-    visible_nodes = [node for node in graph.nodes if node.id not in hidden_subsumed_ids]
+    visible_nodes = [node for node in graph.nodes if node.id not in hidden_node_ids]
     hidden_nodes = [node for node in graph.nodes if node.id in hidden_subsumed_ids]
+    hidden_support_nodes = [node for node in graph.nodes if node.id in hidden_support_ids]
     node_sections = "\n".join(_render_node_section(node, graph) for node in visible_nodes)
     hidden_node_section = _render_hidden_subsumed_nodes_section(hidden_nodes, graph)
+    hidden_support_section = _render_hidden_support_nodes_section(hidden_support_nodes, graph)
     history_frames = build_graph_history_frames(graph_history or [])
     has_history_timeline = len(history_frames) >= 2
     graph_widget = (
         render_graph_history_widget_with_cleanup(
             graph_history or [],
             cleaned_graph=display_graph,
-            cleaned_caption=_subsumed_cleanup_caption(hidden_nodes),
+            cleaned_caption=_cleanup_caption(
+                hidden_informal_nodes=hidden_nodes,
+                hidden_support_nodes=hidden_support_nodes,
+            ),
         )
-        if has_history_timeline and hidden_nodes
+        if has_history_timeline and hidden_node_ids
         else render_graph_history_widget(graph_history or [])
         if has_history_timeline
         else render_graph_widget(display_graph, widget_key="current")
@@ -151,7 +207,10 @@ def render_html_report(
         if has_history_timeline
         else "Click a node to jump to its detail section."
     )
-    graph_caption_cleanup = _subsumed_cleanup_caption(hidden_nodes) if hidden_nodes else ""
+    graph_caption_cleanup = _cleanup_caption(
+        hidden_informal_nodes=hidden_nodes,
+        hidden_support_nodes=hidden_support_nodes,
+    )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -728,6 +787,7 @@ def render_html_report(
         {node_sections}
       </div>
       {hidden_node_section}
+      {hidden_support_section}
     </section>
   </main>
   {graph_history_script}

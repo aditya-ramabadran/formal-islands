@@ -377,6 +377,70 @@ def test_render_html_report_hides_dangling_descendants_of_hidden_subsumed_nodes(
     ]
 
 
+def test_render_html_report_hides_stale_support_core_of_verified_parent() -> None:
+    artifact = FormalArtifact(
+        lean_theorem_name="n1_full",
+        lean_statement="theorem n1_full : True",
+        lean_code="theorem n1_full : True := by trivial",
+        faithfulness_classification="full_node",
+    )
+    support_artifact = FormalArtifact(
+        lean_theorem_name="n1_core",
+        lean_statement="theorem n1_core : True",
+        lean_code="theorem n1_core : True := by trivial",
+        faithfulness_classification="concrete_sublemma",
+    )
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="Main theorem.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Root theorem",
+                informal_statement="Root.",
+                informal_proof_text="Use n1.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Verified parent",
+                informal_statement="Parent.",
+                informal_proof_text="Use core.",
+                status="formal_verified",
+                formal_artifact=artifact,
+            ),
+            ProofNode(
+                id="n1__formal_core",
+                title="Certified local core",
+                informal_statement="Core.",
+                informal_proof_text="Core.",
+                status="formal_verified",
+                formal_artifact=support_artifact,
+            ),
+        ],
+        edges=[
+            ProofEdge(source_id="n0", target_id="n1"),
+            ProofEdge(source_id="n1", target_id="n1__formal_core", label="formal_sublemma_for"),
+        ],
+    )
+    obligations = derive_review_obligations(graph)
+
+    html = render_html_report(graph, obligations)
+    bundle = export_report_bundle(graph, obligations)
+
+    assert "Hidden stale support cores (1)" in html
+    assert (
+        "Final display cleanup hid stale supporting core <code class=\"inline-code\">n1__formal_core</code>"
+        in html
+    )
+    assert "<span class=\"pill\">Nodes: 2</span>" in html
+    assert [node["id"] for node in bundle["graph"]["nodes"]] == ["n0", "n1"]
+    assert all(
+        "n1__formal_core" not in obligation["node_ids"]
+        for obligation in bundle["review_obligations"]
+    )
+
+
 def test_graph_history_frames_skip_annotation_only_or_duplicate_visual_snapshots() -> None:
     graph = ProofGraph(
         theorem_title="Toy theorem",

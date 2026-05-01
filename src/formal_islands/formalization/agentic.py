@@ -12,6 +12,7 @@ from formal_islands.backends import (
     BackendOutputError,
     StructuredBackendRequest,
 )
+from formal_islands.continuation import extract_continuation_instructions
 from formal_islands.formalization.pipeline import (
     FormalizationFaithfulnessError,
     enforce_formalization_faithfulness,
@@ -92,6 +93,7 @@ def build_agentic_formalization_request(
     promoted_parent_attempt = "promoted after all direct children were verified" in (
         (node.formalization_rationale or "").lower()
     )
+    continuation_instructions = extract_continuation_instructions(node.formalization_rationale)
     local_context = build_local_proof_context(graph, node_id)
     direct_child_context = build_verified_direct_child_context(graph, node_id)
 
@@ -110,6 +112,18 @@ def build_agentic_formalization_request(
             },
             indent=2,
         ),
+        (
+            "User continuation instructions (must follow):\n"
+            f"{continuation_instructions}\n\n"
+            "These instructions were supplied by the user for this continuation attempt. "
+            "Treat them as high-priority theorem-shape and proof-strategy constraints. "
+            "Write your plan around these instructions before choosing a fallback theorem. "
+            "If they conflict with generic fallback advice, follow the user continuation "
+            "instructions while still avoiding sorrys, axioms, or semantically "
+            "weaker side facts."
+        )
+        if continuation_instructions
+        else "",
         "Coverage sketch:",
         json.dumps(asdict(build_node_coverage_sketch(node)), indent=2),
         "Local proof neighborhood:",
@@ -264,6 +278,7 @@ def build_agentic_formalization_request(
             "the plan markdown path above."
         ),
     ]
+    prompt_parts = [part for part in prompt_parts if part]
     if promoted_parent_attempt and child_summaries:
         prompt_parts.extend(
             [
