@@ -14,7 +14,7 @@ from pathlib import Path
 from formal_islands.backends.aristotle import AristotleBackend
 from formal_islands.backends.base import BackendOutputError
 from formal_islands.continuation import extract_continuation_instructions
-from formal_islands.fixed_spec import fixed_root_spec_prompt_block
+from formal_islands.fixed_spec import fixed_root_spec_prompt_block, fixed_root_spec_skeleton
 from formal_islands.formalization.agentic import recover_agentic_artifact_from_scratch_file
 from formal_islands.formalization.pipeline import (
     build_local_proof_context,
@@ -459,6 +459,7 @@ def _render_aristotle_scratch_header(
         support for support in (verified_child_support_files or []) if support.usage_mode != "importable"
     ]
     lines: list[str] = []
+    root_fixed_spec_attempt = graph.fixed_root_lean_spec is not None and node.id == graph.root_node_id
     if importable_support_files:
         lines.extend(
             [
@@ -468,6 +469,24 @@ def _render_aristotle_scratch_header(
                     for support in importable_support_files
                     if support.import_module
                 ],
+                "",
+            ]
+        )
+    elif root_fixed_spec_attempt:
+        lines.extend(
+            [
+                "import Mathlib",
+                "",
+            ]
+        )
+    if root_fixed_spec_attempt:
+        lines.extend(
+            [
+                "set_option maxHeartbeats 1600000",
+                "",
+                "open Classical",
+                "",
+                "noncomputable section",
                 "",
             ]
         )
@@ -589,6 +608,15 @@ def _render_aristotle_scratch_header(
             ]
         )
     lines.append("-/")
+    if root_fixed_spec_attempt:
+        skeleton = fixed_root_spec_skeleton(graph.fixed_root_lean_spec)
+        if skeleton is not None:
+            lines.extend(
+                [
+                    "",
+                    skeleton,
+                ]
+            )
     return "\n".join(lines)
 
 

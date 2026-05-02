@@ -155,10 +155,33 @@ def build_extraction_request(
                 "distinct lemma clearly improves the graph."
             ),
             (
-                "When a proof contains one or two central local technical subclaims that would make strong future "
+                "When a proof contains central local technical subclaims that would make strong future "
                 "formal islands, preserve them explicitly even inside an otherwise compressed graph. Good examples "
                 "include concrete inequalities, integration-by-parts identities, explicit algebraic simplifications, "
                 "monotonicity or concavity consequences, and concrete local estimates."
+            ),
+            (
+                "If a single proof paragraph hides a substantial construction with several different obligation "
+                "types, do not compress the whole construction into one node. Split it into a small chain of "
+                "certifiable construction obligations. Useful split points include witness extraction, "
+                "well-definedness checks, regularity of explicit objects, membership or closure obligations, "
+                "algebraic/index expansions, and final quantitative estimates. Keep these nodes mathematically "
+                "meaningful, not microscopic proof-script fragments."
+            ),
+            (
+                "In particular, avoid making one node whose statement simultaneously introduces a new object, "
+                "proves it is well-defined, proves it has regularity or membership properties, and proves the final "
+                "bound or identity. Those are usually separate review obligations and often better formal islands."
+            ),
+            (
+                "When an explicitly constructed object is later used through one decisive estimate, identity, or "
+                "rewrite, prefer a separate node for that final use. This keeps object construction separate from "
+                "the key inferential step."
+            ),
+            (
+                "When full formalization may be blocked by a large external theorem, missing domain infrastructure, "
+                "or a difficult library/API bridge, isolate that blocker as its own review obligation and separately "
+                "preserve nearby explicit local lemmas that could still be Lean-certified."
             ),
             (
                 "Prefer local subclaims that are inferentially important and substantially used by the parent proof, "
@@ -229,15 +252,44 @@ def build_theorem_planning_request(
                 "goal-under-assumptions restatements, one-line substitutions, or duplicate near-equivalent claims."
             ),
             (
-                "When choosing graph granularity, preserve one or two local technical subclaims if they are concrete, "
+                "When choosing graph granularity, preserve local technical subclaims if they are concrete, "
                 "inferentially important, plausibly formalizable, and substantially used by the surrounding proof. "
                 "Good examples include concrete inequalities, integration-by-parts identities, explicit algebraic "
                 "simplifications, monotonicity or concavity consequences, and concrete local estimates."
             ),
             (
+                "If one paragraph hides a substantial construction with multiple obligation types, do not emit one "
+                "oversized construction node as the only formal island. Split it into a small chain of certifiable "
+                "construction obligations and rank the strongest local pieces as candidates. Good split points include "
+                "witness extraction, well-definedness checks, regularity of explicit objects, membership or closure "
+                "obligations, algebraic/index expansions, and final quantitative estimates. These should be meaningful "
+                "mathematical obligations, not microscopic proof-script steps."
+            ),
+            (
+                "Avoid ranking a candidate whose statement bundles object definition, well-definedness, regularity, "
+                "membership, and final estimate/identity all at once. Prefer two to four meaningful obligations that "
+                "make the hidden proof burden auditable."
+            ),
+            (
+                "If the proof first constructs an object and then uses it via a decisive estimate, identity, or "
+                "rewrite, consider separate candidates for the construction/well-definedness step and for the final "
+                "inferential use."
+            ),
+            (
+                "Before choosing candidates, identify likely formalization blockers caused by large library theorems "
+                "or missing domain infrastructure. Isolate such blockers as review obligations, but do not let them "
+                "swallow nearby explicit local lemmas that can be certified independently. A good graph can contain "
+                "both: an informal blocker node and several formal-island candidate nodes around it."
+            ),
+            (
                 "Keep the candidate set small. Prefer local, concrete, technically meaningful nodes that would reduce "
                 "real human proof-checking burden. Disfavor easy side consequences, generic library facts, or claims "
                 "that are much weaker than the surrounding local argument."
+            ),
+            (
+                "It is acceptable for a broad construction parent to remain informal while its leaf construction "
+                "obligations are selected as candidates. This is preferable to selecting only the broad parent when "
+                "the parent mixes several hard ingredients."
             ),
             (
                 "Avoid selecting a parent-style candidate while leaving one of its obvious direct dependency children "
@@ -381,6 +433,11 @@ def build_candidate_selection_request(graph: ProofGraph) -> StructuredBackendReq
                 "technical steps over broader surrounding arguments when the graph already preserves them."
             ),
             (
+                "If a selected broad node contains several explicit construction obligations, prefer the more local "
+                "obligation that is most likely to compile as a reusable Lean lemma: witness extraction, well-definedness, "
+                "regularity of explicit objects, membership or closure, algebraic/index expansion, or a final estimate."
+            ),
+            (
                 "Prefer nontrivial, high-yield nodes that combine multiple ingredients of the proof or discharge real "
                 "inferential burden for the parent argument."
             ),
@@ -489,6 +546,12 @@ def build_candidate_blocker_promotion_request(
             (
                 "Promote the child when it looks like the likely blocker or a more appropriate first local target. "
                 "Do not promote it if the selected parent is genuinely expected to absorb this child internally when formalized."
+            ),
+            (
+                "If the child supplies a necessary hypothesis, witness, regularity fact, side condition, or construction "
+                "ingredient that the selected parent uses but does not explicitly assume in its own statement, promote "
+                "the child. Hidden prerequisites should become visible candidate obligations rather than being silently "
+                "smuggled into a parent formalization attempt."
             ),
             (
                 "Return JSON with keys promote_child, recommended_priority, and reason. "

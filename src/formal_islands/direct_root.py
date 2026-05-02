@@ -17,6 +17,7 @@ from formal_islands.fixed_spec import (
     extract_decl_name,
     fixed_spec_exact_header_matches,
     fixed_spec_mismatch_message,
+    fixed_root_spec_skeleton,
 )
 from formal_islands.formalization.aristotle import (
     _append_aristotle_summary_files,
@@ -114,7 +115,9 @@ def build_direct_root_aristotle_prompt(
             (
                 "The theorem below is an exact external/root target. The designated main theorem "
                 "must preserve this theorem name, binders, hypotheses, and conclusion. Helper lemmas "
-                "are welcome, but changing this theorem header does not count as a direct-root success."
+                "are welcome, but changing this theorem header does not count as a direct-root success. "
+                "The scratch file starts with a matching theorem skeleton; complete that theorem rather "
+                "than replacing it with a different declaration."
             ),
             "```lean",
             fixed_root_lean_spec.lean_statement,
@@ -538,6 +541,7 @@ def _render_direct_root_scratch_header(
     fixed_root_lean_spec: FixedRootLeanSpec | None = None,
 ) -> str:
     fixed_spec_text = ""
+    fixed_spec_skeleton = ""
     if fixed_root_lean_spec is not None:
         fixed_spec_text = (
             "Fixed Lean root specification supplied.\n"
@@ -546,6 +550,9 @@ def _render_direct_root_scratch_header(
             "Exact statement:\n"
             f"{fixed_root_lean_spec.lean_statement}\n"
         )
+        skeleton = fixed_root_spec_skeleton(fixed_root_lean_spec)
+        if skeleton is not None:
+            fixed_spec_skeleton = "\n" + skeleton + "\n"
     return (
         "/-\n"
         "Direct-root diagnostic scratch file.\n"
@@ -557,6 +564,7 @@ def _render_direct_root_scratch_header(
         "set_option maxHeartbeats 1600000\n\n"
         "open Classical\n\n"
         "noncomputable section\n"
+        f"{fixed_spec_skeleton}"
     )
 
 

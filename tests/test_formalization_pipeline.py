@@ -672,10 +672,10 @@ def test_request_abstraction_review_assessment_returns_category() -> None:
     backend = MockBackend(
         queued_payloads=[
             {
-                "abstraction_category": "canonical_encoding",
+                "abstraction_category": "supporting_core",
                 "abstraction_note": (
-                    "Using a concrete graph G : SimpleGraph V over a vertex type V is the natural Lean encoding "
-                    "of the same local claim rather than a drift away from it."
+                    "The theorem is not the exact node statement, but it is a same-setting auxiliary lemma "
+                    "that should be retained as a supporting formal island."
                 ),
             }
         ]
@@ -695,8 +695,8 @@ def test_request_abstraction_review_assessment_returns_category() -> None:
         failure_text="Formalization drifted too far from the target node. Avoid introducing arbitrary `Type*` parameters.",
     )
 
-    assert assessment.category.value == "canonical_encoding"
-    assert "natural Lean encoding" in assessment.note
+    assert assessment.category.value == "supporting_core"
+    assert "supporting formal island" in assessment.note
 
 
 def test_request_concrete_sublemma_summary_returns_generated_text() -> None:

@@ -16,6 +16,7 @@ from formal_islands.formalization.agentic import (
     build_agentic_formalization_request,
     recover_agentic_artifact_from_scratch_file,
 )
+from formal_islands.fixed_spec import build_fixed_root_lean_spec
 from formal_islands.formalization.aristotle import (
     _copy_extracted_generated_lean_files,
     _build_verified_child_support_files,
@@ -443,6 +444,38 @@ def test_build_aristotle_formalization_prompt_includes_all_verified_direct_child
     assert "remaining parent-level delta" in lowered
     assert "dependency direction note" in lowered
     assert "self-contained final scratch file" in lowered
+
+
+def test_aristotle_scratch_header_seeds_fixed_root_skeleton_only_for_root(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+    spec = build_fixed_root_lean_spec(
+        "theorem exact_root (n : Nat) : n = n := by",
+        source="unit-test",
+    )
+    graph = build_graph().model_copy(update={"fixed_root_lean_spec": spec})
+    root = next(node for node in graph.nodes if node.id == graph.root_node_id)
+    child = next(node for node in graph.nodes if node.id != graph.root_node_id)
+
+    root_header = _render_aristotle_scratch_header(
+        graph=graph,
+        node=root,
+        desired_theorem_name="exact_root",
+        relative_scratch_path=workspace.prepare_worker_file("root").relative_to(workspace.root),
+    )
+    child_header = _render_aristotle_scratch_header(
+        graph=graph,
+        node=child,
+        desired_theorem_name="n2_aristotle",
+        relative_scratch_path=workspace.prepare_worker_file("child").relative_to(workspace.root),
+    )
+
+    assert "Fixed root Lean specification (HARD ROOT TARGET)" in root_header
+    assert "Fixed root target skeleton" in root_header
+    assert re.search(r"(?m)^theorem exact_root \(n : Nat\) : n = n$", root_header)
+    assert "Fill in the proof. Do not change the theorem name" in root_header
+    assert "Fixed root Lean specification (ROOT CONTEXT ONLY)" in child_header
+    assert "do not try to prove this statement here" in child_header
+    assert "Fixed root target skeleton" not in child_header
 
 
 def test_build_aristotle_formalization_prompt_with_importable_children_uses_modular_packaging(
@@ -2184,6 +2217,144 @@ def test_formalize_candidate_node_promotes_concrete_sublemma_to_child_node(
     assert "verified supporting sublemma extracted from the formalization of parent node 'n2'." in child.informal_proof_text
     assert backend.summary_calls == 1
     assert support_edge.label == "formal_sublemma_for"
+
+
+def test_repeated_type_abstraction_can_be_salvaged_as_supporting_core(
+    tmp_path: Path,
+) -> None:
+    workspace = create_workspace(tmp_path)
+    worker_file = workspace.prepare_worker_file("n2")
+
+    class FakeAgenticBackend:
+        timeout_seconds = 420.0
+
+        def __init__(self) -> None:
+            self.formalization_calls = 0
+            self.structured_tasks: list[str] = []
+
+        def run_agentic_structured(self, request, *, timeout_seconds=None):
+            self.formalization_calls += 1
+            worker_file, plan_file = extract_agentic_paths(request.prompt)
+            plan_file.write_text(
+                "# Plan\n\n- Prove a reusable support lemma.\n",
+                encoding="utf-8",
+            )
+            worker_file.write_text(
+                "theorem reusable_support_core {E : Type*} : True := by\n  trivial\n",
+                encoding="utf-8",
+            )
+            from formal_islands.backends.base import StructuredBackendResponse
+
+            return StructuredBackendResponse(
+                payload={
+                    "lean_theorem_name": "reusable_support_core",
+                    "lean_statement": "theorem reusable_support_core {E : Type*} : True",
+                    "final_file_path": str(worker_file.resolve()),
+                    "plan_file_path": str(plan_file.resolve()),
+                },
+                raw_stdout="",
+                raw_stderr="",
+                command=("codex", "exec"),
+                exit_code=0,
+                backend_name="codex_cli",
+            )
+
+        def run_structured(self, request):
+            self.structured_tasks.append(request.task_name)
+            from formal_islands.backends.base import StructuredBackendResponse
+
+            if request.task_name == "assess_repair":
+                return StructuredBackendResponse(
+                    payload={
+                        "repair_category": "theorem_shape_fix",
+                        "repair_note": "Try to keep the theorem closer to the target node.",
+                    },
+                    raw_stdout="",
+                    raw_stderr="",
+                    command=("codex", "exec"),
+                    exit_code=0,
+                    backend_name="codex_cli",
+                )
+            if request.task_name == "assess_abstraction_review":
+                return StructuredBackendResponse(
+                    payload={
+                        "abstraction_category": "supporting_core",
+                        "abstraction_note": (
+                            "The `Type*` parameter is not a full-node match, but this theorem is a useful "
+                            "same-setting support core that should be locally verified."
+                        ),
+                    },
+                    raw_stdout="",
+                    raw_stderr="",
+                    command=("codex", "exec"),
+                    exit_code=0,
+                    backend_name="codex_cli",
+                )
+            if request.task_name == "assess_verified_formalization":
+                return StructuredBackendResponse(
+                    payload={
+                        "result_kind": "helper_shard",
+                        "certifies_main_burden": True,
+                        "coverage_score": 5,
+                        "expansion_warranted": False,
+                        "worth_retrying_later": False,
+                        "reason": "The verified theorem is a reusable support core, not the full node.",
+                    },
+                    raw_stdout="",
+                    raw_stderr="",
+                    command=("codex", "exec"),
+                    exit_code=0,
+                    backend_name="codex_cli",
+                )
+            if request.task_name == "summarize_concrete_sublemma":
+                return StructuredBackendResponse(
+                    payload={
+                        "informal_statement": "A reusable support core has been Lean-verified.",
+                        "informal_proof_text": "The Lean artifact proves this auxiliary support fact directly.",
+                    },
+                    raw_stdout="",
+                    raw_stderr="",
+                    command=("codex", "exec"),
+                    exit_code=0,
+                    backend_name="codex_cli",
+                )
+            raise AssertionError(f"unexpected structured task {request.task_name}")
+
+    def fake_run(
+        args: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        cwd: Path,
+        check: bool,
+        timeout: float | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    backend = FakeAgenticBackend()
+    verifier = LeanVerifier(workspace=workspace, command_runner=fake_run)
+    outcome = formalize_candidate_node(
+        backend=backend,
+        planning_backend=backend,
+        verifier=verifier,
+        graph=build_graph(),
+        node_id="n2",
+        mode="agentic",
+        max_attempts=2,
+    )
+
+    parent = next(node for node in outcome.graph.nodes if node.id == "n2")
+    support = next(node for node in outcome.graph.nodes if node.id.startswith("n2__formal_core"))
+
+    assert backend.formalization_calls == 2
+    assert "assess_abstraction_review" in backend.structured_tasks
+    assert parent.status == "informal"
+    assert parent.last_formalization_outcome == "produced_supporting_core"
+    assert support.status == "formal_verified"
+    assert support.formal_artifact is not None
+    assert support.formal_artifact.faithfulness_classification == "concrete_sublemma"
+    assert support.formal_artifact.verification.status == "verified"
+    assert "helper_shard" in (support.formal_artifact.faithfulness_notes or "")
 
 
 def test_agentic_coverage_expansion_is_skipped_when_planning_backend_says_theorem_already_matches(

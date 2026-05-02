@@ -74,6 +74,22 @@ def fixed_root_spec_prompt_block(graph: ProofGraph, node_id: str) -> str | None:
     )
 
 
+def fixed_root_spec_skeleton(spec: FixedRootLeanSpec) -> str | None:
+    """Render an uncompromising Lean skeleton for a fixed root declaration."""
+
+    header = extract_decl_header(spec.lean_statement, preferred_name=spec.theorem_name)
+    if header is None:
+        return None
+    return "\n".join(
+        [
+            "/-- Fixed root target skeleton. Complete this proof without changing the declaration header. -/",
+            header,
+            ":= by",
+            "  -- Fill in the proof. Do not change the theorem name, binders, hypotheses, or conclusion.",
+        ]
+    )
+
+
 def root_fixed_spec_applies(graph: ProofGraph, node_id: str) -> bool:
     """Whether fixed-spec exactness should be enforced on this node."""
 

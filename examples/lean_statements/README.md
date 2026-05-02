@@ -26,3 +26,13 @@ formal-islands run \
 The fixed-root source is a provenance label such as `lean-eval`,
 `formalqualbench`, or `manual`. It is recorded in the graph/report metadata and
 does not change prompt behavior.
+
+Root attempts use the first theorem/lemma declaration in the file as a hard
+target: the scratch file is seeded with that declaration header as a theorem
+skeleton, and a returned root artifact is rejected if the declaration header
+changes. Child-node attempts receive the same statement only as compatibility
+context.
+
+This guard checks declaration-header equality, not a full external benchmark
+comparator. If a benchmark requires exact namespace/module packaging, run that
+benchmark's comparator or inspect the packaging separately.

@@ -63,6 +63,13 @@ def test_build_extraction_request_uses_explicit_schema() -> None:
     assert "local technical subclaims" in request.prompt
     assert "compact, faithful, formalization-sensitive graph" in request.prompt
     assert "root theorem should normally be the source" in request.prompt.lower()
+    assert "certifiable construction obligations" in request.prompt
+    assert "do not compress the whole construction into one node" in request.prompt
+    assert "witness extraction" in request.prompt
+    assert "algebraic/index expansions" in request.prompt
+    assert "simultaneously introduces a new object" in request.prompt
+    assert "decisive estimate, identity, or rewrite" in request.prompt
+    assert "isolate that blocker as its own review obligation" in request.prompt
 
 
 def test_build_theorem_planning_request_uses_merged_schema() -> None:
@@ -79,6 +86,12 @@ def test_build_theorem_planning_request_uses_merged_schema() -> None:
     assert "single canonical dependency direction" in request.prompt.lower()
     assert "either select the child as well or do not select the parent yet" in request.prompt
     assert "direct blocker for the root" in request.prompt
+    assert "well-definedness checks" in request.prompt
+    assert "do not emit one oversized construction node as the only formal island" in request.prompt
+    assert "bundles object definition, well-definedness, regularity" in request.prompt
+    assert "construction/well-definedness step" in request.prompt
+    assert "broad construction parent to remain informal" in request.prompt
+    assert "informal blocker node and several formal-island candidate nodes" in request.prompt
 
 
 def test_extract_proof_graph_validates_schema_and_maps_to_internal_graph() -> None:
@@ -226,6 +239,30 @@ def test_build_candidate_selection_request_mentions_root_blockers_with_library_s
 
     assert "direct blocker for the root" in request.prompt
     assert "standard existing library support" in request.prompt
+    assert "algebraic/index expansion" in request.prompt
+
+
+def test_build_candidate_blocker_promotion_request_mentions_hidden_prerequisites() -> None:
+    from formal_islands.extraction.pipeline import build_candidate_blocker_promotion_request
+
+    graph = build_graph().model_copy(
+        update={
+            "nodes": [
+                build_graph().nodes[0],
+                build_graph().nodes[1].model_copy(update={"status": "candidate_formal"}),
+            ]
+        }
+    )
+
+    request = build_candidate_blocker_promotion_request(
+        graph=graph,
+        parent_node_id="n2",
+        child_node_id="n1",
+    )
+
+    assert "supplies a necessary hypothesis" in request.prompt
+    assert "regularity fact" in request.prompt
+    assert "Hidden prerequisites should become visible candidate obligations" in request.prompt
 
 
 def test_plan_proof_graph_normalizes_textual_candidate_priority_labels() -> None:

@@ -3,25 +3,8 @@
   "theorem_statement": "Let m(E)=1, E subset [0, 3/2-epsilon], and suppose E tiles R with respect to Z. Then hat(chi_E)(xi) != 0 whenever -1/2 <= xi <= 1/2.",
   "raw_proof_text": "Since \\(E\\) tiles with respect to \\(\\mathbb Z\\) and\n\\(E\\subset [0, 3/2-\\epsilon]\\), there is a set\n\\(G\\subset [0,1/2-\\epsilon]\\) such that\n\\[\n\\chi_E=\\chi_{[0,1]}-\\chi_G+\\tau_1\\chi_G\n\\]\nalmost everywhere, where \\(\\tau_h f(x):=f(x-h)\\). Indeed, for almost every\n\\(x\\in[0,1]\\), exactly one of \\(x\\) and \\(x+1\\) lies in \\(E\\), and no other\ninteger translate can occur; taking\n\\(G=\\{x\\in[0,1/2-\\epsilon]:x+1\\in E\\}\\) gives the claimed identity.\n\nWe may assume without loss of generality that \\(m(G)>0\\), for otherwise\n\\(\\chi_E=\\chi_{[0,1]}\\) almost everywhere, and so the zeros of\n\\(\\hat{\\chi_E}\\) are precisely the non-zero integers. The case \\(\\xi=0\\) is\nimmediate, since \\(\\hat{\\chi_E}(0)=m(E)=1\\). Thus assume \\(0<|\\xi|\\leq 1/2\\).\nThen\n\\[\n\\hat{\\chi_E}(\\xi)=(e^{-2\\pi i\\xi}-1)\n\\left(\\hat{\\chi_G}(\\xi)-\\frac{1}{2\\pi i\\xi}\\right).\n\\]\nThe roots of \\(e^{-2\\pi i\\xi}-1\\) are precisely the integers. Since\n\\(0<|\\xi|\\leq 1/2\\), this factor is nonzero. Also,\n\\(|2\\pi x\\xi|<\\pi/2\\) for all \\(x\\in G\\), since\n\\(G\\subset [0,1/2-\\epsilon]\\). This means that\n\\(\\cos(2\\pi x\\xi)>0\\) on \\(G\\), so\n\\[\n\\Re(\\hat{\\chi_G}(\\xi))\n=\\int_G\\cos(2\\pi x\\xi)\\,dx\n=\\int_G|\\cos(2\\pi x\\xi)|\\,dx.\n\\]\nSince \\(\\cos(2\\pi x\\xi)>0\\) on \\(G\\) and \\(m(G)>0\\), the last integral is\nstrictly positive. Thus \\(\\Re(\\hat{\\chi_G}(\\xi))>0\\), while\n\\(1/(2\\pi i\\xi)\\) is purely imaginary. Therefore\n\\(\\hat{\\chi_G}(\\xi)-1/(2\\pi i\\xi)\\neq 0\\), which proves the result.",
   "additional_context": {
-    "paper_context": "This run targets the full paper-level node `lem:no-small-zeros`. The point is to let Formal Islands decompose this lemma into smaller internal proof nodes. Prior paper context: the upstream corollary `cor:lattice-tiling` supplies that E tiles R by Z. The parent paper node `lem:packing-region` later uses this lemma to exclude zeros in (-1/2,1/2). Do not treat this as a request to formalize the whole main theorem. Useful internal islands include cosine positivity, the nonzero exponential factor, and the positive-real-part core.",
-    "suggested_internal_islands": [
-      {
-        "id": "cosine_positivity",
-        "claim": "If x in [0,1/2-eps] and 0 < |xi| <= 1/2, then cos(2*pi*x*xi)>0.",
-        "role": "certifies the concrete positivity step used in the integral argument"
-      },
-      {
-        "id": "noninteger_exponential_factor",
-        "claim": "e^{-2*pi*i*xi}-1 is nonzero when 0<|xi|<=1/2.",
-        "role": "rules out one factor in the Fourier identity"
-      },
-      {
-        "id": "real_part_positive_core",
-        "claim": "If cos(2*pi*x*xi)>0 on a positive-measure G, then the real part of the integral over G is positive.",
-        "role": "connects pointwise positivity to nonvanishing"
-      }
-    ],
-    "important_instruction": "The target is this paper-level lemma/corollary. The planning backend should decompose it into smaller Formal Islands nodes. Suggested internal islands are hints, not the paper-level target."
+    "paper_context": "This run targets the full paper-level node `lem:no-small-zeros`. The point is to let Formal Islands decompose this lemma into smaller internal proof nodes. Prior paper context: the upstream corollary `cor:lattice-tiling` supplies that E tiles R by Z. The parent paper node `lem:packing-region` later uses this lemma to exclude zeros in (-1/2,1/2). Do not treat this as a request to formalize the whole main theorem.",
+    "important_instruction": "The target is this paper-level lemma/corollary. The planning backend should decompose it into smaller Formal Islands nodes. Do not formalize the whole paper. Do not introduce external cited facts as Lean hypotheses, axioms, constants, or unverified theorem stubs. If an external cited fact is needed for the parent/root, leave that parent/root informal and certify only internal local islands that can be proved without those unverified dependencies."
   },
   "paper_case_study": {
     "paper_title": "Spectrality of Product Sets with a Perturbed Interval Factor",

@@ -1,0 +1,11 @@
+{
+  "theorem_title": "Lean Eval: entrywise exponential of a positive semidefinite matrix",
+  "theorem_statement": "Let A be a real square positive semidefinite matrix indexed by a finite type n. Then applying the real exponential function entrywise to A gives another positive semidefinite matrix.",
+  "raw_proof_text": "We use the Schur product theorem: if M and N are positive semidefinite matrices of the same size, then their entrywise product M o N is positive semidefinite. A Gram-matrix proof is as follows. If M is positive semidefinite, write M_ij = <u_i, u_j>. If N is positive semidefinite, write N_ij = <v_i, v_j>. Then (M o N)_ij = M_ij N_ij = <u_i, u_j> <v_i, v_j> = <u_i tensor v_i, u_j tensor v_j>. Hence M o N is a Gram matrix and is positive semidefinite.\n\nFor each integer k >= 0, define A^{o k} to be the k-fold Hadamard power of A, with A^{o 0} the all-ones matrix. The all-ones matrix is positive semidefinite because it is the Gram matrix of identical scalar vectors. By repeated application of the Schur product theorem, every A^{o k} is positive semidefinite.\n\nDefine partial sums S_m = sum_{k=0}^m (1 / k!) A^{o k}. Each coefficient is nonnegative, and nonnegative linear combinations of positive semidefinite matrices are positive semidefinite. Therefore every S_m is positive semidefinite.\n\nEntrywise, (S_m)_ij = sum_{k=0}^m a_ij^k / k!, which converges to exp(a_ij). Thus S_m converges entrywise, and hence in any finite-dimensional matrix norm, to the entrywise exponential matrix A.map exp.\n\nThe cone of positive semidefinite matrices is closed. Indeed, if S_m is positive semidefinite and S_m -> E, then for every vector x, x^* E x = lim_m x^* S_m x >= 0. Therefore the entrywise exponential of A is positive semidefinite.\n\nLikely Formal Islands graph: state/prove the Schur product theorem; deduce Hadamard powers of a PSD matrix are PSD; deduce nonnegative sums of PSD matrices are PSD; show partial sums converge entrywise to entrywise exponential; use closure of the PSD cone. This may fully close, but every node is meaningful and Lean-relevant.",
+  "benchmark_metadata": {
+    "source": "lean-eval",
+    "fixed_root_statement": "examples/lean_statements/lean_eval/run47_entrywise_exponential_psd.lean",
+    "lean_namespace": "ProblemPosSemidefMapExp",
+    "lean_theorem_name": "posSemidef_map_exp"
+  }
+}

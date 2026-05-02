@@ -64,7 +64,7 @@ from formal_islands.progress import (
 
 
 DEFAULT_FORMALIZATION_ATTEMPTS = 4
-MAX_TOTAL_FORMALIZATION_ATTEMPTS = 4
+MAX_TOTAL_FORMALIZATION_ATTEMPTS = 16
 CANONICAL_ABSTRACTION_REVIEW_THRESHOLD = 2
 
 
@@ -189,6 +189,24 @@ def _artifact_with_canonical_abstraction_override(
             "faithfulness_classification": FaithfulnessClassification.FULL_NODE,
             "faithfulness_notes": format_faithfulness_notes(
                 "canonical_abstraction_override",
+                assessment.note,
+            ),
+        }
+    )
+
+
+def _artifact_with_supporting_core_abstraction_override(
+    artifact: FormalArtifact,
+    *,
+    assessment: AbstractionReviewAssessment,
+) -> FormalArtifact:
+    """Keep a rejected abstraction as a verified support candidate, not a full node."""
+
+    return artifact.model_copy(
+        update={
+            "faithfulness_classification": FaithfulnessClassification.CONCRETE_SUBLEMMA,
+            "faithfulness_notes": format_faithfulness_notes(
+                "supporting_core",
                 assessment.note,
             ),
         }
@@ -499,6 +517,19 @@ def _formalize_candidate_node_structured(
                     f"node {node_id}: planner accepted the current abstraction as a canonical Lean encoding; "
                     "proceeding to local Lean verification"
                 )
+            elif (
+                abstraction_review is not None
+                and abstraction_review.category == AbstractionReviewCategory.SUPPORTING_CORE
+            ):
+                latest_artifact = _artifact_with_supporting_core_abstraction_override(
+                    latest_artifact,
+                    assessment=abstraction_review,
+                )
+                artifact = latest_artifact
+                _progress(
+                    f"node {node_id}: planner accepted the current abstraction as a supporting core; "
+                    "proceeding to local Lean verification"
+                )
             else:
                 current_graph = _update_node(current_graph, node_id, "formal_failed", latest_artifact)
                 _emit_update(current_graph, node_id, latest_artifact, on_update)
@@ -732,6 +763,19 @@ def _formalize_candidate_node_aristotle(
                 artifact = latest_artifact
                 _progress(
                     f"node {node_id}: planner accepted the current abstraction as a canonical Lean encoding; "
+                    "proceeding to local Lean verification"
+                )
+            elif (
+                abstraction_review is not None
+                and abstraction_review.category == AbstractionReviewCategory.SUPPORTING_CORE
+            ):
+                latest_artifact = _artifact_with_supporting_core_abstraction_override(
+                    latest_artifact,
+                    assessment=abstraction_review,
+                )
+                artifact = latest_artifact
+                _progress(
+                    f"node {node_id}: planner accepted the current abstraction as a supporting core; "
                     "proceeding to local Lean verification"
                 )
             else:
@@ -1031,6 +1075,18 @@ def _formalize_candidate_node_agentic(
                 )
                 _progress(
                     f"node {node_id}: planner accepted the current abstraction as a canonical Lean encoding; "
+                    "proceeding to local Lean verification"
+                )
+            elif (
+                abstraction_review is not None
+                and abstraction_review.category == AbstractionReviewCategory.SUPPORTING_CORE
+            ):
+                artifact = _artifact_with_supporting_core_abstraction_override(
+                    artifact,
+                    assessment=abstraction_review,
+                )
+                _progress(
+                    f"node {node_id}: planner accepted the current abstraction as a supporting core; "
                     "proceeding to local Lean verification"
                 )
             else:

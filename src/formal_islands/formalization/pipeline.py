@@ -219,6 +219,7 @@ class AbstractionReviewCategory(StrEnum):
     """Whether a repeated abstraction looks canonical or like real drift."""
 
     CANONICAL_ENCODING = "canonical_encoding"
+    SUPPORTING_CORE = "supporting_core"
     REAL_DRIFT = "real_drift"
     UNCERTAIN = "uncertain"
 
@@ -1332,13 +1333,18 @@ def build_abstraction_review_request(
                 "Choose exactly one category:\n"
                 "- canonical_encoding: the type-parametric or abstract-looking statement is still the right theorem "
                 "family and is how this local claim should naturally be represented in Lean.\n"
+                "- supporting_core: the theorem is not a full match for the node, but it is a useful verified "
+                "local core, same-setting generalization, or auxiliary lemma that should be kept as a concrete "
+                "supporting sublemma rather than discarded.\n"
                 "- real_drift: the theorem has genuinely shifted away from the intended node into a broader or "
-                "different mathematical claim.\n"
+                "different mathematical claim that is not useful enough as a supporting formal island.\n"
                 "- uncertain: the theorem is borderline and should not automatically bypass the heuristic guard."
             ),
             (
                 "Be conservative. Do not choose canonical_encoding merely because Lean often uses structures over "
-                "`Type*`; only choose it when the theorem still matches the node's mathematical burden and local role."
+                "`Type*`; only choose it when the theorem still matches the node's mathematical burden and local role. "
+                "Use supporting_core when the artifact is mathematically useful but needs an explicit bridge back to "
+                "the target node."
             ),
             "Return JSON with keys abstraction_category and abstraction_note.",
         ]

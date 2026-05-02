@@ -36,8 +36,12 @@ PAPER_TEX = Path(
 CASE_ROOT = REPO_ROOT / "paper/case_studies/spectral_product"
 UNITS_DIR = CASE_ROOT / "units"
 CONTEXT_DIR = CASE_ROOT / "context"
+BASELINES_DIR = CASE_ROOT / "baselines"
 EXAMPLES_DIR = REPO_ROOT / "examples/manual-testing"
 ARTIFACT_ROOT = REPO_ROOT / "artifacts/paper-case-study/spectral_product"
+WHOLE_PAPER_DIRECT_INPUT_FILENAME = "paper_spectral_product_whole_paper_direct.json"
+WHOLE_PAPER_DIRECT_INPUT_PATH = EXAMPLES_DIR / WHOLE_PAPER_DIRECT_INPUT_FILENAME
+WHOLE_PAPER_DIRECT_COPY_PATH = BASELINES_DIR / WHOLE_PAPER_DIRECT_INPUT_FILENAME
 
 
 @dataclass(frozen=True)
@@ -74,6 +78,7 @@ class PaperRunTarget:
     suggested_internal_islands: list[dict[str, str]]
     recommended_continuation: str
     expected_outcome: str
+    direct_root_probe_enabled: bool = True
 
     @property
     def input_filename(self) -> str:
@@ -436,7 +441,14 @@ def node_by_id() -> dict[str, PaperNode]:
     return {node.id: node for node in PAPER_NODES}
 
 
-def make_target(node_id: str, *, context: str, expected: str, continuation: str) -> PaperRunTarget:
+def make_target(
+    node_id: str,
+    *,
+    context: str,
+    expected: str,
+    continuation: str,
+    direct_root_probe_enabled: bool = True,
+) -> PaperRunTarget:
     node = node_by_id()[node_id]
     return PaperRunTarget(
         id=node_id,
@@ -448,6 +460,7 @@ def make_target(node_id: str, *, context: str, expected: str, continuation: str)
         suggested_internal_islands=node.suggested_internal_islands,
         recommended_continuation=continuation,
         expected_outcome=expected,
+        direct_root_probe_enabled=direct_root_probe_enabled,
     )
 
 
@@ -461,9 +474,7 @@ RUN_TARGETS: dict[str, PaperRunTarget] = {
             "corollary `cor:lattice-tiling` supplies that E tiles R by Z. "
             "The parent paper node `lem:packing-region` later uses this lemma "
             "to exclude zeros in (-1/2,1/2). Do not treat this as a request "
-            "to formalize the whole main theorem. Useful internal islands "
-            "include cosine positivity, the nonzero exponential factor, and "
-            "the positive-real-part core."
+            "to formalize the whole main theorem."
         ),
         expected=(
             "Best first target. We hope for at least one verified internal "
@@ -480,12 +491,12 @@ RUN_TARGETS: dict[str, PaperRunTarget] = {
         "packing_region_lemma",
         context=(
             "This run targets the full paper-level node `lem:packing-region`. "
-            "It may assume, as surrounding paper context, that "
-            "`lem:no-small-zeros` and `lem:zero-density` are available as "
-            "mathematical facts. The aim is not to rebuild Fourier analysis "
-            "from scratch, but to see whether Formal Islands can certify "
-            "internal local obligations such as the D_n-D_n computation or "
-            "the finite zero-counting spine."
+            "The proof invokes the paper node `lem:no-small-zeros` and the "
+            "unformalized heavy node `lem:zero-density`. Do not introduce those "
+            "dependencies as Lean hypotheses, axioms, constants, or unverified "
+            "stand-ins for a full proof of `lem:packing-region`. If those "
+            "dependencies are needed, leave the paper node/root informal and "
+            "look for certifiable internal islands in the displayed proof."
         ),
         expected=(
             "Second target after no_small_zeros_lemma. A good result is a "
@@ -497,37 +508,43 @@ RUN_TARGETS: dict[str, PaperRunTarget] = {
             "guidance to target D_n-D_n: write D_n=(0,1/2) union (n-1/2,n) "
             "and prove the needed inclusion/equality for D_n-D_n."
         ),
+        direct_root_probe_enabled=False,
     ),
     "lattice_tiling_corollary": make_target(
         "lattice_tiling_corollary",
         context=(
-            "This is a dependency-assembly paper node. It may cite the "
-            "overlap lemma, support lemma, proper-tiling lemma, and "
-            "Kolountzakis-Lagarias interval theorem as external/paper facts. "
-            "This run is only useful if the report clearly labels those facts "
-            "as assumptions or remaining burden; a pure predicate skeleton "
-            "should not be counted as a strong certificate."
+            "This paper node cites the overlap lemma, support lemma, "
+            "proper-tiling lemma, and Kolountzakis-Lagarias interval theorem. "
+            "Those cited results should remain unformalized paper-graph nodes "
+            "unless separately verified; do not introduce them as Lean "
+            "hypotheses, axioms, constants, or unverified stand-ins. This run "
+            "is only useful if it certifies an internal local island without "
+            "pretending to certify the full corollary."
         ),
         expected="Later target; useful mostly for dependency assembly.",
         continuation=(
             "If attempted, guide the node toward honest dependency assembly "
             "and assumption provenance, not weak-tiling theory from scratch."
         ),
+        direct_root_probe_enabled=False,
     ),
     "proper_tiling_lemma": make_target(
         "proper_tiling_lemma",
         context=(
             "This run targets the paper's longest new measure-theoretic lemma. "
-            "It depends on the support lemma and has several local subclaims "
-            "about support gaps, unit atoms, translated measures, and "
-            "iteration. It is likely hard; use it as a stress test after "
-            "simpler paper nodes."
+            "Its proof cites the external support lemma and has several local "
+            "subclaims about support gaps, unit atoms, translated measures, "
+            "and iteration. Do not introduce the support lemma as a Lean "
+            "hypothesis, axiom, constant, or unverified stand-in for a full "
+            "proof. It is likely hard; use it as a stress test after simpler "
+            "paper nodes."
         ),
         expected="Hard later target; a useful result may be a small faithful core.",
         continuation=(
             "If attempted, steer toward one local support/atom subclaim rather "
             "than the full proper-tiling theorem."
         ),
+        direct_root_probe_enabled=False,
     ),
 }
 
@@ -541,6 +558,14 @@ def main(argv: list[str] | None = None) -> int:
 
     prepare = subparsers.add_parser("prepare", help="write manifest, paper-node inputs, and dashboard")
     prepare.add_argument("--reset-runs", action="store_true", help="drop recorded run paths")
+    prepare.add_argument(
+        "--guided-inputs",
+        action="store_true",
+        help=(
+            "Also embed suggested internal islands into the generated input JSONs. "
+            "Default leaves those hints only in the dashboard and continuation files."
+        ),
+    )
     prepare.set_defaults(func=cmd_prepare)
 
     dashboard = subparsers.add_parser("dashboard", help="refresh dashboard from known run dirs")
@@ -555,6 +580,26 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--max-attempts", type=int, default=4)
     run.add_argument("--workspace", default=None)
     run.add_argument("--attempt-all-nodes", action="store_true")
+    run.add_argument(
+        "--guided-input",
+        action="store_true",
+        help=(
+            "Embed suggested internal islands in the first-run input. Default is an "
+            "unguided paper-node input; use continuation files for human steering."
+        ),
+    )
+    run.add_argument(
+        "--run-graph-if-direct-root-verifies",
+        "--force-graph-after-direct-root",
+        dest="run_graph_if_direct_root_verifies",
+        action="store_true",
+        help=(
+            "Keep running the graph pipeline even if the normal direct-root probe "
+            "verifies and passes semantic audit. Default allows faithful root "
+            "closure to short-circuit because a closed paper node is already a "
+            "strong artifact."
+        ),
+    )
     run.add_argument("--timestamp", default=None)
     run.set_defaults(func=cmd_run)
 
@@ -563,7 +608,10 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def cmd_prepare(args: argparse.Namespace) -> int:
-    prepare_case_study(reset_runs=bool(args.reset_runs))
+    prepare_case_study(
+        reset_runs=bool(args.reset_runs),
+        include_guidance=bool(args.guided_inputs),
+    )
     print(CASE_ROOT / "index.html")
     print(CASE_ROOT / "paper_manifest.json")
     return 0
@@ -576,7 +624,7 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
 
 
 def cmd_status(args: argparse.Namespace) -> int:
-    prepare_case_study(reset_runs=False)
+    prepare_case_study(reset_runs=False, include_guidance=False)
     manifest = load_manifest()
     for target in manifest.get("run_targets", []):
         latest = latest_run(target)
@@ -587,7 +635,7 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 def cmd_run(args: argparse.Namespace) -> int:
-    prepare_case_study(reset_runs=False)
+    prepare_case_study(reset_runs=False, include_guidance=bool(args.guided_input))
     targets = INITIAL_TARGETS if args.target == "initial" else [args.target]
     timestamp = args.timestamp or _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     for target_id in targets:
@@ -597,6 +645,8 @@ def cmd_run(args: argparse.Namespace) -> int:
             max_attempts=args.max_attempts,
             workspace=args.workspace,
             attempt_all_nodes=bool(args.attempt_all_nodes),
+            include_guidance=bool(args.guided_input),
+            run_graph_if_direct_root_verifies=bool(args.run_graph_if_direct_root_verifies),
             timestamp=timestamp,
         )
     refresh_dashboard()
@@ -604,8 +654,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
-def prepare_case_study(*, reset_runs: bool) -> None:
-    for path in (CASE_ROOT, UNITS_DIR, CONTEXT_DIR, EXAMPLES_DIR, ARTIFACT_ROOT):
+def prepare_case_study(*, reset_runs: bool, include_guidance: bool) -> None:
+    for path in (CASE_ROOT, UNITS_DIR, CONTEXT_DIR, BASELINES_DIR, EXAMPLES_DIR, ARTIFACT_ROOT):
         path.mkdir(parents=True, exist_ok=True)
 
     existing = load_manifest_or_none()
@@ -640,7 +690,7 @@ def prepare_case_study(*, reset_runs: bool) -> None:
 
     run_targets = []
     for target in RUN_TARGETS.values():
-        write_target_input(target)
+        write_target_input(target, include_guidance=include_guidance)
         write_continuation_context(target)
         run_targets.append(
             {
@@ -651,6 +701,7 @@ def prepare_case_study(*, reset_runs: bool) -> None:
                 "continuation_context": str(target.continuation_path.relative_to(REPO_ROOT)),
                 "expected_outcome": target.expected_outcome,
                 "recommended_continuation": target.recommended_continuation,
+                "direct_root_probe_enabled": target.direct_root_probe_enabled,
                 "runs": [] if reset_runs else existing_runs.get(target.id, []),
             }
         )
@@ -665,29 +716,101 @@ def prepare_case_study(*, reset_runs: bool) -> None:
             "Two-level artifact: paper nodes are theorem-like units; Formal Islands runs decompose inside selected paper nodes.",
             "Local suggestions like cosine positivity are internal island hints, not paper-level nodes.",
             "A local island does not certify the paper unless the dependency closure to the main theorem is verified.",
+            "External cited nodes are paper-level provenance nodes, not assumptions, axioms, or Formal Islands targets by default.",
+            "Default generated inputs are unguided; suggested internal islands live in the dashboard and continuation files unless --guided-inputs/--guided-input is used.",
         ],
         "nodes": [paper_node_to_dict(node) for node in PAPER_NODES],
         "edges": [edge.__dict__ for edge in PAPER_EDGES],
         "run_targets": run_targets,
         "initial_targets": INITIAL_TARGETS,
+        "baselines": [whole_paper_direct_baseline_manifest_entry()],
     }
     apply_run_statuses(manifest)
     write_json(CASE_ROOT / "paper_manifest.json", manifest)
-    rewrite_target_inputs_from_manifest(manifest)
+    rewrite_target_inputs_from_manifest(manifest, include_guidance=include_guidance)
+    write_whole_paper_direct_baseline_input()
     write_json(CASE_ROOT / "paper_graph.json", {"nodes": manifest["nodes"], "edges": manifest["edges"]})
     refresh_dashboard()
 
 
-def write_target_input(target: PaperRunTarget, *, dependency_run_context: str = "") -> None:
+def whole_paper_direct_baseline_manifest_entry() -> dict[str, Any]:
+    command = (
+        "uv run formal-islands direct-root "
+        f"--input {WHOLE_PAPER_DIRECT_INPUT_PATH.relative_to(REPO_ROOT)} "
+        "--output-dir "
+        '"artifacts/paper-case-study/spectral_product/direct_whole_paper_aristotle-$(date +%Y%m%d-%H%M%S)" '
+        "--max-attempts 4"
+    )
+    return {
+        "id": "whole_paper_direct_aristotle",
+        "kind": "direct_root_diagnostic",
+        "input_json": str(WHOLE_PAPER_DIRECT_INPUT_PATH.relative_to(REPO_ROOT)),
+        "archival_copy": str(WHOLE_PAPER_DIRECT_COPY_PATH.relative_to(REPO_ROOT)),
+        "output_dir_pattern": "artifacts/paper-case-study/spectral_product/direct_whole_paper_aristotle-<timestamp>",
+        "command": command,
+        "purpose": (
+            "Monolithic diagnostic: ask Aristotle to formalize the paper's main theorem "
+            "from the entire TeX source, without the two-level Formal Islands decomposition."
+        ),
+    }
+
+
+def write_whole_paper_direct_baseline_input() -> None:
+    tex = PAPER_TEX.read_text(encoding="utf-8")
+    policy = """Monolithic whole-paper direct-root baseline policy.
+
+Formalize and prove the main theorem stated above, using the paper TeX below as the informal proof context.
+This is a diagnostic comparison against the decomposed Formal Islands workflow, not the main paper-node artifact.
+
+Important constraints:
+- Do not introduce cited external results from other papers as unproved Lean hypotheses, axioms, constants, or theorem stubs.
+- Any helper lemma used in the Lean proof must be proved in the submitted file or come from Mathlib.
+- If the proof needs cited facts that are not available in Mathlib and are not proved in the submitted file, prefer a transparent compile failure over a misleading theorem with hidden assumptions.
+- Do not weaken, over-abstract, or replace the main theorem with a dependency skeleton.
+- Do not use `sorry`, `admit`, `axiom`, `constant`, or opaque placeholder declarations.
+"""
+    payload = {
+        "theorem_title": "Spectral product paper: whole-paper direct main theorem baseline",
+        "theorem_statement": node_by_id()["main_theorem"].statement_tex,
+        "raw_proof_text": f"{policy}\n\nFull paper TeX source:\n\n{tex}",
+        "baseline_metadata": {
+            "paper_title": "Spectrality of Product Sets with a Perturbed Interval Factor",
+            "source_tex": str(PAPER_TEX),
+            "baseline_kind": "whole_paper_direct_root",
+            "notes": [
+                "This file intentionally avoids Formal Islands optional context fields so the direct-root theorem statement remains clean.",
+                "The anti-axiom/citation-smuggling policy is included in raw_proof_text as part of the proof context.",
+            ],
+        },
+    }
+    write_json(WHOLE_PAPER_DIRECT_COPY_PATH, payload)
+    write_json(WHOLE_PAPER_DIRECT_INPUT_PATH, payload)
+
+
+def write_target_input(
+    target: PaperRunTarget,
+    *,
+    dependency_run_context: str = "",
+    include_guidance: bool = False,
+) -> None:
     additional_context: dict[str, Any] = {
         "paper_context": target.paper_context,
-        "suggested_internal_islands": target.suggested_internal_islands,
         "important_instruction": (
             "The target is this paper-level lemma/corollary. The planning "
             "backend should decompose it into smaller Formal Islands nodes. "
-            "Suggested internal islands are hints, not the paper-level target."
+            "Do not formalize the whole paper. Do not introduce external cited "
+            "facts as Lean hypotheses, axioms, constants, or unverified theorem "
+            "stubs. If an external cited fact is needed for the parent/root, "
+            "leave that parent/root informal and certify only internal local "
+            "islands that can be proved without those unverified dependencies."
         ),
     }
+    if include_guidance:
+        additional_context["suggested_internal_islands"] = target.suggested_internal_islands
+        additional_context["guidance_note"] = (
+            "These suggested internal islands are human guidance for this run, "
+            "not part of the paper-level theorem statement."
+        )
     if dependency_run_context:
         additional_context["previous_paper_node_run_context"] = dependency_run_context
     payload = {
@@ -738,10 +861,18 @@ def write_continuation_context(target: PaperRunTarget, *, dependency_run_context
     target.continuation_path.write_text(text + "\n", encoding="utf-8")
 
 
-def rewrite_target_inputs_from_manifest(manifest: dict[str, Any]) -> None:
+def rewrite_target_inputs_from_manifest(
+    manifest: dict[str, Any],
+    *,
+    include_guidance: bool = False,
+) -> None:
     for target in RUN_TARGETS.values():
         dependency_context = dependency_run_context_for_target(target, manifest)
-        write_target_input(target, dependency_run_context=dependency_context)
+        write_target_input(
+            target,
+            dependency_run_context=dependency_context,
+            include_guidance=include_guidance,
+        )
         write_continuation_context(target, dependency_run_context=dependency_context)
 
 
@@ -800,6 +931,8 @@ def run_target(
     max_attempts: int,
     workspace: str | None,
     attempt_all_nodes: bool,
+    include_guidance: bool,
+    run_graph_if_direct_root_verifies: bool,
     timestamp: str,
 ) -> None:
     safe_backends = backends.replace("/", "-")
@@ -807,7 +940,11 @@ def run_target(
     refresh_dashboard()
     manifest = load_manifest()
     dependency_context = dependency_run_context_for_target(target, manifest)
-    write_target_input(target, dependency_run_context=dependency_context)
+    write_target_input(
+        target,
+        dependency_run_context=dependency_context,
+        include_guidance=include_guidance,
+    )
     write_continuation_context(target, dependency_run_context=dependency_context)
     command = [
         sys.executable,
@@ -827,6 +964,10 @@ def run_target(
         command.extend(["--workspace", workspace])
     if attempt_all_nodes:
         command.append("--attempt-all-nodes")
+    if not target.direct_root_probe_enabled:
+        command.append("--no-direct-root-probe")
+    if run_graph_if_direct_root_verifies:
+        command.append("--run-graph-if-direct-root-verifies")
 
     record_run(target.id, output_dir=output_dir, command=command, outcome="running")
     refresh_dashboard()
@@ -991,9 +1132,20 @@ def render_markdown(manifest: dict[str, Any]) -> str:
         "",
         "This is a two-level paper audit dashboard. Paper nodes are theorem-like units; linked Formal Islands runs decompose inside those nodes.",
         "",
-        "## Paper-Node Run Targets",
+        "## Direct Baselines",
         "",
     ]
+    for baseline in manifest.get("baselines", []):
+        lines.append(f"- `{baseline['id']}`: {baseline['purpose']}")
+        lines.append(f"  - input: `{baseline['input_json']}`")
+        lines.append(f"  - command: `{baseline['command']}`")
+    lines.extend(
+        [
+            "",
+        "## Paper-Node Run Targets",
+        "",
+        ]
+    )
     for target in manifest.get("run_targets", []):
         latest = latest_run(target)
         status = latest.get("outcome", "not_run") if latest else "not_run"
@@ -1018,6 +1170,7 @@ def render_html(manifest: dict[str, Any]) -> str:
     node_by_id = {node["id"]: node for node in manifest.get("nodes", [])}
     nodes_html = "\n".join(render_node_card(node, manifest) for node in manifest.get("nodes", []))
     targets_html = "\n".join(render_target_card(target) for target in manifest.get("run_targets", []))
+    baselines_html = "\n".join(render_baseline_card(baseline) for baseline in manifest.get("baselines", []))
     edges_html = "\n".join(
         f"<li><code>{esc(edge['source_id'])}</code> depends on <code>{esc(edge['target_id'])}</code></li>"
         for edge in manifest.get("edges", [])
@@ -1069,9 +1222,12 @@ def render_html(manifest: dict[str, Any]) -> str:
 <main>
   <h1>Spectral Product Paper Case Study</h1>
   <p class="lede">A two-level audit dashboard for <em>{esc(manifest['paper_title'])}</em>. Paper nodes are theorem-like units from the TeX paper. Linked Formal Islands runs decompose inside selected paper nodes and may certify internal local islands. A verified internal island reduces review burden but does not certify the whole paper node or paper.</p>
+  <p class="small"><strong>External cited nodes:</strong> these are provenance nodes only. They are not treated as Lean assumptions, axioms, or certified dependencies unless separately verified.</p>
   <p class="small">Source TeX: <code>{esc(manifest['source_tex'])}</code></p>
   <h2>Paper Dependency Map</h2>
   <div class="graph">{svg}</div>
+  <h2>Direct Baselines</h2>
+  <div class="grid">{baselines_html}</div>
   <h2>Paper-Node Formal Islands Runs</h2>
   <div class="grid">{targets_html}</div>
   <h2>Paper Nodes</h2>
@@ -1082,6 +1238,17 @@ def render_html(manifest: dict[str, Any]) -> str:
 </body>
 </html>
 """
+
+
+def render_baseline_card(baseline: dict[str, Any]) -> str:
+    return f"""<article class="card">
+  <span class="status not_attempted">diagnostic</span>
+  <h3>{esc(baseline['id'])}</h3>
+  <p>{esc(baseline['purpose'])}</p>
+  <p class="small">Input: <code>{esc(baseline['input_json'])}</code></p>
+  <p class="small">Output pattern: <code>{esc(baseline['output_dir_pattern'])}</code></p>
+  <p class="small">Command: <code>{esc(baseline['command'])}</code></p>
+</article>"""
 
 
 def render_target_card(target: dict[str, Any]) -> str:
@@ -1099,6 +1266,7 @@ def render_target_card(target: dict[str, Any]) -> str:
   <h3>{esc(target['id'])}</h3>
   <p>Paper node: <code>{esc(target['paper_node_id'])}</code></p>
   <p>{esc(target['expected_outcome'])}</p>
+  <p class="small">Direct-root probe: <code>{esc('enabled' if target.get('direct_root_probe_enabled', True) else 'disabled for unformalized external dependencies')}</code></p>
   <p class="small">Input: <code>{esc(target['input_json'])}</code></p>
   {run_html}
   {report_html}

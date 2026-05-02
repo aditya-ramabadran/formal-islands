@@ -169,7 +169,7 @@ formal-islands run \
   --fixed-root-source lean-eval
 ```
 
-In fixed-spec mode, the root node is treated strictly: a root/full-node verification must preserve the supplied theorem header. Non-root child nodes receive the fixed root statement only as context for choosing compatible local definitions, notation, and APIs. `--fixed-root-source` is a provenance label recorded in the graph/report metadata; it does not change backend behavior.
+In fixed-spec mode, the root node is treated strictly: root attempts are seeded with a Lean skeleton for the supplied declaration, and a root/full-node verification must preserve that theorem header. Non-root child nodes receive the fixed root statement only as context for choosing compatible local definitions, notation, and APIs. `--fixed-root-source` is a provenance label recorded in the graph/report metadata; it does not change backend behavior.
 
 ## How It Works
 
@@ -197,7 +197,7 @@ If you rerun `report` later without a planning backend, previously generated `re
 
 For exploratory evaluation, `--attempt-all-nodes` can override the conservative candidate selector and mark every extracted informal node as `candidate_formal`. This is deliberately opt-in because it can spend substantial backend budget on nodes that the planner would normally avoid, but it is helpful when checking whether a stronger formalization backend can close more of an older benchmark than the original candidate policy attempted.
 
-For Aristotle runs, the first direct-root probe uses the compact standalone diagnostic prompt, not the longer graph-aware node prompt. Later root attempts reached through child-first graph promotion still use the normal graph prompt with verified-child support.
+For Aristotle runs, the first direct-root probe uses the compact standalone diagnostic prompt, not the longer graph-aware node prompt. Later root attempts reached through child-first graph promotion still use the normal graph prompt with verified-child support. When a fixed root Lean statement is supplied, both paths use the extracted theorem name and seed the root scratch file with the fixed declaration skeleton; child attempts only see the fixed root as compatibility context.
 
 ## Setup
 
@@ -342,7 +342,7 @@ For benchmark tasks with an externally supplied Lean statement, add one of:
 - `--fixed-root-lean-statement "theorem exact_root ... := by"`
 - `--fixed-root-lean-statement-file examples/lean_statements/root_statement.lean`
 
-When a fixed root statement is supplied, direct-root uses its theorem name when one can be extracted and rejects a compiling returned file if the main theorem header does not match the fixed statement.
+When a fixed root statement is supplied, direct-root uses its theorem name when one can be extracted, seeds the scratch file with that declaration skeleton, and rejects a compiling returned file if the main theorem header does not match the fixed statement.
 
 ### `formal-islands continue`
 
@@ -379,7 +379,9 @@ formal-islands continue \
   --formalization-backend aristotle
 ```
 
-This is different from `--lean-statement`: `--lean-statement` is a soft continuation hint for the continued node, while `--fixed-root-lean-statement-file` is a run-level root specification. If the continued node is the root, the exact theorem header is enforced. If the continued node is a child, the fixed root statement is provided only as compatibility context.
+This is different from `--lean-statement`: `--lean-statement` is a soft continuation hint for the continued node, while `--fixed-root-lean-statement-file` is a run-level root specification. If the continued node is the root, the exact theorem header is enforced and the scratch file starts from the fixed declaration skeleton. If the continued node is a child, the fixed root statement is provided only as compatibility context. If no new fixed root statement is supplied during continuation, any fixed root spec already stored in the graph is preserved.
+
+The fixed-root guard checks the Lean declaration header: theorem/lemma name, binders, hypotheses, and conclusion. It is not a full external benchmark comparator. If a benchmark also requires exact namespace/module packaging, run its comparator or inspect that packaging separately; Formal Islands records the fixed statement and source hash so that check remains auditable.
 
 ## Input Format
 

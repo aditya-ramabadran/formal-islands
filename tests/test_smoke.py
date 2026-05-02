@@ -52,6 +52,7 @@ from formal_islands.backends import ClaudeCodeBackend, CodexCLIBackend, GeminiCL
 from formal_islands.direct_root import (
     DIRECT_ROOT_THEOREM_NAME,
     _contains_theorem_declaration,
+    _render_direct_root_scratch_header,
     build_direct_root_aristotle_prompt,
     run_direct_root_aristotle_diagnostic,
 )
@@ -171,6 +172,28 @@ def test_direct_root_prompt_accepts_fixed_root_spec() -> None:
     assert "Fixed Lean root specification" in prompt
     assert "theorem exact_root" in prompt
     assert "must preserve this theorem name" in prompt
+    assert "scratch file starts with a matching theorem skeleton" in prompt
+
+
+def test_direct_root_scratch_header_seeds_fixed_spec_skeleton() -> None:
+    fixed_spec = _collect_fixed_root_lean_spec(
+        Namespace(
+            fixed_root_lean_statement="theorem exact_root (n : Nat) : n = n := by",
+            fixed_root_lean_statement_file=None,
+            fixed_root_source="unit-test",
+        )
+    )
+    assert fixed_spec is not None
+
+    header = _render_direct_root_scratch_header(
+        theorem_title="Toy theorem",
+        fixed_root_lean_spec=fixed_spec,
+    )
+
+    assert "Fixed root target skeleton" in header
+    assert "theorem exact_root (n : Nat) : n = n" in header
+    assert "Do not change the theorem name" in header
+    assert "sorry" not in header
 
 
 def test_direct_root_theorem_declaration_detection_ignores_comments() -> None:
