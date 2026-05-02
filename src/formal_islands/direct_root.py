@@ -565,6 +565,31 @@ def _contains_theorem_declaration(text: str, theorem_name: str) -> bool:
     return bool(re.search(rf"(?m)^\s*(?:theorem|lemma)\s+{escaped}\b", text))
 
 
+def direct_root_diagnostic_to_artifact(
+    diagnostic: DirectRootDiagnostic,
+) -> FormalArtifact | None:
+    """Recover the verified direct-root theorem as a regular FormalArtifact."""
+
+    if diagnostic.result_lean_path is None or not diagnostic.scratch_path.exists():
+        return None
+
+    lean_code = diagnostic.scratch_path.read_text(encoding="utf-8")
+    lean_statement = extract_decl_header(
+        lean_code,
+        preferred_name=diagnostic.desired_theorem_name,
+    )
+    if lean_statement is None:
+        return None
+
+    return FormalArtifact(
+        lean_theorem_name=diagnostic.desired_theorem_name,
+        lean_statement=lean_statement,
+        lean_code=lean_code,
+        verification=diagnostic.verification,
+        attempt_history=[diagnostic.verification],
+    )
+
+
 def write_direct_root_diagnostic_summary(
     diagnostic: DirectRootDiagnostic,
     path: Path,

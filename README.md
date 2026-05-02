@@ -39,7 +39,11 @@ Depending on the command, you may also see `02_candidate_graph.json` and `04_rep
 
 Runs can also be resumed later from `03_formalized_graph.json` with the `continue` command: you can seed one or more nodes back into the candidate set, append to the same `_progress.log` / `graph_history.jsonl`, and let the normal auto formalization + promotion logic continue from there.
 
-For evaluation and comparison, the repo also has a `direct-root` diagnostic command. It sends the original theorem statement and proof text directly to Aristotle and asks for one root theorem named `direct_root_aristotle`, without proof-graph decomposition or child-island staging. This is useful as a baseline, but it is intentionally separate from the normal Formal Islands artifact. If an external benchmark supplies a fixed Lean root statement, `direct-root`, `run`, and `continue` can also take `--fixed-root-lean-statement` or `--fixed-root-lean-statement-file`.
+For evaluation and comparison, the repo also has a `direct-root` diagnostic command. It sends the original theorem statement and proof text directly to Aristotle and asks for one root theorem named `direct_root_aristotle`, without proof-graph decomposition or child-island staging. This is useful as a standalone baseline.
+
+Normal Aristotle-backed `run` / `run-benchmark` executions now also start with a compact direct-root probe in parallel with the first graph-formalization wave. If that probe locally verifies the root and passes the same semantic full-match audit used by the graph pipeline, the run short-circuits and records the root as formally verified. Short-circuit cancellation is best-effort for already submitted remote Aristotle jobs, but no later graph waves are scheduled. Pass `--no-direct-root-probe` to disable this, or `--run-graph-if-direct-root-verifies` when you still want the graph/islands artifact even after the root closes directly.
+
+If an external benchmark supplies a fixed Lean root statement, `direct-root`, `run`, and `continue` can also take `--fixed-root-lean-statement` or `--fixed-root-lean-statement-file`.
 
 ### How To Read A Run
 
@@ -111,6 +115,23 @@ formal-islands run banach_stone \
 
 This mode is useful for benchmark exploration and stress testing, but the default curated workflow is still conservative candidate selection.
 
+Run the full graph pipeline even if the default direct-root probe closes the theorem:
+
+```bash
+formal-islands run banach_stone \
+  --backends claude/aristotle \
+  --max-attempts 4 \
+  --run-graph-if-direct-root-verifies
+```
+
+Disable the first-wave direct-root probe:
+
+```bash
+formal-islands run banach_stone \
+  --backends claude/aristotle \
+  --no-direct-root-probe
+```
+
 Continue an existing run from its saved graph:
 
 ```bash
@@ -154,8 +175,9 @@ In fixed-spec mode, the root node is treated strictly: a root/full-node verifica
 
 1. **Plan**: a planning backend reads the informal proof and builds a small proof graph (4-8 nodes)
 2. **Select**: candidate nodes for formalization are ranked by how concrete and self-contained they are; the planner is discouraged from selecting a parent while leaving an obvious direct blocker child informal, and a small blocker sweep can promote that child when appropriate
-3. **Formalize**: an agentic backend worker attempts to write and verify a Lean theorem for each candidate node
-4. **Report**: the pipeline produces an HTML report with full verification logs, a review checklist, and a "remaining proof burden" summary for each informal node with already-verified children
+3. **Probe root**: for Aristotle-backed full runs, a compact direct-root attempt runs in parallel with the first graph wave and can short-circuit the run if it verifies the ambient theorem and passes semantic audit
+4. **Formalize**: an agentic backend worker attempts to write and verify a Lean theorem for each candidate node
+5. **Report**: the pipeline produces an HTML report with full verification logs, a review checklist, and a "remaining proof burden" summary for each informal node with already-verified children
 
 The planner and formalizer can be the same backend or different ones. In practice, using a strong reasoning model for planning and Aristotle for formalization gives the best results.
 
@@ -174,6 +196,8 @@ After the initial candidates are exhausted, the pipeline also does a narrow “l
 If you rerun `report` later without a planning backend, previously generated `remaining_proof_burden` text is preserved and reused from the saved run artifacts.
 
 For exploratory evaluation, `--attempt-all-nodes` can override the conservative candidate selector and mark every extracted informal node as `candidate_formal`. This is deliberately opt-in because it can spend substantial backend budget on nodes that the planner would normally avoid, but it is helpful when checking whether a stronger formalization backend can close more of an older benchmark than the original candidate policy attempted.
+
+For Aristotle runs, the first direct-root probe uses the compact standalone diagnostic prompt, not the longer graph-aware node prompt. Later root attempts reached through child-first graph promotion still use the normal graph prompt with verified-child support.
 
 ## Setup
 
@@ -267,6 +291,8 @@ formal-islands run <input> [options]
 | `--node-id ID` | `auto` | Formalize only this node; default formalizes all candidates |
 | `--formalization-timeout-seconds N` | none (Aristotle) | Timeout for the formalization worker |
 | `--attempt-all-nodes` | off | Exploratory mode: after planning, mark every informal node as `candidate_formal` |
+| `--no-direct-root-probe` | off | Disable the default first-wave Aristotle direct-root probe |
+| `--run-graph-if-direct-root-verifies` | off | Continue the graph pipeline even if the direct-root probe verifies the root |
 | `--fixed-root-lean-statement TEXT` | (none) | Optional exact Lean root statement; hard target for root attempts, context only for children |
 | `--fixed-root-lean-statement-file PATH` | (none) | Read the optional exact Lean root statement from a file |
 

@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import re
 from threading import RLock
+from typing import Any
 from typing import Callable
 
 from formal_islands.backends import AgenticStructuredBackend, BackendError, StructuredBackend
@@ -44,6 +45,7 @@ from formal_islands.formalization.pipeline import (
     request_node_formalization,
 )
 from formal_islands.models import (
+    FixedRootLeanSpec,
     FormalArtifact,
     NodeFailureKind,
     NodeFormalizationOutcome,
@@ -61,6 +63,11 @@ from formal_islands.progress import (
 )
 
 
+DEFAULT_FORMALIZATION_ATTEMPTS = 4
+MAX_TOTAL_FORMALIZATION_ATTEMPTS = 4
+CANONICAL_ABSTRACTION_REVIEW_THRESHOLD = 2
+
+
 @dataclass(frozen=True)
 class FormalizationOutcome:
     """Result summary for a single-node bounded formalization run."""
@@ -76,6 +83,17 @@ class MultiFormalizationOutcome:
 
     graph: ProofGraph
     outcomes: list[FormalizationOutcome]
+
+
+@dataclass(frozen=True)
+class DirectRootProbeConfig:
+    """Configuration for the optional direct-root probe inside a graph run."""
+
+    input_payload: dict[str, Any]
+    output_dir: Path
+    fixed_root_lean_spec: FixedRootLeanSpec | None = None
+    max_attempts: int = DEFAULT_FORMALIZATION_ATTEMPTS
+    run_graph_if_direct_root_verifies: bool = False
 
 
 @dataclass
@@ -97,9 +115,6 @@ class ParentPromotionEpisode:
 
 
 FormalizationUpdateCallback = Callable[[FormalizationOutcome], None]
-DEFAULT_FORMALIZATION_ATTEMPTS = 4
-MAX_TOTAL_FORMALIZATION_ATTEMPTS = 4
-CANONICAL_ABSTRACTION_REVIEW_THRESHOLD = 2
 FormalizationBackend = StructuredBackend | AristotleBackend
 
 
@@ -255,6 +270,7 @@ def formalize_candidate_nodes(
     mode: str = "agentic",
     parent_promotion_cache: ParentPromotionCache | None = None,
     initial_attempted_ids: set[str] | None = None,
+    direct_root_probe: DirectRootProbeConfig | None = None,
 ) -> MultiFormalizationOutcome:
     """Formalize multiple candidate nodes sequentially, reusing the updated graph each time.
 
@@ -278,6 +294,7 @@ def formalize_candidate_nodes(
             parent_promotion_cache=parent_promotion_cache or ParentPromotionCache(decisions={}, lock=RLock()),
             enable_parent_promotion=node_ids is None,
             initial_attempted_ids=initial_attempted_ids,
+            direct_root_probe=direct_root_probe if node_ids is None else None,
         )
 
     current_graph = graph
@@ -1275,18 +1292,20 @@ def _repair_policy_lines(repair_assessment: RepairAssessment | None) -> list[str
     lines = [f"Retry diagnosis: {note}"]
     if repair_assessment.category == RepairCategory.SETTING_FIX:
         lines.append(
-            "Lock the theorem to the same mathematical universe: keep the ambient setting, dimension profile, "
-            "and object types fixed instead of swapping to a proxy model."
+            "Lock the theorem to the same ambient universe: keep the ambient setting, dimension profile, and "
+            "object types fixed. Do not retreat to a lower-dimensional, proxy, or analogue theorem family just "
+            "to obtain a proof that compiles."
         )
     elif repair_assessment.category == RepairCategory.THEOREM_SHAPE_FIX:
         lines.append(
-            "Lock the theorem shape to the target node: do not replace the claim with a consequence, "
-            "analogue, or assumed intermediate step."
+            "The theorem family is locked. Lock the theorem shape to the target node: do not replace the claim with a consequence, "
+            "analogue, assumed intermediate step, or easier side fact."
         )
     elif repair_assessment.category == RepairCategory.LEAN_PACKAGING_FIX:
         lines.append(
             "Keep the theorem statement fixed and repair Lean packaging only: imports, namespaces, "
-            "identifiers, typeclass plumbing, and Lean-safe binder names."
+            "identifiers, typeclass plumbing, and Lean-safe binder names. If a theorem-header identifier uses "
+            "Unicode such as `λ₁`, rename it to plain ASCII such as `lambda1`."
         )
     elif repair_assessment.category == RepairCategory.PROOF_STRATEGY_FIX:
         lines.append(
@@ -1305,53 +1324,8 @@ def _repair_policy_lines(repair_assessment: RepairAssessment | None) -> list[str
 
 
 def _faithfulness_repair_lines(repair_assessment: RepairAssessment | None) -> list[str]:
-    if repair_assessment is None:
-        return []
-
-    if repair_assessment.category == RepairCategory.SETTING_FIX:
-        return [
-            "The theorem family is locked: keep the same ambient universe, dimension profile, and object types. "
-            "Do not retreat to a lower-dimensional, proxy, or analogue theorem family as a workaround.",
-            "If the current theorem cannot be made to work, the next attempt should still stay in the same setting; "
-            "do not change the theorem family just to obtain a proof that compiles.",
-        ]
-
-    if repair_assessment.category == RepairCategory.THEOREM_SHAPE_FIX:
-        return [
-            "The theorem family is locked: keep the same concrete claim and proof role. Do not replace it with a "
-            "consequence, analogue, assumed intermediate step, or easier side fact.",
-            "Do not use a smaller sublemma escape hatch unless a later diagnostic explicitly says try_smaller_sublemma.",
-        ]
-
-    if repair_assessment.category == RepairCategory.LEAN_PACKAGING_FIX:
-        return [
-            "Keep the theorem statement fixed and repair Lean packaging only: imports, namespaces, identifiers, "
-            "typeclass plumbing, and Lean-safe binder names.",
-            "Do not change the theorem family or ambient setting while fixing packaging issues.",
-            "If a binder name or theorem-header identifier uses Unicode like `λ₁`, rename it to a plain ASCII "
-            "identifier such as `lambda1` and keep everything else fixed.",
-        ]
-
-    if repair_assessment.category == RepairCategory.PROOF_STRATEGY_FIX:
-        return [
-            "Keep the theorem statement fixed and change only the proof strategy, lemma order, or tactic script.",
-            "The theorem family is already acceptable; do not switch to a different setting or a smaller analogue "
-            "unless a later diagnostic explicitly asks for it.",
-        ]
-
-    if repair_assessment.category == RepairCategory.TRY_SMALLER_SUBLEMMA:
-        return [
-            "If you must shrink, stay in the same setting and extract the nearest honest local core; do not "
-            "switch universes or hide the hard step as a hypothesis.",
-            "The fallback must still be a genuinely nontrivial local theorem, not a bookkeeping identity or a "
-            "mere substitution step.",
-        ]
-
-    if repair_assessment.category == RepairCategory.TRY_LARGER_CORE:
-        return [
-            "Stay in the same setting and expand toward the missing core without changing the mathematical universe.",
-        ]
-
+    # Kept as a compatibility seam for older callers/tests; the concise policy
+    # lines above now carry the category-specific faithfulness constraints.
     return []
 
 
@@ -1369,35 +1343,29 @@ def _build_repair_feedback(
     )
     selected_assessment = repair_assessment or heuristic
     parts: list[str] = []
-    if repair_assessment is not None:
-        parts.extend(
-            [
-                "Planning backend repair diagnosis:",
-                f"[{repair_assessment.category.value}] {repair_assessment.note}",
-            ]
-        )
     parts.extend(_repair_policy_lines(selected_assessment))
     parts.extend(
         [
-            "Heuristic repair diagnosis:",
-            f"[{heuristic.category.value}] {heuristic.note}",
             "Compiler feedback from the previous attempt:",
             previous_result.stderr or "(no stderr)",
             "Stdout from the previous attempt:",
             previous_result.stdout or "(no stdout)",
             (
-            "Repair guidance: fix the Lean syntax or compiler issue and keep the theorem concrete and faithful to the original node. "
-            "Reuse the node's variable names and hypotheses when reasonable. Avoid arbitrary `Type*` parameters, unrelated function "
-            "families, unnecessary higher-order abstraction, or a shift to an arbitrary measure-space theorem when the node is concrete. "
-            "Preserve the ambient setting when possible. If the diagnosis is setting_fix or theorem_shape_fix, do not "
-            "use a smaller theorem family as an escape hatch; keep the same setting and theorem shape locked. "
-            "If the diagnosis is proof_strategy_fix or lean_packaging_fix, keep the theorem statement fixed and only "
-            "repair the proof or packaging. Prefer plain Lean syntax that compiles in a scratch file. "
-            "Use a short, specific import list that matches the identifiers actually used, and avoid both `import Mathlib` "
-            "for tiny local theorems and speculative deep imports that may not exist in the pinned workspace."
-        ),
+                "Repair guidance: fix the Lean or packaging issue while keeping the theorem concrete and faithful "
+                "to the target node. Reuse the node's variable names and hypotheses when reasonable; avoid "
+                "arbitrary `Type*` parameters, unrelated function families, and speculative import paths. "
+                "For tiny local theorems, avoid both `import Mathlib` and guessed deep imports when a short, "
+                "specific import list is available."
+            ),
         ]
     )
+    if repair_assessment is not None and heuristic.category != repair_assessment.category:
+        parts.extend(
+            [
+                "Secondary heuristic diagnosis:",
+                f"[{heuristic.category.value}] {heuristic.note}",
+            ]
+        )
     if extra_guidance:
         parts.append(extra_guidance)
     parts.extend(
@@ -1470,20 +1438,12 @@ def _build_agentic_faithfulness_feedback(
         "Faithfulness feedback from the previous agentic attempt:",
         previous_result.stderr or "(no faithfulness message)",
         (
-            "Revise the current scratch file in place. Stay closer to the target node's concrete mathematical "
-            "setting, variables, hypotheses, and local inferential role."
-        ),
-        (
-            "Do not introduce arbitrary `Type*`, arbitrary measures, arbitrary Hilbert or inner-product spaces, "
-            "or unrelated families of functions unless the node itself explicitly requires that abstraction."
-        ),
-        (
-            "Keep the revised Lean file syntactically conservative: prefer ASCII identifiers in declarations, "
-            "use names like `lambda1` instead of Unicode binder names like `λ₁`, and avoid fancy notation when plain Lean syntax works."
+            "Revise the current scratch file in place. Stay close to the target node's concrete mathematical "
+            "setting, variables, hypotheses, and local inferential role; avoid arbitrary abstraction unless the "
+            "node itself requires it."
         ),
     ]
     parts.extend(_repair_policy_lines(repair_assessment))
-    parts.extend(_faithfulness_repair_lines(repair_assessment))
     return "\n\n".join(parts)
 
 
@@ -1495,19 +1455,14 @@ def _build_aristotle_faithfulness_feedback(
     verified_child_theorem_names: list[str] | None = None,
 ) -> str:
     parts = [
-        "Faithfulness feedback from the previous Aristotle attempt:",
         previous_result.stderr or "(no faithfulness message)",
         (
-            "Revise the current scratch file in place. Stay closer to the target node's concrete mathematical "
-            "setting, variables, hypotheses, and local inferential role."
-        ),
-        (
-            "Do not introduce arbitrary `Type*`, arbitrary measures, arbitrary Hilbert or inner-product spaces, "
-            "or unrelated families of functions unless the node itself explicitly requires that abstraction."
+            "Revise the current scratch file in place. Stay close to the target node's concrete mathematical "
+            "setting, variables, hypotheses, and local inferential role; avoid arbitrary abstraction unless the "
+            "node itself requires it."
         ),
     ]
     parts.extend(_repair_policy_lines(repair_assessment))
-    parts.extend(_faithfulness_repair_lines(repair_assessment))
     parts.extend(
         _packaging_specific_repair_lines(
             previous_result,
@@ -2913,11 +2868,13 @@ def _formalize_candidate_nodes_aristotle_parallel(
     parent_promotion_cache: ParentPromotionCache | None,
     enable_parent_promotion: bool,
     initial_attempted_ids: set[str] | None = None,
+    direct_root_probe: DirectRootProbeConfig | None = None,
 ) -> MultiFormalizationOutcome:
     current_graph = graph
     outcomes: list[FormalizationOutcome] = []
     attempted_ids: set[str] = set(initial_attempted_ids or set())
     wave_index = 0
+    direct_root_probe_submitted = False
 
     while True:
         batch_base_graph = current_graph
@@ -2957,13 +2914,23 @@ def _formalize_candidate_nodes_aristotle_parallel(
             break
 
         wave_index += 1
+        include_direct_root_probe = (
+            direct_root_probe is not None
+            and not direct_root_probe_submitted
+            and node_ids is None
+        )
+        if include_direct_root_probe:
+            direct_root_probe_submitted = True
         _progress(
             "Aristotle dependency-aware wave "
             f"{wave_index}: submitting {len(batch_nodes)} candidate node(s): "
             + ", ".join(node.id for node in batch_nodes)
+            + (" plus direct-root probe" if include_direct_root_probe else "")
         )
         batch_outcomes: list[FormalizationOutcome] = []
-        with ThreadPoolExecutor(max_workers=len(batch_nodes)) as executor:
+        direct_root_outcome: FormalizationOutcome | None = None
+        direct_root_short_circuit = False
+        with ThreadPoolExecutor(max_workers=len(batch_nodes) + (1 if include_direct_root_probe else 0)) as executor:
             future_to_node = {
                 executor.submit(
                     formalize_candidate_node,
@@ -2980,11 +2947,55 @@ def _formalize_candidate_nodes_aristotle_parallel(
                 ): node.id
                 for node in batch_nodes
             }
+            if include_direct_root_probe and direct_root_probe is not None:
+                future_to_node[
+                    executor.submit(
+                        _run_direct_root_probe_for_graph,
+                        backend=backend,
+                        planning_backend=planning_backend,
+                        verifier=verifier,
+                        graph=batch_base_graph,
+                        config=direct_root_probe,
+                    )
+                ] = "__direct_root_probe__"
             for future in as_completed(future_to_node):
                 node_id = future_to_node[future]
+                if node_id == "__direct_root_probe__":
+                    _progress("Aristotle batch: waiting for direct-root probe future to finish")
+                    direct_root_outcome = future.result()
+                    _progress("Aristotle batch: direct-root probe future finished")
+                    if (
+                        direct_root_outcome is not None
+                        and not direct_root_probe.run_graph_if_direct_root_verifies
+                    ):
+                        for pending in future_to_node:
+                            if pending is not future:
+                                pending.cancel()
+                        _progress(
+                            "direct-root probe accepted as full root; no further graph waves will be scheduled"
+                        )
+                        direct_root_short_circuit = True
+                        break
+                    continue
                 _progress(f"Aristotle batch: waiting for node {node_id} future to finish")
                 batch_outcomes.append(future.result())
                 _progress(f"Aristotle batch: node {node_id} future finished")
+
+        if (
+            direct_root_outcome is not None
+            and direct_root_probe is not None
+            and not direct_root_probe.run_graph_if_direct_root_verifies
+            and direct_root_short_circuit
+        ):
+            current_graph = direct_root_outcome.graph
+            outcomes.append(direct_root_outcome)
+            _emit_update(
+                current_graph,
+                direct_root_outcome.node_id,
+                direct_root_outcome.artifact,
+                on_update,
+            )
+            return MultiFormalizationOutcome(graph=current_graph, outcomes=outcomes)
 
         batch_order = {node.id: index for index, node in enumerate(batch_nodes)}
         for outcome in sorted(batch_outcomes, key=lambda item: batch_order.get(item.node_id, 999)):
@@ -3011,10 +3022,183 @@ def _formalize_candidate_nodes_aristotle_parallel(
                 f"{outcome.artifact.verification.status} as {outcome.artifact.faithfulness_classification}"
             )
 
+        if direct_root_outcome is not None:
+            current_graph = _merge_formalization_outcome(
+                current_graph=current_graph,
+                batch_base_graph=batch_base_graph,
+                updated_graph=direct_root_outcome.graph,
+            )
+            outcomes.append(direct_root_outcome)
+            _emit_update(
+                current_graph,
+                direct_root_outcome.node_id,
+                direct_root_outcome.artifact,
+                on_update,
+            )
+
         if node_ids is not None:
             break
 
     return MultiFormalizationOutcome(graph=current_graph, outcomes=outcomes)
+
+
+def _run_direct_root_probe_for_graph(
+    *,
+    backend: AristotleBackend,
+    planning_backend: StructuredBackend | None,
+    verifier: LeanVerifier,
+    graph: ProofGraph,
+    config: DirectRootProbeConfig,
+) -> FormalizationOutcome | None:
+    """Run the standalone direct-root diagnostic and accept it only after semantic audit."""
+
+    from formal_islands.direct_root import (
+        direct_root_diagnostic_to_artifact,
+        run_direct_root_aristotle_diagnostic,
+        write_direct_root_diagnostic_summary,
+    )
+
+    probe_dir = config.output_dir / "_direct_root_probe"
+    _progress("direct-root probe: starting standalone Aristotle root attempt")
+    diagnostic = run_direct_root_aristotle_diagnostic(
+        backend=backend,
+        verifier=verifier,
+        input_payload=config.input_payload,
+        output_dir=probe_dir,
+        max_attempts=config.max_attempts,
+        fixed_root_lean_spec=config.fixed_root_lean_spec,
+    )
+    write_direct_root_diagnostic_summary(diagnostic, probe_dir / "direct_root_summary.json")
+
+    if not diagnostic.verified_root:
+        _progress("direct-root probe: local verification did not produce an acceptable root theorem")
+        return None
+
+    artifact = direct_root_diagnostic_to_artifact(diagnostic)
+    if artifact is None:
+        _progress("direct-root probe: verified file did not yield a recoverable theorem artifact")
+        return None
+
+    semantic_graph = _graph_with_ambient_root_target(
+        graph=graph,
+        input_payload=config.input_payload,
+    )
+    if planning_backend is not None:
+        try:
+            assessment = request_combined_verification_assessment(
+                backend=planning_backend,
+                graph=semantic_graph,
+                node_id=semantic_graph.root_node_id,
+                artifact=artifact,
+            )
+            append_formalization_assessment_to_progress_log(
+                node_id=graph.root_node_id,
+                result_kind=assessment.result_kind,
+                reason=assessment.reason,
+                coverage_score=assessment.coverage_score,
+                certifies_main_burden=assessment.certifies_main_burden,
+                expansion_warranted=assessment.expansion_warranted,
+                worth_retrying_later=assessment.worth_retrying_later,
+            )
+        except BackendError:
+            _progress("direct-root probe: semantic audit failed; keeping graph pipeline result")
+            return None
+
+        _progress(
+            "direct-root probe: semantic audit -> "
+            f"{assessment.result_kind} (coverage={assessment.coverage_score})"
+        )
+        if assessment.result_kind != "full_match":
+            _progress(
+                "direct-root probe: verified theorem was not accepted as a full root match; "
+                "keeping graph pipeline result"
+            )
+            return None
+        artifact = artifact.model_copy(
+            update={
+                "faithfulness_classification": FaithfulnessClassification.FULL_NODE,
+                "faithfulness_notes": format_faithfulness_notes(
+                    assessment.result_kind,
+                    "Accepted by direct-root probe against the ambient theorem statement. "
+                    + assessment.reason,
+                ),
+            }
+        )
+    elif config.fixed_root_lean_spec is None:
+        _progress(
+            "direct-root probe: no planning backend is available for semantic audit; "
+            "not short-circuiting without a fixed Lean root specification"
+        )
+        return None
+
+    updated = _update_node(graph, graph.root_node_id, "formal_verified", artifact)
+    updated = _record_node_formalization_episode(
+        graph=updated,
+        node_id=graph.root_node_id,
+        attempt_count=artifact.verification.attempt_count,
+        outcome=NodeFormalizationOutcome.VERIFIED_FULL_NODE,
+        failure_kind=None,
+        note=(
+            "Direct-root probe verified the ambient theorem and passed semantic audit; "
+            "the graph formalization pass was short-circuited."
+        ),
+    )
+    updated = _clear_unattempted_candidates_after_direct_root_probe(updated)
+    return FormalizationOutcome(
+        graph=updated,
+        node_id=graph.root_node_id,
+        artifact=artifact,
+    )
+
+
+def _graph_with_ambient_root_target(
+    *,
+    graph: ProofGraph,
+    input_payload: dict[str, Any],
+) -> ProofGraph:
+    """Use the original theorem/proof text as the semantic target for direct-root audit."""
+
+    root_node_id = graph.root_node_id
+    root_title = str(input_payload.get("theorem_title") or graph.theorem_title)
+    root_statement = str(input_payload.get("theorem_statement") or graph.theorem_statement)
+    root_proof = str(input_payload.get("raw_proof_text") or root_statement)
+    updated_nodes = [
+        node.model_copy(
+            update={
+                "title": root_title,
+                "informal_statement": root_statement,
+                "informal_proof_text": root_proof,
+            }
+        )
+        if node.id == root_node_id
+        else node
+        for node in graph.nodes
+    ]
+    return graph.model_copy(update={"nodes": updated_nodes})
+
+
+def _clear_unattempted_candidates_after_direct_root_probe(graph: ProofGraph) -> ProofGraph:
+    """Avoid leaving unattempted candidate markers in a direct-root-closed report."""
+
+    changed = False
+    updated_nodes = []
+    for node in graph.nodes:
+        if node.id != graph.root_node_id and node.status == "candidate_formal":
+            changed = True
+            updated_nodes.append(
+                node.model_copy(
+                    update={
+                        "status": "informal",
+                        "formalization_priority": None,
+                        "formalization_rationale": None,
+                    }
+                )
+            )
+            continue
+        updated_nodes.append(node)
+    if not changed:
+        return graph
+    return graph.model_copy(update={"nodes": updated_nodes})
 
 
 def _select_dependency_aware_aristotle_wave(

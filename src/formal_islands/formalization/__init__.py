@@ -2,6 +2,7 @@
 
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
 from formal_islands.formalization.loop import (
+    DirectRootProbeConfig,
     FormalizationOutcome,
     MultiFormalizationOutcome,
     formalize_candidate_node,
@@ -14,6 +15,7 @@ from formal_islands.formalization.pipeline import (
 
 __all__ = [
     "FormalizationOutcome",
+    "DirectRootProbeConfig",
     "LeanVerifier",
     "LeanWorkspace",
     "MultiFormalizationOutcome",

@@ -36,6 +36,7 @@ from formal_islands.extraction import (
     select_formalization_candidates,
 )
 from formal_islands.formalization import (
+    DirectRootProbeConfig,
     LeanVerifier,
     LeanWorkspace,
     formalize_candidate_node,
@@ -426,6 +427,7 @@ def build_parser() -> argparse.ArgumentParser:
         )
         add_fixed_root_spec_args(bp)
         add_formalization_timeout_arg(bp)
+        add_direct_root_probe_args(bp)
         bp.set_defaults(func=cmd_run_benchmark)
 
     new_parser = subparsers.add_parser("new", help="Interactively enter a theorem and run the pipeline.")
@@ -556,6 +558,53 @@ def add_formalization_timeout_arg(parser: argparse.ArgumentParser) -> None:
         help=(
             "Optional timeout override for the formalization backend worker in seconds. "
             "Leave unset to use the backend default (Aristotle defaults to no timeout)."
+        ),
+    )
+
+
+def add_direct_root_probe_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--no-direct-root-probe",
+        action="store_true",
+        help=(
+            "Disable the default first-wave direct-root Aristotle probe. By default, "
+            "full run/run-benchmark Aristotle runs submit a compact direct-root attempt "
+            "in parallel with the first graph formalization wave and short-circuit if it "
+            "verifies and passes semantic audit."
+        ),
+    )
+    parser.add_argument(
+        "--run-graph-if-direct-root-verifies",
+        action="store_true",
+        help=(
+            "Continue the graph pipeline even if the first-wave direct-root probe verifies "
+            "the root and passes semantic audit. Useful when you still want a mixed-islands "
+            "artifact for analysis."
+        ),
+    )
+
+
+def _build_direct_root_probe_config(
+    *,
+    args: argparse.Namespace,
+    formalization_backend_name: str,
+    output_dir: Path,
+    fixed_root_lean_spec: FixedRootLeanSpec | None,
+) -> DirectRootProbeConfig | None:
+    if getattr(args, "no_direct_root_probe", False):
+        return None
+    if formalization_backend_name != "aristotle":
+        return None
+    input_payload = getattr(args, "direct_root_probe_input_payload", None)
+    if input_payload is None:
+        return None
+    return DirectRootProbeConfig(
+        input_payload=input_payload,
+        output_dir=output_dir,
+        fixed_root_lean_spec=fixed_root_lean_spec,
+        max_attempts=int(getattr(args, "max_attempts", DEFAULT_FORMALIZATION_ATTEMPTS)),
+        run_graph_if_direct_root_verifies=bool(
+            getattr(args, "run_graph_if_direct_root_verifies", False)
         ),
     )
 
@@ -919,6 +968,12 @@ def cmd_formalize_all_candidates(args: argparse.Namespace) -> int:
             graph = load_graph(Path(args.graph))
             _log_dependency_direction_warnings(graph, context="formalization stage")
             verifier = LeanVerifier(workspace=LeanWorkspace(root=Path(args.workspace)))
+            direct_root_probe = _build_direct_root_probe_config(
+                args=args,
+                formalization_backend_name=formalization_backend_name,
+                output_dir=output_dir,
+                fixed_root_lean_spec=getattr(args, "fixed_root_lean_spec", None),
+            )
             graph_path = output_dir / "03_formalized_graph.json"
             summary_path = output_dir / "03_formalization_summaries.json"
             latest_graph = graph
@@ -943,6 +998,7 @@ def cmd_formalize_all_candidates(args: argparse.Namespace) -> int:
                 max_attempts=args.max_attempts,
                 on_update=write_progress,
                 mode=args.formalization_mode,
+                direct_root_probe=direct_root_probe,
             )
 
             write_graph(outcomes.graph, graph_path)
@@ -1434,6 +1490,7 @@ def cmd_run_example(args: argparse.Namespace) -> int:
 
 def cmd_run_benchmark(args: argparse.Namespace) -> int:
     input_path = Path(args.input)
+    input_payload = load_input_payload(input_path)
     output_dir = ensure_output_dir(
         Path(args.output_dir)
         if args.output_dir is not None
@@ -1445,6 +1502,14 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
         output_dir / GRAPH_HISTORY_LOG_FILENAME
     ):
         try:
+            planning_backend_name = resolve_backend_name(args, formalization=False)
+            planning_backend_model = resolve_backend_model(args, formalization=False)
+            formalization_backend_name = resolve_backend_name(args, formalization=True)
+            formalization_backend_model = resolve_backend_model(args, formalization=True)
+            formalization_timeout = resolve_formalization_timeout(
+                args,
+                formalization_backend_name,
+            )
             _log_cli_invocation(
                 command_name=str(getattr(args, "command", "run-benchmark")),
                 args=args,
@@ -1452,15 +1517,20 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
                     "input_path": str(input_path),
                     "output_dir": str(output_dir),
                     "workspace": str(workspace),
-                    "planning_backend": resolve_backend_name(args, formalization=False),
-                    "planning_model": resolve_backend_model(args, formalization=False),
-                    "formalization_backend": resolve_backend_name(args, formalization=True),
-                    "formalization_model": resolve_backend_model(args, formalization=True),
-                    "formalization_timeout_seconds": resolve_formalization_timeout(
-                        args,
-                        resolve_backend_name(args, formalization=True),
-                    ),
+                    "planning_backend": planning_backend_name,
+                    "planning_model": planning_backend_model,
+                    "formalization_backend": formalization_backend_name,
+                    "formalization_model": formalization_backend_model,
+                    "formalization_timeout_seconds": formalization_timeout,
                     "attempt_all_nodes": bool(getattr(args, "attempt_all_nodes", False)),
+                    "direct_root_probe_enabled": (
+                        formalization_backend_name == "aristotle"
+                        and getattr(args, "node_id", "auto") == "auto"
+                        and not bool(getattr(args, "no_direct_root_probe", False))
+                    ),
+                    "run_graph_if_direct_root_verifies": bool(
+                        getattr(args, "run_graph_if_direct_root_verifies", False)
+                    ),
                     "has_fixed_root_lean_spec": fixed_root_lean_spec is not None,
                     "fixed_root_lean_spec_hash": (
                         fixed_root_lean_spec.statement_hash if fixed_root_lean_spec else None
@@ -1520,8 +1590,6 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
                     "benchmark candidate stage: --attempt-all-nodes marked every informal "
                     "node as candidate_formal"
                 )
-            formalization_backend_name = resolve_backend_name(args, formalization=True)
-            formalization_timeout = resolve_formalization_timeout(args, formalization_backend_name)
             common = argparse.Namespace(
                 backends=getattr(args, "backends", None),
                 backend=getattr(args, "backend", None),
@@ -1537,6 +1605,12 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
                 formalization_mode=args.formalization_mode,
                 formalization_timeout_seconds=formalization_timeout,
                 cleanup_archives=False,
+                direct_root_probe_input_payload=input_payload,
+                fixed_root_lean_spec=fixed_root_lean_spec,
+                no_direct_root_probe=getattr(args, "no_direct_root_probe", False),
+                run_graph_if_direct_root_verifies=getattr(
+                    args, "run_graph_if_direct_root_verifies", False
+                ),
             )
             progress("benchmark formalization stage starting")
             if args.node_id == "auto":
@@ -1861,7 +1935,53 @@ def load_input_payload(path: Path) -> dict[str, Any]:
         raise ValueError(f"input payload is missing keys: {', '.join(missing)}")
     if "theorem_title" not in payload:
         payload["theorem_title"] = payload.get("theorem_title_hint", "Untitled theorem")
+    _append_optional_input_context(payload)
     return payload
+
+
+def _append_optional_input_context(payload: dict[str, Any]) -> None:
+    """Append optional context fields to the theorem/proof text seen by backends.
+
+    The base input schema is intentionally tiny. For paper-level case studies,
+    though, a theorem-like unit often needs surrounding context: cited earlier
+    paper lemmas, notation, intended proof role, or suggested internal islands.
+    Extra context is appended explicitly as context, not silently converted into
+    assumptions.
+    """
+
+    sections: list[str] = []
+    for key in (
+        "additional_context",
+        "paper_context",
+        "formalization_context",
+        "surrounding_context",
+    ):
+        raw = payload.get(key)
+        if raw is None:
+            continue
+        if isinstance(raw, str):
+            text = raw.strip()
+        else:
+            text = json.dumps(raw, indent=2, ensure_ascii=False)
+        if text:
+            title = key.replace("_", " ").title()
+            sections.append(f"{title}:\n{text}")
+
+    case_study = payload.get("paper_case_study")
+    if isinstance(case_study, dict):
+        sections.append("Paper Case Study Metadata:\n" + json.dumps(case_study, indent=2, ensure_ascii=False))
+
+    if not sections:
+        return
+
+    context_block = (
+        "\n\nAdditional context for this input. This context is for notation, "
+        "surrounding paper dependencies, and proof role. It is not part of the "
+        "target theorem statement unless the target statement or proof explicitly "
+        "cites it as an assumption.\n\n"
+        + "\n\n".join(sections)
+    )
+    payload["theorem_statement"] = str(payload["theorem_statement"]).rstrip() + context_block
 
 
 def load_graph(path: Path) -> ProofGraph:

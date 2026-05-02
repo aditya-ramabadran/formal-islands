@@ -1,0 +1,28 @@
+{
+  "theorem_title": "Spectral product paper node: Weak tiling is proper under short support and overlap",
+  "theorem_statement": "Let E subset [a,b] be measurable, b-a <= 2, and Delta(E) contain (-1,1). Then any weak tiling of E^c by E is a proper tiling.",
+  "raw_proof_text": "Let \\(\\mu\\) be a weak tiling measure for \\(E\\).\nAfter replacing \\(a,b\\) by essential infimum/supremum, the support lemma gives\n\\(\\operatorname{supp}\\mu\\cap(-1,1)=\\varnothing\\). One proves first that\n\\(b-a\\geq 1\\), and that \\(E\\) contains almost all points of\n\\((b-1,a+1)\\) when that interval is nonempty. Define\n\\[\na+s=\\operatorname{essinf}(E^c\\cap[a+1,\\infty)).\n\\]\nThen \\(1\\leq s\\leq b-a\\leq 2\\), and \\(E\\) contains almost all points of\n\\((a+1,a+s)\\). The support has no mass in \\([1,s)\\). A local-finiteness\nargument shows that \\(\\mu\\{s\\}=1\\): if the mass near \\(s\\) were below \\(1\\),\nthen the weak tiling identity would fail just to the right of \\(a+s\\), while\non \\(E+s\\) the atom at \\(s\\) cannot contribute more than total mass \\(1\\).\n\nDefine \\(\\mu_1=(\\mu+\\delta_0-\\delta_s)*\\delta_{-s}\\). It is again a weak\ntiling measure. Repeating the argument shows unit atoms at \\(s,2s,3s,\\ldots\\)\nwith no mass between them. Reflecting \\(E\\) and \\(\\mu\\) gives the same\nconclusion on the negative side. Thus the weak tiling is proper.",
+  "additional_context": {
+    "paper_context": "This run targets the paper's longest new measure-theoretic lemma. It depends on the support lemma and has several local subclaims about support gaps, unit atoms, translated measures, and iteration. It is likely hard; use it as a stress test after simpler paper nodes.",
+    "suggested_internal_islands": [
+      {
+        "id": "support_gap",
+        "claim": "supp(mu) avoids (-1,1) from Delta(E) superset (-1,1).",
+        "role": "early support exclusion"
+      },
+      {
+        "id": "translated_measure",
+        "claim": "mu_1=(mu+delta_0-delta_s)*delta_{-s} is positive locally finite if mu{s}=1.",
+        "role": "iteration step"
+      }
+    ],
+    "important_instruction": "The target is this paper-level lemma/corollary. The planning backend should decompose it into smaller Formal Islands nodes. Suggested internal islands are hints, not the paper-level target."
+  },
+  "paper_case_study": {
+    "paper_title": "Spectrality of Product Sets with a Perturbed Interval Factor",
+    "source_tex": "/Users/adihaya/GitHub/math/summer-2024/studia_mathematica_paper/paper.tex",
+    "paper_node_id": "proper_tiling_lemma",
+    "target_id": "proper_tiling_lemma",
+    "expected_outcome": "Hard later target; a useful result may be a small faithful core."
+  }
+}

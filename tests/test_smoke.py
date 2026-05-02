@@ -103,6 +103,31 @@ def test_load_input_payload_backfills_theorem_title_from_legacy_hint(tmp_path: P
     assert payload["theorem_title"] == "Legacy title"
 
 
+def test_load_input_payload_appends_optional_context_as_context_only(tmp_path: Path) -> None:
+    input_path = tmp_path / "input.json"
+    input_path.write_text(
+        json.dumps(
+            {
+                "theorem_title": "Paper unit",
+                "theorem_statement": "Target theorem.",
+                "raw_proof_text": "Proof.",
+                "additional_context": "Earlier lemma A is available as context.",
+                "paper_case_study": {"paper_node_id": "lemma_1"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    payload = load_input_payload(input_path)
+
+    assert payload["theorem_statement"].startswith("Target theorem.")
+    assert "Additional context for this input" in payload["theorem_statement"]
+    assert "not part of the target theorem statement" in payload["theorem_statement"]
+    assert "Earlier lemma A is available as context." in payload["theorem_statement"]
+    assert '"paper_node_id": "lemma_1"' in payload["theorem_statement"]
+    assert payload["raw_proof_text"] == "Proof."
+
+
 def test_direct_root_prompt_is_compact_but_faithfulness_constrained() -> None:
     prompt = build_direct_root_aristotle_prompt(
         theorem_title="Toy theorem",
@@ -1068,6 +1093,8 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
 ) -> None:
     calls: list[tuple[str, str]] = []
     seen_timeout: list[float] = []
+    seen_direct_root_payloads: list[dict[str, object] | None] = []
+    seen_direct_root_flags: list[tuple[bool, bool]] = []
     monkeypatch.chdir(tmp_path)
     input_path = tmp_path / "run11_two_point_log_sobolev.json"
     input_path.write_text(
@@ -1116,6 +1143,13 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
     def fake_formalize(args: Namespace) -> int:
         calls.append(("formalize", args.output_dir))
         seen_timeout.append(args.formalization_timeout_seconds)
+        seen_direct_root_payloads.append(getattr(args, "direct_root_probe_input_payload", None))
+        seen_direct_root_flags.append(
+            (
+                bool(getattr(args, "no_direct_root_probe", False)),
+                bool(getattr(args, "run_graph_if_direct_root_verifies", False)),
+            )
+        )
         out = Path(args.output_dir)
         write_graph(load_graph(out / "02_candidate_graph.json"), out / "03_formalized_graph.json")
         return 0
@@ -1137,7 +1171,7 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
             model=None,
             planning_backend=None,
             planning_model=None,
-            formalization_backend=None,
+            formalization_backend="aristotle",
             formalization_model=None,
             input=str(input_path),
             output_dir=None,
@@ -1161,6 +1195,14 @@ def test_cmd_run_benchmark_orchestrates_pipeline_with_default_output_dir(
     assert calls[1][1] == output_dir_used
     assert calls[2][1] == output_dir_used
     assert seen_timeout == [900.0]
+    assert seen_direct_root_payloads == [
+        {
+            "theorem_title": "Run 11",
+            "theorem_statement": "If A then B.",
+            "raw_proof_text": "Proof.",
+        }
+    ]
+    assert seen_direct_root_flags == [(False, False)]
     progress_log = Path(output_dir_used) / "_progress.log"
     assert progress_log.exists()
     log_text = progress_log.read_text(encoding="utf-8")

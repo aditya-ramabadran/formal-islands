@@ -1,0 +1,29 @@
+{
+  "theorem_title": "Spectral product paper node: Z-tiling interval perturbation admits an orthogonal packing region",
+  "theorem_statement": "Let m(E)=1, E subset [0, 3/2-epsilon], and suppose E tiles R with respect to Z. Then E admits an orthogonal packing region D subset R with m(D)=1.",
+  "raw_proof_text": "For each \\(n=1,2,3,\\ldots\\), let\n\\[\nD_n:=\\left(0,\\frac12\\right)\\cup\\left(n-\\frac12,n\\right).\n\\]\nThen \\(D_n\\) is open and \\(m(D_n)=1\\).\n\nSuppose for contradiction that \\(E\\) admits no orthogonal packing region\n\\(D\\subset\\mathbb R\\) with \\(m(D)=1\\). In particular, no set \\(D_n\\) is an\northogonal packing region for \\(E\\). Since \\(D_n\\) is open, we have\n\\(\\Delta(D_n)=D_n-D_n\\), and\n\\[\n\\Delta(D_n)=(-n,-n+1)\\cup(-1/2,1/2)\\cup(n-1,n).\n\\]\nBecause \\(D_n\\) is not an orthogonal packing region for \\(E\\),\n\\(\\hat{\\chi_E}\\) has a zero in \\(\\Delta(D_n)\\). By the no-small-zeros lemma,\n\\(\\hat{\\chi_E}\\) does not vanish on \\((-1/2,1/2)\\), so it has a zero either\nin \\((-n,-n+1)\\) or in \\((n-1,n)\\). Since \\(\\chi_E\\) is real-valued, the zero\nset of \\(\\hat{\\chi_E}\\) is symmetric about the origin. Therefore for each\n\\(n\\) there is a zero \\(b_n\\in(n-1,n)\\) of \\(\\hat{\\chi_E}\\).\n\nSince \\(E\\) tiles \\(\\mathbb R\\) with respect to \\(\\mathbb Z\\), taking Fourier\ncoefficients on \\(\\mathbb R/\\mathbb Z\\) gives\n\\(\\hat{\\chi_E}(k)=0\\) for every nonzero integer \\(k\\).\n\nLet \\(\\Lambda_+=\\{\\xi>0:\\hat{\\chi_E}(\\xi)=0\\}\\). The zeros \\(b_n\\) lie in\ndisjoint intervals \\((n-1,n)\\), and none of them is an integer. If\n\\(r\\in[N,N+1)\\), then \\(\\Lambda_+\\cap[0,r]\\) contains \\(1,\\ldots,N\\) and\n\\(b_1,\\ldots,b_N\\), so \\(\\#(\\Lambda_+\\cap[0,r])\\geq 2N\\). Hence the lower\ndensity of \\(\\Lambda_+\\) is at least \\(2\\). Since \\(\\chi_E\\) is supported in\nan interval of length \\(3/2-\\epsilon<2\\), the zero-density lemma implies\n\\(\\chi_E=0\\) almost everywhere, contradicting \\(m(E)=1\\).",
+  "additional_context": {
+    "paper_context": "This run targets the full paper-level node `lem:packing-region`. It may assume, as surrounding paper context, that `lem:no-small-zeros` and `lem:zero-density` are available as mathematical facts. The aim is not to rebuild Fourier analysis from scratch, but to see whether Formal Islands can certify internal local obligations such as the D_n-D_n computation or the finite zero-counting spine.",
+    "suggested_internal_islands": [
+      {
+        "id": "Dn_difference",
+        "claim": "D_n-D_n = (-n,-n+1) union (-1/2,1/2) union (n-1,n).",
+        "role": "localizes possible Fourier zeros"
+      },
+      {
+        "id": "zero_count_density",
+        "claim": "one noninteger zero in each (n-1,n) plus integer zeros gives lower density at least 2",
+        "role": "discrete counting spine before applying zero-density"
+      }
+    ],
+    "important_instruction": "The target is this paper-level lemma/corollary. The planning backend should decompose it into smaller Formal Islands nodes. Suggested internal islands are hints, not the paper-level target.",
+    "previous_paper_node_run_context": "These are previous Formal Islands runs for paper nodes that the current paper node depends on. Treat them as navigation and proof-role context. Only use a previous Lean theorem as a proved dependency if it is actually imported as a verified support module by the ordinary Formal Islands workflow.\n- dependency paper node `no_small_zeros_lemma` has prior target `no_small_zeros_lemma`\n  run_dir: artifacts/paper-case-study/spectral_product/no_small_zeros_lemma-codex-aristotle-20260501-211122\n  outcome: running"
+  },
+  "paper_case_study": {
+    "paper_title": "Spectrality of Product Sets with a Perturbed Interval Factor",
+    "source_tex": "/Users/adihaya/GitHub/math/summer-2024/studia_mathematica_paper/paper.tex",
+    "paper_node_id": "packing_region_lemma",
+    "target_id": "packing_region_lemma",
+    "expected_outcome": "Second target after no_small_zeros_lemma. A good result is a verified D_n difference-set island or a faithful core around the discrete zero-count argument."
+  }
+}

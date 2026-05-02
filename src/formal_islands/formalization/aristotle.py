@@ -18,7 +18,6 @@ from formal_islands.fixed_spec import fixed_root_spec_prompt_block
 from formal_islands.formalization.agentic import recover_agentic_artifact_from_scratch_file
 from formal_islands.formalization.pipeline import (
     build_local_proof_context,
-    build_node_coverage_sketch,
     build_verified_direct_child_context,
     format_local_proof_context,
     format_verified_direct_child_context,
@@ -223,36 +222,10 @@ def build_aristotle_formalization_prompt(
     previous_lean_code: str | None = None,
     compiler_feedback: str | None = None,
 ) -> str:
-    sketch = build_node_coverage_sketch(node)
     local_context = build_local_proof_context(graph, node.id)
     direct_child_context = build_verified_direct_child_context(graph, node.id)
     continuation_instructions = extract_continuation_instructions(node.formalization_rationale)
     fixed_spec_block = fixed_root_spec_prompt_block(graph, node.id)
-    children = {edge.target_id for edge in graph.edges if edge.source_id == node.id}
-    support_by_child_id = {
-        support.child_id: support for support in (verified_child_support_files or [])
-    }
-    child_summaries = [
-        {
-            "id": child.id,
-            "title": child.title,
-            "informal_statement": child.informal_statement,
-            "lean_theorem_name": child.formal_artifact.lean_theorem_name,
-            "lean_statement": child.formal_artifact.lean_statement,
-            "verification_status": child.formal_artifact.verification.status,
-            "usage_mode": support_by_child_id.get(child.id).usage_mode
-            if support_by_child_id.get(child.id)
-            else "reference",
-            "import_module": support_by_child_id.get(child.id).import_module
-            if support_by_child_id.get(child.id)
-            else None,
-            "snapshot_file": str(support_by_child_id.get(child.id).relative_path)
-            if support_by_child_id.get(child.id)
-            else None,
-        }
-        for child in graph.nodes
-        if child.id in children and child.formal_artifact is not None
-    ]
     importable_support_files = [
         support for support in (verified_child_support_files or []) if support.usage_mode == "importable"
     ]
@@ -270,7 +243,7 @@ def build_aristotle_formalization_prompt(
             "Primary formalization target: the target node's informal statement and informal proof text below. "
             "Do not try to prove the ambient theorem statement itself unless it is identical to the target node."
         ),
-        fixed_root_spec_prompt_block(graph, node.id) or "",
+        fixed_spec_block or "",
         f"Target theorem name: {desired_theorem_name}",
         f"Scratch file to rewrite: {relative_scratch_path}",
         "Target node:",
@@ -293,12 +266,9 @@ def build_aristotle_formalization_prompt(
         )
         if continuation_instructions
         else "",
-        "Coverage sketch:",
-        _format_coverage_sketch(sketch),
         "Local proof neighborhood:",
         format_local_proof_context(local_context),
         "Verified direct child lemmas:",
-        json.dumps(child_summaries, indent=2) if child_summaries else "[]",
         format_verified_direct_child_context(direct_child_context),
         (
             "Proof-goal instruction: the verified direct children already cover part of this node's burden. "
@@ -326,44 +296,22 @@ def build_aristotle_formalization_prompt(
             "Treat them as already established support, not as parents or as claims that depend on the target."
         ),
         (
-            "Rewrite the designated scratch file into a Lean 4 theorem and proof that formalize the node. "
-            "Use the same concrete setting as the node whenever possible, and keep the theorem faithful to the "
-            "local inferential role described above."
+            "Core constraints: rewrite only the designated scratch file into a Lean 4 theorem named "
+            f"`{desired_theorem_name}`; keep the same concrete mathematical setting and local proof role; "
+            "do not convert a difficult intermediate identity, estimate, or proof step from the informal proof "
+            "into a new hypothesis unless it is already stated in the target node; do not make a major shrink "
+            "to a proxy theorem, lower-dimensional analogue, or weak side "
+            "fact; avoid sorrys, axioms, and arbitrary abstraction."
         ),
         (
-            "Do not convert a difficult intermediate identity, estimate, or proof step from the informal proof "
-            "into a new hypothesis unless that step is already stated in the node itself. If the informal proof "
-            "derives a fact, treat it as something to prove, not something to assume."
+            "Lean hygiene: `λ` is a reserved keyword in declaration headers, so keep theorem headers and binders "
+            "ASCII-safe (`lambda1` rather than Unicode binder names "
+            "such as `λ₁`), modify no unrelated files, and prefer specific imports when practical."
         ),
         (
-            "Do not modify unrelated files. Keep the file self-contained and include necessary imports, but prefer specific imports to broad ones like `import Mathlib`."
-            "Do not make a major shrink in the mathematical setting, dimension, ambient structure, or variable "
-            "scope just to make the theorem easier."
-        ),
-        (
-            "Keep theorem headers and binders ASCII-safe. Lean treats `λ` as a reserved keyword in declarations, "
-            "so do not use Unicode binder names like `λ₁`; use plain names such as `lambda1` or `lambda_1` "
-            "instead. Preserve the mathematical notation in comments and statements, but keep Lean identifiers "
-            "plain when possible."
-        ),
-        (
-            "If the full node is too hard, prefer a smaller but still genuinely nontrivial concrete theorem in the "
-            "same setting. The fallback must still carry meaningful inferential load from the parent proof, and it "
-            "must not switch theorem family to a simpler proxy or lower-dimensional analogue."
-        ),
-        (
-            "If the local proof neighborhood lists verified supporting lemmas, you may rely on their statements "
-            "as established facts for this job. Context-only sibling ingredients are only orientation, not "
-            "assumptions."
-        ),
-        (
-            "Avoid sorrys, avoid arbitrary abstraction, and avoid replacing the node with a weak side fact that carries "
-            "little inferential load."
-        ),
-        (
-            "If you need a fallback, make it explicit in the Lean file and keep it as close as possible to the original "
-            "node. If you cannot keep the fallback meaningfully nontrivial, fail rather than returning a trivial or "
-            "over-shrunk theorem."
+            "Fallback rule: if the full node is too hard, the designated theorem may be a smaller concrete core only "
+            "when it is explicit in the Lean file, stays in the same theorem family, is genuinely nontrivial, and carries meaningful inferential "
+            "load from this parent proof. If no such core is possible, fail rather than returning a trivial or over-shrunk theorem."
         ),
     ]
     if verified_child_support_files:
@@ -469,17 +417,17 @@ def build_aristotle_formalization_prompt(
         prompt_parts.extend(
             [
                 (
-                    "Before revising the current scratch file: if it contains any local declarations whose theorem "
-                    "names match verified direct-child theorems above, or local stand-ins such as `_local`/primed "
-                    "variants of those child lemmas, delete those declarations and replace them with the exact imports "
-                    "listed above."
+                    "Revise the current scratch file already present in the submitted project snapshot. "
+                    "Do not ask for the file contents; inspect and edit the snapshot file in place."
                 )
-                if importable_support_files
-                else "",
-                "Current scratch file to revise:",
-                f"```lean\n{previous_lean_code}\n```",
             ]
         )
+        if importable_support_files:
+            prompt_parts.append(
+                "If the scratch file contains local declarations whose theorem names match verified direct-child "
+                "theorems above, or local stand-ins such as `_local`/primed variants of those child lemmas, delete "
+                "those declarations and replace them with the exact imports listed above."
+            )
 
     prompt_parts = [part for part in prompt_parts if part]
 
@@ -500,10 +448,10 @@ def _render_aristotle_scratch_header(
     relative_scratch_path: Path,
     verified_child_support_files: list[VerifiedChildSupportFile] | None = None,
 ) -> str:
-    sketch = build_node_coverage_sketch(node)
     local_context = build_local_proof_context(graph, node.id)
     direct_child_context = build_verified_direct_child_context(graph, node.id)
     continuation_instructions = extract_continuation_instructions(node.formalization_rationale)
+    fixed_spec_block = fixed_root_spec_prompt_block(graph, node.id)
     importable_support_files = [
         support for support in (verified_child_support_files or []) if support.usage_mode == "importable"
     ]
@@ -563,9 +511,6 @@ def _render_aristotle_scratch_header(
                 if continuation_instructions
                 else []
             ),
-            "Coverage sketch:",
-            _format_coverage_sketch(sketch),
-            "",
             "Local proof neighborhood:",
             format_local_proof_context(local_context),
             "",
@@ -834,13 +779,6 @@ def _format_node_context(
             rationale_text,
         ]
     )
-
-
-def _format_coverage_sketch(sketch) -> str:
-    lines = [f"- summary: {sketch.summary}", "- components:"]
-    for component in sketch.components:
-        lines.append(f"  - [{component.kind}] {component.text}")
-    return "\n".join(lines)
 
 
 def _aristotle_snapshot_ignore(directory: str, names: list[str]) -> set[str]:

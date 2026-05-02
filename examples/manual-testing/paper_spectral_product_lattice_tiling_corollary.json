@@ -1,0 +1,17 @@
+{
+  "theorem_title": "Spectral product paper node: Weak tiling implies Z tiling",
+  "theorem_statement": "If m(E)=1, E subset [0, 3/2-epsilon], and E weakly tiles its complement, then E+Z tiles R.",
+  "raw_proof_text": "By the overlap lemma, \\(\\Delta(E)\\) contains\n\\((-1,1)\\). Since the support interval has length \\(3/2-\\epsilon<2\\), the\nproper-tiling lemma implies that any weak tiling of \\(E^c\\) by \\(E\\) is\nproper. If \\(\\mu=\\sum_{\\lambda\\in\\Lambda'}\\delta_\\lambda\\) is the weak tiling\nmeasure, then \\(0\\notin\\Lambda'\\) by the support lemma, and\n\\[\n\\chi_E*(\\delta_0+\\mu)=\\chi_E+\\chi_{E^c}=1\n\\]\nalmost everywhere. Hence \\(E+\\Lambda\\) tiles \\(\\mathbb R\\), where\n\\(\\Lambda=\\Lambda'\\cup\\{0\\}\\). Since \\(\\mu\\) is locally finite,\n\\(\\Lambda\\) is discrete, and the Kolountzakis-Lagarias interval theorem gives\n\\(\\Lambda=\\mathbb Z\\).",
+  "additional_context": {
+    "paper_context": "This is a dependency-assembly paper node. It may cite the overlap lemma, support lemma, proper-tiling lemma, and Kolountzakis-Lagarias interval theorem as external/paper facts. This run is only useful if the report clearly labels those facts as assumptions or remaining burden; a pure predicate skeleton should not be counted as a strong certificate.",
+    "suggested_internal_islands": [],
+    "important_instruction": "The target is this paper-level lemma/corollary. The planning backend should decompose it into smaller Formal Islands nodes. Suggested internal islands are hints, not the paper-level target."
+  },
+  "paper_case_study": {
+    "paper_title": "Spectrality of Product Sets with a Perturbed Interval Factor",
+    "source_tex": "/Users/adihaya/GitHub/math/summer-2024/studia_mathematica_paper/paper.tex",
+    "paper_node_id": "lattice_tiling_corollary",
+    "target_id": "lattice_tiling_corollary",
+    "expected_outcome": "Later target; useful mostly for dependency assembly."
+  }
+}

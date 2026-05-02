@@ -21,6 +21,7 @@ from formal_islands.formalization.aristotle import (
     _build_verified_child_support_files,
     _materialize_workspace_verified_child_support_files,
     _materialize_verified_child_support_files,
+    _render_aristotle_scratch_header,
     build_aristotle_formalization_prompt,
 )
 from formal_islands.formalization.aristotle import _append_aristotle_summary_files
@@ -353,6 +354,37 @@ def test_build_aristotle_formalization_prompt_marks_ambient_theorem_as_context_o
     assert "reserved keyword" in prompt.lower()
     assert "lambda1" in prompt.lower()
     assert "user continuation instructions (must follow)" not in prompt.lower()
+    assert "coverage sketch" not in prompt.lower()
+
+    revise_prompt = build_aristotle_formalization_prompt(
+        graph=graph,
+        node=node,
+        desired_theorem_name="n2_aristotle",
+        relative_scratch_path=scratch_path.relative_to(workspace.root),
+        previous_lean_code="theorem stale_attempt : True := by trivial",
+    )
+    assert "current scratch file to revise" not in revise_prompt.lower()
+    assert "theorem stale_attempt" not in revise_prompt
+    assert "already present in the submitted project snapshot" in revise_prompt
+
+
+def test_render_aristotle_scratch_header_without_fixed_spec(tmp_path: Path) -> None:
+    workspace = create_workspace(tmp_path)
+    scratch_path = workspace.prepare_worker_file("n2")
+    graph = build_graph()
+    node = next(node for node in graph.nodes if node.id == "n2")
+
+    header = _render_aristotle_scratch_header(
+        graph=graph,
+        node=node,
+        desired_theorem_name="n2_aristotle",
+        relative_scratch_path=scratch_path.relative_to(workspace.root),
+    )
+
+    assert "Aristotle formalization target." in header
+    assert "Target theorem name: n2_aristotle" in header
+    assert "Primary formalization target:" in header
+    assert "Fixed root Lean specification" not in header
 
 
 def test_build_aristotle_formalization_prompt_promotes_continuation_instructions(
