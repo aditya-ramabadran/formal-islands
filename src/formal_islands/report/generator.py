@@ -211,6 +211,15 @@ def render_html_report(
         hidden_informal_nodes=hidden_nodes,
         hidden_support_nodes=hidden_support_nodes,
     )
+    fixed_root_spec_html = ""
+    if graph.fixed_root_lean_spec is not None:
+        fixed_root_spec_html = f"""
+      <div class="note-card">
+        <p><strong>Fixed root Lean specification:</strong> this run is anchored to an exact root theorem header.</p>
+        <p class="meta">Source: {escape(graph.fixed_root_lean_spec.source or 'manual')} &bull; SHA256: <code>{escape(graph.fixed_root_lean_spec.statement_hash)}</code></p>
+        <pre class="lean-code"><code>{escape(graph.fixed_root_lean_spec.lean_statement)}</code></pre>
+      </div>
+        """
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -342,6 +351,13 @@ def render_html_report(
     }}
     .meta {{
       color: var(--muted);
+    }}
+    .note-card {{
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--target-panel);
+      padding: 0.8rem 0.9rem;
+      margin-top: 0.9rem;
     }}
     .math-text {{
       white-space: pre-wrap;
@@ -733,6 +749,7 @@ def render_html_report(
       <h1>{escape(graph.theorem_title)}</h1>
       {render_math_text(graph.theorem_statement)}
       <p class="meta">Root node: {escape(graph.root_node_id)}</p>
+      {fixed_root_spec_html}
     </section>
     <section>
       <h2>Graph Summary</h2>

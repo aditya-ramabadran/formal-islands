@@ -14,6 +14,7 @@ from pathlib import Path
 from formal_islands.backends.aristotle import AristotleBackend
 from formal_islands.backends.base import BackendOutputError
 from formal_islands.continuation import extract_continuation_instructions
+from formal_islands.fixed_spec import fixed_root_spec_prompt_block
 from formal_islands.formalization.agentic import recover_agentic_artifact_from_scratch_file
 from formal_islands.formalization.pipeline import (
     build_local_proof_context,
@@ -66,6 +67,12 @@ def request_aristotle_formalization(
         raise ValueError("scratch_file_path must live inside the Lean workspace root")
 
     desired_theorem_name = _desired_aristotle_theorem_name(node_id)
+    if (
+        graph.fixed_root_lean_spec is not None
+        and node_id == graph.root_node_id
+        and graph.fixed_root_lean_spec.theorem_name
+    ):
+        desired_theorem_name = graph.fixed_root_lean_spec.theorem_name
     relative_scratch_path = scratch_path.relative_to(workspace_root)
 
     modular_child_support_attempt = _should_use_importable_verified_child_support(
@@ -220,6 +227,7 @@ def build_aristotle_formalization_prompt(
     local_context = build_local_proof_context(graph, node.id)
     direct_child_context = build_verified_direct_child_context(graph, node.id)
     continuation_instructions = extract_continuation_instructions(node.formalization_rationale)
+    fixed_spec_block = fixed_root_spec_prompt_block(graph, node.id)
     children = {edge.target_id for edge in graph.edges if edge.source_id == node.id}
     support_by_child_id = {
         support.child_id: support for support in (verified_child_support_files or [])
@@ -262,6 +270,7 @@ def build_aristotle_formalization_prompt(
             "Primary formalization target: the target node's informal statement and informal proof text below. "
             "Do not try to prove the ambient theorem statement itself unless it is identical to the target node."
         ),
+        fixed_root_spec_prompt_block(graph, node.id) or "",
         f"Target theorem name: {desired_theorem_name}",
         f"Scratch file to rewrite: {relative_scratch_path}",
         "Target node:",
@@ -528,6 +537,7 @@ def _render_aristotle_scratch_header(
             "",
             "Primary formalization target:",
             "The target node's informal statement and informal proof text below.",
+            *([fixed_spec_block, ""] if fixed_spec_block else []),
             "Target node:",
             _format_node_context(
                 node_id=node.id,

@@ -89,6 +89,15 @@ class FormalArtifact(StrictModel):
     attempt_history: list[VerificationResult] = Field(default_factory=list)
 
 
+class FixedRootLeanSpec(StrictModel):
+    """Optional externally supplied Lean statement for the root theorem."""
+
+    lean_statement: str = Field(min_length=1)
+    statement_hash: str = Field(min_length=1)
+    source: str | None = None
+    theorem_name: str | None = None
+
+
 class ProofNode(StrictModel):
     """A single claim in the extracted proof graph."""
 
@@ -161,6 +170,7 @@ class ProofGraph(StrictModel):
     root_node_id: str = Field(min_length=1)
     nodes: list[ProofNode] = Field(min_length=1)
     edges: list[ProofEdge] = Field(default_factory=list)
+    fixed_root_lean_spec: FixedRootLeanSpec | None = None
 
     @model_validator(mode="after")
     def validate_graph(self) -> ProofGraph:

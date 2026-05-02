@@ -9,6 +9,12 @@ from collections import defaultdict, deque
 from dataclasses import asdict, dataclass
 
 from formal_islands.backends import StructuredBackend, StructuredBackendRequest
+from formal_islands.fixed_spec import (
+    fixed_root_spec_prompt_block,
+    fixed_spec_exact_header_matches,
+    fixed_spec_mismatch_message,
+    root_fixed_spec_applies,
+)
 from formal_islands.formalization.schemas import FormalizationResult
 from formal_islands.models import (
     FaithfulnessClassification,
@@ -526,6 +532,7 @@ def build_formalization_request(
     prompt_parts = [
             f"Theorem title: {graph.theorem_title}",
             f"Ambient theorem statement:\n{graph.theorem_statement}",
+            fixed_root_spec_prompt_block(graph, node_id) or "",
             "Target node:",
             json.dumps(
                 {
@@ -669,6 +676,7 @@ def build_combined_verification_assessment_request(
                 f"- formalization priority: {node.formalization_priority if node.formalization_priority is not None else 'unset'}\n"
                 f"- formalization rationale: {node.formalization_rationale or '(no rationale recorded)'}"
             ),
+            fixed_root_spec_prompt_block(graph, node_id) or "",
             (
                 "Verified Lean theorem to assess:\n"
                 f"- theorem name: {artifact.lean_theorem_name}\n"
@@ -809,7 +817,8 @@ def request_node_formalization(
         verification=VerificationResult(),
         attempt_history=[],
     )
-    return enforce_formalization_faithfulness(node=node, artifact=artifact)
+    artifact = enforce_formalization_faithfulness(node=node, artifact=artifact)
+    return enforce_fixed_root_spec_if_needed(graph=graph, node_id=node_id, artifact=artifact)
 
 
 def build_concrete_sublemma_summary_request(
@@ -1533,6 +1542,35 @@ def enforce_formalization_faithfulness(node, artifact: FormalArtifact) -> Formal
                 assessment.message or "",
             ]
         ).strip(),
+        artifact=updated_artifact,
+    )
+
+
+def enforce_fixed_root_spec_if_needed(
+    *,
+    graph: ProofGraph,
+    node_id: str,
+    artifact: FormalArtifact,
+) -> FormalArtifact:
+    """Reject root artifacts that do not preserve an explicit fixed Lean spec."""
+
+    if not root_fixed_spec_applies(graph, node_id):
+        return artifact
+    assert graph.fixed_root_lean_spec is not None
+    if fixed_spec_exact_header_matches(artifact, graph.fixed_root_lean_spec):
+        return artifact
+
+    updated_artifact = artifact.model_copy(
+        update={
+            "faithfulness_classification": FaithfulnessClassification.OVER_ABSTRACT,
+            "faithfulness_notes": fixed_spec_mismatch_message(
+                graph.fixed_root_lean_spec,
+                artifact,
+            ),
+        }
+    )
+    raise FormalizationFaithfulnessError(
+        fixed_spec_mismatch_message(graph.fixed_root_lean_spec, artifact),
         artifact=updated_artifact,
     )
 

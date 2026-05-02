@@ -30,6 +30,7 @@ from formal_islands.smoke import (
     _backend_failure_outcome,
     _cleanup_archive_artifacts,
     _collect_continuation_instructions,
+    _collect_fixed_root_lean_spec,
     _prepare_graph_for_continuation,
     cmd_plan,
     cmd_report,
@@ -40,6 +41,7 @@ from formal_islands.smoke import (
     ensure_output_dir,
     load_graph,
     load_input_payload,
+    mark_all_informal_nodes_candidate_formal,
     select_candidate_node_id,
     write_graph,
 )
@@ -121,6 +123,29 @@ def test_direct_root_prompt_is_compact_but_faithfulness_constrained() -> None:
     assert "Verified direct child" not in prompt
     assert "Target node" not in prompt
     assert "Coverage sketch" not in prompt
+
+
+def test_direct_root_prompt_accepts_fixed_root_spec() -> None:
+    fixed_spec = _collect_fixed_root_lean_spec(
+        Namespace(
+            fixed_root_lean_statement="theorem exact_root (n : Nat) : n = n := by",
+            fixed_root_lean_statement_file=None,
+            fixed_root_source="unit-test",
+        )
+    )
+    assert fixed_spec is not None
+    prompt = build_direct_root_aristotle_prompt(
+        theorem_title="Toy theorem",
+        theorem_statement="For every natural number n, n = n.",
+        raw_proof_text="This follows by reflexivity.",
+        desired_theorem_name="exact_root",
+        relative_scratch_path=Path("FormalIslands/Generated/direct_root_toy.lean"),
+        fixed_root_lean_spec=fixed_spec,
+    )
+
+    assert "Fixed Lean root specification" in prompt
+    assert "theorem exact_root" in prompt
+    assert "must preserve this theorem name" in prompt
 
 
 def test_direct_root_theorem_declaration_detection_ignores_comments() -> None:
@@ -264,6 +289,71 @@ def test_run_direct_root_aristotle_diagnostic_retries_until_verified(
     assert diagnostic.attempt_history[1]["verified_root"] is True
     assert (output_dir / "aristotle_result_attempt_1").is_dir()
     assert (output_dir / "aristotle_result_attempt_2").is_dir()
+
+
+def test_run_direct_root_aristotle_diagnostic_rejects_fixed_spec_mismatch(
+    tmp_path: Path,
+) -> None:
+    workspace = build_workspace(tmp_path / "lean_project")
+    output_dir = tmp_path / "out"
+    fixed_spec = _collect_fixed_root_lean_spec(
+        Namespace(
+            fixed_root_lean_statement="theorem exact_root (n : Nat) : n = n := by",
+            fixed_root_lean_statement_file=None,
+            fixed_root_source="unit-test",
+        )
+    )
+    assert fixed_spec is not None
+    tar_path = tmp_path / "result.tar.gz"
+    returned_root = tmp_path / "returned"
+    returned_file = returned_root / "FormalIslands" / "Generated" / "DirectRootResult.lean"
+    returned_file.parent.mkdir(parents=True)
+    returned_file.write_text(
+        "import Mathlib\n\n"
+        "theorem exact_root : True := by\n"
+        "  trivial\n",
+        encoding="utf-8",
+    )
+    with tarfile.open(tar_path, "w:gz") as tar:
+        tar.add(returned_root, arcname=".")
+
+    class FakeAristotleBackend:
+        log_dir = output_dir / "_backend_logs"
+
+        def submit_project(self, *, prompt: str, project_dir: Path, task_name: str):
+            assert "Fixed Lean root specification" in prompt
+            return AristotleProjectRun(
+                project_id="proj-test",
+                status="COMPLETE",
+                result_tar_path=tar_path,
+                status_history=["COMPLETE"],
+                log_path=output_dir / "_backend_logs" / "fake.json",
+                elapsed_seconds=1.0,
+                project_snapshot_dir=project_dir,
+                prompt=prompt,
+                task_name=task_name,
+            )
+
+    def fake_runner(*args, **kwargs):
+        return subprocess.CompletedProcess(args=args[0], returncode=0, stdout="", stderr="")
+
+    diagnostic = run_direct_root_aristotle_diagnostic(
+        backend=FakeAristotleBackend(),  # type: ignore[arg-type]
+        verifier=LeanVerifier(workspace=workspace, command_runner=fake_runner),
+        input_payload={
+            "theorem_title": "Toy root",
+            "theorem_statement": "True.",
+            "raw_proof_text": "Trivial.",
+        },
+        output_dir=output_dir,
+        max_attempts=1,
+        fixed_root_lean_spec=fixed_spec,
+    )
+
+    assert not diagnostic.verified_root
+    assert diagnostic.contains_desired_theorem
+    assert diagnostic.fixed_spec_exact_header_present is False
+    assert "Fixed root Lean specification mismatch" in diagnostic.verification.stderr
 
 
 def test_select_candidate_node_id_uses_lowest_priority_number_then_id() -> None:
@@ -600,6 +690,35 @@ def test_cmd_plan_writes_both_planning_artifacts(tmp_path: Path, monkeypatch: py
     assert any(node.status == "candidate_formal" for node in candidate_graph.nodes)
 
 
+def test_mark_all_informal_nodes_candidate_formal_marks_root_and_leaves() -> None:
+    graph = ProofGraph(
+        theorem_title="Toy theorem",
+        theorem_statement="A implies B.",
+        root_node_id="n0",
+        nodes=[
+            ProofNode(
+                id="n0",
+                title="Root",
+                informal_statement="B.",
+                informal_proof_text="Use n1.",
+            ),
+            ProofNode(
+                id="n1",
+                title="Leaf",
+                informal_statement="A.",
+                informal_proof_text="Given.",
+            ),
+        ],
+        edges=[ProofEdge(source_id="n0", target_id="n1")],
+    )
+
+    updated = mark_all_informal_nodes_candidate_formal(graph)
+
+    assert [node.status for node in updated.nodes] == ["candidate_formal", "candidate_formal"]
+    assert all(node.formalization_priority == 3 for node in updated.nodes)
+    assert all("--attempt-all-nodes" in (node.formalization_rationale or "") for node in updated.nodes)
+
+
 def test_cmd_report_reuses_previous_remaining_proof_burdens_without_planning_backend(
     tmp_path: Path,
 ) -> None:
@@ -817,6 +936,27 @@ def test_collect_continuation_instructions_combines_inline_file_and_lean_stateme
     assert "Use the existing finite-product lemma." in text
     assert "Preferred Lean theorem statement" in text
     assert "theorem n1_aristotle" in text
+
+
+def test_collect_fixed_root_spec_source_is_clean_provenance_label(tmp_path: Path) -> None:
+    statement_file = tmp_path / "root_statement.lean"
+    statement_file.write_text(
+        "import Mathlib\n\ntheorem exact_root (n : Nat) : n = n := by",
+        encoding="utf-8",
+    )
+
+    spec = _collect_fixed_root_lean_spec(
+        Namespace(
+            fixed_root_lean_statement=None,
+            fixed_root_lean_statement_file=str(statement_file),
+            fixed_root_source="lean-eval",
+        )
+    )
+
+    assert spec is not None
+    assert spec.source == "lean-eval"
+    assert spec.theorem_name == "exact_root"
+    assert str(statement_file) not in spec.source
 
 
 def test_build_backend_configures_backend_logs(tmp_path: Path) -> None:

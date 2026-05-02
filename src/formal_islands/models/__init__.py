@@ -2,6 +2,7 @@
 
 from formal_islands.models.proof import (
     FaithfulnessClassification,
+    FixedRootLeanSpec,
     FormalArtifact,
     NodeFailureKind,
     NodeFormalizationOutcome,
@@ -16,6 +17,7 @@ from formal_islands.models.proof import (
 
 __all__ = [
     "FormalArtifact",
+    "FixedRootLeanSpec",
     "FaithfulnessClassification",
     "NodeFailureKind",
     "NodeFormalizationOutcome",

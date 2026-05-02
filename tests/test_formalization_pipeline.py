@@ -6,6 +6,7 @@ from formal_islands.formalization.loop import (
     _integrate_successful_formalization,
     _should_attempt_refinement_after_failure,
 )
+from formal_islands.fixed_spec import build_fixed_root_lean_spec
 from formal_islands.formalization.pipeline import (
     FaithfulnessClassification,
     FormalizationFaithfulnessError,
@@ -184,6 +185,38 @@ def test_build_formalization_request_includes_all_verified_direct_children() -> 
     assert "Arithmetic lemma 1" in request.prompt
     assert "Arithmetic lemma 2" in request.prompt
     assert "remaining parent-level delta" in lowered
+
+
+def test_build_formalization_request_treats_fixed_spec_hard_only_for_root() -> None:
+    spec = build_fixed_root_lean_spec(
+        "theorem exact_root (n : Nat) : n = n := by",
+        source="unit-test",
+    )
+    root_graph = build_graph().model_copy(update={"fixed_root_lean_spec": spec})
+    root_graph = root_graph.model_copy(
+        update={
+            "nodes": [
+                node.model_copy(
+                    update={
+                        "status": "candidate_formal",
+                        "formalization_priority": 1,
+                        "formalization_rationale": "Root attempt.",
+                    }
+                )
+                if node.id == root_graph.root_node_id
+                else node
+                for node in root_graph.nodes
+            ]
+        }
+    )
+    root_request = build_formalization_request(root_graph, root_graph.root_node_id)
+    child_request = build_formalization_request(root_graph, "n2")
+
+    assert "Fixed root Lean specification (HARD ROOT TARGET)" in root_request.prompt
+    assert "must prove the exact Lean statement" in root_request.prompt
+    assert "theorem exact_root" in root_request.prompt
+    assert "Fixed root Lean specification (ROOT CONTEXT ONLY)" in child_request.prompt
+    assert "do not try to prove this statement here" in child_request.prompt
 
 
 def test_request_node_formalization_treats_measure_space_abstraction_as_borderline_core() -> None:

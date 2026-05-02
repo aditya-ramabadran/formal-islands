@@ -13,9 +13,11 @@ from formal_islands.backends import (
     StructuredBackendRequest,
 )
 from formal_islands.continuation import extract_continuation_instructions
+from formal_islands.fixed_spec import fixed_root_spec_prompt_block
 from formal_islands.formalization.pipeline import (
     FormalizationFaithfulnessError,
     enforce_formalization_faithfulness,
+    enforce_fixed_root_spec_if_needed,
     build_node_coverage_sketch,
     build_local_proof_context,
     build_verified_direct_child_context,
@@ -100,6 +102,7 @@ def build_agentic_formalization_request(
     prompt_parts = [
         f"Theorem title: {graph.theorem_title}",
         f"Ambient theorem statement:\n{graph.theorem_statement}",
+        fixed_root_spec_prompt_block(graph, node_id) or "",
         "Target node:",
         json.dumps(
             {
@@ -383,7 +386,7 @@ def request_agentic_formalization(
         node=next(candidate for candidate in graph.nodes if candidate.id == node_id),
         artifact=artifact,
     )
-    return artifact
+    return enforce_fixed_root_spec_if_needed(graph=graph, node_id=node_id, artifact=artifact)
 
 
 def recover_agentic_artifact_from_scratch_file(
@@ -415,10 +418,11 @@ def recover_agentic_artifact_from_scratch_file(
         verification=VerificationResult(),
         attempt_history=[],
     )
-    return enforce_formalization_faithfulness(
+    artifact = enforce_formalization_faithfulness(
         node=next(candidate for candidate in graph.nodes if candidate.id == node_id),
         artifact=artifact,
     )
+    return enforce_fixed_root_spec_if_needed(graph=graph, node_id=node_id, artifact=artifact)
 
 
 def _extract_primary_lean_theorem(

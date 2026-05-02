@@ -12,6 +12,12 @@ from typing import Any
 
 from formal_islands.backends import AristotleBackend
 from formal_islands.backends.base import BackendError, BackendUnavailableError
+from formal_islands.fixed_spec import (
+    extract_decl_header,
+    extract_decl_name,
+    fixed_spec_exact_header_matches,
+    fixed_spec_mismatch_message,
+)
 from formal_islands.formalization.aristotle import (
     _append_aristotle_summary_files,
     _aristotle_snapshot_ignore,
@@ -21,7 +27,7 @@ from formal_islands.formalization.aristotle import (
     _sanitize_file_stem,
 )
 from formal_islands.formalization.lean import LeanVerifier, LeanWorkspace
-from formal_islands.models import VerificationResult
+from formal_islands.models import FixedRootLeanSpec, FormalArtifact, VerificationResult
 from formal_islands.progress import progress
 
 
@@ -44,6 +50,8 @@ class DirectRootDiagnostic:
     aristotle_result_tar_path: Path | None
     verification: VerificationResult
     contains_desired_theorem: bool
+    fixed_root_lean_spec: FixedRootLeanSpec | None
+    fixed_spec_exact_header_present: bool | None
     copied_auxiliary_paths: list[Path]
     attempt_history: list[dict[str, Any]]
 
@@ -52,6 +60,7 @@ class DirectRootDiagnostic:
         return (
             self.contains_desired_theorem
             and self.verification.status == "verified"
+            and self.fixed_spec_exact_header_present is not False
         )
 
     def to_json_dict(self) -> dict[str, Any]:
@@ -60,6 +69,12 @@ class DirectRootDiagnostic:
             "desired_theorem_name": self.desired_theorem_name,
             "verified_root": self.verified_root,
             "contains_desired_theorem": self.contains_desired_theorem,
+            "fixed_root_lean_spec": (
+                self.fixed_root_lean_spec.model_dump(mode="json")
+                if self.fixed_root_lean_spec
+                else None
+            ),
+            "fixed_spec_exact_header_present": self.fixed_spec_exact_header_present,
             "prompt_path": str(self.prompt_path),
             "scratch_path": str(self.scratch_path),
             "result_lean_path": str(self.result_lean_path) if self.result_lean_path else None,
@@ -88,8 +103,23 @@ def build_direct_root_aristotle_prompt(
     raw_proof_text: str,
     desired_theorem_name: str = DIRECT_ROOT_THEOREM_NAME,
     relative_scratch_path: Path,
+    fixed_root_lean_spec: FixedRootLeanSpec | None = None,
 ) -> str:
     """Build the compact direct-root prompt used for Aristotle diagnostics."""
+
+    fixed_spec_parts: list[str] = []
+    if fixed_root_lean_spec is not None:
+        fixed_spec_parts = [
+            "Fixed Lean root specification:",
+            (
+                "The theorem below is an exact external/root target. The designated main theorem "
+                "must preserve this theorem name, binders, hypotheses, and conclusion. Helper lemmas "
+                "are welcome, but changing this theorem header does not count as a direct-root success."
+            ),
+            "```lean",
+            fixed_root_lean_spec.lean_statement,
+            "```",
+        ]
 
     return "\n\n".join(
         [
@@ -102,6 +132,7 @@ def build_direct_root_aristotle_prompt(
             ),
             "Theorem statement to formalize and prove:",
             theorem_statement.strip(),
+            *fixed_spec_parts,
             "Informal proof text:",
             raw_proof_text.strip(),
             "Lean output requirements:",
@@ -109,6 +140,13 @@ def build_direct_root_aristotle_prompt(
                 [
                     f"- Scratch file to rewrite: {relative_scratch_path.as_posix()}",
                     f"- The designated main theorem must be named `{desired_theorem_name}`.",
+                    *(
+                        [
+                            "- Because a fixed Lean root specification was supplied, the designated main theorem must preserve the exact fixed theorem header."
+                        ]
+                        if fixed_root_lean_spec is not None
+                        else []
+                    ),
                     "- The file should compile with `lake env lean` in the submitted Lean project.",
                     "- Avoid `sorry`, `admit`, axioms, or opaque placeholder lemmas.",
                     "- Helper lemmas in the same file are welcome when they make the proof clearer.",
@@ -138,6 +176,7 @@ def run_direct_root_aristotle_diagnostic(
     input_payload: dict[str, Any],
     output_dir: Path,
     max_attempts: int,
+    fixed_root_lean_spec: FixedRootLeanSpec | None = None,
 ) -> DirectRootDiagnostic:
     """Submit an input theorem/proof directly to Aristotle and verify the returned root file."""
 
@@ -147,6 +186,11 @@ def run_direct_root_aristotle_diagnostic(
     theorem_title = str(input_payload.get("theorem_title") or "Untitled theorem")
     theorem_statement = str(input_payload["theorem_statement"])
     raw_proof_text = str(input_payload["raw_proof_text"])
+    desired_theorem_name = (
+        fixed_root_lean_spec.theorem_name
+        if fixed_root_lean_spec is not None and fixed_root_lean_spec.theorem_name
+        else DIRECT_ROOT_THEOREM_NAME
+    )
     workspace_root = verifier.workspace.root.resolve()
     verifier.workspace.validate()
 
@@ -154,14 +198,16 @@ def run_direct_root_aristotle_diagnostic(
     scratch_path = _prepare_direct_root_scratch_file(
         workspace=verifier.workspace,
         theorem_title=theorem_title,
+        fixed_root_lean_spec=fixed_root_lean_spec,
     ).resolve()
     relative_scratch_path = scratch_path.relative_to(workspace_root)
     prompt = build_direct_root_aristotle_prompt(
         theorem_title=theorem_title,
         theorem_statement=theorem_statement,
         raw_proof_text=raw_proof_text,
-        desired_theorem_name=DIRECT_ROOT_THEOREM_NAME,
+        desired_theorem_name=desired_theorem_name,
         relative_scratch_path=relative_scratch_path,
+        fixed_root_lean_spec=fixed_root_lean_spec,
     )
     prompt_path = output_dir / "direct_root_prompt.txt"
     prompt_path.write_text(prompt + "\n", encoding="utf-8")
@@ -189,6 +235,8 @@ def run_direct_root_aristotle_diagnostic(
                 prompt=prompt,
                 prompt_path=prompt_path,
                 attempt_number=attempt_number,
+                desired_theorem_name=desired_theorem_name,
+                fixed_root_lean_spec=fixed_root_lean_spec,
             )
         except BackendUnavailableError:
             raise
@@ -204,7 +252,7 @@ def run_direct_root_aristotle_diagnostic(
             )
             diagnostic = DirectRootDiagnostic(
                 theorem_title=theorem_title,
-                desired_theorem_name=DIRECT_ROOT_THEOREM_NAME,
+                desired_theorem_name=desired_theorem_name,
                 prompt_path=prompt_path,
                 scratch_path=scratch_path,
                 result_lean_path=None,
@@ -215,6 +263,8 @@ def run_direct_root_aristotle_diagnostic(
                 aristotle_result_tar_path=None,
                 verification=verification,
                 contains_desired_theorem=False,
+                fixed_root_lean_spec=fixed_root_lean_spec,
+                fixed_spec_exact_header_present=None if fixed_root_lean_spec is None else False,
                 copied_auxiliary_paths=[],
                 attempt_history=[],
             )
@@ -245,6 +295,8 @@ def _run_direct_root_aristotle_attempt(
     prompt: str,
     prompt_path: Path,
     attempt_number: int,
+    desired_theorem_name: str,
+    fixed_root_lean_spec: FixedRootLeanSpec | None,
 ) -> DirectRootDiagnostic:
     workspace_root = verifier.workspace.root.resolve()
     with tempfile.TemporaryDirectory(prefix="formal-islands-direct-root-") as temp_dir_name:
@@ -258,7 +310,10 @@ def _run_direct_root_aristotle_attempt(
         snapshot_scratch_path = snapshot_root / relative_scratch_path
         snapshot_scratch_path.parent.mkdir(parents=True, exist_ok=True)
         snapshot_scratch_path.write_text(
-            _render_direct_root_scratch_header(theorem_title=theorem_title),
+            _render_direct_root_scratch_header(
+                theorem_title=theorem_title,
+                fixed_root_lean_spec=fixed_root_lean_spec,
+            ),
             encoding="utf-8",
         )
 
@@ -283,7 +338,7 @@ def _run_direct_root_aristotle_attempt(
         )
         return DirectRootDiagnostic(
             theorem_title=theorem_title,
-            desired_theorem_name=DIRECT_ROOT_THEOREM_NAME,
+            desired_theorem_name=desired_theorem_name,
             prompt_path=prompt_path,
             scratch_path=scratch_path,
             result_lean_path=None,
@@ -294,6 +349,8 @@ def _run_direct_root_aristotle_attempt(
             aristotle_result_tar_path=None,
             verification=verification,
             contains_desired_theorem=False,
+            fixed_root_lean_spec=fixed_root_lean_spec,
+            fixed_spec_exact_header_present=None if fixed_root_lean_spec is None else False,
             copied_auxiliary_paths=[],
             attempt_history=[],
         )
@@ -310,7 +367,7 @@ def _run_direct_root_aristotle_attempt(
     result_lean_path = _find_result_lean_file(
         extracted_root=extracted_root,
         preferred_relative_path=relative_scratch_path,
-        desired_theorem_name=DIRECT_ROOT_THEOREM_NAME,
+        desired_theorem_name=desired_theorem_name,
     )
     if result_lean_path is None:
         verification = VerificationResult(
@@ -324,7 +381,7 @@ def _run_direct_root_aristotle_attempt(
         )
         return DirectRootDiagnostic(
             theorem_title=theorem_title,
-            desired_theorem_name=DIRECT_ROOT_THEOREM_NAME,
+            desired_theorem_name=desired_theorem_name,
             prompt_path=prompt_path,
             scratch_path=scratch_path,
             result_lean_path=None,
@@ -335,6 +392,8 @@ def _run_direct_root_aristotle_attempt(
             aristotle_result_tar_path=run.result_tar_path,
             verification=verification,
             contains_desired_theorem=False,
+            fixed_root_lean_spec=fixed_root_lean_spec,
+            fixed_spec_exact_header_present=None if fixed_root_lean_spec is None else False,
             copied_auxiliary_paths=[],
             attempt_history=[],
         )
@@ -349,8 +408,23 @@ def _run_direct_root_aristotle_attempt(
     )
     contains_desired_theorem = _contains_theorem_declaration(
         scratch_path.read_text(encoding="utf-8"),
-        DIRECT_ROOT_THEOREM_NAME,
+        desired_theorem_name,
     )
+    fixed_spec_exact_header_present = None
+    if fixed_root_lean_spec is not None:
+        lean_code = scratch_path.read_text(encoding="utf-8")
+        fixed_spec_exact_header_present = fixed_spec_exact_header_matches(
+            FormalArtifact(
+                lean_theorem_name=desired_theorem_name,
+                lean_statement=extract_decl_header(
+                    lean_code,
+                    preferred_name=desired_theorem_name,
+                )
+                or "-- theorem header not found",
+                lean_code=lean_code,
+            ),
+            fixed_root_lean_spec,
+        )
 
     verification = verifier.verify_existing_file(file_path=scratch_path, attempt_number=attempt_number)
     if verification.status == "verified" and not contains_desired_theorem:
@@ -360,14 +434,35 @@ def _run_direct_root_aristotle_attempt(
                 "stderr": (
                     verification.stderr
                     + "\nDirect-root diagnostic rejected the file because it did not contain "
-                    f"a theorem declaration named `{DIRECT_ROOT_THEOREM_NAME}`."
+                    f"a theorem declaration named `{desired_theorem_name}`."
+                ).strip(),
+            }
+        )
+    if verification.status == "verified" and fixed_spec_exact_header_present is False:
+        lean_code = scratch_path.read_text(encoding="utf-8")
+        artifact = FormalArtifact(
+            lean_theorem_name=desired_theorem_name,
+            lean_statement=extract_decl_header(
+                lean_code,
+                preferred_name=desired_theorem_name,
+            )
+            or "-- theorem header not found",
+            lean_code=lean_code,
+        )
+        verification = verification.model_copy(
+            update={
+                "status": "failed",
+                "stderr": (
+                    verification.stderr
+                    + "\n"
+                    + fixed_spec_mismatch_message(fixed_root_lean_spec, artifact)
                 ).strip(),
             }
         )
 
     return DirectRootDiagnostic(
         theorem_title=theorem_title,
-        desired_theorem_name=DIRECT_ROOT_THEOREM_NAME,
+        desired_theorem_name=desired_theorem_name,
         prompt_path=prompt_path,
         scratch_path=scratch_path,
         result_lean_path=result_lean_path,
@@ -378,6 +473,8 @@ def _run_direct_root_aristotle_attempt(
         aristotle_result_tar_path=run.result_tar_path,
         verification=verification,
         contains_desired_theorem=contains_desired_theorem,
+        fixed_root_lean_spec=fixed_root_lean_spec,
+        fixed_spec_exact_header_present=fixed_spec_exact_header_present,
         copied_auxiliary_paths=copied_auxiliary_paths,
         attempt_history=[],
     )
@@ -392,6 +489,7 @@ def _attempt_summary(
         "attempt_number": attempt_number,
         "verified_root": diagnostic.verified_root,
         "contains_desired_theorem": diagnostic.contains_desired_theorem,
+        "fixed_spec_exact_header_present": diagnostic.fixed_spec_exact_header_present,
         "aristotle_project_id": diagnostic.aristotle_project_id,
         "aristotle_status": diagnostic.aristotle_status,
         "aristotle_log_path": str(diagnostic.aristotle_log_path)
@@ -411,7 +509,12 @@ def _attempt_summary(
     }
 
 
-def _prepare_direct_root_scratch_file(*, workspace: LeanWorkspace, theorem_title: str) -> Path:
+def _prepare_direct_root_scratch_file(
+    *,
+    workspace: LeanWorkspace,
+    theorem_title: str,
+    fixed_root_lean_spec: FixedRootLeanSpec | None = None,
+) -> Path:
     workspace.validate()
     workspace.generated_dir.mkdir(parents=True, exist_ok=True)
     safe_title = _sanitize_file_stem(theorem_title.lower())[:48] or "direct_root"
@@ -420,17 +523,34 @@ def _prepare_direct_root_scratch_file(*, workspace: LeanWorkspace, theorem_title
         "lean",
     )
     scratch_path.write_text(
-        _render_direct_root_scratch_header(theorem_title=theorem_title),
+        _render_direct_root_scratch_header(
+            theorem_title=theorem_title,
+            fixed_root_lean_spec=fixed_root_lean_spec,
+        ),
         encoding="utf-8",
     )
     return scratch_path
 
 
-def _render_direct_root_scratch_header(*, theorem_title: str) -> str:
+def _render_direct_root_scratch_header(
+    *,
+    theorem_title: str,
+    fixed_root_lean_spec: FixedRootLeanSpec | None = None,
+) -> str:
+    fixed_spec_text = ""
+    if fixed_root_lean_spec is not None:
+        fixed_spec_text = (
+            "Fixed Lean root specification supplied.\n"
+            f"Expected theorem name: {extract_decl_name(fixed_root_lean_spec.lean_statement) or '(could not extract)'}\n"
+            f"Statement hash: {fixed_root_lean_spec.statement_hash}\n"
+            "Exact statement:\n"
+            f"{fixed_root_lean_spec.lean_statement}\n"
+        )
     return (
         "/-\n"
         "Direct-root diagnostic scratch file.\n"
         f"Theorem title: {theorem_title}\n"
+        f"{fixed_spec_text}"
         "Aristotle should replace this file with a proof of the root theorem.\n"
         "-/\n"
         "import Mathlib\n\n"

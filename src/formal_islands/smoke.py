@@ -25,6 +25,10 @@ from formal_islands.direct_root import (
     run_direct_root_aristotle_diagnostic,
     write_direct_root_diagnostic_summary,
 )
+from formal_islands.fixed_spec import (
+    build_fixed_root_lean_spec,
+    read_fixed_root_lean_statement_file,
+)
 from formal_islands.examples import TOY_RAW_PROOF, TOY_THEOREM_STATEMENT
 from formal_islands.extraction import (
     extract_proof_graph,
@@ -41,6 +45,7 @@ from formal_islands.formalization.loop import (
     DEFAULT_FORMALIZATION_ATTEMPTS,
 )
 from formal_islands.models import (
+    FixedRootLeanSpec,
     FormalArtifact,
     ProofGraph,
     VerificationResult,
@@ -147,6 +152,14 @@ def build_parser() -> argparse.ArgumentParser:
     add_backend_args(select_parser)
     add_graph_input_arg(select_parser)
     add_output_dir_arg(select_parser)
+    select_parser.add_argument(
+        "--attempt-all-nodes",
+        action="store_true",
+        help=(
+            "Bypass conservative candidate selection and mark every currently informal "
+            "node as candidate_formal. Intended for exploratory benchmark sweeps."
+        ),
+    )
     select_parser.set_defaults(func=cmd_select_candidates)
 
     formalize_parser = subparsers.add_parser("formalize-one")
@@ -253,6 +266,7 @@ def build_parser() -> argparse.ArgumentParser:
             "continued node attempt."
         ),
     )
+    add_fixed_root_spec_args(continue_parser)
     continue_parser.add_argument(
         "--max-attempts",
         type=int,
@@ -315,6 +329,7 @@ def build_parser() -> argparse.ArgumentParser:
             f"{DEFAULT_FORMALIZATION_ATTEMPTS}."
         ),
     )
+    add_fixed_root_spec_args(direct_root_parser)
     add_formalization_timeout_arg(direct_root_parser)
     direct_root_parser.set_defaults(func=cmd_direct_root)
 
@@ -342,6 +357,16 @@ def build_parser() -> argparse.ArgumentParser:
         default="agentic",
         help="Formalization execution mode. Agentic is the only supported option.",
     )
+    run_parser.add_argument(
+        "--attempt-all-nodes",
+        action="store_true",
+        help=(
+            "After planning, mark every currently informal node as candidate_formal. "
+            "This is an exploratory mode for broad benchmark sweeps, not the default "
+            "curated artifact workflow."
+        ),
+    )
+    add_fixed_root_spec_args(run_parser)
     add_formalization_timeout_arg(run_parser)
     run_parser.set_defaults(func=cmd_run_example)
 
@@ -390,6 +415,16 @@ def build_parser() -> argparse.ArgumentParser:
             default="agentic",
             help="Formalization execution mode. Agentic is the only supported option.",
         )
+        bp.add_argument(
+            "--attempt-all-nodes",
+            action="store_true",
+            help=(
+                "After planning, mark every currently informal node as candidate_formal. "
+                "This is an exploratory mode for broad benchmark sweeps, not the default "
+                "curated artifact workflow."
+            ),
+        )
+        add_fixed_root_spec_args(bp)
         add_formalization_timeout_arg(bp)
         bp.set_defaults(func=cmd_run_benchmark)
 
@@ -485,6 +520,34 @@ def add_output_dir_arg(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def add_fixed_root_spec_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--fixed-root-lean-statement",
+        "--strict-lean-statement",
+        dest="fixed_root_lean_statement",
+        default=None,
+        help=(
+            "Optional exact Lean statement for the root theorem. Root attempts must preserve "
+            "this theorem header; child attempts receive it only as compatibility context."
+        ),
+    )
+    parser.add_argument(
+        "--fixed-root-lean-statement-file",
+        "--strict-lean-statement-file",
+        dest="fixed_root_lean_statement_file",
+        default=None,
+        help=(
+            "Path to an optional exact Lean root statement. Root attempts must preserve this "
+            "theorem header; child attempts receive it only as compatibility context."
+        ),
+    )
+    parser.add_argument(
+        "--fixed-root-source",
+        default="manual",
+        help="Short provenance label for the fixed Lean root statement.",
+    )
+
+
 def add_formalization_timeout_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--formalization-timeout-seconds",
@@ -555,6 +618,37 @@ def _collect_continuation_instructions(args: argparse.Namespace) -> str | None:
     if not parts:
         return None
     return "\n\n".join(parts)
+
+
+def _collect_fixed_root_lean_spec(args: argparse.Namespace) -> FixedRootLeanSpec | None:
+    inline_statement = getattr(args, "fixed_root_lean_statement", None)
+    statement_file = getattr(args, "fixed_root_lean_statement_file", None)
+    has_inline = inline_statement is not None and str(inline_statement).strip()
+    has_file = statement_file is not None and str(statement_file).strip()
+    if has_inline and has_file:
+        raise ValueError(
+            "provide either --fixed-root-lean-statement or "
+            "--fixed-root-lean-statement-file, not both"
+        )
+    if not has_inline and not has_file:
+        return None
+    if has_file:
+        statement = read_fixed_root_lean_statement_file(str(statement_file))
+        source = str(getattr(args, "fixed_root_source", None) or "manual")
+    else:
+        statement = str(inline_statement).strip()
+        source = str(getattr(args, "fixed_root_source", None) or "manual")
+    return build_fixed_root_lean_spec(statement, source=source)
+
+
+def _attach_fixed_root_lean_spec(
+    *,
+    graph: ProofGraph,
+    fixed_root_lean_spec: FixedRootLeanSpec | None,
+) -> ProofGraph:
+    if fixed_root_lean_spec is None:
+        return graph
+    return graph.model_copy(update={"fixed_root_lean_spec": fixed_root_lean_spec})
 
 
 def _prepare_graph_for_continuation(
@@ -676,7 +770,14 @@ def cmd_select_candidates(args: argparse.Namespace) -> int:
         )
         graph = load_graph(Path(args.graph))
         _log_dependency_direction_warnings(graph, context="candidate-selection stage")
-        updated_graph = select_formalization_candidates(backend=backend, graph=graph)
+        if getattr(args, "attempt_all_nodes", False):
+            updated_graph = mark_all_informal_nodes_candidate_formal(graph)
+            progress(
+                "candidate selection stage: --attempt-all-nodes marked every informal "
+                "node as candidate_formal"
+            )
+        else:
+            updated_graph = select_formalization_candidates(backend=backend, graph=graph)
         path = output_dir / "02_candidate_graph.json"
         write_graph(updated_graph, path)
         _append_graph_logs(
@@ -687,6 +788,39 @@ def cmd_select_candidates(args: argparse.Namespace) -> int:
         )
         print(path)
     return 0
+
+
+def mark_all_informal_nodes_candidate_formal(graph: ProofGraph) -> ProofGraph:
+    """Return a graph where every informal node is an exploratory candidate."""
+
+    changed = False
+    updated_nodes = []
+    for node in graph.nodes:
+        if node.status != "informal":
+            updated_nodes.append(node)
+            continue
+
+        changed = True
+        updated_nodes.append(
+            node.model_copy(
+                update={
+                    "status": "candidate_formal",
+                    "formalization_priority": node.formalization_priority or 3,
+                    "formalization_rationale": (
+                        node.formalization_rationale
+                        or (
+                            "Selected by --attempt-all-nodes exploratory mode. "
+                            "This node was not necessarily judged to be a conservative "
+                            "high-yield formal island."
+                        )
+                    ),
+                }
+            )
+        )
+
+    if not changed:
+        return graph
+    return graph.model_copy(update={"nodes": updated_nodes})
 
 
 def cmd_formalize_one(args: argparse.Namespace) -> int:
@@ -839,6 +973,7 @@ def cmd_continue(args: argparse.Namespace) -> int:
 
     requested_node_ids = _normalize_requested_node_ids(getattr(args, "node_ids", []))
     continuation_instructions = _collect_continuation_instructions(args)
+    fixed_root_lean_spec = _collect_fixed_root_lean_spec(args)
     with use_progress_log(output_dir / PROGRESS_LOG_FILENAME), use_graph_history_log(
         output_dir / GRAPH_HISTORY_LOG_FILENAME
     ):
@@ -860,6 +995,10 @@ def cmd_continue(args: argparse.Namespace) -> int:
                         resolve_backend_name(args, formalization=True),
                     ),
                     "has_continuation_instructions": continuation_instructions is not None,
+                    "has_fixed_root_lean_spec": fixed_root_lean_spec is not None,
+                    "fixed_root_lean_spec_hash": (
+                        fixed_root_lean_spec.statement_hash if fixed_root_lean_spec else None
+                    ),
                 },
             )
             progress("continuation stage starting")
@@ -869,7 +1008,16 @@ def cmd_continue(args: argparse.Namespace) -> int:
             )
             if continuation_instructions:
                 progress("user continuation request includes extra formalization instructions")
+            if fixed_root_lean_spec:
+                progress(
+                    "user continuation request includes fixed root Lean specification "
+                    f"{fixed_root_lean_spec.statement_hash[:12]}"
+                )
             graph = load_graph(graph_path)
+            graph = _attach_fixed_root_lean_spec(
+                graph=graph,
+                fixed_root_lean_spec=fixed_root_lean_spec,
+            )
             _log_dependency_direction_warnings(graph, context="continuation stage")
             continued_graph = _prepare_graph_for_continuation(
                 graph=graph,
@@ -887,6 +1035,13 @@ def cmd_continue(args: argparse.Namespace) -> int:
                     "requested_nodes": requested_node_ids,
                     "has_continuation_instructions": continuation_instructions is not None,
                     "continuation_instructions": continuation_instructions,
+                    "has_fixed_root_lean_spec": fixed_root_lean_spec is not None,
+                    "fixed_root_lean_spec_hash": (
+                        fixed_root_lean_spec.statement_hash if fixed_root_lean_spec else None
+                    ),
+                    "fixed_root_lean_spec_source": (
+                        fixed_root_lean_spec.source if fixed_root_lean_spec else None
+                    ),
                 },
             )
 
@@ -1054,6 +1209,7 @@ def cmd_direct_root(args: argparse.Namespace) -> int:
     )
     workspace = _resolve_workspace(getattr(args, "workspace", None))
     with use_progress_log(output_dir / PROGRESS_LOG_FILENAME):
+        fixed_root_lean_spec = _collect_fixed_root_lean_spec(args)
         _log_cli_invocation(
             command_name=str(getattr(args, "command", "direct-root")),
             args=args,
@@ -1067,6 +1223,10 @@ def cmd_direct_root(args: argparse.Namespace) -> int:
                     "aristotle",
                 ),
                 "max_attempts": args.max_attempts,
+                "has_fixed_root_lean_spec": fixed_root_lean_spec is not None,
+                "fixed_root_lean_spec_hash": (
+                    fixed_root_lean_spec.statement_hash if fixed_root_lean_spec else None
+                ),
             },
         )
         progress("direct-root diagnostic stage starting")
@@ -1087,6 +1247,7 @@ def cmd_direct_root(args: argparse.Namespace) -> int:
             input_payload=input_payload,
             output_dir=output_dir,
             max_attempts=args.max_attempts,
+            fixed_root_lean_spec=fixed_root_lean_spec,
         )
         summary_path = output_dir / "direct_root_summary.json"
         write_direct_root_diagnostic_summary(diagnostic, summary_path)
@@ -1174,6 +1335,7 @@ def _persist_report_annotations_to_graph_if_canonical(
 
 def cmd_run_example(args: argparse.Namespace) -> int:
     output_dir = ensure_output_dir(Path(args.output_dir))
+    fixed_root_lean_spec = _collect_fixed_root_lean_spec(args)
     with use_progress_log(output_dir / PROGRESS_LOG_FILENAME), use_graph_history_log(
         output_dir / GRAPH_HISTORY_LOG_FILENAME
     ):
@@ -1195,6 +1357,43 @@ def cmd_run_example(args: argparse.Namespace) -> int:
                 )
             )
             candidate_graph_path = output_dir / "02_candidate_graph.json"
+            if fixed_root_lean_spec is not None:
+                original_candidate_graph = load_graph(candidate_graph_path)
+                candidate_graph = _attach_fixed_root_lean_spec(
+                    graph=original_candidate_graph,
+                    fixed_root_lean_spec=fixed_root_lean_spec,
+                )
+                write_graph(candidate_graph, candidate_graph_path)
+                _append_graph_logs(
+                    candidate_graph,
+                    label="02_candidate_graph.json (fixed root Lean spec)",
+                    previous_graph=original_candidate_graph,
+                    event="fixed_root_spec_attached",
+                    metadata={
+                        "fixed_root_lean_spec_hash": fixed_root_lean_spec.statement_hash,
+                        "fixed_root_lean_spec_source": fixed_root_lean_spec.source,
+                    },
+                )
+                progress(
+                    "example setup: attached fixed root Lean specification "
+                    f"{fixed_root_lean_spec.statement_hash[:12]}"
+                )
+            if getattr(args, "attempt_all_nodes", False):
+                original_candidate_graph = load_graph(candidate_graph_path)
+                candidate_graph = mark_all_informal_nodes_candidate_formal(
+                    original_candidate_graph
+                )
+                write_graph(candidate_graph, candidate_graph_path)
+                _append_graph_logs(
+                    candidate_graph,
+                    label="02_candidate_graph.json (--attempt-all-nodes)",
+                    previous_graph=original_candidate_graph,
+                    event="candidate_selection_output",
+                )
+                progress(
+                    "example candidate stage: --attempt-all-nodes marked every informal "
+                    "node as candidate_formal"
+                )
             progress("example formalization stage starting")
             cmd_formalize_one(
                 argparse.Namespace(
@@ -1241,6 +1440,7 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
         else default_output_dir_for_input(input_path, args)
     )
     workspace = _resolve_workspace(getattr(args, "workspace", None))
+    fixed_root_lean_spec = _collect_fixed_root_lean_spec(args)
     with use_progress_log(output_dir / PROGRESS_LOG_FILENAME), use_graph_history_log(
         output_dir / GRAPH_HISTORY_LOG_FILENAME
     ):
@@ -1260,6 +1460,11 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
                         args,
                         resolve_backend_name(args, formalization=True),
                     ),
+                    "attempt_all_nodes": bool(getattr(args, "attempt_all_nodes", False)),
+                    "has_fixed_root_lean_spec": fixed_root_lean_spec is not None,
+                    "fixed_root_lean_spec_hash": (
+                        fixed_root_lean_spec.statement_hash if fixed_root_lean_spec else None
+                    ),
                 },
             )
             progress("running benchmark end-to-end")
@@ -1278,6 +1483,43 @@ def cmd_run_benchmark(args: argparse.Namespace) -> int:
                 )
             )
             candidate_graph_path = output_dir / "02_candidate_graph.json"
+            if fixed_root_lean_spec is not None:
+                original_candidate_graph = load_graph(candidate_graph_path)
+                candidate_graph = _attach_fixed_root_lean_spec(
+                    graph=original_candidate_graph,
+                    fixed_root_lean_spec=fixed_root_lean_spec,
+                )
+                write_graph(candidate_graph, candidate_graph_path)
+                _append_graph_logs(
+                    candidate_graph,
+                    label="02_candidate_graph.json (fixed root Lean spec)",
+                    previous_graph=original_candidate_graph,
+                    event="fixed_root_spec_attached",
+                    metadata={
+                        "fixed_root_lean_spec_hash": fixed_root_lean_spec.statement_hash,
+                        "fixed_root_lean_spec_source": fixed_root_lean_spec.source,
+                    },
+                )
+                progress(
+                    "benchmark setup: attached fixed root Lean specification "
+                    f"{fixed_root_lean_spec.statement_hash[:12]}"
+                )
+            if getattr(args, "attempt_all_nodes", False):
+                original_candidate_graph = load_graph(candidate_graph_path)
+                candidate_graph = mark_all_informal_nodes_candidate_formal(
+                    original_candidate_graph
+                )
+                write_graph(candidate_graph, candidate_graph_path)
+                _append_graph_logs(
+                    candidate_graph,
+                    label="02_candidate_graph.json (--attempt-all-nodes)",
+                    previous_graph=original_candidate_graph,
+                    event="candidate_selection_output",
+                )
+                progress(
+                    "benchmark candidate stage: --attempt-all-nodes marked every informal "
+                    "node as candidate_formal"
+                )
             formalization_backend_name = resolve_backend_name(args, formalization=True)
             formalization_timeout = resolve_formalization_timeout(args, formalization_backend_name)
             common = argparse.Namespace(

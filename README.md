@@ -39,6 +39,8 @@ Depending on the command, you may also see `02_candidate_graph.json` and `04_rep
 
 Runs can also be resumed later from `03_formalized_graph.json` with the `continue` command: you can seed one or more nodes back into the candidate set, append to the same `_progress.log` / `graph_history.jsonl`, and let the normal auto formalization + promotion logic continue from there.
 
+For evaluation and comparison, the repo also has a `direct-root` diagnostic command. It sends the original theorem statement and proof text directly to Aristotle and asks for one root theorem named `direct_root_aristotle`, without proof-graph decomposition or child-island staging. This is useful as a baseline, but it is intentionally separate from the normal Formal Islands artifact. If an external benchmark supplies a fixed Lean root statement, `direct-root`, `run`, and `continue` can also take `--fixed-root-lean-statement` or `--fixed-root-lean-statement-file`.
+
 ### How To Read A Run
 
 The main output is a mixed artifact, not just a success/failure bit.
@@ -98,6 +100,17 @@ Run a saved example or input file end to end:
 formal-islands run banach_stone --backends claude/aristotle --max-attempts 4
 ```
 
+Run a broad exploratory sweep that attempts every extracted node, not just the planner-selected candidates:
+
+```bash
+formal-islands run banach_stone \
+  --backends claude/aristotle \
+  --max-attempts 4 \
+  --attempt-all-nodes
+```
+
+This mode is useful for benchmark exploration and stress testing, but the default curated workflow is still conservative candidate selection.
+
 Continue an existing run from its saved graph:
 
 ```bash
@@ -115,6 +128,27 @@ formal-islands report \
   --graph artifacts/manual-testing/run19-young-convolution-inequality-gemini-aristotle/03_formalized_graph.json \
   --output-dir artifacts/manual-testing/run19-young-convolution-inequality-gemini-aristotle
 ```
+
+Run a direct-root baseline attempt without proof-graph decomposition:
+
+```bash
+formal-islands direct-root \
+  --input examples/manual-testing/run4_heat_uniqueness.json \
+  --output-dir artifacts/direct-full-attempts/heat_uniqueness-aristotle \
+  --max-attempts 8
+```
+
+Run with an exact fixed Lean root statement, such as a FormalQualBench-style specification:
+
+```bash
+formal-islands run \
+  --input examples/manual-testing/my_example.json \
+  --backends codex/aristotle \
+  --fixed-root-lean-statement-file examples/lean_statements/my_example_root_spec.lean \
+  --fixed-root-source lean-eval
+```
+
+In fixed-spec mode, the root node is treated strictly: a root/full-node verification must preserve the supplied theorem header. Non-root child nodes receive the fixed root statement only as context for choosing compatible local definitions, notation, and APIs. `--fixed-root-source` is a provenance label recorded in the graph/report metadata; it does not change backend behavior.
 
 ## How It Works
 
@@ -138,6 +172,8 @@ In stronger recent runs, that graph structure has become real proof modularity: 
 After the initial candidates are exhausted, the pipeline also does a narrow “last blocker” sweep: if one remaining informal endpoint/base-case node is the only obstacle to a promising broader parent/root closure, it can be promoted and tried late in the run.
 
 If you rerun `report` later without a planning backend, previously generated `remaining_proof_burden` text is preserved and reused from the saved run artifacts.
+
+For exploratory evaluation, `--attempt-all-nodes` can override the conservative candidate selector and mark every extracted informal node as `candidate_formal`. This is deliberately opt-in because it can spend substantial backend budget on nodes that the planner would normally avoid, but it is helpful when checking whether a stronger formalization backend can close more of an older benchmark than the original candidate policy attempted.
 
 ## Setup
 
@@ -225,11 +261,14 @@ formal-islands run <input> [options]
 | `--backends PLANNING/FORMALIZATION` | (none) | Shorthand, e.g. `gemini/aristotle` or `claude` for both |
 | `--planning-backend` | `codex` | Backend for planning/extraction stages |
 | `--formalization-backend` | `codex` | Backend for formalization; `aristotle` recommended |
-| `--max-attempts N` | `2` | Formalization attempts per node; `4` gives stronger results |
+| `--max-attempts N` | `4` | Formalization attempts per node |
 | `--output-dir PATH` | auto | Auto-derived from input name + backends + timestamp |
 | `--workspace PATH` | auto | Auto-discovered `lean_project/` from repo root |
 | `--node-id ID` | `auto` | Formalize only this node; default formalizes all candidates |
 | `--formalization-timeout-seconds N` | none (Aristotle) | Timeout for the formalization worker |
+| `--attempt-all-nodes` | off | Exploratory mode: after planning, mark every informal node as `candidate_formal` |
+| `--fixed-root-lean-statement TEXT` | (none) | Optional exact Lean root statement; hard target for root attempts, context only for children |
+| `--fixed-root-lean-statement-file PATH` | (none) | Read the optional exact Lean root statement from a file |
 
 ### `formal-islands new`
 
@@ -253,6 +292,32 @@ formal-islands report --graph <file> --output-dir <dir> --planning-backend claud
 
 The `report` command accepts `--planning-backend` optionally; if supplied, it synthesizes a "remaining proof burden" paragraph for any informal node that has verified children.
 
+### `formal-islands direct-root`
+
+Run an Aristotle-only direct full/root formalization diagnostic on an input theorem/proof JSON, bypassing proof-graph extraction and candidate selection.
+
+```bash
+formal-islands direct-root \
+  --input examples/manual-testing/run19_young_convolution_inequality.json \
+  --output-dir artifacts/direct-full-attempts/young_convolution-aristotle \
+  --max-attempts 8
+```
+
+This writes:
+
+- `direct_root_prompt.txt`: the exact standalone Aristotle prompt
+- `direct_root_summary.json`: attempt history, Aristotle project metadata, theorem-name check, optional fixed-spec header check, and local Lean verification result
+- extracted Aristotle result files under the output directory, plus the copied generated Lean file in the Lean workspace
+
+The command is meant for diagnostics and paper baselines: it answers "can Aristotle close the root directly under this prompt and budget?" It does not produce a proof graph, semantic-island report, or remaining-burden review packet.
+
+For benchmark tasks with an externally supplied Lean statement, add one of:
+
+- `--fixed-root-lean-statement "theorem exact_root ... := by"`
+- `--fixed-root-lean-statement-file examples/lean_statements/root_statement.lean`
+
+When a fixed root statement is supplied, direct-root uses its theorem name when one can be extracted and rejects a compiling returned file if the main theorem header does not match the fixed statement.
+
 ### `formal-islands continue`
 
 Resume a finished run from its existing `03_formalized_graph.json`, reintroducing specific node ids as fresh candidates and then continuing the normal auto formalization loop from there.
@@ -275,6 +340,20 @@ Continuation can also carry targeted human guidance into the next formalization 
 - `--lean-statement "theorem ..."` appends a preferred Lean theorem statement or theorem-shape hint.
 
 These hints are stored in the continued node's formalization rationale, so they remain visible in the graph, progress history, prompts, and report.
+
+Continuation can also attach or replace a graph-level fixed root statement:
+
+```bash
+formal-islands continue \
+  --output-dir artifacts/manual-testing/existing-run \
+  --node root \
+  --fixed-root-lean-statement-file examples/lean_statements/root_spec.lean \
+  --fixed-root-source formalqualbench \
+  --planning-backend codex \
+  --formalization-backend aristotle
+```
+
+This is different from `--lean-statement`: `--lean-statement` is a soft continuation hint for the continued node, while `--fixed-root-lean-statement-file` is a run-level root specification. If the continued node is the root, the exact theorem header is enforced. If the continued node is a child, the fixed root statement is provided only as compatibility context.
 
 ## Input Format
 
